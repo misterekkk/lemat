@@ -31,12 +31,6 @@ lemat/
 └── src/
 ```
 
-## Autorzy
-
-<!-- uzupełnić: imiona i nazwiska członków zespołu -->
-
-Wydział Matematyki i Nauk Informacyjnych
-Politechnika Warszawska, 2026
 
 ## Licencja
 
