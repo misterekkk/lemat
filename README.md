@@ -30,7 +30,9 @@ lemat/
 │   └── architecture.md
 └── src/
 ```
+## Autorzy
 
+Kacper Piotrowski i Igor Ptak
 
 ## Licencja
 
