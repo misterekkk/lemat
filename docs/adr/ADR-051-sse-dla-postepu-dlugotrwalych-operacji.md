@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; zastępuje ADR-014 |
@@ -102,3 +102,17 @@ docelową komunikację.
 - Kontrakty zdarzeń są częścią OpenAPI (iteracja 3) i testów
   `Lemat.Api.Tests` (otwarcie, `Last-Event-ID`, zamknięcie po `koniec`,
   limit strumieni).
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.1 (C6-01, C6-09; ADR-056, ADR-057).**
+(1) `NOTIFY lemat_zdarzenia` wysyłają wyłącznie triggery z listy ADR-056
+p. 3 (rozwiązanie, ocena, weryfikacja, powiadomienie, import arkusza,
+zlecenie generowania), nie `SaveChangesInterceptor`; powiadomienie dociera
+po `COMMIT`, nigdy po `ROLLBACK`. (2) Limit strumieni z p. 4 zastąpiony:
+≤ 4 strumienie na (użytkownik, zasób) i ≤ 12 na użytkownika na replikę,
+nadmiarowe połączenie dostaje `429 ZA_DUZO_STRUMIENI` (istniejące nie są
+zamykane); strumień powiadomień otwiera wyłącznie karta-lider przeglądarki
+(Web Locks `lemat-powiadomienia-lider`, `BroadcastChannel`). (3) `id:`
+zdarzenia `powiadomienie` = `powiadomienie.id` (UUIDv7), nie `created_at`.
+(4) Service worker nie obsługuje `/api/*` (ADR-057 p. 6).

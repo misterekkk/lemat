@@ -4,12 +4,88 @@
 |---|---|
 | Dokument | `docs/ARCHITECTURE_CHANGELOG.md` |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](ARCHITECTURE_DETAILED.md) |
-| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.0) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
+| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.1) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
 
 Numery sekcji w tabelach mapowania odnoszą się do wersji dokumentu
 głównego obowiązującej w danej iteracji. Od wersji 3.0 rejestr ADR jest w
 `docs/adr/`, a decyzje właściciela produktu D-1 … D-17 pozostają w sekcji
 23.4 dokumentu głównego.
+
+## Pętla 3.x, iteracja 2 (2026-11-01, wersja 3.1) — agenci AI w .NET, model danych EF Core, porty i prace w tle; zamknięcie uwag C6
+
+Kontekst: iteracja 2 z 4 pętli „.NET 10 + Next.js” (ADR-048). Zakres:
+dokładna architektura agentów AI w .NET (Microsoft.Extensions.AI, Semantic
+Kernel), schemat danych z mapowaniem EF Core, porty C# i prace w tle oraz
+wszystkie 15 uwag iteracji 6 krytyka. Reguły domenowe wersji 2.4 i zasada
+Z-1 bez zmian.
+
+**Zmiany struktury dokumentów:**
+
+- Nowy katalog `docs/spec/`: `ddl.md` (pełne DDL przeniesione z 7.3 z
+  poprawkami 3.1 i pełną treścią PL/pgSQL triggerów i funkcji),
+  `ef-core.md` (`LematDbContext`, konwencje, konwersje, współbieżność,
+  konfiguracje agregatów, pokrycie 58 tabel, strategia migracji),
+  `prompty.md` (8 promptów systemowych, 3 szablony stanów, schematy JSON
+  odpowiedzi, teksty pytań, dane Mock).
+- Nowe ADR: ADR-056 (jednostka pracy, zlecanie SQL `ON CONFLICT`,
+  `NOTIFY` z triggerów), ADR-057 (sesja w wielu kartach, okno tolerancji
+  rotacji, jeden strumień powiadomień), ADR-058 (`IModelGeneratywny` jako
+  fabryka klientów czatu per rola, SK tylko do pluginów i promptów
+  systemowych), ADR-059 (budżet połączeń PostgreSQL bez PgBouncera).
+- Uzupełnienia wersji 3.1: ADR-020, ADR-023, ADR-049 (p. 11, 12), ADR-051,
+  ADR-052, ADR-053, ADR-054, ADR-055.
+
+**Zmiany treści dokumentu głównego:**
+
+- Sekcja 7 przepisana: ERD, konwencje (UUIDv7, `version`/`xmin`, nazwy),
+  7.3 jako lista zmian i odnośnik do `docs/spec/ddl.md`, 7.5.5
+  (`wywolania_narzedzi`), nowe 7.6 (decyzje mapowania EF Core) i 7.7
+  (strategia migracji); notka „do przepisania” usunięta.
+- Sekcja 10 przepisana: nowe 10.0 (komponenty, kontrakty wspólne,
+  `WywolanieCzatu`/`BudowniczyWiadomosci`/`SzablonyPromptow`, czas,
+  ponowienia, błędy i model zapasowy per agent, telemetria OpenTelemetry
+  GenAI, implementacje Mock, rejestracja i testy); kontrakty agentów jako
+  interfejsy i rekordy C#; nowe 10.1.8, 10.2.4 (plugin
+  `SprawdzanieSymbolicznePlugin` z `[KernelFunction]`), 10.2.5
+  (orkiestracja generowania i Walidacji), 10.3.4, 10.4.6, 10.5.4
+  (realizacja .NET każdego agenta); plan pytań 10.4.4 w C#; notka
+  usunięta.
+- Sekcja 13 przepisana: porty C# 13.1 (w tym `IModelGeneratywny`,
+  `IObrobkaObrazow`, wyjątki), klasy adapterów 13.2, kontrakty prac w tle
+  13.4.1 (`IZlecaniePrac`, `IJednostkaPracy`, `IHandlerPracy`,
+  `PulaPracHostedService`), SQL sklepu prac 13.4.2 (warunek dzierżawy przy
+  zapisie wyniku, `ON CONFLICT`), harmonogram 13.5 (`HarmonogramHostedService`,
+  wyrażenia cron), zdarzenia 13.6 (`IObslugaZdarzenia<T>`); notka usunięta.
+- 3.6: pełne szkielety `Uzytkownik`, `Nauczyciel`, `Rozwiazanie`,
+  `Weryfikacja`, `SciezkaNauki`, `StanBezpiecznika`; strażnik w
+  `ProfilUcznia.Zastosuj`; fabryki `Ocena` z typem domenowym `RezultatOceny`.
+- 5.2–5.4, 6.1–6.9, 9.2, 12.3 (zatwierdzenie, adres zdjęcia), 12.4
+  (`SesjaWyjscie.flagi`), 15.2 (C-41 … C-46), 16.1, 17.4, 18.4 (e)–(k),
+  19 (indeks), 21 (R-26, R-27), 22 (parametry 3.1), nagłówek i konwencja
+  odczytu.
+
+**Mapowanie uwag iteracji 6 → miejsce rozwiązania:**
+
+| Uwaga | Rozwiązanie | Miejsca |
+|---|---|---|
+| C6-01 (WYSOKA) | `IJednostkaPracy` z jawną transakcją (`BeginTransactionAsync` … `CommitAsync`, bez `EnableRetryOnFailure`); `IZlecaniePrac.ZlecAsync` = `INSERT … ON CONFLICT … DO NOTHING / DO UPDATE SET ladunek … RETURNING id, (xmax = 0)` na transakcji jednostki pracy (konflikt nie wycofuje przypadku użycia); `NOTIFY` wyłącznie z triggerów `trg_*_powiadom` (dostarczane po `COMMIT`, nigdy po `ROLLBACK`); `ZlecaniePracInterceptor` usunięty; testy (a)–(f) w `Lemat.Infrastructure.Tests` | ADR-056, ADR-053 (uzup. 3.1), ADR-051 (uzup. 3.1), 6.3, 13.4, 13.6, 15.2 (C-46), `docs/spec/ddl.md` blok B, `docs/spec/ef-core.md` 1, 5 |
+| C6-02 (WYSOKA) | Klient: odświeżanie single-flight w sekcji krytycznej Web Locks `lemat-odswiezenie`, rozgłaszanie tokenu `BroadcastChannel("lemat-sesja")`, prośba o token nowej karty (150 ms), odświeżenie proaktywne 60 s przed `exp`; serwer: okno tolerancji 30 s dla tokenu zastąpionego (ten sam `skrot_klienta_http`, ≤ 5 użyć) — nowy access token bez `Set-Cookie`, poza oknem unieważnienie rodziny; kolumny `zastapiony_przez`, `zastapiony_at`, `skrot_klienta_http`, `uzycia_w_oknie_tolerancji`; testy Playwright i integracyjne; scenariusz C-41 | ADR-057, ADR-020 (uzup. 3.1), 6.8, 15.2 (C-41), 16.1, 21 (R-26), 22, `docs/spec/ddl.md` (`token_odswiezania`), `docs/spec/ef-core.md` 6.1 |
+| C6-03 (WYSOKA) | Port `IModelGeneratywny.DlaRoliAsync(RolaModelu) → KlientCzatuRoli` (fabryka klientów czatu per rola z konfiguracją, wersją promptu, parametrami i potokiem `ChatClientBuilder`); `Microsoft.Extensions.AI.Abstractions` dozwolony w `Lemat.Application`; pętla wywołań funkcji w `FunctionInvokingChatClient` potoku; ślad wywołań narzędzi w `zlecenie_generowania.wywolania_narzedzi`; test `AgentNieRozwiazujeKlientaCzatuZDi` | ADR-058, ADR-055 (uzup. 3.1), 6.4, 6.5, 6.6, 7.5.5, 10.0, 10.2.4, 13.1, 3.5 #24 |
+| C6-04 (WYSOKA) | Komplet przejść 8.1 w `Rozwiazanie` (`RozpocznijRozpoznawanie`, `ZapiszTranskrypcjeAgenta`, `ZapiszBladRozpoznawania`, `ZapiszPoprawke`, `RozpocznijOcenianie`, `ZarejestrujT6`, `ZakonczPoWeryfikacji`, `Porzuc`, `Anuluj`); `PonowRozpoznanie` zgłasza `RozwiazaniePrzeslane`; `PrzeslanoAt` wyłącznie przy Przesłaniu, nowe `OstatnieRozpoznanieOdAt` (A-11 liczy błąd dostawcy jako naruszenie); `Zatwierdz(transkrypcja, wersjaTranskrypcji, oczekiwanaWersjaRozwiazania)` z `409 TRANSKRYPCJA_NIEAKTUALNA` i `412`; `KontekstProby` i `ZadanieDoProby` (rodzaj z wersji Zadania); kolumny `najnowsza_transkrypcja_id`, `najnowsza_wersja_transkrypcji`, `ostatnie_rozpoznanie_od_at`; test przejść (34 przypadki) i scenariusz C-43 | 3.6, 7.3, 12.3, 12.5, 13.3, 15.2 (C-43), 18.4 (j), `docs/spec/ddl.md` |
+| C6-05 (ŚREDNIA) | Fabryka `Weryfikacja.Utworz` (powody początkowe, priorytet z 11.3, przydział 11.4.1, termin SLA); `KlasaId`; `Podejmij(nauczyciel, UprawnienieDoPodjecia, teraz)` z regułą uprawnień 11.4.2 i zachowaniem `PodjetaAt` przy ponownym podjęciu przez właściciela także po wygaśnięciu (limit 2 h); `Zwolnij`, `ZwolnijWygasla`, `DolaczOcene`, `Anuluj`, `CofnijEskalacjeKarencji`; strażnik stanu w `DopiszZgloszenie`; `Eskaluj` w `W_TRAKCIE`: przy ważnej blokadzie odroczenie (chyba że eskalacja dotyczy właściciela blokady), przy wygasłej — zwolnienie i eskalacja; `NauczycielDocelowyId` pozostaje po eskalacji | 3.6, `docs/spec/ef-core.md` 6.4 |
+| C6-06 (ŚREDNIA) | `OkresKarencji.StatusPrzedWnioskiem` (kolumna `status_przed_wnioskiem`) odtwarzany przez `Przywroc`; `Zatwierdz`, `Zablokuj`, `Odblokuj` w `Uzytkownik`; `NadajWeryfikatoraGlobalnego(deklarowane, statusKonta, prowadziKlase, prognoza, umowaPoufnosciAt)` z limitem 180 min wyłącznie dla prowadzącego Klasę; kolumna i CHECK `umowa_poufnosci_at`; `OdbierzWeryfikatoraGlobalnego`, `NadajRecenzentaTresci`, `OdbierzRecenzentaTresci` | 3.5 #73, #101, 3.6, `docs/spec/ddl.md` |
+| C6-07 (ŚREDNIA) | Tryb synchroniczny w `IRekomendacjaSynchroniczna` (`Lemat.Application.Orkiestracja.Synchroniczna`), zależnej tylko od `IAgentRekomendujacy` i fasad odczytu; zapis w `NastepnyElementHandler` modułu Rekomendacje; `IZlecaniePrac` i typy prac przeniesione do `Lemat.Application.Wspolne.PraceWTle`; testy `BrakCykliMiedzyModulamiAplikacji` i `KontenerDiTests` (`ValidateOnBuild`, `ValidateScopes`) | ADR-023 (uzup. 3.1), 6.1, 6.2 reguła 3, 6.3, 6.4, 6.5, 6.7, 9.2, 3.5 #67, #95 |
+| C6-08 (ŚREDNIA) | `StanBezpiecznika : Agregat<KluczBezpiecznika>` z kolumną `version`; `Utworz` (tylko `OTWARTE_OBLICZENIOWE`), `Wyzwol` z `OstatnieWyzwolenieAt`, `WyjdzZBlokady`, strażnik w `Dezaktywuj`, `DezaktywowanyPo`; `KALIBRUJ` zapisuje z tokenem wersji, przy konflikcie ponowna ocena (maks. 3), dezaktywacja w trakcie przebiegu wygrywa; dezaktywacja z `If-Match`; scenariusz C-44 | 3.5 #104, #110, 3.6, 11.5.3 (krok 6), 13.3 (`KALIBRUJ`), 15.2 (C-44), `docs/spec/ddl.md`, `docs/spec/ef-core.md` 6.5 |
+| C6-09 (ŚREDNIA) | Jeden strumień powiadomień na przeglądarkę (karta-lider Web Locks `lemat-powiadomienia-lider` + `BroadcastChannel`); limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika z `429 ZA_DUZO_STRUMIENI` bez zamykania istniejących; `id:` powiadomienia = UUIDv7 `powiadomienie.id`; jawna lista triggerów `NOTIFY lemat_zdarzenia` (rozwiązanie, ocena, weryfikacja, powiadomienie, import, zlecenie); `/api/*` poza service workerem; scenariusz C-42 | ADR-057, ADR-056 p. 3, ADR-051 (uzup. 3.1), ADR-054 (uzup. 3.1), 5.2, 6.8, 6.9, 15.2 (C-42), 22 |
+| C6-10 (ŚREDNIA) | Pakiety `Microsoft.SemanticKernel.Yaml` (bez Handlebars) i `JsonSchema.Net`; limit wywołań funkcji przez `FunkcjaZLimitem : DelegatingAIFunction` (9. wywołanie → `BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`) + `MaximumIterationsPerRequest = 8`; szablony SK wyłącznie dla promptów systemowych ze zmiennymi systemowymi, treść użytkownika w wiadomości `user` z `UnsafeRelaxedJsonEscaping`; stan Modelu decyzyjnego budowany w C# (`BudowniczyStanuOceny`); testy `LimitWywolanFunkcjiTests`, `ZgodnoscBajtowaLatexTests`, `StanOcenyZgodnyBajtowo` | ADR-058 p. 4–5, 7, 5.2, 6.4, 6.6, 10.0.3, 10.2.4, `docs/spec/prompty.md` 1, 3 |
+| C6-11 (ŚREDNIA) | Nadzorca + procesy robocze w `Lemat.ImageSandbox` zamiast `Environment.FailFast` (zabijany tylko proces przekraczający 8 s, `504`); `tmpfs /tmp`, `ResourceLimits.Disk`, `Memory = 384 MiB`, `Thread = 1`, `SetTempDirectory`; limity kontenerów 1,5 / 3 GiB; polityka bezpieczeństwa ustawiana w kodzie (`MagickNET.Initialize` z `ConfigurationFiles`), test `KoderSpozaListyJestOdrzucany`; ładowanie biblioteki natywnej z `runtimes/` i test startowy z `read_only`; `429 LIMIT_NORMALIZACJI` po 3 przekroczeniach w 10 min | ADR-052 (uzup. 3.1), 5.3, 5.4, 6.7, 13.1 (`IObrobkaObrazow`), 22 |
+| C6-12 (NISKA) | p. 1: `ORYGINALNA`/`MASKOWANA` w 3.5 i 12.3; p. 2: 3.2 — Kalibracja w dwóch modułach, zasób `/nauczyciele`, `Zadanie.CzyBazowe`/`CzyWygenerowane`; p. 3: `IModelDecyzyjny` w 3.3 i A-02; p. 4: `WynikZadaniaSkrot`, `ZdjecieRef` jako typy wewnętrzne C#, TS `WynikZadaniaWyjscie`, `ZdjecieRozwiazaniaWyjscie`, `AdresZdjeciaWyjscie`, `ObszarNaZdjeciu` na liście nowych nazw; p. 5: `KontekstDecyzji` przy #30; p. 6: 16.1 — ES256; p. 7: `Lemat.Symulacje` → `Lemat.Infrastructure`, pakiety `Microsoft.ML`, `Microsoft.ML.LightGbm`; p. 8: ADR-049 p. 11 i test `BrakCzesciowejKwalifikacjiPrzestrzeni` | 3.2, 3.3, 3.5, 6.4, 12.3, 16.1, ADR-049 (uzup. 3.1) |
+| C6-13 (NISKA) | Trzecie znaczenie „blokady” — blokada konta (`status_konta = 'ZABLOKOWANE'`, `StatusKonta.Zablokowane`, `Uzytkownik.Zablokuj`, `KontoZablokowane`, `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`) z kwalifikatorem w prozie; przemianowanie odrzucone z powodu kolizji z Zawieszeniem Wyniku zadania | 3.1 p. 5, 3.4 część 3, 3.6, ADR-049 p. 12 |
+| C6-14 (ŚREDNIA) | Trasy `(administrator)/admin/zadania/**`, `zgloszenia-bledu-zadan`, `zlecenia-generowania/**`; `(nauczyciel)/nauczyciel/wkladki-teoretyczne/**` ze `StraznikFlagi` (`SesjaWyjscie.uzytkownik.flagi`); `(uczen)/klasy`; przepływ `dolacz/[kod]` dla zalogowanego, niezalogowanego, innej roli i kodu nieważnego; zdjęcia przez `GET …/zdjecia/{id}/adres` (JSON z podpisanym URL) i `<img src>` bez `blob:` i CORS, testy Vitest i E2E; `next build --webpack` dla Serwist | ADR-054 (uzup. 3.1), 5.2, 6.8, 6.9, 12.3, 12.4 |
+| C6-15 (NISKA) | p. 1: zapis wyniku pracy z `wykonawca = @ja AND status = 'W_TOKU'` + potwierdzenie dzierżawy `FOR UPDATE` w jednostce pracy (C-45); p. 2: budżet 155 połączeń, `max_connections ≥ 200`, PgBouncer dopiero powyżej 3 replik `worker` (tryb `transaction`, połączenia `LISTEN`/blokady doradczej bezpośrednio); p. 3: strażnik `UniewaznionyAt` w `ProfilUcznia.Zastosuj`; p. 4: `SciezkaNauki` z aktywnymi elementami, `OstatniaKolejnosc` (kolumna `ostatnia_kolejnosc`), wygaszanie w `Zaproponuj`, limit Serii w metodzie; p. 5: `RezultatOceny` w `Lemat.Domain.Ocenianie` | ADR-056 p. 4, ADR-059, 3.6, 5.4, 10.4.1, 13.4, 15.2 (C-45), 17.4, 22, `docs/spec/ef-core.md` 6.5 |
+
+`TASKS.md`, `HANDOFF.md`, `CLAUDE.md`, `docs/CRITIQUE_LOG.md`, wymagania,
+słownik i wizja nie były edytowane.
 
 ## Pętla 3.x, iteracja 1 (2026-11-01, wersja 3.0) — stos .NET 10 + Next.js, moduły, mapowanie słownika, zamknięcie uwag C5
 

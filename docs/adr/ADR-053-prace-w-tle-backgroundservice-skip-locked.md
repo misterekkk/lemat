@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; realizacja ADR-002 w .NET |
@@ -86,3 +86,14 @@ W wersji 2.4 pętle były korutynami `asyncio`.
   `Lemat.Infrastructure.Tests` na PostgreSQL 16 (Testcontainers):
   współbieżne pobieranie bez duplikatów, wygasanie dzierżawy, deduplikacja,
   `NOTIFY` dopiero po zatwierdzeniu.
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.1 (C6-01, C6-15 p. 1; ADR-056).** Zmiany:
+p. 2e — zapis wyniku ma warunek `WHERE id = @id AND wykonawca = @ja AND
+status = 'W_TOKU'`, a jednostka pracy handlera potwierdza dzierżawę
+`SELECT … FOR UPDATE` przed `COMMIT`; p. 3 — `IZlecaniePrac.ZlecAsync`
+wykonuje `INSERT … ON CONFLICT … RETURNING` poleceniem SQL na transakcji
+bieżącej jednostki pracy (nie `Add` encji), a `NOTIFY praca_w_tle` wysyła
+trigger `trg_praca_w_tle_powiadom`; `ZlecaniePracInterceptor` nie
+istnieje. Kontrakt `IZlecaniePrac` jest w `Lemat.Application.Wspolne.PraceWTle`.

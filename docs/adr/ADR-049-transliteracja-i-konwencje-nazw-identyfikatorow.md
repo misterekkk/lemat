@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie — rozszerza ADR-016, nie zmienia słownika |
 | Rozszerza | ADR-016 (identyfikatory domenowe po polsku), 3.1 dokumentu głównego |
@@ -153,3 +153,28 @@ nazwy parametrów ścieżek (C5-05 p. 2) i wieloznaczność słowa „blokada”
 - Kod C# zawiera polskie identyfikatory bez diakrytyków (np.
   `ZasadyPoprawekTranskrypcji`), co wymaga od zespołu stosowania tabeli 3.5
   zamiast intuicji językowej.
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.1 (C6-12 p. 8, C6-13).**
+
+11. **Przesłanianie przestrzeni nazw przez przestrzeń nazw.** Przestrzenie
+    `Lemat.Domain.Modele`, `Lemat.Application.Modele`,
+    `Lemat.Application.Agenci` mają tę samą ostatnią część co projekty
+    `Lemat.Modele` i `Lemat.Agenci`. Kod nigdy nie używa częściowo
+    kwalifikowanych nazw zaczynających się od `Modele.` ani `Agenci.`;
+    typy z innej przestrzeni są importowane dyrektywą `using` z pełną
+    nazwą przestrzeni (`using Lemat.Application.Modele;`), a przy kolizji
+    nazwy typu — aliasem (`using PortyModeli = Lemat.Application.Modele;`).
+    Test `BrakCzesciowejKwalifikacjiPrzestrzeni` (`Lemat.Architecture.Tests`)
+    przegląda pliki `*.cs` wyrażeniem `(?<![\w.])(Modele|Agenci)\.[A-Z]`
+    poza dyrektywami `using` i kończy się błędem przy trafieniu.
+12. **Trzecie znaczenie „blokady” (zmiana p. 9).** Dozwolone znaczenia
+    domenowe słowa „blokada” to: **Blokada weryfikacji**, **Blokada
+    obniżania progu** i **blokada konta** (konto zablokowane przez
+    Administratora: `status_konta = 'ZABLOKOWANE'`,
+    `StatusKonta.Zablokowane`, `PowodEskalacji.NauczycielDocelowyZablokowany`,
+    `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`, akcja audytu `KONTO_ZABLOKOWANE`). W
+    prozie trzecie znaczenie ma zawsze kwalifikator „konta”. Przemianowanie
+    na „zawieszenie” odrzucono, bo koliduje z pojęciem Zawieszenie Wyniku
+    zadania (3.5 #80).

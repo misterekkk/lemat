@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4 (frontend React 18 + Vite zastąpiony) |
@@ -103,3 +103,21 @@ TypeScript), a role wymagają osobnych układów i strażników.
   serwera — świadomie, bo aplikacja działa za logowaniem.
 - Granice modułów frontendu (6.9) są egzekwowane w CI tak jak granice
   backendu (6.5).
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.1 (C6-02, C6-09, C6-14).** (1) Odświeżanie
+tokenu single-flight (Web Locks + `BroadcastChannel`) i jeden strumień
+powiadomień na przeglądarkę — ADR-057. (2) `app/sw.ts` nie rejestruje
+trasy dla `/api/*` (żądania API omijają service worker). (3) **Budowanie
+z Serwist:** `@serwist/next` 9 wymaga webpacka, a Next.js 16 buduje
+domyślnie Turbopackiem, dlatego skrypt `build` to `next build --webpack`;
+`next dev` działa z Turbopackiem, a service worker jest w trybie
+deweloperskim wyłączony (`disable: process.env.NODE_ENV ===
+"development"`). (4) **Zdjęcia bez BFF:** zdjęcia kartek są wyświetlane
+przez `<img src>` z podpisanym URL magazynu (CSP `img-src` zawiera
+magazyn) pobranym z `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres`
+(JSON `AdresZdjeciaWyjscie { url, wygasa_at }`) przez `klient.ts`; brak
+`blob:` URL, brak CORS na buckecie. (5) Trasy dla Administratora (Zadania,
+Zgłoszenia błędu w Zadaniu, zlecenia generowania), recenzenta treści
+(Wkładki do przeglądu) i Ucznia (Klasy) oraz przepływ `dolacz/[kod]` — 6.8.

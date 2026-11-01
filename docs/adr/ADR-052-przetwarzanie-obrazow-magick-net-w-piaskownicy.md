@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; zastępuje realizację ADR-045 (treść domenowa ADR-045 obowiązuje); aktualizuje realizację ADR-031 |
@@ -91,3 +91,38 @@ w procesie obsługującym żądania ani w procesie wykonującym prace w tle
   (17.4, założenie do pomiaru w G-3).
 - Ryzyko licencyjne HEVC (R-24) ograniczone przez konwersję w przeglądarce
   i przełącznik.
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.1 (C6-11).** Zmiany p. 2–3:
+(1) **Procesy robocze zamiast `Environment.FailFast`.** `Lemat.ImageSandbox`
+jest nadzorcą: uruchamia tyle procesów potomnych
+`Lemat.ImageSandbox --proces-roboczy` ile slotów (2 w `obrazy-api`, 4 w
+`obrazy-worker`); każdy proces potomny wykonuje jedną operację naraz
+(komunikacja: ramki długość + JSON + bajty po `stdin`/`stdout`). Po 8 s
+czasu ściennego nadzorca zabija **tylko** ten proces (`Process.Kill`),
+zwraca klientowi `504 NORMALIZACJA_PRZEKROCZONY_CZAS` i uruchamia nowy
+proces (≈ 300 ms); pozostałe operacje działają dalej. Proces potomny jest
+też odnawiany po 200 operacjach. W procesie potomnym `ResourceLimits.Thread
+= 1`, `ResourceLimits.Time = 5` s, `ResourceLimits.Memory = 384 MiB`,
+`ResourceLimits.Disk = 256 MiB`. (2) **Katalog tymczasowy:** kontenery
+sidecarów mają `tmpfs: /tmp` (`obrazy-api` 512 MiB, `obrazy-worker`
+1 GiB), `MagickNET.SetTempDirectory("/tmp/magick")`; limity kontenerów
+podniesione do 1,5 GiB (`obrazy-api`) i 3 GiB (`obrazy-worker`), bo
+`tmpfs` liczy się do pamięci cgroup. Biblioteka natywna jest ładowana z
+`runtimes/linux-x64/native/` katalogu aplikacji (Magick.NET-Q8-AnyCPU na
+.NET nie rozpakowuje jej do katalogu tymczasowego); test startowy kontenera
+z `read_only: true` wywołuje `MagickNET.Initialize` i `/zdrowie` zwraca
+`MagickNET.Version`. (3) **Polityka bezpieczeństwa w kodzie:**
+`MagickNET.Initialize(konfiguracja, "/tmp/magick-konfiguracja")` z
+`ConfigurationFiles.Default`, w którym `Policy.Data` to osadzony
+`polityka.xml` (`<policy domain="coder" rights="none" pattern="*"/>`, potem
+`rights="read|write"` dla `{JPEG,PNG,HEIC,WEBP}`, `<policy domain="delegate"
+rights="none" pattern="*"/>`, `<policy domain="path" rights="none"
+pattern="@*"/>`); systemowy `policy.xml` nie jest używany. Test
+`KoderSpozaListyJestOdrzucany` (SVG, PS, MVG, TXT → `422
+ZDJECIE_NIEPRAWIDLOWE`, bez uruchomienia delegatu). (4) **Limit kosztownych
+przesłań:** `api` liczy przekroczenia czasu normalizacji na Ucznia (okno
+przesuwne 10 min, pamięć procesu); 3 przekroczenia → `429
+LIMIT_NORMALIZACJI` dla przesłań tego Ucznia przez 10 min, metryka
+`normalizacja_przekroczenia_total{replika}`.

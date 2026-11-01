@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; realizacja ADR-003, ADR-009, ADR-026 w .NET |
@@ -104,3 +104,19 @@ implementacją Mock do pracy offline. Jev nie jest modelem językowym
 - Telemetria GenAI z OpenTelemetry bez treści promptów (RODO, 16.3).
 - Prompty są wersjonowane jak w 2.4 (`wersja_promptu`), ale w formacie
   szablonów SK; test sprawdza istnienie pliku dla każdej wersji.
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.1 (C6-03, C6-10; ADR-058).** Zmiany:
+p. 1 — `IModelGeneratywny` jest fabryką klientów czatu per rola
+(`DlaRoliAsync(RolaModelu, CancellationToken) → KlientCzatuRoli`), a
+metody `GenerujJsonAsync<T>`/`GenerujTekstAsync` przechodzą do pomocnika
+`Lemat.Agenci.Wspolne.WywolanieCzatu`; p. 2 — potok `ChatClientBuilder` z
+ADR-058 p. 3 (w tym `UseFunctionInvocation`); p. 4 — Semantic Kernel
+(`Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml`) służy
+wyłącznie do pluginów `[KernelFunction]` przekazywanych jako `AIFunction` i
+do szablonów promptów **systemowych** w składni `{{$zmienna}}` (bez
+Handlebars); limit wywołań funkcji realizuje `FunkcjaZLimitem :
+DelegatingAIFunction`; treść od użytkownika nie przechodzi przez szablony;
+stan Modelu decyzyjnego buduje kod C# bez Semantic Kernel. Pełne prompty i
+schematy — `docs/spec/prompty.md`.
