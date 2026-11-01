@@ -225,13 +225,15 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
     Rzeczywiste liczby po `migrate`: 61 tabel (bez partycji i `__historia_migracji`), 43 typy enum, 15 triggerów, 13 partycji `decyzja_modelu` (bieżący miesiąc + 12), `konfiguracja_modelu` = 0 wierszy, historia: `0001_SchematPoczatkowy`.
     Decyzje: tabela historii `__historia_migracji`; rola `lemat_migracje` NIE utworzona (do decyzji PO / TASK-112); role `lemat_api/worker/scheduler` tworzy 0005 jako NOLOGIN, gdy brak; testy zgodności modelu EF (ef-core.md 8) dochodzą z TASK-037.
 
-- [ ] **TASK-014 [MVP] `Lemat.Domain.Common`: agregat, identyfikatory, wspólne typy, konwencja nazw**
+- [x] **TASK-014 [MVP] `Lemat.Domain.Common`: agregat, identyfikatory, wspólne typy, konwencja nazw**
   - **Opis:** `Agregat<TId>` (`version`, kolekcja zdarzeń), `IZdarzenieDomenowe`, wyjątki domenowe (`WyjatekDomenowy`, `NiezmiennikNaruszonyException(kod)`), `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci` (1–5), generator UUIDv7,
     `KonwencjaNazw` (konwersje `PascalCase` ↔ `snake_case` ↔ `UPPER_SNAKE` ↔ `kebab-case`, ADR-049 / C9-03), baza interfejsów dla identyfikatorów silnie typowanych (`readonly record struct`; każdy typ `*Id` powstaje w TASK modułu, jeden plik na typ).
   - **Zależności:** TASK-001.
   - **Realizuje:** 3.5 (wiersze 9, 28, 31), 3.6, 6.2 (`Wspolne`), 6.11.2 p. 1; ADR-049, ADR-016.
   - **DoD:** testy `Lemat.Domain.Tests/Common`: round-trip konwencji dla co najmniej 30 nazw (np. `Wstepna` ↔ `WSTEPNA`, `OtwarteZDowodem` ↔ `OTWARTE_Z_DOWODEM`, `ZgloszenieBleduOdczytu` ↔ `zgloszenie_bledu_odczytu`);
     `PoziomTrudnosci` odrzuca wartości poza 1–5; `Agregat` zwiększa `version` przy zapisie zdarzenia zgodnie z kontraktem 3.6; `Lemat.Domain` nadal bez pakietów.
+  - **Pliki (utworzone):** `backend/src/Lemat.Domain/Common/Aggregate.cs`, `backend/src/Lemat.Domain/Common/DifficultyLevel.cs`, `backend/src/Lemat.Domain/Common/DomainException.cs`, `backend/src/Lemat.Domain/Common/ExerciseKind.cs`, `backend/src/Lemat.Domain/Common/IDomainEvent.cs`, `backend/src/Lemat.Domain/Common/IIdentifier.cs`, `backend/src/Lemat.Domain/Common/MaturaLevel.cs`, `backend/src/Lemat.Domain/Common/NamingConvention.cs`, `backend/src/Lemat.Domain/Common/UuidGenerator.cs`, `backend/tests/Lemat.Domain.Tests/Common/AggregateTests.cs`, `backend/tests/Lemat.Domain.Tests/Common/CommonTypesTests.cs`, `backend/tests/Lemat.Domain.Tests/Common/NamingConventionTests.cs`.
+  - **Weryfikacja:** build `-warnaserror` OK; `dotnet test` zielone (Domain 56, Architecture 104, Infrastructure 15); `dotnet format --verify-no-changes` czysto. Odstępstwa: `Agregat.Version` rośnie przez publiczne `PotwierdzZapis()` wołane przez `LematDbContext` (TASK-015), `Zglos()` wersji nie zmienia.
 
 - [ ] **TASK-015 [MVP] Warstwa trwałości: konwencje EF Core, `IJednostkaPracy`, tłumacz błędów bazy**
   - **Opis:** Dokończ `LematDbContext` wg `ef-core.md` 1–5: rejestracja typów enum PostgreSQL przez `MapEnum` z translatorem `UPPER_SNAKE` (rejestr wszystkich 43 typów), konwertery identyfikatorów silnie typowanych (generyczny `IdConverter<TId>`),

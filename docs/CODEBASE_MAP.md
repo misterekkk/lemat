@@ -4,8 +4,8 @@
 |---|---|
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
-| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `LematOpcje` (TASK-004); środowisko bazy: `docker-compose.yml` + `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js App Router, next-intl pl-PL, KaTeX `Wzor`/`TrescMarkdown`, `src/ui`, QueryProvider, `check-headers.mjs`; bez stron biznesowych i bez wywołań API); skrypty weryfikacji `scripts/verify-*.sh` + `.github/workflows/ci.yml` + sekcja „Szybki start” w `README.md` (TASK-007; bez powiązań stron/endpointów); schemat bazy: `Persistence/` w `Lemat.Infrastructure` (`LematDbContext`, migracja SQL `SchematPoczatkowy`, `MigratorBazy`), polecenie `Lemat.Tools migrate`, `backend/tools/extract-ddl.sh`, `PostgresFixture` (TASK-013; bez encji EF); pozostałe wiersze `planowane` |
-| Ostatnia aktualizacja | 2026-11-01 (TASK-013) |
+| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `LematOpcje` (TASK-004); środowisko bazy: `docker-compose.yml` + `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js App Router, next-intl pl-PL, KaTeX `Wzor`/`TrescMarkdown`, `src/ui`, QueryProvider, `check-headers.mjs`; bez stron biznesowych i bez wywołań API); skrypty weryfikacji `scripts/verify-*.sh` + `.github/workflows/ci.yml` + sekcja „Szybki start” w `README.md` (TASK-007; bez powiązań stron/endpointów); schemat bazy: `Persistence/` w `Lemat.Infrastructure` (`LematDbContext`, migracja SQL `SchematPoczatkowy`, `MigratorBazy`), polecenie `Lemat.Tools migrate`, `backend/tools/extract-ddl.sh`, `PostgresFixture` (TASK-013; bez encji EF); `Lemat.Domain.Common` (TASK-014: `Agregat<TId>`, `IZdarzenieDomenowe`, `IIdentyfikator<T>`, `WyjatekDomenowy`/`NiezmiennikNaruszonyException`, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci`, `GeneratorUuid`, `KonwencjaNazw`; bez pakietów, bez powiązań stron/endpointów); pozostałe wiersze `planowane` |
+| Ostatnia aktualizacja | 2026-11-01 (TASK-014) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -75,7 +75,7 @@ Moduł = `Lemat.Domain.<Module>` + `Lemat.Application.<Module>` + grupa tras w `
 
 | Moduł (katalog) | Projekty | Fasada | Tabele (właściciel) | Grupa tras | TASK (MVP) | Status |
 |---|---|---|---|---|---|---|
-| `Common` | Domain, Application | — | `dzien_wolny` | — | 014, 024 | planowane |
+| `Common` | Domain, Application | — | `dzien_wolny` | — | 014, 024 | w toku (typy wspólne `Lemat.Domain.Common` gotowe w TASK-014; `dzien_wolny` i Application: 024) |
 | `Accounts` | Domain, Application, Infrastructure (`Security`), Api | `IKontaFasada` (`IAccountsFacade`) | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania` | `/auth`, `/uczniowie/ja`, `/nauczyciele/ja` | 016, 072, 073 | planowane |
 | `Classes` | Domain, Application, Api | `IKlasyFasada` | `klasa`, `czlonkostwo_klasy` (MVP); `zestaw_zadan`, `przypisanie*` (POST-MVP) | `/klasy` | 018, 074 | planowane |
 | `Content` | Domain, Application, Api | `ITresciFasada` | `dzial`, `umiejetnosc`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `wkladka_teoretyczna` | `/dzialy`, `/umiejetnosci`, `/zadania`, `/wkladki-teoretyczne` | 017, 025, 027, 028, 073 | planowane |
@@ -137,6 +137,8 @@ Moduł = `Lemat.Domain.<Module>` + `Lemat.Application.<Module>` + grupa tras w `
 ## 5. Diagramy zależności (Mermaid)
 
 ### 5.1 Projekty backendu (strzałka = „ma referencję do”)
+
+TASK-014: graf referencji projektów bez zmian (`Lemat.Domain.Common` żyje w `Lemat.Domain`, który nadal nie referuje żadnego projektu ani pakietu; `Lemat.Domain.Tests` referuje tylko `Lemat.Domain`).
 
 TASK-013: graf referencji projektów `src` bez zmian (`Lemat.Tools` → `Lemat.Infrastructure` już istniało; `MigrujBazeCommand` używa `MigratorBazy`). Zmiana tylko w testach: `Lemat.Infrastructure.Tests` referuje dodatkowo `Lemat.Tools` (test polecenia `migrate`); projekty testowe nie są częścią diagramu.
 
@@ -317,6 +319,18 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/src/Lemat.Tools/Commands/MigrujBazeCommand.cs` | Polecenie `migrate [--polaczenie=...]` (idempotentne; partycje na 12 miesięcy) | MigratorBazy, LematKonfiguracja, IPolecenie | Tools.Program, operator, scripts | TASK-013 |
 | `backend/tests/Lemat.Infrastructure.Tests/Persistence/PostgresFixture.cs` | Fixture: PostgreSQL 16 z Testcontainers albo `LEMAT_TEST_BAZA`; świeże puste bazy | Testcontainers.PostgreSql, Npgsql | SchematBazyTests, kolejne testy integracyjne | TASK-013 |
 | `backend/tests/Lemat.Infrastructure.Tests/Persistence/SchematBazyTests.cs` | Testy schematu: obiekty z ddl.md, brak konfiguracji Mock, idempotencja migrate, smoke funkcji, deterministyczność extract-ddl | PostgresFixture, MigratorBazy, MigrujBazeCommand, ZasobSql | dotnet test | TASK-013 |
+| `backend/src/Lemat.Domain/Common/Aggregate.cs` | Korzeń agregatu: Version (token współbieżności), kolekcja zdarzeń domenowych (3.6) | Lemat.Domain.Common.IZdarzenieDomenowe | agregaty wszystkich modułów domenowych, LematDbContext (TASK-015) | TASK-014 |
+| `backend/src/Lemat.Domain/Common/DifficultyLevel.cs` | Value object Poziom trudności (1–5) | Lemat.Domain.Common.NiezmiennikNaruszonyException | moduły Content, Profile, Recommendations | TASK-014 |
+| `backend/src/Lemat.Domain/Common/DomainException.cs` | Wyjątki domenowe: baza oraz naruszenie niezmiennika z kodem błędu 12.2 (mapowany na ProblemDetails) | — | agregaty domeny, TlumaczBledowBazy (TASK-015), Lemat.Api | TASK-014 |
+| `backend/src/Lemat.Domain/Common/ExerciseKind.cs` | Wyliczenie Rodzaj zadania (typ PostgreSQL rodzaj_zadania) | — | moduły Content, Solutions, Grading, Calibration | TASK-014 |
+| `backend/src/Lemat.Domain/Common/IDomainEvent.cs` | Zdarzenie domenowe zgłaszane przez agregat (katalog zdarzeń 13.6) | — | Lemat.Domain.Common.Agregat, moduły domenowe | TASK-014 |
+| `backend/src/Lemat.Domain/Common/IIdentifier.cs` | Baza identyfikatorów silnie typowanych (readonly record struct <Korzen>Id; każdy typ w TASK modułu) | — | Lemat.Domain.Common.Agregat, konwertery EF (TASK-015) | TASK-014 |
+| `backend/src/Lemat.Domain/Common/MaturaLevel.cs` | Wyliczenie Poziom matury (typ PostgreSQL poziom_matury) | — | moduły Accounts, Content, Profile | TASK-014 |
+| `backend/src/Lemat.Domain/Common/NamingConvention.cs` | Konwencja nazw (ADR-049): konwersje PascalCase, snake_case, UPPER_SNAKE, kebab-case | System.Text.Json.JsonNamingPolicy | konwencje EF Core (TASK-015), test słownika, serializacja | TASK-014 |
+| `backend/src/Lemat.Domain/Common/UuidGenerator.cs` | Generator identyfikatorów UUIDv7 (uporządkowanych czasowo) z TimeProvider | — | fabryki agregatów wszystkich modułów | TASK-014 |
+| `backend/tests/Lemat.Domain.Tests/Common/AggregateTests.cs` | Testy Agregat<TId>: Version, kolekcja zdarzeń, kontrakt 3.6 | Lemat.Domain.Common.Agregat | dotnet test | TASK-014 |
+| `backend/tests/Lemat.Domain.Tests/Common/CommonTypesTests.cs` | Testy wspólnych typów domeny: PoziomTrudnosci, wyjątki, wyliczenia, generator UUIDv7 | Lemat.Domain.Common | dotnet test | TASK-014 |
+| `backend/tests/Lemat.Domain.Tests/Common/NamingConventionTests.cs` | Testy KonwencjiNazw: round-trip PascalCase, snake_case, UPPER_SNAKE, kebab-case (ADR-049) | Lemat.Domain.Common.KonwencjaNazw | dotnet test | TASK-014 |
 
 | `frontend/src/app/layout.tsx` | Główny układ: `<html lang="pl">`, NextIntlClientProvider, QueryClientProvider, style KaTeX | next-intl, lib/query/QueryProvider, globals.css | Next.js App Router (wszystkie trasy) | TASK-006 |
 | `frontend/src/app/(public)/layout.tsx` | Układ stref publicznych (bez logowania) | react | Next.js App Router | TASK-006 |
@@ -340,7 +354,7 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `frontend/vitest.config.ts` | Konfiguracja Vitest (jsdom, alias `@/`) | vitest | npm run test | TASK-006 |
 | `frontend/vitest.setup.ts` | Setup testów: matchery jest-dom, sprzątanie DOM | @testing-library/jest-dom | vitest.config.ts | TASK-006 |
 | `frontend/scripts/check-headers.mjs` | Sprawdza nagłówki Living Documentation w `.ts/.tsx` frontendu | node:fs, node:path | `npm run check:headers`, `scripts/verify-frontend.sh` (TASK-007) | TASK-006 |
-Projekt `Lemat.Application` ma od TASK-004 `Common/` (LematOpcje); `Lemat.Infrastructure` ma od TASK-013 `Persistence/`; projekty `Lemat.Domain`, `Lemat.Agents`, `Lemat.Models` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Projekt `Lemat.Application` ma od TASK-004 `Common/` (LematOpcje); `Lemat.Infrastructure` ma od TASK-013 `Persistence/`; `Lemat.Domain` ma od TASK-014 `Common/` (typy wspólne; `Lemat.Domain.Tests/Common/`); projekty `Lemat.Agents`, `Lemat.Models` nie mają jeszcze plików `.cs` (tylko `.csproj`).
 Pliki nie-C# (TASK-013, schemat bazy): `backend/tools/extract-ddl.sh` (wycina bloki A i B z `docs/spec/ddl.md`; deterministyczny; `--check`), `backend/src/Lemat.Infrastructure/Persistence/Schema/ddl.sql` (A+B), `backend/src/Lemat.Infrastructure/Persistence/Migrations/Sql/0000_schema.sql … 0007_api.sql` (zasoby osadzone; powiązanie warstwowe: `Lemat.Tools migrate` ↔ baza PostgreSQL ↔ wszystkie tabele DDL); zmiana w `Lemat.Infrastructure.csproj` (EmbeddedResource) i `Lemat.Infrastructure.Tests.csproj` (referencja do `Lemat.Tools`).
 Pliki nie-C#/nie-TS (TASK-007, CI; brak powiązań warstwowych strona/endpoint/agent/tabela): `scripts/verify-backend.sh` (restore, build `-warnaserror`, test, `dotnet format --verify-no-changes`), `scripts/verify-frontend.sh` (`npm ci`, typecheck, lint, test, build, `check:headers` -> `frontend/scripts/check-headers.mjs`), `scripts/verify-all.sh` (woła oba; `--backend-only`/`--frontend-only`), `.github/workflows/ci.yml` (job backend: PostgreSQL 16 + Testcontainers, cache NuGet; job frontend: Node 22, cache npm; test kontraktu OpenAPI dojdzie w TASK-071), `README.md` (Szybki start; rozbudowa TASK-112).
 Pliki nie-TS frontendu (TASK-006): `frontend/{package.json,package-lock.json,tsconfig.json,postcss.config.mjs,eslint.config.mjs,.prettierrc.json,.prettierignore,.gitignore}`, `frontend/messages/pl-PL.json` (komunikaty UI, NFR-10), `frontend/src/app/globals.css` (Tailwind 4 + `katex.min.css`); brak powiązań strona/endpoint/agent/tabela (szkielet; `rewrites` `/api/*` -> `LEMAT_API_URL` gotowe, klient API od TASK-081). Reguła ESLint `react/jsx-no-literals` wymusza teksty z `messages/pl-PL.json`.

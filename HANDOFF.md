@@ -7,8 +7,8 @@
 | Cel właściciela | **Działające MVP jak najszybciej**, kompletne end-to-end (Uczeń i Nauczyciel), całość uruchamialna lokalnie bez kluczy API (Mock) |
 | Architektura | `docs/ARCHITECTURE_DETAILED.md` v3.5; spec: `docs/spec/{ddl,ef-core,api,prompts}.md`; ADR-001 … ADR-075 w `docs/adr/` |
 | Stos | .NET 10 (`backend/`), Next.js App Router + TypeScript (`frontend/`), PostgreSQL 16, REST + SSE, Microsoft.Extensions.AI + Semantic Kernel |
-| Kod | szkielet solucji `backend/` (TASK-001) + 7 projektów testowych (TASK-002) + hosty z `/zdrowie` i OpenAPI (TASK-003) + `LematOpcje` (TASK-004) + PostgreSQL 16 w `docker-compose.yml` i skrypty `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js, next-intl pl-PL, KaTeX, `src/ui`); skrypty `verify-*` i CI (TASK-007); schemat bazy: `extract-ddl.sh`, migracja SQL, `Lemat.Tools migrate`, `PostgresFixture` (TASK-013); dokumentacja i definicje agentów w `.claude/agents/` |
-| Następne TASK | **TASK-014** (`Lemat.Domain.Common`; zależność TASK-001 spełniona) |
+| Kod | `Lemat.Domain.Common` (TASK-014) + szkielet solucji `backend/` (TASK-001) + 7 projektów testowych (TASK-002) + hosty z `/zdrowie` i OpenAPI (TASK-003) + `LematOpcje` (TASK-004) + PostgreSQL 16 w `docker-compose.yml` i skrypty `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js, next-intl pl-PL, KaTeX, `src/ui`); skrypty `verify-*` i CI (TASK-007); schemat bazy: `extract-ddl.sh`, migracja SQL, `Lemat.Tools migrate`, `PostgresFixture` (TASK-013); dokumentacja i definicje agentów w `.claude/agents/` |
+| Następne TASK | **TASK-015** (warstwa trwałości EF Core; zależności TASK-013, 014 spełnione) |
 | Jak pracować | `CLAUDE.md` (reguły), `TASKS.md` (backlog + macierz pokrycia), `docs/CODEBASE_MAP.md` (żywa mapa), ten plik (stan, założenia, decyzje) |
 
 Poprzednia wersja `CLAUDE.md`/`TASKS.md`/`HANDOFF.md` (Python/FastAPI/React, ścieżki `src/lemat/…`) była nieaktualna i została
@@ -176,6 +176,7 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 **Do wykonania przez właściciela / człowieka (agent nie może tego zrobić sam):**
 
+0e. **Po TASK-014:** brak akcji obowiązkowych (czysty kod domeny, bez mocków, zmiennych środowiskowych ani konfiguracji). Do zatwierdzenia (informacyjnie): `default(PoziomTrudnosci)` ma `Wartosc == 0` (struct) — używać konstruktora; `CA1710` wyciszony na `WyjatekDomenowy` (nazwa wymagana przez zadanie).
 0d. **Po TASK-013:** brak akcji obowiązkowych. Testy integracyjne wymagają Dockera (Testcontainers, postgres:16) albo `LEMAT_TEST_BAZA` (np. `Host=localhost;Port=5432;Database=lemat_test;Username=lemat;Password=lemat_dev`); `extract-ddl.sh` wymaga `bash`. **Decyzja do podjęcia:** rola `lemat_migracje` (rekomendacja z 0a: tak) NIE została utworzona — migracja 0005 działa na dowolnej roli właściciela, a role `lemat_api/worker/scheduler` tworzy jako NOLOGIN, gdy brak; rozstrzygnąć przed TASK-112/produkcją. Uwaga: granice partycji `decyzja_modelu` zależą od strefy czasowej sesji (`timestamptz`); po 12 miesiącach wymagany ponowny `migrate` (U-08). Mocki: brak (`konfiguracja_modelu` pusta do `seed-dev`, TASK-026).
 0c. **Po TASK-007:** brak akcji obowiązkowych. Do lokalnego `verify-all.sh` potrzebne: .NET SDK 10.0.100+, Node >= 22, Docker (Testcontainers od TASK-013). Zalecane: po pierwszym pushu sprawdzić, że workflow `.github/workflows/ci.yml` przechodzi na GitHub Actions (lokalnie zweryfikowano tylko składnię — `yamllint`, `actionlint` niedostępny); rozważyć `packages.lock.json` dla cache NuGet. Mocki: nie dotyczy.
 0b. **Po TASK-006:** brak akcji obowiązkowych. Wymagany Node >= 22 (+ npm); port 3000 musi być wolny. Decyzje do potwierdzenia: (a) Next 16.4 / React 19 / TS 5.9 (przypięte, bo `npm latest` to TS 7; 5.2 mówi o TS 5) — akceptacja wersji; (b) OQ-04 (Node 22, `next build --webpack` użyty w skrypcie `build`). Mocki: nie dotyczy (brak wywołań API do TASK-081). `LEMAT_API_URL` jest już czytane przez frontend.
@@ -211,8 +212,8 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
-| 1. Szkielet i środowisko (001 … 012) | 7 / 7 | 0 / 5 | faza MVP ukończona; dalej **TASK-014** (faza 2) |
-| 2. Model domenowy i baza (013 … 037) | 1 / 16 | 0 / 9 | **TASK-014** (TASK-013 gotowe; zależność 001 spełniona) |
+| 1. Szkielet i środowisko (001 … 012) | 7 / 7 | 0 / 5 | faza MVP ukończona; dalej **TASK-015** (faza 2) |
+| 2. Model domenowy i baza (013 … 037) | 2 / 16 | 0 / 9 | **TASK-015** (TASK-013, 014 gotowe) |
 | 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
 | 5. Testy i dopracowanie (109 … 120) | 0 / 4 | 0 / 8 | po TASK-089 |
@@ -227,9 +228,13 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 **Co działa (TASK-006):** `frontend/` (npm, Node 22): Next.js 16.4 App Router + React 19 + TypeScript strict 5.9, Tailwind 4, Radix UI (`radix-ui`), ESLint 9 flat config, Prettier, Vitest 3 + Testing Library (9 testów), next-intl 4 (tylko `pl-PL`, bez prefiksu w URL, `messages/pl-PL.json`), TanStack Query (`QueryProvider`), KaTeX (`Wzor`, `TrescMarkdown`; `trust: false`, brak wykonywania HTML), `src/ui` (`Button`, `Dialog`, `List`, `Form`), drzewo grup tras `(public)`, `(student)`, `(teacher)/teacher`, `(administrator)/admin` z pustymi układami, strona `/`, `scripts/check-headers.mjs`. `typecheck`, `lint`, `test`, `build` (`next build --webpack`) zielone; backend nietknięty.
 
+**Co działa (TASK-014):** `Lemat.Domain.Common` (`backend/src/Lemat.Domain/Common/`, bez pakietów): `Agregat<TId>` (`Version` start 1, zdarzenia przez `Zglos()`, `PotwierdzZapis()`), `IZdarzenieDomenowe`, `IIdentyfikator<TWartosc>`, `WyjatekDomenowy`, `NiezmiennikNaruszonyException(kod, opis=null)`, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci` (1–5), `GeneratorUuid.Nowy(TimeProvider)` (UUIDv7), `KonwencjaNazw` (oparta na `JsonNamingPolicy`). Testy w `backend/tests/Lemat.Domain.Tests/Common` (Domain 56 zielone). Uruchamianie bez zmian (sekcja 5); ten TASK nie dodaje procesów ani zmiennych.
+
 **Co działa (TASK-013):** `backend/tools/extract-ddl.sh` (wycina bloki A i B z `docs/spec/ddl.md` -> `Persistence/Schema/ddl.sql` + `Persistence/Migrations/Sql/0000_schema.sql … 0007_api.sql`, zasoby osadzone, deterministyczny, `--check`), `LematDbContext` (Npgsql, snake_case, bez encji), migracja `SchematPoczatkowy` (`0001_SchematPoczatkowy`, tylko `migrationBuilder.Sql`, bez `ModelSnapshot`), `MigratorBazy` i `Lemat.Tools migrate` (idempotentne; partycje `decyzja_modelu` bieżący miesiąc + 12), `PostgresFixture` + `SchematBazyTests`. Rzeczywiste liczby w bazie: 61 tabel, 43 typy enum, 15 triggerów, 13 partycji, `konfiguracja_modelu` = 0 wierszy.
 
-**Ostatnia zmiana: TASK-013** (pliki: `TASKS.md` pod TASK-013). Zrobiono: j.w. Weryfikacja: build `-warnaserror` 0/0; testy zielone (Infrastructure.Tests 15, Architecture.Tests 104) z Testcontainers i z `LEMAT_TEST_BAZA`; `dotnet format` czysto; `extract-ddl.sh` deterministyczny. Decyzje: tabela historii `__historia_migracji`; rola `lemat_migracje` nie utworzona (sekcja 6, pkt 0d); testy zgodności modelu EF z katalogiem (`ModelEfZgodnyZKatalogiem`, `KazdyTriggerWKatalogu`, `ZadnaMigracjaNieGenerujeSchematu`) dojdą z TASK-037/encjami. Zmiana DDL: edycja `docs/spec/ddl.md` -> `backend/tools/extract-ddl.sh` -> nowa migracja (kolejne pliki SQL); test `ExtractDdlJestDeterministycznyIZgodnyZRepozytorium` pilnuje zgodności. Kolejne TASK z encjami: `IEntityTypeConfiguration` w `Lemat.Infrastructure` (`ApplyConfigurationsFromAssembly` podpięte), w testach `PostgresFixture` + `[Collection(PostgresKolekcjaTestow.Nazwa)]`. Nagłówki 9 plików `.cs` sprawdzone, poprawne. Brak mocków i nowych U-xx.
+**Ostatnia zmiana: TASK-014** (pliki: `TASKS.md` pod TASK-014). Zrobiono: j.w. Weryfikacja: build `-warnaserror` OK; testy zielone (Domain 56, Architecture 104, Infrastructure 15); `dotnet format` czysto. Decyzje: (1) `Agregat.Version` rośnie przez publiczne `PotwierdzZapis()` wołane przez `LematDbContext` przy zapisie (3.6 p. 3) — TASK-015 musi to wywołać; `Zglos()` wersji nie zmienia; (2) `NiezmiennikNaruszonyException(kod, opis=null)`, opis domyślnie = kod; (3) `CA1710` wyciszony na `WyjatekDomenowy`; (4) `default(PoziomTrudnosci).Wartosc == 0`; (5) `IIdentyfikator<TWartosc>` to baza dla `*Id`, `Agregat<TId>` ma tylko ograniczenie `struct`. Brak mocków, brak nowych U-xx. Nagłówki 12 plików `.cs` sprawdzone, poprawne.
+
+**Poprzednia zmiana: TASK-013** (pliki: `TASKS.md` pod TASK-013). Zrobiono: j.w. Weryfikacja: build `-warnaserror` 0/0; testy zielone (Infrastructure.Tests 15, Architecture.Tests 104) z Testcontainers i z `LEMAT_TEST_BAZA`; `dotnet format` czysto; `extract-ddl.sh` deterministyczny. Decyzje: tabela historii `__historia_migracji`; rola `lemat_migracje` nie utworzona (sekcja 6, pkt 0d); testy zgodności modelu EF z katalogiem (`ModelEfZgodnyZKatalogiem`, `KazdyTriggerWKatalogu`, `ZadnaMigracjaNieGenerujeSchematu`) dojdą z TASK-037/encjami. Zmiana DDL: edycja `docs/spec/ddl.md` -> `backend/tools/extract-ddl.sh` -> nowa migracja (kolejne pliki SQL); test `ExtractDdlJestDeterministycznyIZgodnyZRepozytorium` pilnuje zgodności. Kolejne TASK z encjami: `IEntityTypeConfiguration` w `Lemat.Infrastructure` (`ApplyConfigurationsFromAssembly` podpięte), w testach `PostgresFixture` + `[Collection(PostgresKolekcjaTestow.Nazwa)]`. Nagłówki 9 plików `.cs` sprawdzone, poprawne. Brak mocków i nowych U-xx.
 
 **Poprzednia zmiana: TASK-007** (pliki: `TASKS.md` pod TASK-007). Skrypty `scripts/verify-*.sh` i `.github/workflows/ci.yml` (szczegóły: TASKS.md).
 
@@ -237,7 +242,7 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 **Szczegóły TASK-007:** (pliki: `TASKS.md` pod TASK-007). Zrobiono: `scripts/verify-backend.sh`, `scripts/verify-frontend.sh`, `scripts/verify-all.sh` (wykonywalne), `.github/workflows/ci.yml` (job backend: postgres:16 na 5433 jako zapas dla `LEMAT_TEST_BAZA` + Testcontainers, cache NuGet przez `actions/cache` po hash csproj/`Directory.Packages.props` — brak `packages.lock.json`, więc `setup-dotnet` bez cache; job frontend: Node 22 + cache npm), `README.md` — sekcja „Szybki start”. Weryfikacja: `scripts/verify-all.sh` -> kod 0, powtórny przebieg frontendu OK; `ci.yml`: `yaml.safe_load` + `yamllint` OK (`actionlint` niedostępny), `bash -n` OK. Zmienne środowiskowe: bez zmian (`LEMAT_TEST_BAZA` w CI nieustawiane — testy używają Testcontainers). Brak mocków i nowych U-xx.
 
-**Wytyczne dla TASK-014 (następne MVP):** `Lemat.Domain.Common` w `backend/src/Lemat.Domain` (bez pakietów — test `Lemat.Domain` bez pakietów musi nadal przechodzić): `Agregat<TId>` (`version`, kolekcja zdarzeń), `IZdarzenieDomenowe`, `WyjatekDomenowy`, `NiezmiennikNaruszonyException(kod)`, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci` (1–5), generator UUIDv7, `KonwencjaNazw` (PascalCase / snake_case / UPPER_SNAKE / kebab-case), baza dla `*Id` (`readonly record struct`, jeden plik na typ). Testy w `Lemat.Domain.Tests/Common` (round-trip >= 30 nazw). Nazwy tylko ze słownika (ASCII), nagłówki @Role/@DependsOn/@UsedBy/@Task w każdym `.cs`, `scripts/verify-all.sh` musi dać kod 0 (testy bazy wymagają Dockera lub `LEMAT_TEST_BAZA`).
+**Wytyczne dla TASK-015 (następne MVP):** dokończ `LematDbContext` wg `docs/spec/ef-core.md` 1–5: `MapEnum` z translatorem `UPPER_SNAKE` (43 typy; użyj `KonwencjaNazw`), generyczny `IdConverter<TId>` dla `*Id : IIdentyfikator<Guid>`, pomocnicy `jsonb`, token współbieżności `version` (wywołuj `Agregat.PotwierdzZapis()` przy zapisie), `IJednostkaPracy` + `JednostkaPracyEf`, `TlumaczBledowBazy` (`P0001` -> `NiezmiennikNaruszonyException(kod)`, `23505` -> kod z `KatalogIndeksowUnikalnych`), `PersistenceRegistration.DodajPersystencje`. Identyfikatory generuj `GeneratorUuid.Nowy(TimeProvider)`. Testy w `Lemat.Infrastructure.Tests` z `PostgresFixture` (Docker lub `LEMAT_TEST_BAZA`). Nazwy ze słownika (ASCII), nagłówki w każdym `.cs`, `scripts/verify-all.sh` kod 0.
 
 **Poprzednia zmiana: TASK-005** (pliki: `TASKS.md` pod TASK-005). Zrobiono: `docker-compose.yml` (postgres:16, wolumen, healthcheck, port `${LEMAT_PG_PORT:-5433}`, zmienne `LEMAT_PG_UZYTKOWNIK`/`LEMAT_PG_HASLO`), `docker/postgres/init-db.sh` (baza `lemat_test`, role `lemat_api/worker/scheduler` z LOGIN wg ddl.md 0005, rozszerzenia `citext`/`pg_trgm`), `.env.example` (wszystkie 14 nazw z `MapowanieZmiennych` + `LEMAT_PG_*`, `LEMAT_TEST_BAZA`, `LEMAT_API_URL`; bez sekretów), `scripts/db-up.sh`, `db-reset.sh`, `db-local-setup.sh` (idempotentny), `Lemat:Baza:Polaczenie` w `appsettings.Development.json` trzech hostów. Weryfikacja: kontener `healthy`, `psql` na 5433 do `lemat_dev`, rozszerzenia obecne, `db-reset.sh` -> 0 tabel, `db-local-setup.sh` OK; build `-warnaserror` i testy zielone (Architecture 104, Application 14, Api 3). Brak mocków, kod `.cs` bez zmian (nagłówki: nie dotyczy).
 
@@ -279,20 +284,20 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ## 10. Gotowy prompt dla kolejnego dewelopera
 
-### 10.1 Następne TASK: TASK-014 (kopiuj do agenta `developer`)
+### 10.1 Następne TASK: TASK-015 (kopiuj do agenta `developer`)
 
 ```text
 Jesteś Senior Developerem .NET i Next.js w projekcie Lemat (repozytorium: /home/user/lemat).
-Zrealizuj dokładnie jedno zadanie planu: TASK-014 z TASKS.md ("`Lemat.Domain.Common`: agregat, identyfikatory, wspólne typy, konwencja nazw").
+Zrealizuj dokładnie jedno zadanie planu: TASK-015 z TASKS.md ("Warstwa trwałości: konwencje EF Core, `IJednostkaPracy`, tłumacz błędów bazy").
 
-Najpierw przeczytaj: CLAUDE.md (reguły, komendy weryfikacji), HANDOFF.md (sekcje 5, 6, 7: wytyczne dla TASK-014), docs/CODEBASE_MAP.md oraz opis TASK-014 w TASKS.md.
-Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (3.5 wiersze 9, 28, 31; 3.6; 6.2 `Wspolne`; 6.11.2 p. 1; ADR-049, ADR-016); dokumenty w docs/ są tylko do odczytu.
+Najpierw przeczytaj: CLAUDE.md (reguły, komendy weryfikacji), HANDOFF.md (sekcje 5, 6, 7: wytyczne dla TASK-015), docs/CODEBASE_MAP.md oraz opis TASK-015 w TASKS.md.
+Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/spec/ef-core.md 1-5; 5.2 Dostęp do danych; 15.1; ADR-056, ADR-063); dokumenty w docs/ są tylko do odczytu.
 
 Wymagania:
-- W backend/src/Lemat.Domain (bez żadnych pakietów): Agregat<TId> (version, kolekcja zdarzeń; version rośnie przy zapisie zdarzenia wg kontraktu 3.6), IZdarzenieDomenowe, WyjatekDomenowy, NiezmiennikNaruszonyException(kod), PoziomMatury, RodzajZadania, PoziomTrudnosci (1-5, odrzuca wartości spoza zakresu), generator UUIDv7, KonwencjaNazw (PascalCase <-> snake_case <-> UPPER_SNAKE <-> kebab-case), baza interfejsów dla identyfikatorów silnie typowanych (readonly record struct; jeden plik na typ).
-- Testy w backend/tests/Lemat.Domain.Tests/Common: round-trip konwencji dla >= 30 nazw (np. Wstepna <-> WSTEPNA, OtwarteZDowodem <-> OTWARTE_Z_DOWODEM, ZgloszenieBleduOdczytu <-> zgloszenie_bledu_odczytu).
-- Zachowaj reguły warstw i słownika (nazwy ASCII ze słownika); nagłówki Living Documentation @Role/@DependsOn/@UsedBy/@Task w każdym nowym .cs; uruchom scripts/verify-all.sh (kod 0).
-- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-014.
+- W backend/src/Lemat.Infrastructure/Persistence: konwencje EF Core (MapEnum UPPER_SNAKE dla 43 typów, IdConverter<TId>, jsonb, token version), IJednostkaPracy + JednostkaPracyEf, TlumaczBledowBazy (P0001 -> NiezmiennikNaruszonyException, 23505 -> kod z KatalogIndeksowUnikalnych), PersistenceRegistration.DodajPersystencje. Użyj KonwencjaNazw i GeneratorUuid z Lemat.Domain.Common; wywołaj Agregat.PotwierdzZapis() przy zapisie.
+- Testy w backend/tests/Lemat.Infrastructure.Tests wg DoD z TASKS.md (PostgresFixture; Docker albo LEMAT_TEST_BAZA).
+- Zachowaj reguły warstw i słownika; nagłówki Living Documentation @Role/@DependsOn/@UsedBy/@Task w każdym nowym .cs; uruchom scripts/verify-all.sh (kod 0).
+- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-015.
 Zwróć raport: lista plików, wyniki weryfikacji, decyzje i odstępstwa, wskazówki dla kolejnego TASK.
 ```
 
