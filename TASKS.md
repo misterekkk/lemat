@@ -9,10 +9,11 @@ najpierw wszystkie `[MVP]`, potem `[POST-MVP]`; numery rosną w kolejności doku
 którego zależności są `[x]`. Pod ukończonym TASK `handoff-guardian` dopisuje: `Pliki:` (dokładne ścieżki),
 `Weryfikacja:` (wyniki komend) i zmienia `[ ]` na `[x]`. Pozycje `[POST-MVP]` startują dopiero po ukończeniu
 wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP (U-xx) opisuje `HANDOFF.md`.
+**Priorytet właściciela: najpierw POC** (sekcja „POC (priorytet właściciela)”, TASK-121 … 140, kontrakt `docs/POC_CONTRACT.md`); pozostałe zadania MVP po POC.
 
 **Tagi:** `[MVP]` — wchodzi do pierwszego działającego end-to-end produktu; `[POST-MVP]` — reszta architektury.
 
-**Podsumowanie:** 120 pozycji, w tym **60 `[MVP]`** i 60 `[POST-MVP]`.
+**Podsumowanie:** 120 pozycji, w tym **60 `[MVP]`** i 60 `[POST-MVP]`; ponadto **20 pozycji POC** (TASK-121 … 140; sekcja „POC (priorytet właściciela)” poniżej — **wykonywane w pierwszej kolejności**, nie wchodzą do liczników).
 
 | Faza | `[MVP]` | `[POST-MVP]` | Zakres |
 |---|---|---|---|
@@ -36,6 +37,223 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
 6. **Raport developera** (pliki, wyniki komend, decyzje/odstępstwa, mocki, wskazówki) i aktualizacja dokumentów przez `handoff-guardian`; jeden commit
    `feat(TASK-XXX): … + updated codebase map & handoff`.
 7. Każdy przypadek użycia i reguła domenowa ma test jednostkowy (przypadki graniczne); testy bazy — na PostgreSQL 16 (Testcontainers).
+
+---
+
+# POC (priorytet właściciela) — TASK-121 … TASK-140
+
+**Decyzja właściciela (2026-11-01): zakres zawężony do proof of concept.** Do czasu ukończenia POC wykonujemy **wyłącznie** zadania z tej sekcji;
+pozostałe `[MVP]` (poza już ukończonymi TASK-001 … 019) czekają. Kontrakt HTTP obu ścieżek: **`docs/POC_CONTRACT.md`** (wersja POC-1.0) — jedyne miejsce, które łączy ścieżki.
+Podział pracy, branche, prompty i scenariusz demo: `HANDOFF.md` → sekcja 12.
+
+**Zakres POC:** (1) rejestracja i logowanie Ucznia (JWT), (2) dane Ucznia `/uczniowie/ja` i uproszczony Profil ucznia, (3) lista kilku Zadań z seeda, szczegóły Zadania z KaTeX,
+przesłanie zdjęcia kartki, po chwili zmockowana Transkrypcja (z zatwierdzeniem) i Ocena (punkty per Kryterium, uzasadnienie, Wskazówka).
+**Poza zakresem:** Test diagnostyczny, Rekomendacje i Ścieżka nauki (ekrany), Weryfikacje, Klasy, Nauczyciel, Administrator, SSE (odpytywanie statusu), Poprawki Ucznia, Zadania zamknięte,
+reset hasła, RODO, `Idempotency-Key`, limity szybkości.
+
+**Ścieżki (dwie osoby równolegle, niezależne; zależności tylko wewnątrz ścieżki + kontrakt):**
+`[POC-A]` backend = TASK-121 … 130 (katalog `backend/`, `scripts/`, `.env.example`); `[POC-B]` frontend = TASK-131 … 139 (katalog `frontend/`);
+`[POC-INT]` = TASK-140 (po obu ścieżkach). Zadania POC **nie wchodzą** do liczników `[MVP]`/`[POST-MVP]` z tabeli „Podsumowanie”; są *częściową realizacją* wskazanych zadań MVP
+(tabela niżej) — te zadania MVP pozostają `[ ]` i wykonuje się je później, już na gotowym szkielecie POC (uproszczenia POC to U-21 … U-31 w `HANDOFF.md`).
+Numer zadania nie narzuca kolejności między ścieżkami; w obrębie ścieżki numery rosną w kolejności wykonania. Jeden TASK = jedna sesja agenta = jeden commit
+(`feat(TASK-121): … + updated codebase map & handoff`); wspólne Definition of Done z początku pliku obowiązuje, a rozdzielenie edycji dokumentów między ścieżki opisuje `HANDOFF.md` 12.2.
+
+| Zadanie POC | Częściowo realizuje (zadania MVP, które po POC zostają do dokończenia) |
+|---|---|
+| TASK-121 | TASK-071 (infrastruktura HTTP), TASK-003/015 (wpięcie trwałości w hosty) |
+| TASK-122 | TASK-025 (Działy), TASK-026 (konta, konfiguracja modelu, próg), TASK-028 (Zadania otwarte) |
+| TASK-123 | TASK-072 (rejestracja, logowanie, odświeżanie, wylogowanie) |
+| TASK-124 | TASK-073 (`/uczniowie/ja`, `/dzialy`) |
+| TASK-125 | TASK-073 (`/zadania`, `/zadania/{id}`) |
+| TASK-126 | TASK-020 (Rozwiązanie, Transkrypcja), TASK-021 (Ocena) — część domenowa i EF |
+| TASK-127 | TASK-040 (magazyn lokalny, obróbka obrazów), TASK-077 (przesłanie zdjęć, lista, adresy) |
+| TASK-128 | TASK-024 (zlecanie i pobieranie prac), TASK-039, 043, 045, 048, 049 (Mock, rozpoznanie, ocena, pula, handlery), TASK-078 (zatwierdzenie, odczyt Oceny) |
+| TASK-129 | (rozszerzenie POC; zastąpione przez TASK-075 `GET /uczniowie/ja/profil`) |
+| TASK-130 | TASK-109 (test potoku), TASK-112 (`dev-up`) |
+| TASK-131 | TASK-081 (klient API, błędy) |
+| TASK-132 | (mocki MSW — rozszerzenie POC; w MVP rolę mocków pełni backend na Mockach) |
+| TASK-133 | TASK-081 (sesja), TASK-082 (logowanie, rejestracja, układ Ucznia) |
+| TASK-134 | TASK-083 (ustawienia Ucznia), TASK-084 (Profil ucznia) |
+| TASK-135 | TASK-083/085 (Zadanie z KaTeX) |
+| TASK-136 | TASK-085 (przesłanie zdjęć, kompresja) |
+| TASK-137 | TASK-086 (postęp, Ocena i Wskazówka), TASK-087 (Transkrypcja — tylko podgląd i zatwierdzenie) |
+| TASK-138 | TASK-081/082 (tryby, układ, błędy) |
+| TASK-139 | TASK-110 (E2E Playwright) |
+| TASK-140 | TASK-110/112 (integracja i scenariusz demo) |
+
+## Ścieżka A — backend `[POC-A]` (TASK-121 … 130)
+
+- [ ] **TASK-121 [POC-A] Infrastruktura HTTP (`/api/v1`) i wpięcie trwałości w hosty Api i Worker**
+  - **Opis:** W `Lemat.Api`: `Configuration/JsonApi.cs` (`System.Text.Json`: `snake_case` z separacją cyfr przez `KonwencjaNazw`, enumy `UPPER_SNAKE`, `UnmappedMemberHandling.Disallow`, `null` zawsze wysyłane, `JavaScriptEncoder.UnsafeRelaxedJsonEscaping` dla LaTeX; `api.md` 1),
+    `Errors/` (podzbiór `KodBledu` z `docs/POC_CONTRACT.md` 1.2, `ProblemDetailsLemat` z `kod`, `trace_id`, `szczegoly`, `bledy_pol`, `type` = `https://lemat.pl/bledy/<kod-kebab>`; `ObslugaBledowWiazania`, `ObslugaWyjatkowDomenowych` mapujący `WyjatekDomenowy`/`TlumaczBledowBazy`; komunikaty po polsku),
+    `Strona<T>` + kursor z podpisem HMAC (`LEMAT_KURSOR_KLUCZ`, w Development klucz domyślny), pomocnik `If-Match`/`version` (428/400/412 z `szczegoly.aktualny`), `FiltrScenariuszaMock` (nagłówek `X-Lemat-Mock-Scenariusz` honorowany tylko w `Development`/`E2E`),
+    nagłówki `Cache-Control: no-store`, `Vary: Authorization`, `X-Lemat-Wersja-Api`. Wpięcie: `DodajPersystencje` + `DodajModulKonta/Tresci` w `ApiHost`, `DodajPersystencje` w `WorkerHost`, connection string z `LEMAT_BAZA`/`appsettings.Development.json`; dostosowanie `KontenerDiTests` do hostów z bazą (podmiana źródła danych lub `LEMAT_TEST_BAZA`).
+    Regeneracja `backend/openapi/lemat-v1.json` (operacje `WithName` wg ADR-049 p. 15).
+  - **Zależności:** TASK-003, TASK-004, TASK-014, TASK-015 (ukończone). Kontrakt: `docs/POC_CONTRACT.md` 1.
+  - **Realizuje:** 12.1, 12.2, `docs/spec/api.md` 1–2; ADR-060, ADR-062, ADR-067, ADR-069, ADR-065; kontrakt POC 1.1, 1.2.
+  - **DoD:** testy `Lemat.Api.Tests` (WebApplicationFactory + PostgreSQL): wyjątek domenowy → ProblemDetails (`type`, `kod`, `status`, `trace_id`, `instance`); nieznane pole JSON → `422 WALIDACJA` z `bledy_pol[0].kod_reguly = POLE_NIEZNANE`; ucięty JSON → `400 ZAPYTANIE_NIEPRAWIDLOWE`;
+    podrobiony kursor → `400 KURSOR_NIEPRAWIDLOWY`; `If-Match` brak → `428`, zła forma → `400`, niezgodny → `412` z `szczegoly.aktualny`; rekord testowy serializuje się z `oswiadczenie_wieku_16`, `liczba_wynikow_7d` i enumem `UPPER_SNAKE`; 404/405 z routingu mają `kod`;
+    nagłówek Mock ignorowany poza `Development`/`E2E`; `GET /api/v1/zdrowie` nadal `200`; `dotnet run --project backend/src/Lemat.Api` startuje z bazą po `migrate`; build `-warnaserror`, `dotnet test`, `dotnet format --verify-no-changes` zielone.
+
+- [ ] **TASK-122 [POC-A] `Lemat.Tools seed-poc`: Działy, Umiejętności, 5 Zadań z Kryteriami, konta demo, konfiguracja modelu i próg**
+  - **Opis:** Polecenie `seed-poc` (idempotentne; odmawia przy `LEMAT_SRODOWISKO=Production`; wypisuje konta demo): 13 Działów z 7.4 (jawne `id` 1 … 13), 5 Umiejętności z kontraktu 6.2, 5 Zadań `OTWARTE_OBLICZENIOWE` `GLOBALNY` `OPUBLIKOWANE` ze stałymi identyfikatorami, treścią (Markdown + LaTeX), `rozwiazanie_wzorcowe`,
+    `wynik_koncowy_wzorcowy` i Kryteriami oceniania z `docs/POC_CONTRACT.md` 6.3 (przez agregaty `Zadanie` i repozytoria z TASK-017), 2 konta Uczniów z 6.1 (argon2id; hasher z TASK-123 — do czasu jego powstania prosty `IHasherHasel` w `Lemat.Application.Accounts`, ten sam port), aktywna `konfiguracja_modelu` `mock`
+    (role `ROZPOZNAWANIE_PISMA`, `DECYZYJNY_GLOWNY`), kalibrator tożsamościowy i `prog_pewnosci` 0.95 dla `OTWARTE_OBLICZENIOWE` (wymóg CHECK `ocena`, U-10). Dane w plikach osadzonych (`Persistence/Data/poc-exercises.yaml` lub JSON), nie w kodzie.
+  - **Zależności:** TASK-121; ukończone TASK-013, 016, 017, 018.
+  - **Realizuje:** 7.4, 7.5, `ddl.md` (`dzial`, `umiejetnosc`, `zadanie`, `zadanie_wersja`, `kryterium_oceniania`, `konfiguracja_modelu`, `kalibrator_pewnosci`, `prog_pewnosci`); kontrakt POC 6; FR-12, FR-36 (część).
+  - **DoD:** po `migrate` + `seed-poc` na pustej bazie: 13 Działów, 5 Umiejętności, 5 Zadań z identyfikatorami z kontraktu, suma `punkty_max` Kryteriów = `punkty_max` Zadania (`trg_suma_kryteriow` przechodzi), 2 konta `AKTYWNE`; drugie uruchomienie nie duplikuje (test); odmowa w `Production` (test);
+    test zbalansowania `$…$` i nawiasów w `tresc_md` i `opis` Kryteriów; hasła demo nie są logowane poza komunikatem wyjściowym polecenia; build/test/format zielone.
+
+- [ ] **TASK-123 [POC-A] Konta: rejestracja, logowanie, odświeżenie, wylogowanie (JWT ES256, refresh w cookie)**
+  - **Opis:** `HaszowanieHasel` (argon2id, pakiet `Konscious.Security.Cryptography.Argon2` z `Directory.Packages.props`), `WystawcaTokenow` (JWT ES256, 15 min, claims `sub`, `rola`, `status`, `jti`, `exp`; klucz z `LEMAT_JWT_KLUCZ`, w Development generowany i zapisywany lokalnie poza repozytorium),
+    refresh token w cookie `lemat_rt` (`HttpOnly; SameSite=Strict; Path=/api/v1/auth`, `Secure` przy HTTPS) z rotacją i unieważnieniem rodziny przy ponownym użyciu (tabela `token_odswiezania`, bez okna tolerancji — U-22), uwierzytelnianie JWT Bearer, polityki `Anonimowy`, `Zalogowany`, `Uczen` (status konta `AKTYWNE`),
+    handlery `ZarejestrujUzytkownikaHandler` (Uczeń: `uzytkownik`, `uczen`, `profil_ucznia`, `sciezka_nauki` w jednej transakcji; `NAUCZYCIEL` → `422 ROLA_NIEOBSLUGIWANA`), `ZalogujHandler`, `OdswiezSesjeHandler`, `WylogujHandler`, `AccountsEndpoints` (`/auth/*`), `FluentValidation` dla `RejestracjaWejscie`/`LogowanieWejscie`.
+  - **Zależności:** TASK-121; ukończone TASK-016.
+  - **Realizuje:** 12.3 (`/auth/*`), 16.1, `api.md` 3 (Konta); ADR-020, ADR-057 (część), ADR-071 p. 4, ADR-072; FR-01; kontrakt POC 3.
+  - **DoD:** testy integracyjne zgodne z `docs/POC_CONTRACT.md` 3: rejestracja → `201` + `Set-Cookie`, kształt JSON identyczny z przykładem; zajęty e-mail (także w innej wielkości liter) → `409 EMAIL_ZAJETY`; hasło < 10 znaków → `422` z `bledy_pol`; brak oświadczenia wieku → `422 WYMAGANE_OSWIADCZENIE`;
+    logowanie poprawne `200`, zły e-mail i złe hasło dają **identyczną** odpowiedź `401 NIEUWIERZYTELNIONY`; odświeżenie rotuje cookie; użycie starego cookie → `401 SESJA_UNIEWAZNIONA` i unieważnienie rodziny (nowe cookie też przestaje działać); wylogowanie `204` czyści cookie; endpoint chroniony bez tokenu `401`, z tokenem wygasłym `401`;
+    hasła i tokeny nie trafiają do logów (test); testy jednostkowe hashera i wystawcy; build/test/format zielone.
+
+- [ ] **TASK-124 [POC-A] Uczeń (`/uczniowie/ja` GET i PATCH) i `GET /dzialy`**
+  - **Opis:** `StudentsEndpoints`/`AccountsEndpoints`: `GET /uczniowie/ja` (`UczenWyjscie`, `test_diagnostyczny = BRAK`, `klasy = []`), `PATCH /uczniowie/ja` (JSON Merge Patch przez `Opcjonalne<T>` i `OpcjonalneKonwerter`, `Content-Type: application/merge-patch+json`, `If-Match` z `version`, walidacja `null` tylko dla `termin_egzaminu` i `wybrany_dzial_id`, `DZIAL_NIEZNANY`),
+    przypadki użycia w `Lemat.Application.Accounts`/`Content` (`PobierzUczniaHandler`, `ZmienUczniaHandler`, odczyt Działów przez `IContentFacade`), `GET /dzialy` (tablica 13 pozycji, `poziom_matury` wg kontraktu 4.2).
+  - **Zależności:** TASK-122, TASK-123.
+  - **Realizuje:** 12.3 (`/uczniowie/ja`, `/dzialy`), 12.5 (PATCH), `api.md` 3; ADR-069, ADR-072; FR-02 (część), FR-09 (część); kontrakt POC 4.1, 4.2.
+  - **DoD:** testy integracyjne: `GET` zgodny z przykładem; `PATCH` ustawia `poziom_matury`, `termin_egzaminu`, `wybrany_dzial_id` i zwiększa `version` o 1; pole nieobecne nie zmienia wartości; `termin_egzaminu: null` i `wybrany_dzial_id: null` czyszczą; `poziom_matury: null` → `422 NIE_MOZNA_WYCZYSCIC`; nieznany Dział → `422 DZIAL_NIEZNANY`;
+    brak `If-Match` → `428`, zły → `412` z `szczegoly.aktualny`; zły `Content-Type` → `415`; dwa równoległe `PATCH` z tym samym `If-Match` — jeden `200`, drugi `412`; `GET /dzialy` zwraca 13 pozycji dokładnie jak w kontrakcie 4.2; bez tokenu `401`; build/test/format zielone.
+
+- [ ] **TASK-125 [POC-A] Zadania: `GET /zadania` i `GET /zadania/{id}` dla Ucznia**
+  - **Opis:** `ContentEndpoints`: `GET /zadania` **[Rozszerzenie POC]** (filtr `dzial_id`, `limit`, `kursor`, sortowanie `poziom_trudnosci`, `id`) i `GET /zadania/{id}` (bez wymaganego kontekstu — U-23) zwracające `ZadanieUczniaWyjscie` z danych Zadania wersji aktualnej (bez Rozwiązania wzorcowego i klucza) przez `IContentFacade`
+    (`ExerciseForStudent` z TASK-017); tylko Zadania `OPUBLIKOWANE` i `GLOBALNY`.
+  - **Zależności:** TASK-122, TASK-123.
+  - **Realizuje:** 12.3 (`/zadania/{id}`), 7.5, `api.md` 3 (Treści); ADR-012, ADR-071 p. 3 (uproszczony); FR-12; kontrakt POC 5, 6.3.
+  - **DoD:** test integracyjny: po `seed-poc` odpowiedź `GET /zadania` jest **identyczna** z JSON z `docs/POC_CONTRACT.md` 6.3 (porównanie strukturalne, kolejność 2, 5, 1, 3, 4); `?dzial_id=5` → tylko Zadanie 1; `?dzial_id=999` → pusta lista; `GET /zadania/{id}` zgodny z przykładem z 5.2; nieistniejące, nieopublikowane i niepoprawne UUID → `404 NIE_ZNALEZIONO`;
+    odpowiedź nie zawiera pól `rozwiazanie_wzorcowe`, `kryteria_oceniania`, `wynik_koncowy_wzorcowy` (test refleksyjny po nazwach pól); paginacja z `limit=2` i kursorem przechodzi całą listę bez duplikatów; bez tokenu `401`; build/test/format zielone.
+
+- [ ] **TASK-126 [POC-A] Domena i trwałość Rozwiązań i Ocen (zakres POC): Rozwiązanie, Zdjęcie, Transkrypcja, Ocena**
+  - **Opis:** `Lemat.Domain.Solutions`: agregat `Rozwiazanie` ze stanami POC (`PRZESLANE`, `ROZPOZNAWANIE`, `BLAD_ROZPOZNAWANIA`, `TRANSKRYPCJA_GOTOWA`, `ZATWIERDZONE`, `OCENIANIE`, `OCENIONE`) i przejściami z 7.11 kontraktu (niedozwolone przejście → `WyjatekDomenowy` `ROZWIAZANIE_NIEPRAWIDLOWY_STAN`; `Version` rośnie przy każdym przejściu; znaczniki `transkrypcja_gotowa_at`, `zatwierdzono_at`, `ocena_wystawiona_at`, `czas_systemowy_ms`),
+    `ZdjecieRozwiazania`, `Transkrypcja` z `KrokTranskrypcji` (wersja 1 `AGENT_ROZPOZNAJACY`), `Lemat.Domain.Grading`: `Ocena` z `OcenaKryterium` (niezmienna, Z-5) i `WynikZadania` z `Lemat.Domain.Profile` (zapis wyniku z `zrodlo = OCENA`); konfiguracje EF (`Persistence/Configurations/Solutions|Grading`) wg `ef-core.md` i DDL (`rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `ocena`, `ocena_kryterium`, `decyzja_modelu` przez istniejący port),
+    repozytoria i `IRozwiazaniaFasada` w `Lemat.Application.Solutions`. Typy i kolumny zgodne z DDL, tak by TASK-020/021 jedynie rozszerzały (reszta stanów, Poprawki, Weryfikacja).
+  - **Zależności:** TASK-121, TASK-122; ukończone TASK-014 … 019.
+  - **Realizuje:** 8.1 (podzbiór), 6.7, `ddl.md` (tabele wyżej, `trg_ocena_niezmienna`), `ef-core.md`; Z-4, Z-5; FR-17, FR-19, FR-27 (dane); kontrakt POC 7.11.
+  - **DoD:** testy jednostkowe domeny: każde dozwolone przejście z diagramu i **każde niedozwolone** (parametrycznie), `Version`, brak `DateTime.Now`; testy bazy (PostgreSQL 16): zapis i odczyt agregatu z zdjęciami i Transkrypcją, CHECK-i DDL (np. `CHECK ocena AUTOMATYCZNA` wymaga progu i kalibratora), `trg_ocena_niezmienna` blokuje `UPDATE` Oceny, `UNIQUE (rozwiazanie_id, wersja)`;
+    testy architektury (warstwy, słownik, nagłówki) zielone; `DodajModulRozwiazan`/`DodajModulOceniania` zarejestrowane w hostach; build/test/format zielone.
+
+- [ ] **TASK-127 [POC-A] Magazyn lokalny i obróbka obrazów oraz `POST /rozwiazania`, `GET /rozwiazania`, `GET /rozwiazania/{id}`, adres zdjęcia**
+  - **Opis:** Porty `IMagazynObiektow` i `IObrobkaObrazow` (`Lemat.Application.Common`/moduł Rozwiązania) i adaptery `MagazynObiektowLokalny` (katalog z `LEMAT_MAGAZYN_SCIEZKA`/`Lemat:Magazyn:Sciezka`, klucze `zdjecia/{uczen_id}/{rozwiazanie_id}/{id}.jpg`, adresy podpisane HMAC ważne 5 min) i `ProstaObrobkaObrazow` (JPEG: magic bytes, ≤ 10 MB, wymiary z nagłówka SOF, `sha256`; U-02, U-25),
+    `PrzeslijRozwiazanieHandler` (reguły z kontraktu 7.4: wersja aktualna Zadania, brak nieukończonego Rozwiązania tego Zadania, techniczny `element_sciezki` — U-24; w jednej transakcji `rozwiazanie`, `zdjecie_rozwiazania` (`usun_po` = +90 dni) i zlecenie pracy `ROZPOZNAJ_PISMO` w `praca_w_tle` przez minimalny `IZlecaniePrac`, scenariusz Mock w `ladunek.mock_scenariusz`),
+    `SolutionsEndpoints`: `POST /rozwiazania` (multipart `[AsParameters]`, pola `zadanie_wersja_id`, `zdjecia`), `GET /rozwiazania` (filtr `status`, kursor), `GET /rozwiazania/{id}` (`RozwiazanieWyjscie` z `nastepne_odpytanie_ms`), `GET /rozwiazania/{id}/zdjecia/{id}/adres`, `GET /magazyn-lokalny/{token}`; własność zasobu (cudze → `404`).
+  - **Zależności:** TASK-123, TASK-125, TASK-126.
+  - **Realizuje:** 9.4, 12.3 (`/rozwiazania`), 12.5, `api.md` 3 i ADR-067 (multipart), 6.6 (porty); ADR-024, ADR-052 (część), ADR-056; FR-16; kontrakt POC 7.4 … 7.6, 7.9, 7.10.
+  - **DoD:** testy integracyjne: poprawne przesłanie → `202` + `Location`, JSON zgodny z przykładem 7.4 (`PRZESLANE`, `nastepne_odpytanie_ms = 1000`) i wiersz `praca_w_tle` `ROZPOZNAJ_PISMO` w tej samej transakcji (test wycofania: błąd zapisu → brak Rozwiązania i brak pracy); PNG → `415`; 6 plików i 0 plików → `422 ZA_DUZO_ZDJEC`; plik > 10 MB → `413 ZDJECIE_ZA_DUZE`;
+    plik nieczytelny jako JPEG → `422 ZDJECIE_NIEPRAWIDLOWE`; plik pod inną nazwą pola → `422 PLIK_POZA_POLEM_ZDJECIA`; stara `zadanie_wersja_id` → `409 WERSJA_ZADANIA_NIEAKTUALNA`; drugie Rozwiązanie tego samego Zadania w trakcie → `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `szczegoly.istniejace_rozwiazanie_id`; Rozwiązanie innego Ucznia → `404` (GET, adres);
+    adres zdjęcia działa bez nagłówka `Authorization`, zmieniony token i token po 5 min → `404`; lista: sortowanie, `status`, paginacja kursorem; nagłówek Mock `nieznany` → `422 MOCK_SCENARIUSZ_NIEZNANY`; zdjęcia nie są logowane; build/test/format zielone.
+
+- [ ] **TASK-128 [POC-A] Zmockowany potok: praca w tle, rozpoznanie i ocena, zatwierdzenie, odczyt Oceny, Wynik zadania**
+  - **Opis:** Wybrane najprostsze sensowne uproszczenie (U-26): **jedna pętla** `PocPracaHostedService` w `Lemat.Worker` odpytująca `praca_w_tle` co 500 ms (`FOR UPDATE SKIP LOCKED`, dzierżawa `dzierzawa_do`/`wykonawca`, ponowienia do `maks_prob = 3`, potem `MARTWA`; bez `LISTEN/NOTIFY` i pul R/S/O/P/W), z handlerami idempotentnymi sprawdzającymi stan:
+    `RozpoznajPismoHandler` (`PRZESLANE` → `ROZPOZNAWANIE`, opóźnienie `Lemat:Poc:OpoznienieRozpoznaniaMs` = 3000 poza transakcją, zapis Transkrypcji wersja 1 z danych 7.2 kontraktu → `TRANSKRYPCJA_GOTOWA`; scenariusz `rozpoznanie-nieczytelne` → `BLAD_ROZPOZNAWANIA`) i `OcenRozwiazanieHandler` (`ZATWIERDZONE` → `OCENIANIE`, opóźnienie `OpoznienieOcenyMs` = 2000, Ocena i `ocena_kryterium` wg 7.3 z `pewnosc_oceny = 0.995`, po jednym wierszu `decyzja_modelu` na Kryterium (Z-4), `wynik_zadania` (`zrodlo = OCENA`, `ulamek = punkty/punkty_max`, `waga = 1.00`, `liczy_do_trudnosci` przy pierwszej próbie), `OCENIONE`, `ocena_wystawiona_at`, `czas_systemowy_ms`).
+    Dane mocka w pliku osadzonym za portem (Mock deterministyczny w `Lemat.Models.Mock`/`Lemat.Agents`, bez wiedzy domeny o implementacji; w `Production` mock kończy start błędem — ADR-055 p. 6). `POST /rozwiazania/{id}/zatwierdzenie` (`If-Match`, `TRANSKRYPCJA_NIEAKTUALNA`, zlecenie `OCEN_ROZWIAZANIE` w tej samej transakcji) i `GET /rozwiazania/{id}/ocena` (404 do czasu `OCENIONE`). Brak Poprawek Ucznia, Filtra, trasowania T-1 … T-7, Weryfikacji, Wskazówki z Agenta (U-26, U-27).
+  - **Zależności:** TASK-122, TASK-126, TASK-127.
+  - **Realizuje:** 9.4, 9.5, 11.1 (podzbiór), 13.3–13.4 (uproszczone), 15.1, 10.0.6 (Mock); ADR-053 (część), ADR-056, ADR-065, ADR-055 p. 6; FR-17, FR-19, FR-22 (stała pewność), FR-23, FR-27, FR-29 (tylko zapis Wyniku); kontrakt POC 7.1 … 7.3, 7.7, 7.8.
+  - **DoD:** test parametryczny dla wszystkich 5 Zadań: po `POST` → ... → `OCENIONE` Transkrypcja (`kroki[].latex`, `pewnosc_odczytu`) i Ocena (`punkty`, `kryteria[]`, `pierwszy_bledny_krok`, `typ_bledu`, `wskazowka`, `uzasadnienie`) są **dokładnie** takie jak w tabelach 7.2 i 7.3; czasy z `TimeProvider`/fałszywego zegara (test nie czeka realnie 5 s); `version` rośnie o 1 przy każdym przejściu;
+    handler uruchomiony dwa razy nie duplikuje Transkrypcji, Oceny ani `wynik_zadania`; dwa workery na jednej bazie nie wykonują tej samej pracy (test współbieżności); scenariusz nieczytelny → `BLAD_ROZPOZNAWANIA` z `kod_bledu_rozpoznawania`; ponowne zatwierdzenie → `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`; zła `wersja` → `409 TRANSKRYPCJA_NIEAKTUALNA`; `GET …/ocena` przed `OCENIONE` → `404`;
+    `ocena` w `GET /rozwiazania/{id}` i w `GET …/ocena` identyczne; praca z błędem jest ponawiana, a po wyczerpaniu prób `MARTWA` (test); `Lemat.Worker` startuje (`/zdrowie`); build/test/format zielone.
+
+- [ ] **TASK-129 [POC-A] Uproszczony Profil ucznia: `GET /uczniowie/ja/profil-uproszczony`**
+  - **Opis:** **[Rozszerzenie POC]** Zapytanie w `Lemat.Application.Profile` (`PobierzProfilUproszczonyHandler`) agregujące po Ocenach `OSTATECZNA` Rozwiązań w statusie `OCENIONE` Ucznia: `liczba_rozwiazan` (bez `ANULOWANE`, `PORZUCONE`), `liczba_ocenionych`, sumy punktów, `sredni_procent_punktow` (1 miejsce po przecinku), rozbicie na Działy i 5 ostatnich Ocen; endpoint w `ProfileEndpoints`. Bez aktualizacji Elo (U-28).
+  - **Zależności:** TASK-124, TASK-128.
+  - **Realizuje:** kontrakt POC 4.3; FR-04 (uproszczone), FR-29 (odczyt).
+  - **DoD:** testy: nowy Uczeń → `liczba_rozwiazan = 0`, `sredni_procent_punktow = null`, puste listy; po ocenieniu Zadań 1 (2/2), 2 (1/2), 5 (0/2) i Zadania 3 w trakcie wynik **równy** przykładowi z 4.3 (3/6, 50.0, trzy Działy, kolejność `ostatnie_oceny`); Rozwiązanie w trakcie liczy się do `liczba_rozwiazan`, ale nie do `liczba_ocenionych`; dane innego Ucznia nie wpływają na wynik; bez tokenu `401`; build/test/format zielone.
+
+- [ ] **TASK-130 [POC-A] Test integracyjny przepływu POC i skrypt `scripts/dev-up.sh`**
+  - **Opis:** `Lemat.Api.Tests/Poc/PocFlowTests`: `WebApplicationFactory` + `PocPracaHostedService` w procesie testu na tej samej bazie (PostgreSQL 16), sterowany zegar i skrócone opóźnienia; scenariusz: rejestracja → `PATCH /uczniowie/ja` → `GET /zadania` → `POST /rozwiazania` (JPEG z zasobu testowego) → odpytywanie `GET /rozwiazania/{id}` do `TRANSKRYPCJA_GOTOWA` → zatwierdzenie → odpytywanie do `OCENIONE` → `GET …/ocena` → `GET /uczniowie/ja/profil-uproszczony`; oraz drugi Uczeń nie widzi cudzych Rozwiązań (`404`).
+    `scripts/dev-up.sh` (z opcjami `--stop`, `--reset`): PostgreSQL (`db-up.sh` albo lokalny — wg `.env`), `Lemat.Tools migrate`, `seed-poc`, `Lemat.Api` (5080) i `Lemat.Worker` w tle (logi w `.logs/`, ignorowane przez git; PID-y do `--stop`), czeka na `GET /api/v1/zdrowie`, wypisuje adresy i konta demo; `scripts/poc-smoke.sh` (curl: pełny przepływ z kontraktu na działającym API — używany przez TASK-140). Aktualizacja `.env.example` (nowe klucze `Lemat:Poc:*`, `LEMAT_JWT_KLUCZ`, `LEMAT_MAGAZYN_SCIEZKA`), sekcja „Szybki start POC” w `README.md`.
+  - **Zależności:** TASK-128, TASK-129.
+  - **Realizuje:** kontrakt POC (całość), 17.5 (część), CLAUDE.md pkt 7, 10; TASK-109 i TASK-112 (część).
+  - **DoD:** `PocFlowTests` zielony w < 60 s; wszystkie kształty odpowiedzi zgodne z przykładami kontraktu; na czystym środowisku `scripts/dev-up.sh` uruchamia całość jednym poleceniem, `scripts/poc-smoke.sh` kończy się kodem 0 i wypisuje punkty z Oceny, `--stop` zatrzymuje procesy; instrukcje z README wykonane krok po kroku (zapis w raporcie);
+    `scripts/verify-backend.sh` zielone; **backend POC kompletny** — `handoff-guardian` zapisuje w `HANDOFF.md` 12.4 stan ścieżki A.
+
+## Ścieżka B — frontend `[POC-B]` (TASK-131 … 139)
+
+Reguły wspólne: wszystkie teksty UI w `frontend/messages/pl-PL.json` (reguła `react/jsx-no-literals`), tylko `lib/api/client.ts` woła `/api/*`, token dostępu tylko w pamięci, wzory przez `MarkdownContent`/`Formula` (KaTeX, `throwOnError: false`),
+segmenty tras i katalogi `features/*` angielskie wg CLAUDE.md pkt 4.B (`(public)/login`, `(public)/register`, `(student)/exercises`, `(student)/solutions`, `(student)/profile`, `(student)/settings`), nagłówki Living Documentation w każdym `.ts/.tsx`, `npm run check:headers`. Praca wyłącznie na kontrakcie `docs/POC_CONTRACT.md` i mockach MSW — backend nie jest potrzebny aż do TASK-140.
+
+- [ ] **TASK-131 [POC-B] Typy kontraktu, klient API i obsługa błędów (`lib/api`)**
+  - **Opis:** `src/lib/api/types.ts` (ręcznie utrzymywane typy z `docs/POC_CONTRACT.md` 3 … 7: `SesjaWyjscie`, `UczenWyjscie`, `ZmianaUczniaWejscie`, `ProfilUproszczonyWyjscie`, `DzialWyjscie`, `ZadanieUczniaWyjscie`, `RozwiazanieWyjscie`, `TranskrypcjaWyjscie`, `OcenaWyjscie`, `AdresZdjeciaWyjscie`, `Strona<T>`, enumy `UPPER_SNAKE` jako unie literałów; nazwy i pola ze słownika, U-30),
+    `errors.ts` (`ProblemDetailsLemat`, `BladApi` z `status`, `kod` — także kody klienta `BLAD_SIECI`, `PRZERWANO`, `BLAD_BRAMY` — `problem`, `bledyPol`), `client.ts` (jedyne miejsce `fetch` do `/api/v1`: wstrzykiwany dostawca tokenu, `Authorization: Bearer`, `cache: "no-store"`, jednokrotne odświeżenie i ponowienie po `401 NIEUWIERZYTELNIONY` przez wstrzyknięty `odswiezSesje`, nagłówek `If-Match: "<version>"`, `multipart/form-data`, `application/merge-patch+json`, opcjonalny `X-Lemat-Mock-Scenariusz`, mapowanie odpowiedzi bez `application/problem+json` na `BLAD_BRAMY`),
+    typowane funkcje endpointów (`zarejestruj`, `zaloguj`, `odswiez`, `wyloguj`, `pobierzUcznia`, `zmienUcznia`, `pobierzProfilUproszczony`, `pobierzDzialy`, `pobierzZadania`, `pobierzZadanie`, `przeslijRozwiazanie`, `pobierzRozwiazanie`, `pobierzRozwiazania`, `zatwierdzRozwiazanie`, `pobierzOcene`, `pobierzAdresZdjecia`), klucze komunikatów `bledy.<KOD>` w `messages/pl-PL.json` dla kodów z 1.2, zależności `zod`, `react-hook-form`, `@hookform/resolvers` (stos z CLAUDE.md pkt 2).
+  - **Zależności:** TASK-006 (ukończone). Kontrakt: `docs/POC_CONTRACT.md` 1 … 7.
+  - **Realizuje:** 12.11, `api.md` 6.1 (uproszczone), ADR-054, ADR-061 (część); NFR-10; kontrakt POC 1.
+  - **DoD:** testy Vitest klienta (wstrzyknięty `fetch`): dodaje `Authorization` i `If-Match`; po `401` odświeża raz i ponawia raz (drugi `401` → błąd, bez pętli); ProblemDetails → `BladApi` z `kod` i `bledyPol`; odpowiedź HTML 502 → `BLAD_BRAMY`; błąd sieci → `BLAD_SIECI`; `multipart` bez ręcznego `Content-Type`; `412` niesie `szczegoly.aktualny`; typy kompilują się z przykładami JSON wklejonymi z kontraktu (test typów na stałych);
+    reguła ESLint lub test blokuje `fetch('/api` poza `client.ts`; komunikaty dla każdego kodu z 1.2 istnieją w `pl-PL.json` (test kompletności); `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-132 [POC-B] Mocki MSW według kontraktu (stanowe, z przejściami czasowymi)**
+  - **Opis:** Dodaj `msw` jako `devDependency` (OQ-12) i `src/mocks/`: `handlers.ts`, `db.ts` (stan w pamięci: konta, sesje, Rozwiązania), `fixtures/` (Działy 4.2, Zadania 6.3, Transkrypcje 7.2, Oceny 7.3 — dane **skopiowane z kontraktu**, nie wymyślone), `browser.ts`, `server.ts` (Vitest/Playwright), `public/mockServiceWorker.js` (`msw init`), `public/mock/kartka-przyklad.jpg` (mała kartka JPEG), komponent `MockProvider` uruchamiający worker tylko gdy `NEXT_PUBLIC_LEMAT_API=mock` (import dynamiczny — kod MSW nie trafia do buildu produkcyjnego `real`).
+    Handlery: wszystkie endpointy 1–17 z katalogu kontraktu: konta demo 6.1 i rejestracja (`EMAIL_ZAJETY`, walidacja z `bledy_pol`), logowanie/odświeżenie/wylogowanie (stan odświeżania wolno trzymać w `localStorage` tylko w trybie MSW), `PATCH /uczniowie/ja` z `If-Match` (428/412), `GET /zadania` (filtr `dzial_id`, paginacja), `POST /rozwiazania` (multipart, walidacje 7.4, scenariusze z nagłówka), przejścia stanów na timerach 3000/2000 ms z `version` +1 i `nastepne_odpytanie_ms` wg 7.11, `409` dla drugiego nieukończonego Rozwiązania, `profil-uproszczony` liczony z bieżącego stanu.
+  - **Zależności:** TASK-131.
+  - **Realizuje:** kontrakt POC 2 … 8 (zachowanie mocka 7.1); NFR-10.
+  - **DoD:** testy Vitest na `setupServer`: pełny przepływ (rejestracja → logowanie → lista Zadań → `POST` → status po 3 s `TRANSKRYPCJA_GOTOWA` → zatwierdzenie → po 2 s `OCENIONE`) z fałszywymi timerami; dla każdego z 5 Zadań Transkrypcja i Ocena równe tabelom 7.2/7.3; scenariusz `rozpoznanie-nieczytelne`; błędy w kształcie 1.1 (`kod`, `bledy_pol`, `szczegoly`); `profil-uproszczony` równy przykładowi 4.3 po odtworzeniu sekwencji; odpowiedź `GET /zadania` równa 6.3;
+    `NEXT_PUBLIC_LEMAT_API=mock npm run dev` startuje z aktywnym Service Workerem (weryfikacja ręczna w raporcie); `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-133 [POC-B] Sesja i uwierzytelnianie: `SessionProvider`, strony `/login` i `/register`, strażnik układu Ucznia**
+  - **Opis:** `src/lib/auth/SessionProvider.tsx` (+ `useSession`): token dostępu tylko w pamięci, przy starcie jedno `POST /auth/odswiezenie` (single-flight w obrębie karty), proaktywne odświeżenie 60 s przed `wygasa_at`, wstrzyknięcie dostawcy tokenu i `odswiezSesje` do `client.ts`, `wyloguj`; `src/features/accounts` (formularze `react-hook-form` + `zod` odwzorowujące reguły serwera: e-mail, hasło 10–128, imię 1–60, nazwisko 1–80, dwa oświadczenia; mapowanie `bledy_pol` na pola; komunikaty `EMAIL_ZAJETY`, `NIEUWIERZYTELNIONY`),
+    strony `(public)/login/page.tsx`, `(public)/register/page.tsx`, `(student)/layout.tsx` (strażnik: bez sesji → `/login`; nawigacja: Zadania, Rozwiązania, Profil, Ustawienia, „Wyloguj”), przekierowanie po logowaniu na `/exercises`, `proxy.ts`/middleware niewymagane.
+  - **Zależności:** TASK-131, TASK-132.
+  - **Realizuje:** 12.3 (`/auth/*`), 14 (UX), `api.md` 6.2 (uproszczone), ADR-054, ADR-057 (część), ADR-020; FR-01; NFR-10; kontrakt POC 3.
+  - **DoD:** testy Vitest/Testing Library (MSW): walidacja pól po polsku, błędy serwera na polach (`bledy_pol`), `EMAIL_ZAJETY` i zły login jako czytelne komunikaty, udane logowanie → przekierowanie, rejestracja → sesja i przekierowanie, strażnik przekierowuje niezalogowanego, wylogowanie czyści stan i wywołuje endpoint, odświeżenie przy starcie przywraca sesję, nieudane odświeżenie (`SESJA_UNIEWAZNIONA`) → `/login`;
+    test, że token nie trafia do `localStorage`/`sessionStorage`/`document.cookie`; podwójne kliknięcie nie wysyła dwóch żądań; nawigacja dostępna na szerokości 375 px (test układu lub zapis ręcznej weryfikacji); `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-134 [POC-B] Dane Ucznia (`/settings`) i uproszczony Profil ucznia (`/profile`)**
+  - **Opis:** `(student)/settings/page.tsx`: formularz poziomu matury, terminu egzaminu i wybranego Działu (lista z `GET /dzialy`, opcja „Wszystkie Działy” = `null`), `PATCH /uczniowie/ja` z `If-Match` z `version`, obsługa `412 KONFLIKT_WERSJI` (komunikat i przeładowanie danych), `422` na polach; `(student)/profile/page.tsx`: karty „Liczba rozwiązań”, „Średni wynik”, rozbicie na Działy, lista ostatnich Ocen (link do `/solutions/[solutionId]`), stan pusty dla nowego Ucznia; `features/accounts`, `features/profile` (publiczne API przez `index.ts`), TanStack Query z unieważnianiem po `PATCH`.
+  - **Zależności:** TASK-133.
+  - **Realizuje:** 12.3 (`/uczniowie/ja`, `/dzialy`), kontrakt POC 4.1 … 4.3; FR-02 (część), FR-04 (uproszczone), FR-09 (część); NFR-10.
+  - **DoD:** testy (MSW): formularz wypełnia się danymi z `GET`, zapis wysyła merge-patch tylko ze zmienionymi polami i poprawnym `If-Match`, wyczyszczenie terminu wysyła `null`, `412` pokazuje komunikat i odświeża dane, `422` oznacza pola; strona Profilu dla Ucznia bez Rozwiązań pokazuje stan pusty, a po sekwencji z przykładu 4.3 — 50,0% i trzy Działy; wartości procentowe i liczby w formacie polskim (`Intl`, `pl-PL`);
+    `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-135 [POC-B] Zadania: lista (`/exercises`) i szczegóły (`/exercises/[exerciseId]`) z KaTeX**
+  - **Opis:** `features/content` (kafelki Zadań: Dział, poziom trudności, `punkty_max`, początek `tresc_md` renderowany przez `MarkdownContent`; filtr Działu z `GET /dzialy`; stany ładowania, pusty, błąd z możliwością ponowienia), `(student)/exercises/page.tsx`, `(student)/exercises/[exerciseId]/page.tsx` (pełna treść z KaTeX, Umiejętności, punkty, przycisk „Prześlij rozwiązanie” otwierający sekcję przesyłania z TASK-136 — w tym zadaniu pusty slot), mapowanie `const { exerciseId: zadanieId }`, `404 NIE_ZNALEZIONO` → strona „Nie znaleziono zadania”.
+  - **Zależności:** TASK-133.
+  - **Realizuje:** 12.3 (`/zadania`, `/zadania/{id}`), kontrakt POC 5; FR-12 (odczyt); NFR-08, NFR-10.
+  - **DoD:** testy (MSW): lista pokazuje 5 Zadań w kolejności z kontraktu 6.3, filtr Działu zawęża listę, wzór `$20\%$`, `\frac`, `\operatorname{tg}` renderuje się (element `.katex`, brak surowego `$`), niepoprawny LaTeX nie wywala strony (`throwOnError: false`), szczegóły pokazują `punkty_max` i Umiejętność, nieistniejący `exerciseId` → komunikat 404; układ czytelny na 375 px (test lub ręczny zapis);
+    `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-136 [POC-B] Przesłanie zdjęcia kartki (aparat/plik, konwersja do JPEG, `POST /rozwiazania`)**
+  - **Opis:** `features/solutions/PhotoUpload` (`input type=file accept="image/*" capture="environment" multiple`, 1 … 5 plików, miniatury z możliwością usunięcia, licznik), `src/lib/photos/to-jpeg.ts` (przeskalowanie do ≤ 2000 px dłuższego boku i kodowanie JPEG jakość 0.85 przez `canvas`, EXIF z orientacją respektowany przez przeglądarkę; HEIC/nieczytelny plik → komunikat; funkcja wstrzykiwalna dla testów), walidacje klienta (≤ 10 MB po konwersji, ≤ 5 plików), wysyłka `multipart` przez `client.ts` (pola `zadanie_wersja_id`, `zdjecia`), blokada przycisku w trakcie (U-11), po `202` przejście do `/solutions/[solutionId]`;
+    obsługa błędów: `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` (link do istniejącego Rozwiązania z `szczegoly.istniejace_rozwiazanie_id`), `409 WERSJA_ZADANIA_NIEAKTUALNA` (odświeżenie Zadania), `413/415/422` jako komunikaty; podpięcie w `exercises/[exerciseId]`.
+  - **Zależności:** TASK-135.
+  - **Realizuje:** 12.3 (`POST /rozwiazania`), `api.md` ADR-067 (multipart), 9.4; FR-16; NFR-08; kontrakt POC 7.4.
+  - **DoD:** testy (MSW + wstrzyknięty konwerter): wybór 1 … 5 plików, 6. plik odrzucony komunikatem, usunięcie miniatury, wysyłka tworzy żądanie `multipart` z polami `zadanie_wersja_id` i `zdjecia`, po `202` nawigacja na `/solutions/<id>` z odpowiedzi, `409` pokazuje link do istniejącego Rozwiązania, `415`/`422` mają polskie komunikaty, przycisk zablokowany w trakcie wysyłki (jedno żądanie przy podwójnym kliknięciu);
+    nagłówek `X-Lemat-Mock-Scenariusz` wysyłany tylko gdy ustawiono `NEXT_PUBLIC_LEMAT_MOCK_SCENARIUSZ` (tryb dev/E2E); `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-137 [POC-B] Ekran Rozwiązania: odpytywanie statusu, Transkrypcja, zatwierdzenie, Ocena i Wskazówka; lista Rozwiązań**
+  - **Opis:** `(student)/solutions/[solutionId]/page.tsx` (`const { solutionId: rozwiazanieId }`) i `(student)/solutions/page.tsx`: hook `useRozwiazanie` na TanStack Query z `refetchInterval` = `nastepne_odpytanie_ms` (zatrzymanie przy `null`, limit 60 s z komunikatem i przyciskiem „Odśwież”), widoki według tabeli 7.11 kontraktu: postęp („Odczytujemy…”, „Oceniamy…” z paskiem/animacją respektującą `prefers-reduced-motion`), Transkrypcja (kroki: `tekst`, `latex` przez KaTeX, wskazanie niskiej pewności) z przyciskiem „Zatwierdź” (`POST …/zatwierdzenie`, `If-Match` z `version`, obsługa `409`/`412`),
+    Ocena (punkty `x/y`, tabela Kryteriów z punktami i opisem w KaTeX, `uzasadnienie` jako Markdown, wyróżniony pierwszy błędny krok, Wskazówka w ramce, podgląd przesłanego zdjęcia przez `GET …/adres`), `BLAD_ROZPOZNAWANIA` (komunikat i „Prześlij ponownie” → Zadanie), lista Rozwiązań (`GET /rozwiazania`, status, punkty, link), `features/solutions` z `index.ts`.
+  - **Zależności:** TASK-136.
+  - **Realizuje:** 12.3 (`/rozwiazania*`), 12.1 (Postęp operacji — odpytywanie), 9.4, 9.5, kontrakt POC 7.5 … 7.11; FR-17, FR-18 (podgląd i zatwierdzenie), FR-19, FR-27; NFR-01 (widoczny postęp), NFR-08.
+  - **DoD:** testy (MSW, fałszywe timery): sekwencja `PRZESLANE` → `ROZPOZNAWANIE` → `TRANSKRYPCJA_GOTOWA` (odpytywanie zatrzymuje się, pokazana Transkrypcja Zadania 2 z KaTeX) → klik „Zatwierdź” → `OCENIANIE` → `OCENIONE` z Oceną 1/2, Kryteriami, błędnym krokiem 2 i Wskazówką; dla Zadania 1 (2/2) brak bloku Wskazówki; `BLAD_ROZPOZNAWANIA` pokazuje komunikat i akcję; ponowne zatwierdzenie (`409`) pokazuje komunikat i odświeża; limit 60 s zatrzymuje odpytywanie;
+    zdjęcie ładowane z adresu z `GET …/adres` (nie z `Authorization`); lista pokazuje statusy po polsku; `typecheck`, `lint`, `test`, `build`, `check:headers` zielone.
+
+- [ ] **TASK-138 [POC-B] Przełączanie mock/real, stany ogólne i dopracowanie nawigacji**
+  - **Opis:** Zmienna `NEXT_PUBLIC_LEMAT_API=mock|real` (domyślnie `real`; `.env.example` frontendu), skrypty `dev:mock` i `dev:real` w `package.json`, `next.config.ts`: `rewrites` `/api/:path*` → `LEMAT_API_URL` tylko w trybie `real`, brak kodu MSW w buildzie `real` (weryfikacja przez wyszukanie w `.next`), `app/error.tsx`, `(student)/error.tsx`, `loading.tsx`, `not-found.tsx`, strona główna `(public)/page.tsx` z linkami „Zaloguj się”/„Załóż konto” (przekierowanie zalogowanego na `/exercises`), baner w trybie mock („Dane przykładowe”), dostępność (fokus, etykiety, kontrast, `aria-live` dla postępu), przegląd widoków na 375 px i 1280 px.
+  - **Zależności:** TASK-137.
+  - **Realizuje:** 5.2 (konfiguracja frontendu), 14 (UX), `api.md` 6.1; NFR-08, NFR-10; kontrakt POC 8.
+  - **DoD:** `npm run dev:mock` — cały scenariusz demo (rejestracja → Zadanie → zdjęcie → Transkrypcja → Ocena → Profil) przechodzi ręcznie bez backendu (zapis kroków w raporcie); `npm run dev:real` wysyła żądania na `/api/v1/...` (potwierdzone w narzędziach sieci lub teście `rewrites`); build `real` nie zawiera `msw` ani `mockServiceWorker`;
+    błąd sieci i `BLAD_BRAMY` pokazują czytelny komunikat z ponowieniem; brak surowych kluczy tłumaczeń ani tekstów w JSX (lint); `scripts/verify-frontend.sh` zielone.
+
+- [ ] **TASK-139 [POC-B] Test Playwright smoke (tryb MSW; opcjonalnie przeciw prawdziwemu API)**
+  - **Opis:** `@playwright/test`, `frontend/playwright.config.ts` (projekty Desktop Chrome i Pixel 7; `webServer`: `npm run dev:mock` na wolnym porcie albo `dev:real` gdy `LEMAT_E2E_REAL=1`), skrypt `e2e` (zastępuje placeholder), `e2e/poc-smoke.spec.ts`: rejestracja nowego Ucznia → ustawienia (poziom matury) → lista 5 Zadań → szczegóły Zadania 2 (KaTeX widoczny) → przesłanie zdjęcia (`e2e/fixtures/kartka.jpg`) → ekran oczekiwania → Transkrypcja → „Zatwierdź” → Ocena 1/2 z Wskazówką → Profil (1 rozwiązanie, 50,0%) → wylogowanie i ponowne logowanie kontem demo; w trybie `real` czas oczekiwania liczony z 3 s + 2 s mocka serwera.
+  - **Zależności:** TASK-138.
+  - **Realizuje:** 17.x (E2E), ADR-065 p. 7 (część); TASK-110 (część); FR-01, FR-16, FR-17, FR-19, FR-27; NFR-08.
+  - **DoD:** `npm --prefix frontend run e2e` zielone lokalnie na obu projektach w trybie MSW (< 90 s); test `rozpoznanie-nieczytelne` (nagłówek scenariusza przez `NEXT_PUBLIC_LEMAT_MOCK_SCENARIUSZ` lub `page.route`) pokazuje błąd rozpoznania; w trybie `real` ten sam smoke zielony po `scripts/dev-up.sh` (zapis wyniku w raporcie; jeśli backend niegotowy — oznaczone jako oczekujące na TASK-140); katalog `e2e/` i wyniki Playwright w `.gitignore` (raporty), nagłówki w `.ts`; `scripts/verify-frontend.sh` zielone.
+
+## Integracja `[POC-INT]` (po ukończeniu obu ścieżek)
+
+- [ ] **TASK-140 [POC-INT] Integracja frontendu z prawdziwym backendem i scenariusz demo**
+  - **Opis:** Uruchom `scripts/dev-up.sh`, a frontend w trybie `real`; wykonaj pełny scenariusz demo z `HANDOFF.md` 12.5 ręcznie i testem `LEMAT_E2E_REAL=1 npm --prefix frontend run e2e`; porównaj odpowiedzi API z kontraktem (`scripts/poc-smoke.sh`); rozbieżności rozstrzygaj zmianą **kontraktu** (procedura `docs/POC_CONTRACT.md` 10) i poprawką właściwej ścieżki, nie obejściem po stronie klienta;
+    uzgodnij `HANDOFF.md` (stan prac, jak uruchomić, U-21 … U-31, otwarte pytania z obu ścieżek) i `docs/CODEBASE_MAP.md` (scalenie wierszy), oznacz w `TASKS.md` zadania MVP częściowo zrealizowane przez POC (notatka „częściowo: POC”).
+  - **Zależności:** TASK-130 oraz TASK-139 (obie ścieżki).
+  - **Realizuje:** kontrakt POC (całość); TASK-109/110/112 (część).
+  - **DoD:** scenariusz demo 12.5 przechodzi bez ręcznych obejść na czystym klonie (`scripts/dev-up.sh` + `npm --prefix frontend run dev:real`); `LEMAT_E2E_REAL=1 npm --prefix frontend run e2e` zielone; `scripts/verify-all.sh` zielone; lista rozbieżności kontraktu i ich rozwiązań w raporcie; **POC gotowe** wg definicji z `HANDOFF.md` 12.5; wybór dalszej kolejności MVP (zadania nadal `[ ]`) jest decyzją właściciela.
 
 ---
 

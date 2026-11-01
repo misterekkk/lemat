@@ -10,6 +10,10 @@ Planowanie architektury jest zakończone (`docs/ARCHITECTURE_DETAILED.md` v3.5).
 z tagiem `[MVP]` w `TASKS.md`; zadania `[POST-MVP]` nie są wykonywane, dopóki MVP nie jest
 kompletne end-to-end (chyba że właściciel zdecyduje inaczej).
 
+**Priorytet właściciela: POC.** Do ukończenia POC obowiązuje wyłącznie sekcja „POC (priorytet właściciela)” w `TASKS.md` (TASK-121 … 140, ścieżki `[POC-A]` backend i `[POC-B]`
+frontend, pracowane równolegle przez dwie osoby) oraz kontrakt HTTP `docs/POC_CONTRACT.md` (jedyny punkt styku ścieżek; zmiana kontraktu tylko procedurą z jego sekcji 10). Agent pracuje tylko w katalogach
+swojej ścieżki, a reguły edycji `TASKS.md`/`HANDOFF.md`/`docs/CODEBASE_MAP.md` w POC opisuje `HANDOFF.md` sekcja 12 (zawężenie pkt 5.2). Uproszczenia POC to U-21 … U-31; pozostałe zadania `[MVP]` czekają na koniec POC.
+
 ## 1. Czym jest Lemat
 
 Platforma przeglądarkowa (telefon i komputer) do nauki do matury z matematyki. **Uczeń**

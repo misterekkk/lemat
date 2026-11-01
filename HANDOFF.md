@@ -8,7 +8,7 @@
 | Architektura | `docs/ARCHITECTURE_DETAILED.md` v3.5; spec: `docs/spec/{ddl,ef-core,api,prompts}.md`; ADR-001 … ADR-075 w `docs/adr/` |
 | Stos | .NET 10 (`backend/`), Next.js App Router + TypeScript (`frontend/`), PostgreSQL 16, REST + SSE, Microsoft.Extensions.AI + Semantic Kernel |
 | Kod | moduły Profil i Rekomendacje: `Lemat.Domain.{Profile,Recommendations}`, `Lemat.Application.{Profile,Recommendations}`, konfiguracje EF i repozytoria (TASK-019) + moduły Klasy, Modele, Kalibracja: `Lemat.Domain.{Classes,Models,Calibration}`, `Lemat.Application.{Classes,Models,Calibration}`, konfiguracje EF i repozytoria (TASK-018) + moduł Treści (TASK-017) + moduł Konta: `Lemat.Domain.Accounts`, `Lemat.Application.Accounts`, konfiguracje EF i repozytoria (TASK-016) + warstwa trwałości EF Core: konwencje, `IJednostkaPracy`, `TlumaczBledowBazy`, `DodajPersystencje` (TASK-015) + `Lemat.Domain.Common` (TASK-014) + szkielet solucji `backend/` (TASK-001) + 7 projektów testowych (TASK-002) + hosty z `/zdrowie` i OpenAPI (TASK-003) + `LematOpcje` (TASK-004) + PostgreSQL 16 w `docker-compose.yml` i skrypty `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js, next-intl pl-PL, KaTeX, `src/ui`); skrypty `verify-*` i CI (TASK-007); schemat bazy: `extract-ddl.sh`, migracja SQL, `Lemat.Tools migrate`, `PostgresFixture` (TASK-013); dokumentacja i definicje agentów w `.claude/agents/` |
-| Następne TASK | Plan POC (`TASKS.md` sekcja POC, `docs/POC_CONTRACT.md`) — w przygotowaniu |
+| Następne TASK | **POC, dwie ścieżki równolegle** (sekcja 12): `[POC-A]` backend TASK-121 → 130, `[POC-B]` frontend TASK-131 → 139, potem `[POC-INT]` TASK-140. Kontrakt: `docs/POC_CONTRACT.md` (POC-1.0). Pozostałe `[MVP]` po POC |
 | Jak pracować | `CLAUDE.md` (reguły), `TASKS.md` (backlog + macierz pokrycia), `docs/CODEBASE_MAP.md` (żywa mapa), ten plik (stan, założenia, decyzje) |
 
 Poprzednia wersja `CLAUDE.md`/`TASKS.md`/`HANDOFF.md` (Python/FastAPI/React, ścieżki `src/lemat/…`) była nieaktualna i została
@@ -124,6 +124,17 @@ Kolumna „Blokuje produkcję” oznacza, że do startu produkcyjnego z prawdziw
 | U-18 | Brak powiadomień w aplikacji: Uczeń widzi status przez SSE/odświeżenie listy, Nauczyciel przez odświeżenie Kolejki | uproszczenie | nie | TASK-096 |
 | U-19 | **Dane startowe są autorskie, „w stylu CKE”** (nie import Arkuszy CKE); wagi Umiejętności równe | brak importu | **tak** (jakość merytoryczna) | TASK-068, 098 |
 | U-20 | Brak Dockerfile, Caddy i wdrożenia; uruchomienie: PostgreSQL (Docker lub lokalny) + `dotnet run` + `npm run dev` | szybkość | tak | TASK-010, 119 |
+| U-21 | **POC:** tylko rola `UCZEN` (rejestracja `NAUCZYCIEL` → `422 ROLA_NIEOBSLUGIWANA`); `test_diagnostyczny` zawsze `BRAK`, `klasy` zawsze `[]` | zakres POC (decyzja właściciela) | nie | TASK-072, 073, 074 |
+| U-22 | **POC:** sesja bez okna tolerancji rotacji refresh tokenu (30 s), bez wielokartowości i bez limitów prób logowania | szybkość | tak | TASK-091, 104 |
+| U-23 | **POC:** rozszerzenia kontraktu spoza 12.3: `GET /zadania` dla Ucznia, `GET /zadania/{id}` bez wymaganego kontekstu, `GET /uczniowie/ja/profil-uproszczony`, `GET /magazyn-lokalny/{token}` | brak Ścieżki nauki i Profilu Elo w POC | nie | TASK-075, 076, 083, 084 |
+| U-24 | **POC:** serwer tworzy techniczny `element_sciezki` (`ROZPOCZETY`) dla każdego Rozwiązania (CHECK DDL wymaga kontekstu próby) | brak Rekomendacji | nie | TASK-076, 077 |
+| U-25 | **POC:** zdjęcia wyłącznie JPEG (CHECK DDL `typ_mime = 'image/jpeg'`), konwersja do JPEG po stronie klienta; wymiary z nagłówka JPEG (rozszerza U-02) | brak normalizacji obrazów | tak | TASK-056 |
+| U-26 | **POC:** potok `ROZPOZNAJ_PISMO`/`OCEN_ROZWIAZANIE` jako jedna pętla odpytywania `praca_w_tle` w `Lemat.Worker` (bez `LISTEN/NOTIFY`, bez pul), handlery minimalne z deterministycznym Mockiem zamiast Agentów, brak Filtra danych osobowych, trasowania T-1 … T-7, Weryfikacji i Poprawek Ucznia; odpytywanie zamiast SSE | najprostsze sensowne uproszczenie | tak | TASK-024, 043 … 050, 079 |
+| U-27 | **POC:** Wskazówka stała (dane mocka), zapisana razem z Oceną; bez Agenta wyjaśniającego i strażnika wycieku | brak Agenta | tak | TASK-046, 050 |
+| U-28 | **POC:** `wynik_zadania` zapisywany, ale Profil ucznia (Elo) nie jest aktualizowany; „profil uproszczony” to agregat po Ocenach | brak `AKTUALIZUJ_PROFIL` | nie | TASK-050, 075 |
+| U-29 | **POC:** `Lemat.Tools seed-poc` (13 Działów, 5 Umiejętności, 5 Zadań, 2 konta, stałe hasła demo) zamiast `seed-dev` i TASK-025/027/028 | szybkość | tak | TASK-025 … 028 |
+| U-30 | **POC (frontend):** typy TS utrzymywane ręcznie według kontraktu i cienki klient `fetch` zamiast `openapi-typescript`/`openapi-fetch`; MSW jako `devDependency` (OQ-12) | brak generowanego OpenAPI | nie | TASK-081 |
+| U-31 | **POC:** `kod_reguly` w `bledy_pol` to lista zamknięta z `docs/POC_CONTRACT.md` 1.1 (OQ-13) | 12.2 nie definiuje listy | nie | TASK-071 |
 
 ---
 
@@ -218,12 +229,12 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
 | 1. Szkielet i środowisko (001 … 012) | 7 / 7 | 0 / 5 | faza MVP ukończona |
-| 2. Model domenowy i baza (013 … 037) | 7 / 16 | 0 / 9 | plan POC w przygotowaniu (TASK-013 … 019 gotowe) |
-| 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
+| 2. Model domenowy i baza (013 … 037) | 7 / 16 | 0 / 9 | TASK-013 … 019 gotowe; dalej POC (TASK-121 … 130, `[POC-A]`) |
+| 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po POC (TASK-121 … 139) |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
 | 5. Testy i dopracowanie (109 … 120) | 0 / 4 | 0 / 8 | po TASK-089 |
 
-**Zakres i kolejność:** właściciel zawęził zakres do POC (rejestracja, logowanie, profil, Zadania z przesłaniem zdjęcia i zmockowaną Oceną; bez Testu diagnostycznego, rekomendacji, Weryfikacji, Klas). Plan POC (`TASKS.md` sekcja POC, `docs/POC_CONTRACT.md`) — w przygotowaniu; „Następne TASK” wyznacza ten plan.
+**Zakres i kolejność:** właściciel zawęził zakres do POC (rejestracja, logowanie, profil, Zadania z przesłaniem zdjęcia i zmockowaną Oceną; bez Testu diagnostycznego, rekomendacji, Weryfikacji, Klas). Plan: `TASKS.md` sekcja „POC (priorytet właściciela)” (TASK-121 … 140), kontrakt `docs/POC_CONTRACT.md`, podział pracy na 2 osoby — sekcja 12 poniżej. Zadania POC nie wchodzą do liczników tabeli i są częściową realizacją zadań MVP (mapowanie w `TASKS.md`); pozostałe `[MVP]` po POC. Tabela „Stan prac” aktualizowana jest po scaleniu obu ścieżek (TASK-140); do tego czasu stan ścieżek jest w 12.4.
 
 Ścieżka krytyczna MVP: 001 → 002 → 003/004 → 013 → 014 → 015 → 016 → 017 → 018 → 019 → 020 → 021 → 022 → 023 → 024 → 038 → 039/040/041 → 042 → 043 … 047 → 048 → 049 → 050 →
 071 → 072 → 073 … 080 → 081 → 082 … 089 → 109 → 110 → 111 → 112. Zadania frontendu 006 oraz 005 można wykonywać równolegle z backendem; 081 … 089 równolegle po 071/072.
@@ -310,6 +321,10 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 | OQ-09 | Definicja fnv1a (szerokość, wejście) nie jest podana w dokumentach (`procent_grupy_eksperymentu`, T-5) | TASK-016: 32-bit nad 16 bajtami UUID big-endian, mod 100 (`Fnv1a.Skrot32`); wektory policzone niezależnie; potwierdzić z PO |
 | OQ-10 | Poziom DOMYŚLNY opanowania: wzór `sigma(-0.8)` daje 0.310, a przykładowy kod w architekturze zakładał 0.5 | TASK-019: 0.310 wg wzoru; potwierdzić z PO |
 | OQ-11 | Kody błędów domeny Profilu/Rekomendacji spoza 12.2 (`POZIOM_OPANOWANIA_POZA_ZAKRESEM`, `WYNIK_CUDZEGO_UCZNIA`, `TEST_NIEPRAWIDLOWY_STAN`, `ELEMENT_NIEPRAWIDLOWY_STAN`, `SERIA_PELNA`, `UZASADNIENIE_WYMAGANE` i in.) | Do zmapowania na ProblemDetails w TASK-071 (zakres POC wg planu) |
+| OQ-12 | Pakiet `msw` (mocki frontendu) nie występuje w 5.2/6.4; `zod`, `react-hook-form`, `@hookform/resolvers`, `@playwright/test` są w stosie z CLAUDE.md pkt 2, ale jeszcze nie w `package.json` | Właściciel zażądał MSW w POC: dodać jako `devDependency` (TASK-132), bez wpływu na build produkcyjny; potwierdzić |
+| OQ-13 | `kod_reguly` w `bledy_pol` nie ma w 12.2 zamkniętej listy | Lista POC-1.0 z `docs/POC_CONTRACT.md` 1.1 (U-31); uzgodnić przy TASK-071 |
+| OQ-14 | `DzialWyjscie.poziom_matury` (jeden poziom na Dział) vs DDL `dzial.tylko_rozszerzony` | POC: `ROZSZERZONY` gdy `tylko_rozszerzony`, w pozostałych `PODSTAWOWY`; potwierdzić z PO |
+| OQ-15 | Stałe hasła kont demo POC (`Lemat-Demo-2026!`) jawne w `docs/POC_CONTRACT.md`, wbrew sugestii TASK-026 (wypisywać w konsoli) | Dopuszczone wyłącznie dla `Development`/`E2E`; `seed-poc` odmawia w `Production`; potwierdzić |
 
 ## 9. Propozycje do słownika
 
@@ -322,7 +337,7 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ### 10.1 Następne TASK
 
-Plan POC (`TASKS.md` sekcja POC, `docs/POC_CONTRACT.md`) — w przygotowaniu. Gotowy prompt dla dewelopera dopisze orkiestrator razem z planem POC.
+Dwie osoby pracują równolegle według sekcji 12: ścieżka A (backend) startuje od **TASK-121**, ścieżka B (frontend) od **TASK-131**. Gotowe prompty startowe agentów: 12.3. Po obu ścieżkach — TASK-140. Prompt generyczny poniżej (10.2) stosuj z ograniczeniem do własnej ścieżki.
 
 ### 10.2 Szablon pętli dla orkiestratora (jedno TASK = jedna iteracja)
 
@@ -347,5 +362,136 @@ Plan POC (`TASKS.md` sekcja POC, `docs/POC_CONTRACT.md`) — w przygotowaniu. Go
 | `docs/ARCHITECTURE_DETAILED.md` v3.5 | architektura (czytać wybiórczo) |
 | `docs/spec/*` | DDL, EF Core, API/TS, prompty |
 | `docs/adr/*` | uzasadnienia decyzji (ADR-001 … ADR-075) |
+| `docs/POC_CONTRACT.md` | kontrakt HTTP POC (POC-1.0): endpointy, przykłady JSON, dane seed, zachowanie mocka — jedyny punkt styku ścieżek A i B |
 | `docs/CRITIQUE_LOG.md`, `docs/ARCHITECTURE_CHANGELOG.md` | historia przeglądów (ostatnia iteracja: C9, wszystkie uwagi zaadresowane w v3.5) |
 | `.claude/agents/*` | `architect`, `critic`, `planner`, `developer`, `handoff-guardian` |
+
+---
+
+## 12. POC — podział pracy na 2 osoby
+
+**Decyzja właściciela (2026-11-01):** zakres zawężony do proof of concept — rejestracja i logowanie Ucznia (JWT), dane Ucznia i uproszczony Profil ucznia, lista Zadań z seeda ze szczegółami (KaTeX),
+przesłanie zdjęcia kartki, po chwili zmockowana Transkrypcja (z zatwierdzeniem) i Ocena (punkty per Kryterium, uzasadnienie, Wskazówka). Poza zakresem: Test diagnostyczny, Rekomendacje, Weryfikacje, Klasy, Nauczyciel, Administrator, SSE.
+Pracują **dwie osoby równolegle, każda ze swoimi agentami**: osoba A = backend (`[POC-A]`, TASK-121 … 130), osoba B = frontend (`[POC-B]`, TASK-131 … 139). Łączy je wyłącznie kontrakt `docs/POC_CONTRACT.md`
+(POC-1.0); frontend pracuje na mockach MSW, backend nie czeka na frontend. Integrację robi TASK-140 (`[POC-INT]`). Zadania: `TASKS.md` → „POC (priorytet właściciela)”.
+
+### 12.1 Zasady współpracy
+
+1. **Branche.** Osoba A: `poc/backend`; osoba B: `poc/frontend` (oba z aktualnego `main`). Praca na własnym branchu, zadanie po zadaniu (jedno TASK = jeden commit, `feat(TASK-12x): … + updated codebase map & handoff`, stopka atrybucji wymagana przez środowisko).
+   Zmiana kontraktu: osobny krótki branch `poc/contract-<n>` z jednym commitem `docs(poc-contract): …`.
+2. **Kto merguje.** Każda osoba scala **własne** zmiany do `main` (pull request z `poc/backend` / `poc/frontend`) po zielonym `scripts/verify-backend.sh` (A) lub `scripts/verify-frontend.sh` (B), nie rzadziej niż po każdych 2–3 ukończonych zadaniach.
+   Przed scaleniem: `git fetch && git rebase origin/main` (bez merge-commitów, jedno zadanie = jeden commit zostaje widoczny). Zmianę kontraktu scala dopiero druga osoba (akceptacja obu); po jej scaleniu obie ścieżki robią rebase. Agenci nie wykonują `git push` bez prośby swojej osoby.
+3. **Rozdzielne katalogi.** A edytuje wyłącznie `backend/`, `scripts/`, `.env.example`, `README.md` (sekcja „Szybki start POC”, TASK-130), `.logs/` w `.gitignore`. B edytuje wyłącznie `frontend/` (w tym `frontend/.env.example`) oraz własne linie w `.gitignore` (`playwright-report/`, `test-results/`).
+   Nikt nie edytuje `docs/` (poza `docs/CODEBASE_MAP.md` jak niżej i kontraktem wg procedury), `CLAUDE.md` ani cudzego katalogu. Brak lub sprzeczność w kontrakcie → wpis w 12.6, nie „cicha” decyzja w kodzie; odstępstwo zgodne z kontraktem nie wymaga pytania.
+4. **Kontrakt jest jedynym łączem.** A implementuje dokładnie ten kontrakt (testy porównują z przykładami), B buduje mocki z danych kontraktu (sekcje 6 i 7), nigdy z kodu backendu. Zmiany addytywne podnoszą wersję `POC-1.x`; niezgodne — `POC-2.0` po zgodzie właściciela.
+5. **Punkty synchronizacji.** (1) Po TASK-122 A publikuje `seed-poc`; po TASK-132 B ma pełne mocki — żadna ścieżka na nikogo nie czeka. (2) Po TASK-130 A ogłasza „backend gotowy” (`scripts/dev-up.sh`, `scripts/poc-smoke.sh`); po TASK-139 B uruchamia `LEMAT_E2E_REAL=1`.
+   (3) TASK-140 wykonuje osoba B (domyślnie), z pomocą A przy poprawkach backendu; na czas integracji ścieżki nie dokładają nowych zadań.
+
+### 12.2 Jak nie robić konfliktów w `TASKS.md`, `HANDOFF.md`, `docs/CODEBASE_MAP.md`
+
+W POC `handoff-guardian` każdej ścieżki **zawęża** swoje obowiązki z CLAUDE.md pkt 5.2:
+
+| Dokument | Co wolno ścieżce | Czego nie wolno |
+|---|---|---|
+| `TASKS.md` | Zmienić `[ ]` → `[x]` i dopisać `Pliki:`/`Weryfikacja:` **tylko pod własnymi zadaniami** (A: 121 … 130, B: 131 … 139); nic więcej w pliku | Zmieniać cudze zadania, tabelę mapowania, sekcje MVP/POST-MVP, formatowanie |
+| `HANDOFF.md` | Pisać **tylko** w 12.4 (podsekcja własnej ścieżki: stan, jak uruchomić, zmienne, decyzje, nowe U-xx/OQ jako propozycje) i w 12.6/12.7 z prefiksem `[A]`/`[B]`; własne wiersze dopisywać na końcu tabel | Edytować sekcje 1 … 11 (tabela „Stan prac”, U-xx, OQ, „Wymagane akcje”) — scala je TASK-140 |
+| `docs/CODEBASE_MAP.md` | Dodawać/zmieniać wiersze swoich plików (backend lub frontend) i status `planowane` → `gotowe`; nowe wiersze na końcu właściwej sekcji | Usuwać lub przepisywać cudze wiersze, zmieniać diagramy cudzej warstwy; przy konflikcie rebase zachować **obie** strony |
+
+Konflikt tekstowy w tych trzech plikach rozwiązuje się zawsze „zachowaj obie strony” (dwie osoby nie mają prawa zmieniać tych samych linii). Opcjonalnie (do decyzji właściciela, nie dodane): `.gitattributes` z `docs/CODEBASE_MAP.md merge=union`.
+Gdy zadanie wymaga nowego U-xx lub OQ, ścieżka proponuje je w 12.4/12.6; numery U-32 … i OQ-16 … nadaje TASK-140.
+
+### 12.3 Gotowe prompty startowe dla agentów
+
+**Osoba A — backend (`[POC-A]`).** Wklej do agenta (`developer`, potem `handoff-guardian`; gdy pracujesz bez podziału na agentów, wykonaj obie role po kolei):
+
+```text
+Jesteś agentem osoby A (backend) w repozytorium Lemat (/home/user/lemat), ścieżka [POC-A]. Właściciel zawęził zakres do POC: rejestracja/logowanie Ucznia (JWT), /uczniowie/ja i uproszczony
+Profil, lista i szczegóły Zadań z seeda, przesłanie zdjęcia kartki, zmockowana Transkrypcja i Ocena. Drugą ścieżkę (frontend, [POC-B]) prowadzi inna osoba równolegle — łączy Was tylko kontrakt.
+1. Pracuj na branchu poc/backend (git switch -c poc/backend z aktualnego main, jeśli go nie ma). Zmieniaj WYŁĄCZNIE backend/, scripts/, .env.example, README.md (sekcja "Szybki start POC", TASK-130) i .gitignore (linia .logs/). Nie dotykaj frontend/, docs/ ani CLAUDE.md.
+2. Przeczytaj: CLAUDE.md w całości; docs/POC_CONTRACT.md w całości (to Twój kontrakt — implementujesz go dokładnie: ścieżki, nazwy pól snake_case, kody błędów, dane seed, zachowanie mocka); HANDOFF.md sekcje 4, 8 i 12; TASKS.md sekcję "POC (priorytet właściciela)";
+   docs/CODEBASE_MAP.md. Z docs/ARCHITECTURE_DETAILED.md i docs/spec/* czytaj tylko sekcje z pola "Realizuje" zadania (sed -n 'A,Bp').
+3. Wybierz najniższe TASK z ścieżki [POC-A] (TASK-121 … 130) ze statusem [ ], którego zależności są [x]. Pierwsze: TASK-121. Realizuj dokładnie jego zakres i DoD; nie wykonuj zadań spoza POC i spoza swojej ścieżki.
+4. Obowiązują: słownik pojęć (identyfikatory polskie ASCII, nazwy plików angielskie), nagłówek "// @Role … | @Task: TASK-XXX" w każdym .cs, mocki za portami (aplikacja działa bez kluczy), DDL z docs/spec/ddl.md jedynym źródłem schematu (żadnych migracji z modelu EF),
+   jedna transakcja = zmiana stanu + zlecenie pracy, wywołania modeli poza transakcją, testy na PostgreSQL 16 (Testcontainers lub LEMAT_TEST_BAZA).
+5. Zweryfikuj: dotnet build backend/Lemat.slnx -warnaserror && dotnet test backend/Lemat.slnx && dotnet format backend/Lemat.slnx --verify-no-changes (lub scripts/verify-backend.sh). Odpowiedzi API muszą zgadzać się z przykładami JSON w kontrakcie.
+6. Sprzeczność lub luka w kontrakcie: NIE zgaduj — zapisz w HANDOFF.md 12.6 (prefiks [A]) i zatrzymaj zadanie, jeśli blokuje DoD. Zmiana kontraktu wyłącznie procedurą z docs/POC_CONTRACT.md sekcja 10 (osobny branch, zgoda osoby B).
+7. Dokumentacja po zadaniu (zasady z HANDOFF.md 12.2): TASKS.md ([x], Pliki, Weryfikacja — tylko Twoje zadanie), HANDOFF.md 12.4.A, docs/CODEBASE_MAP.md (Twoje wiersze). Jeden commit: "feat(TASK-12x): <opis> + updated codebase map & handoff" ze stopką atrybucji. Bez git push, chyba że osoba poprosi.
+8. Raport: utworzone/zmienione pliki, wyniki komend, decyzje i odstępstwa, mocki, wskazówki dla następnego zadania. Potem weź kolejne zadanie ścieżki A.
+```
+
+**Osoba B — frontend (`[POC-B]`).** Wklej do agenta (`developer`, potem `handoff-guardian`):
+
+```text
+Jesteś agentem osoby B (frontend) w repozytorium Lemat (/home/user/lemat), ścieżka [POC-B]. Właściciel zawęził zakres do POC: rejestracja/logowanie Ucznia, ustawienia i uproszczony Profil, lista i szczegóły Zadań (KaTeX),
+przesłanie zdjęcia kartki, ekran oczekiwania z odpytywaniem, Transkrypcja z zatwierdzeniem i Ocena z Wskazówką. Backend ([POC-A]) pisze inna osoba równolegle — łączy Was tylko kontrakt; Ty NIE potrzebujesz działającego backendu.
+1. Pracuj na branchu poc/frontend (git switch -c poc/frontend z aktualnego main, jeśli go nie ma). Zmieniaj WYŁĄCZNIE frontend/ oraz własne linie w .gitignore (playwright-report/, test-results/). Nie dotykaj backend/, scripts/, docs/ ani CLAUDE.md.
+2. Przeczytaj: CLAUDE.md w całości; docs/POC_CONTRACT.md w całości (sekcje 6 i 7 zawierają komplet danych do mocków: Działy, 5 Zadań, Transkrypcje, Oceny, czasy 3 s + 2 s, przykłady JSON, kody błędów); HANDOFF.md sekcje 4, 8 i 12;
+   TASKS.md sekcję "POC (priorytet właściciela)"; docs/CODEBASE_MAP.md. Z docs/ARCHITECTURE_DETAILED.md i docs/spec/api.md czytaj tylko to, co wskazuje pole "Realizuje" (np. api.md 6, sekcje 6.8/6.9 architektury dla drzewa frontendu).
+3. Wybierz najniższe TASK z ścieżki [POC-B] (TASK-131 … 139) ze statusem [ ], którego zależności są [x]. Pierwsze: TASK-131. Realizuj dokładnie jego zakres i DoD; nie wykonuj zadań spoza POC i spoza swojej ścieżki.
+4. Obowiązują: wszystkie teksty UI w frontend/messages/pl-PL.json (nigdy w JSX), tylko lib/api/client.ts woła /api/*, token dostępu tylko w pamięci, KaTeX z throwOnError:false, trasy i katalogi features/* angielskie kebab-case ze słownika
+   (np. (student)/solutions/[solutionId], zmienna const { solutionId: rozwiazanieId }), nagłówek "// @Role … | @Task: TASK-XXX" w każdym .ts/.tsx, układ działa od 375 px, nowe zależności tylko z listy w TASK-131/132 (msw — OQ-12).
+5. Zweryfikuj: npm --prefix frontend run typecheck && lint && test && build oraz npm --prefix frontend run check:headers (lub scripts/verify-frontend.sh). Mocki MSW muszą zwracać dokładnie dane i kształty z kontraktu.
+6. Sprzeczność lub luka w kontrakcie: NIE zgaduj — zapisz w HANDOFF.md 12.6 (prefiks [B]) i zatrzymaj zadanie, jeśli blokuje DoD. Zmiana kontraktu wyłącznie procedurą z docs/POC_CONTRACT.md sekcja 10 (osobny branch, zgoda osoby A).
+7. Dokumentacja po zadaniu (zasady z HANDOFF.md 12.2): TASKS.md ([x], Pliki, Weryfikacja — tylko Twoje zadanie), HANDOFF.md 12.4.B, docs/CODEBASE_MAP.md (Twoje wiersze). Jeden commit: "feat(TASK-13x): <opis> + updated codebase map & handoff" ze stopką atrybucji. Bez git push, chyba że osoba poprosi.
+8. Raport: utworzone/zmienione pliki, wyniki komend, decyzje i odstępstwa, użyte mocki, wskazówki dla następnego zadania. Potem weź kolejne zadanie ścieżki B.
+```
+
+**TASK-140 (integracja, osoba B z pomocą A):** „Wykonaj TASK-140 z TASKS.md: uruchom scripts/dev-up.sh i frontend w trybie dev:real, przejdź scenariusz z HANDOFF.md 12.5, uruchom LEMAT_E2E_REAL=1 npm --prefix frontend run e2e i scripts/poc-smoke.sh;
+rozbieżności rozstrzygaj zmianą kontraktu (procedura w POC_CONTRACT.md 10) i poprawką właściwej ścieżki; scal HANDOFF.md (sekcje 4, 6, 7, 8, 9: U-32 …, OQ-16 …) i docs/CODEBASE_MAP.md; zaktualizuj 'Stan prac' i 'Następny krok'.”
+
+### 12.4 Dziennik ścieżek (wypełnia `handoff-guardian` własnej ścieżki)
+
+#### 12.4.A Ścieżka A — backend (`poc/backend`)
+
+| Pole | Wartość |
+|---|---|
+| Stan | TASK-121 … 130: 0 / 10 ukończonych |
+| Jak uruchomić | (po TASK-130) `scripts/dev-up.sh` → API `http://localhost:5080/api/v1`, Worker `:8081`; `scripts/dev-up.sh --stop`; `scripts/poc-smoke.sh` |
+| Zmienne środowiskowe / konfiguracja | (uzupełnia ścieżka A: `LEMAT_BAZA`, `LEMAT_JWT_KLUCZ`, `LEMAT_MAGAZYN_SCIEZKA`, `LEMAT_KURSOR_KLUCZ`, `Lemat:Poc:OpoznienieRozpoznaniaMs`/`OpoznienieOcenyMs`) |
+| Decyzje, odstępstwa, propozycje U-xx/OQ | (brak) |
+
+#### 12.4.B Ścieżka B — frontend (`poc/frontend`)
+
+| Pole | Wartość |
+|---|---|
+| Stan | TASK-131 … 139: 0 / 9 ukończonych |
+| Jak uruchomić | (po TASK-138) `npm --prefix frontend install`; `npm --prefix frontend run dev:mock` (MSW, bez backendu) lub `dev:real` (proxy `/api` → `LEMAT_API_URL`, domyślnie `http://localhost:5080`); `npm --prefix frontend run e2e` |
+| Zmienne środowiskowe / konfiguracja | (uzupełnia ścieżka B: `NEXT_PUBLIC_LEMAT_API=mock\|real`, `LEMAT_API_URL`, `NEXT_PUBLIC_LEMAT_MOCK_SCENARIUSZ`, `LEMAT_E2E_REAL`) |
+| Decyzje, odstępstwa, propozycje U-xx/OQ | (brak) |
+
+### 12.5 Definicja „POC gotowe” i scenariusz demo
+
+**POC jest gotowe, gdy** spełnione są wszystkie warunki: (a) TASK-121 … 140 mają status `[x]`; (b) scenariusz demo poniżej przechodzi na czystym klonie bez ręcznych obejść, a uruchomienie to `scripts/dev-up.sh` + `npm --prefix frontend run dev:real` (+ `npm install`);
+(c) zielone: `scripts/verify-all.sh`, `PocFlowTests` (backend), `npm --prefix frontend run e2e` w trybie MSW oraz z `LEMAT_E2E_REAL=1`; (d) odpowiedzi API zgadzają się z `docs/POC_CONTRACT.md` (`scripts/poc-smoke.sh` kod 0), brak otwartych pozycji w 12.6;
+(e) HANDOFF.md zawiera aktualny „Stan prac”, „Jak uruchomić” i wpisy U-21 … U-31 oraz dalsze; (f) nic spoza zakresu POC nie zostało dodane „przy okazji”.
+
+**Scenariusz demo (kolejne kroki):**
+
+1. Uruchom `scripts/dev-up.sh` (PostgreSQL, migracja, `seed-poc`, API :5080, Worker) i `npm --prefix frontend run dev:real` → `http://localhost:3000`. Konta demo wypisane w konsoli (`uczen1@lemat.local`, `uczen2@lemat.local`, hasło z `docs/POC_CONTRACT.md` 6.1).
+2. Strona główna → „Załóż konto” → wypełnij rejestrację (Ola Wiśniewska, hasło ≥ 10 znaków, oba oświadczenia) → po sukcesie jesteś zalogowana(y) na liście Zadań. Spróbuj tego samego e-maila ponownie → czytelny komunikat o zajętym adresie.
+3. Ustawienia: poziom matury „podstawowy”, termin egzaminu 2027-05-05, Dział „Funkcje” → zapisz → odśwież stronę → wartości zostały.
+4. Zadania: 5 pozycji (kolejność wg trudności); filtr Działu „Funkcje” zostawia jedno; otwórz „Rozwiąż równanie $x^2 - 5x + 6 = 0$” — wzór wyrenderowany przez KaTeX, widać punkty i Umiejętność.
+5. „Prześlij rozwiązanie” → wybierz zdjęcie (plik JPEG/PNG albo aparat na telefonie) → wyślij → ekran Rozwiązania „Odczytujemy…” (ok. 3 s, status odświeża się samo).
+6. Pojawia się Transkrypcja (2 kroki z wzorami) → „Zatwierdź” → „Oceniamy…” (ok. 2 s).
+7. Ocena 1/2: Kryterium 1 — 1/1, Kryterium 2 — 0/1, błędny krok 2 (błąd rachunkowy), uzasadnienie i Wskazówka („Sprawdź jeszcze raz krok 2 …”), miniatura przesłanego zdjęcia.
+8. Wróć do Zadań, rozwiąż Zadanie z funkcją kwadratową (Zadanie 1) → Ocena 2/2 bez Wskazówki.
+9. Profil: 2 rozwiązania, średnio 75,0% (3/4 pkt), rozbicie na Działy „Funkcje” i „Równania i nierówności”, dwie ostatnie Oceny z linkami do Rozwiązań.
+10. Wyloguj się → zaloguj jako `uczen1@lemat.local` → Profil pusty; wklejenie adresu cudzego Rozwiązania daje „Nie znaleziono”.
+11. Scenariusz błędu: z `NEXT_PUBLIC_LEMAT_MOCK_SCENARIUSZ=rozpoznanie-nieczytelne` kolejne przesłanie kończy się komunikatem „Nie udało się odczytać zdjęcia” i przyciskiem „Prześlij ponownie”.
+12. Ten sam przebieg (kroki 2–9) bez backendu: `npm --prefix frontend run dev:mock` (dane przykładowe z MSW).
+
+### 12.6 Pytania i rozbieżności dotyczące kontraktu
+
+| ID | Kto zgłasza | Pytanie / rozbieżność | Status / rozstrzygnięcie |
+|---|---|---|---|
+| (brak) | | | |
+
+Zgłoszenia mają prefiks `[A]` lub `[B]` i numer (np. `K-A-01`); rozstrzygnięcie zapisuje się jako zmiana `docs/POC_CONTRACT.md` (wersja `POC-1.x`) albo odpowiedź „bez zmian — kontrakt jest jednoznaczny”.
+
+### 12.7 Wymagane akcje od człowieka (POC)
+
+- **Narzędzia lokalne:** .NET SDK 10.0.x, Node.js ≥ 22 + npm, Docker (PostgreSQL przez `docker-compose.yml`) albo lokalny PostgreSQL 16 (`scripts/db-local-setup.sh`); dla Playwright jednorazowo `npx playwright install` (przeglądarki).
+- **Potwierdzenia (OQ-12 … OQ-15):** dodanie `msw` jako `devDependency`; lista `kod_reguly`; interpretacja `DzialWyjscie.poziom_matury`; jawne hasła kont demo wyłącznie lokalnie.
+- **Klucze AI:** niepotrzebne — POC działa wyłącznie na Mockach (`Lemat:Modele:Dostawca = mock`); nie ustawiaj kluczy ani `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY` w POC.
+- **Przegląd merytoryczny 5 Zadań i Kryteriów (U-19):** autorskie dane „w stylu CKE”; przed pokazaniem prawdziwym Uczniom wymagają przeglądu nauczyciela matematyki.
+- **Do decyzji właściciela przed MVP:** kolejność zadań MVP po POC (zadania `[MVP]` z częściową realizacją przez POC pozostają `[ ]`, zob. mapowanie w `TASKS.md`).
