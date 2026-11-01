@@ -3,11 +3,11 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/ARCHITECTURE_DETAILED.md` |
-| Wersja | 2.3 (iteracja 5 pętli architekt → krytyk: zamknięcie uwag C3-01 … C3-09) |
+| Wersja | 2.4 (iteracja 6 pętli architekt → krytyk: zamknięcie uwag C4-01 … C4-06) |
 | Data | 2026-11-01 |
 | Dokumenty źródłowe | `docs/vision.md`, `docs/glossary.md`, `docs/requirements.md`, `docs/architecture.md` |
-| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); mapowanie uwaga → miejsce rozwiązania: 23.3 (C1), 23.5 (C1-21, C2) i 23.6 (C3) |
-| Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-15 w 23.4 |
+| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: 23.3 (C1), 23.5 (C1-21, C2), 23.6 (C3) i 23.7 (C4) |
+| Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-17 w 23.4 |
 | Status | Do przeglądu przez krytyka (`docs/CRITIQUE_LOG.md`) |
 
 Dokument rozwija `docs/architecture.md` (wstępną) do poziomu, na którym można
@@ -42,7 +42,7 @@ startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
 20. Odpowiedzi na otwarte pytania z architektury wstępnej
 21. Ryzyka
 22. Parametry systemu (wartości domyślne)
-23. Changelog iteracji (23.3, 23.5 i 23.6: mapowanie uwag krytyki → miejsca rozwiązania; 23.4: decyzje właściciela produktu)
+23. Changelog iteracji (23.3, 23.5, 23.6 i 23.7: mapowanie uwag krytyki → miejsca rozwiązania; 23.4: decyzje właściciela produktu)
 
 ---
 
@@ -101,7 +101,7 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 
 | ID | Założenie | Skutek, jeśli fałszywe |
 |---|---|---|
-| A-01 | Jev udostępnia API HTTP/JSON z trzema typami pytań: `noul` (tak/nie z prawdopodobieństwem), `score` (rozkład na liczbach całkowitych w zadanym zakresie), `choice` (rozkład na zamkniętej liście opcji); stan wejściowy to tekst ≤ 32 000 znaków; **żądanie wsadowe** (`questions[]`, do 32 pytań o jednym stanie) z p95 ≤ 800 ms na żądanie; limit szybkości ≥ 50 żądań HTTP/s na klucz API, liczony jako średnia w oknie ≥ 5 s **albo** z tolerancją chwilowego przekroczenia do 75 żądań w oknie 1 s (wersja 2.3, C3-04: kubełki workerów mają pojemność 16 wywołań, 13.2). Wymagania dla dostawcy: tryb wsadowy i tolerancja przekroczenia (obie sprawdzane w G-4); przy ścisłym oknie 1 s bez tolerancji pojemność kubełka workera wynosi 4 (13.2), a budżet trybu pojedynczego rośnie o 1,1 s (17.2). | Bez trybu wsadowego `JevAdapter` (13.2) działa w **trybie pojedynczym**: jedno pytanie na żądanie, ≤ 16 równolegle na Ocenę, plan w 3 falach (p95 3,6 s zamiast 1,6 s — budżet 17.2 i scenariusze S-1 … S-7 są liczone dla trybu pojedynczego jako najgorszego), szczyt „koniec lekcji” do 44 żądań/s (17.4). Globalny ogranicznik szybkości (13.2, ADR-039) utrzymuje ruch ≤ 80% limitu klucza; Ocena, dla której zabrakło przydziału, idzie do modelu zapasowego bez otwierania obwodu. Przy braku dostępu do Jev cały ruch obsługuje model zapasowy (ADR-009). |
+| A-01 | Jev udostępnia API HTTP/JSON z trzema typami pytań: `noul` (tak/nie z prawdopodobieństwem), `score` (rozkład na liczbach całkowitych w zadanym zakresie), `choice` (rozkład na zamkniętej liście opcji); stan wejściowy to tekst ≤ 32 000 znaków; **żądanie wsadowe** (`questions[]`, do 32 pytań o jednym stanie) z p95 ≤ 800 ms na żądanie; limit szybkości ≥ 50 żądań HTTP/s na klucz API, liczony jako średnia w oknie ≥ 5 s **albo** z tolerancją chwilowego przekroczenia do 75 żądań w oknie 1 s (wersja 2.3, C3-04; od wersji 2.4, C4-05: łączna pojemność kubełków wszystkich procesów `B_całk = 34` niezależnie od liczby replik, więc w dowolnym oknie 1 s ≤ 34 + 40 = 74 wywołania przy 2, 3 i 4 workerach — 13.2). Wymagania dla dostawcy: tryb wsadowy i tolerancja przekroczenia (obie sprawdzane w G-4); przy ścisłym oknie 1 s bez tolerancji `B_całk = 10` (kubełek workera 4 przy 2 workerach, 13.2), a budżet trybu pojedynczego rośnie o 1,1 s (17.2). | Bez trybu wsadowego `JevAdapter` (13.2) działa w **trybie pojedynczym**: jedno pytanie na żądanie, ≤ 16 równolegle na Ocenę, plan w 3 falach (p95 3,6 s zamiast 1,6 s — budżet 17.2 i scenariusze S-1 … S-7 są liczone dla trybu pojedynczego jako najgorszego), szczyt „koniec lekcji” do 44 żądań/s (17.4). Globalny ogranicznik szybkości (13.2, ADR-039) utrzymuje ruch ≤ 80% limitu klucza; Ocena, dla której zabrakło przydziału, idzie do modelu zapasowego bez otwierania obwodu. Przy braku dostępu do Jev cały ruch obsługuje model zapasowy (ADR-009). |
 | A-02 | Jev jest we wczesnym dostępie — system musi działać produkcyjnie **bez** Jev. | Model zapasowy jest pełnoprawną, osobno skalibrowaną implementacją portu `ModelDecyzyjny`. |
 | A-03 | Skala pilotażu: 1 000 Uczniów, 50 Nauczycieli, 1 500 Rozwiązań zadań otwartych na dobę (20% z dowodem), szczyt 300 Rozwiązań/h wieczorem oraz szczyt „koniec lekcji”: 90 przesłań w ciągu 60 s (3 klasy jednocześnie), 30 jednoczesnych ocen. | Architektura (modularny monolit, prace w tle w PostgreSQL) wystarcza do ok. 20× tej skali (17.4); model obciążenia Nauczycieli w 17.7. |
 | A-04 | Obowiązuje formuła matury od 2023 r. (podstawa programowa 2018) z 13 Działami (sekcja 7.4). | Działy i Umiejętności są danymi (tabele `dzial`, `umiejetnosc`), zmiana nie wymaga zmian kodu. |
@@ -162,6 +162,23 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
    `rezultat_ujawniony_od`); odrzucony zapis przestarzałego obliczenia =
    **rezultat przestarzały** (`rezultat_przestarzaly`); możliwość wyboru w
    decyzji właściciela produktu = **opcja** (23.4), nigdy „wariant”.
+   **Zdjęcie** (wersja 2.4, C4-04) oznacza wyłącznie fotografię kartki
+   (`zdjecie_rozwiazania`, `?wersja_zdjecia=`, `ObszarNaZdjeciu`); wyłączenie
+   mechanizmu ochronnego przez Administratora (bezpiecznika) =
+   **dezaktywacja** (`POST /admin/bezpieczniki/dezaktywacja`,
+   `dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`);
+   odebranie uprawnienia (flagi) = **odebranie** (np. „flagi
+   `weryfikator_globalny` są odbierane w `USUN_KONTO`”); wyłączenie flagi
+   danych (np. `diagnostyczne`) = **wyłączenie**. W prozie dokumentu
+   czasownik „zdjąć” i rzeczownik „zdjęcie” w innym znaczeniu niż fotografia
+   nie występują. **Wstrzymanie** ma jedno znaczenie: czasowe zatrzymanie
+   skutku do zdarzenia rozstrzygającego, bez zmiany stanu obiektu i
+   odwracalne bez strat; identyfikator zawsze nazywa obiekt i skutek:
+   `wstrzymanie_w_doborze` (Zadanie poza doborem do rozpatrzenia Zgłoszeń),
+   `WSTRZYMANA_BLAD_ODCZYTU` (punkty Oceny wstępnej niewidoczne do
+   Weryfikacji, ADR-022), procesy konta wstrzymane w okresie karencji
+   (ADR-040; tylko proza, bez identyfikatora). Zatrzymanie innego rodzaju
+   (np. blokada obniżania progu) nie jest nazywane wstrzymaniem.
 6. **Dopuszczone terminy techniczne** (jedyne wyjątki od reguły 1 poza
    kolumnami z reguły 2): `theta` (θ — parametr umiejętności w modelu Elo),
    `trudnosc_b` (b — parametr trudności Zadania w modelu Elo), `ipw`
@@ -267,7 +284,7 @@ dopisania do słownika (PZS-1, część A).
 | Blokada weryfikacji | FR-33, ADR-033 | Wyłączne prawo jednego Nauczyciela do rozstrzygnięcia Weryfikacji przez 15 min (przedłużane, łącznie ≤ 2 h). | `weryfikacja.zablokowana_do` |
 | Szkic rozstrzygnięcia | ADR-033 | Autozapisany, niezatwierdzony stan rozstrzygnięcia jednego Nauczyciela dla jednej Weryfikacji. | `szkic_rozstrzygniecia` |
 | Pseudonim Ucznia | ADR-031 | Stały, nieodwracalny bez sekretu identyfikator Ucznia pokazywany weryfikatorowi globalnemu spoza jego Klasy. | `uczen_pseudonim` |
-| Kontrola przyjęć | 11.4.3 | Ograniczenie udziału zadań otwartych w rekomendacjach: dla Uczniów bez Klasy, gdy zaległość kolejki globalnej przekracza jej pojemność, oraz dla Uczniów Klasy, której Nauczyciel ma `odsetek_eskalacji_7d ≥ 0,20`. | `kontrola_przyjec_aktywna`, `klasy_z_kontrola_przyjec` |
+| Kontrola przyjęć | 11.4.3 | Ograniczenie udziału zadań otwartych w rekomendacjach: dla Uczniów bez Klasy, gdy zaległość kolejki globalnej przekracza jej pojemność, oraz dla Uczniów Klasy, której Nauczyciel ma `odsetek_eskalacji_7d ≥ 0,20` (bez eskalacji z powodu karencji) albo konto w okresie karencji (wersja 2.4, C4-06 p. 6). | `kontrola_przyjec_aktywna`, `klasy_z_kontrola_przyjec` |
 | Tryb pełnej weryfikacji | 11.5.1 | Stan pary (model decyzyjny, rodzaj zadania), w którym Próg pewności = 1.000, więc każda Ocena trafia do Weryfikacji. | `prog_pewnosci.wartosc = 1.000` |
 | Zawieszenie Wyniku zadania | FR-28, ADR-022 | Wyłączenie Wyniku zadania z Profilu ucznia na czas rozpatrywania Zgłoszenia błędu odczytu. | `wynik_zadania.powod_uniewaznienia = 'ZGLOSZENIE_BLEDU_ODCZYTU'` |
 | Czas systemowy | NFR-01, A-11 | Czas pracy systemu nad Rozwiązaniem: rozpoznanie (przesłanie → Transkrypcja gotowa) plus ocena (zatwierdzenie → Ocena widoczna). | `rozwiazanie.czas_systemowy_ms` |
@@ -291,13 +308,16 @@ dopisania do słownika (PZS-1, część A).
 | Dzień roboczy | A-15 | Dzień od poniedziałku do piątku, który nie jest dniem ustawowo wolnym; jednostka SLA Weryfikacji. | `dzien_wolny`, `dodaj_dni_robocze` |
 | Zdarzenie RODO | NFR-09, ADR-041 | Wniosek o usunięcie konta, anulowanie wniosku (przywrócenie), wykonanie usunięcia, odwołanie albo udzielenie zgody na trening; zapisywane w Rejestrze Zdarzeń RODO przed zmianą w bazie — przez `api` (zdarzenia z inicjatywy użytkownika) albo przez `worker` (wykonanie usunięcia, `zrodlo = WORKER`). | `zdarzenie_rodo`, `typ_zdarzenia_rodo`, `zrodlo_zdarzenia_rodo` |
 | Okres karencji | NFR-09, ADR-040 | 30 dni między żądaniem usunięcia konta a usunięciem danych; procesy konta są w tym czasie wstrzymane, a nie anulowane. | `uzytkownik.usuniecie_zaplanowane_at` |
-| Filtr danych osobowych | NFR-09, ADR-042 | Przetwarzanie Transkrypcji (odczytu i Poprawek) zastępujące dane identyfikacyjne Ucznia znacznikiem przed zapisem w bazie; nie usuwa kroków i nie zmienia LaTeX (wersja 2.3, C3-02). | `FiltrDanychOsobowych`, `[DANE_OSOBOWE]` |
+| Filtr danych osobowych | NFR-09, ADR-042 | Przetwarzanie Transkrypcji (odczytu i Poprawek) zastępujące dane identyfikacyjne Ucznia znacznikiem przed zapisem w bazie; nie usuwa kroków i nie zmienia LaTeX (wersja 2.3, C3-02); imię i nazwisko z konta nigdy nie są traktowane jako treść matematyczna, także gdy są terminem ze Słownika terminów matematycznych (wersja 2.4, C4-03). | `FiltrDanychOsobowych`, `[DANE_OSOBOWE]` |
 | Przekazanie Klasy | FR-30, ADR-044 | Zmiana Nauczyciela prowadzącego Klasę przez Administratora, wymagana przed usunięciem konta Nauczyciela. | `POST /admin/klasy/{id}/przekazanie` |
 | Bezpiecznik | NFR-03, ADR-046 | Automatyczna reakcja nadzoru na **dowód** przekroczenia 2% błędu ocen automatycznych w Kontroli losowej (dolna granica Wilsona 95% > 2% przy `n_eff ≥ 50`): bezpiecznik trafności podnosi Próg pewności, bezpiecznik poprawek kieruje każdą Transkrypcję z Poprawkami do Weryfikacji (T-7). | `stan_bezpiecznika`, `typ_bezpiecznika` |
 | Wniosek o usunięcie konta | NFR-09, ADR-040 | Zdarzenie RODO rozpoczynające okres karencji usunięcia konta (`DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie`). | `WNIOSEK_O_USUNIECIE` |
-| Słownik terminów matematycznych | ADR-042 | Zamknięta lista form wyrazowych terminów matematycznych (z odmianą), których Filtr danych osobowych nigdy nie zastępuje, nawet gdy są równe imieniu lub nazwisku z konta. | `lemat/rozpoznawanie/slownik_matematyczny.txt` |
+| Słownik terminów matematycznych | ADR-042 | Zamknięta lista form wyrazowych terminów matematycznych (z odmianą), których Filtr danych osobowych nie zastępuje, także gdy są równe imieniu lub nazwisku z konta — z dwoma wyjątkami (wersja 2.4, C4-03): token sąsiaduje z drugim członem imienia i nazwiska (lub inicjałem) albo leży w kroku agenta z podejrzeniem danych osobowych. | `lemat/rozpoznawanie/slownik_matematyczny.txt` |
 | Obszar kroku | 10.3.2 | Ramka linii kroku Transkrypcji na znormalizowanym zdjęciu, używana przez Filtr danych osobowych i Sprawdzenie zgodności poprawek. | `krok_transkrypcji.obszar`, `ObszarKroku` |
 | Przyjęcie planu | ADR-039 | Decyzja globalnego ogranicznika szybkości przed pierwszą falą Oceny: plan pytań Jev zostanie wykonany przed terminem miękkim albo Ocena od razu przechodzi do modelu zapasowego. | `PrzyjeciePlanu` |
+| Dezaktywacja bezpiecznika | ADR-046, C4-04 | Decyzja Administratora z uzasadnieniem kończąca stan aktywny bezpiecznika (poprawek: koniec T-7 dla każdej Poprawki; trafności: koniec blokady obniżania progu) i ustawiająca nowy początek okna oceny `okno_od`. | `POST /admin/bezpieczniki/dezaktywacja`, `dezaktywowano_at` |
+| Blokada obniżania progu | 11.5.3, C4-02 | Stan pary (konfiguracja, rodzaj zadania) po wyzwoleniu bezpiecznika trafności, w którym KALIBRUJ nie obniża Progu pewności, dopóki próba Kontroli losowych powyżej bieżącego progu nie wykaże UB Wilsona ≤ 2% przy `n_eff ≥ 189`. | `stan_bezpiecznika.aktywny` (typ `TRAFNOSC`) |
+| Wstrzymanie | 3.1 p. 5, C4-04 | Czasowe zatrzymanie skutku (doboru Zadania, punktów Oceny wstępnej, procesów konta w karencji) do zdarzenia rozstrzygającego, bez zmiany stanu obiektu i odwracalne bez strat. | `wstrzymanie_w_doborze`, `WSTRZYMANA_BLAD_ODCZYTU` |
 
 ### 3.4 Propozycja zmiany słownika PZS-1
 
@@ -309,11 +329,12 @@ powstawać, ale nie może zostać wdrożona produkcyjnie. Dokument nie edytuje
 właściciela produktu.
 
 **Część A — nowe pojęcia.** Wszystkie wiersze tabeli 3.3 w podanym tam
-brzmieniu (83 pojęcia: 42 z wersji 2.0, 19 dopisanych w wersji 2.1 — od
+brzmieniu (86 pojęć: 42 z wersji 2.0, 19 dopisanych w wersji 2.1 — od
 „Element Ścieżki nauki” do „Rejestr Zdarzeń RODO” (do wersji 2.2 „Rejestr
 usunięć”) —, 17 dopisanych w wersji 2.2 — od „Pewność surowa” do
-„Przekazanie Klasy” — i 5 dopisanych w wersji 2.3 — od „Bezpiecznik” do
-„Przyjęcie planu”).
+„Przekazanie Klasy” —, 5 dopisanych w wersji 2.3 — od „Bezpiecznik” do
+„Przyjęcie planu” — i 3 dopisane w wersji 2.4 — „Dezaktywacja
+bezpiecznika”, „Blokada obniżania progu”, „Wstrzymanie”; razem 86 pojęć).
 
 **Test w CI `tests/test_slownik.py`** (wersja 2.2, C2-11) ma cztery części,
 każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
@@ -336,10 +357,25 @@ każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
    musi należeć do słownika tokenów `tests/slownik_tokeny.yaml`, generowanego
    z identyfikatorów 3.2/3.3, terminów technicznych 3.1 p. 2 i p. 6 oraz
    zamkniętej listy słów ogólnych (np. `nr`, `opis`, `status`, `liczba`,
-   `termin`, `tresc`, `koszt`).
+   `termin`, `tresc`, `koszt`; od wersji 2.4: `dezaktywacja`,
+   `dezaktywowany`, `dezaktywowano`, `dezaktywacji`, `blokada`,
+   `obnizania`, `przydzial`, `laczna`, `wykonane`, `podpisu`).
 3. **Słowa zarezerwowane (3.1 p. 3 i p. 5):** identyfikator zawierający token
-   `odpowiedz*`, `wariant*`, `krok*`, `wynik*`, `kolejk*` albo (od wersji 2.3,
-   C3-07) `zadan*` musi być na liście dozwolonych użyć tego słowa (dla
+   `odpowiedz*`, `wariant*`, `krok*`, `wynik*`, `kolejk*`, (od wersji 2.3,
+   C3-07) `zadan*` albo (od wersji 2.4, C4-04) `zdjec*`, `zdjet*`, `zdje*`
+   (formy „zdjęcie”, „zdjęto”, „zdjęty”) i `wstrzym*` musi być na liście
+   dozwolonych użyć tego słowa (dla `zdje*` — wyłącznie znaczenie
+   „fotografia kartki”: `zdjecie_rozwiazania`, `zdjecie_rozwiazania_id`,
+   `zdjecia` w ścieżkach `/rozwiazania/{id}/zdjecia` i polach DTO,
+   `zdjecie` w `ObszarNaZdjeciu`/`NiepewnyFragment`/`obszar`,
+   `wersja_zdjecia`, `ZdjecieRef`, `ObszarNaZdjeciu`, `widoczny_na_zdjeciu`,
+   `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`, `ZDJECIE_NIEPRAWIDLOWE`, `USUN_ZDJECIA`,
+   `zdjecia_zalegle`, prefiksy `ux_zdjecie_*`, `ix_zdjecie_*`; tokeny
+   `zdjeto`, `zdjety`, `zdjecia` w znaczeniu dezaktywacji nie mają
+   dozwolonych użyć; dla `wstrzym*`: `wstrzymanie_w_doborze`,
+   `WSTRZYMANA_BLAD_ODCZYTU`, pole DTO `wstrzymane_w_doborze` (wyliczane z
+   tabeli `wstrzymanie_w_doborze`); dla
+   `zadan*`
    `zadan*`: identyfikatory odnoszące się do pojęcia Zadanie — `zadanie`,
    `zadanie_id`, `zadanie_ids`, `zadanie_wersja`, `zadanie_wersja_id`,
    `zadanie_umiejetnosc`, `zadania` w ścieżkach `/zadania`, `rodzaj_zadania`,
@@ -349,7 +385,10 @@ każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
    `zgodnosc_z_zadaniem`, wartości `ZADANIE`, `ZADANIE_LATWE`,
    `ZADANIE_MATURALNE`, `ZADANIE_Z_DOWODEM`, `ZADANIE_DO_PRZEGLADU`, klasy
    `Zadanie*`, `*Zadania*` i prefiksy `ux_zadanie_*`, `ix_zadanie_*`; pełna lista
-   w `tests/slownik_wyjatki.yaml`) (np. dla `wynik*`: `wynik_zadania`,
+   w `tests/slownik_wyjatki.yaml`). Przypadek kontrolny testu (wersja 2.4):
+   migracja testowa z kolumną `stan_bezpiecznika.zdjeto_at` i ścieżka
+   `/admin/bezpieczniki/zdjecie` muszą kończyć test błędem. Przykłady list
+   dozwolonych użyć (np. dla `wynik*`: `wynik_zadania`,
    `wynik_zadania_id`, `wynik_koncowy`, `wynik_koncowy_wzorcowy`,
    `ix_wynik_*`, `ux_wynik_*`, `WynikZadaniaSkrot`; dla `odpowiedz*`:
    `odpowiedz`, `odpowiedz_id`, `OdpowiedzWejscie`, `OdpowiedzWyjscie`,
@@ -789,16 +828,19 @@ CREATE TABLE zdarzenie_rodo (
     id             uuid PRIMARY KEY,                  -- generowany przez proces zapisujący obiekt do bucketu PRZED zmianą w bazie:
                                                       -- api (gen_random_uuid) albo worker (USUNIECIE_WYKONANE: uuid5(NS_RODO,
                                                       -- 'USUNIECIE_WYKONANE:' || uzytkownik_id) — deterministyczny, ponowienie USUN_KONTO
-                                                      -- trafia w ten sam klucz obiektu; C3-03)
+                                                      -- w dowolnym dniu trafia w ten sam klucz obiektu bez daty; C3-03, C4-06 p. 3)
     uzytkownik_id  uuid NOT NULL,                     -- bez FK: wpis przeżywa usunięcie konta
     typ            typ_zdarzenia_rodo NOT NULL,
     zrodlo         zrodlo_zdarzenia_rodo NOT NULL DEFAULT 'API',
                                                       -- WORKER: stanem docelowym jest wykonanie usunięcia, a nie transakcja;
                                                       -- UZGODNIJ_REJESTR_RODO nigdy go nie unieważnia (13.3)
-    dane           jsonb NOT NULL DEFAULT '{}',       -- np. {"usuniecie_zaplanowane_at":"…"}; bez danych osobowych
-    klucz_obiektu  text NOT NULL UNIQUE,              -- rejestr-zdarzen-rodo/zdarzenia/{rrrr-mm-dd}/{uzytkownik_id}/{id}.json
+    dane           jsonb NOT NULL DEFAULT '{}',       -- zawsze {"rola": "UCZEN"|"NAUCZYCIEL"|"ADMINISTRATOR", …} (od 2.4, C4-01),
+                                                      -- np. {"rola":"UCZEN","usuniecie_zaplanowane_at":"…"}; bez danych osobowych
+    klucz_obiektu  text NOT NULL UNIQUE,              -- API: rejestr-zdarzen-rodo/zdarzenia/{rrrr-mm-dd created_at}/{uzytkownik_id}/{id}.json
+                                                      -- WORKER: rejestr-zdarzen-rodo/wykonane/{uzytkownik_id}/{id}.json (bez daty, C4-06 p. 3)
     created_at     timestamptz NOT NULL DEFAULT now(),
-    CHECK ((zrodlo = 'WORKER') = (typ = 'USUNIECIE_WYKONANE'))
+    CHECK ((zrodlo = 'WORKER') = (typ = 'USUNIECIE_WYKONANE')),
+    CHECK (dane ? 'rola')                             -- rola konta w każdym zdarzeniu (ponowienie wg roli, 16.4, C4-01)
 );
 CREATE INDEX ix_zdarzenie_rodo_uzytkownik ON zdarzenie_rodo (uzytkownik_id, created_at);
 
@@ -1294,7 +1336,8 @@ CREATE TABLE transkrypcja (
     zgodnosc_poprawek      jsonb,                      -- ADR-036: rezultat SPRAWDZ_POPRAWKI_TRANSKRYPCJI (schemat 10.3.3); NULL = brak rezultatu
     dane_osobowe_usuniete  smallint NOT NULL DEFAULT 0,-- liczba zastąpień tokenów przez Filtr danych osobowych (ADR-042); kroków się nie usuwa
     konflikt_filtra        boolean NOT NULL DEFAULT false,
-                           -- ≥ 1 krok z podejrzenie_danych_osobowych i treścią matematyczną → T-3 (11.1 p. 7d, C3-02)
+                           -- ≥ 1 krok niezmieniony przez Ucznia z podejrzenie_danych_osobowych i treścią matematyczną
+                           -- (tokeny imienia/nazwiska z konta nie są treścią matematyczną, C4-03) → T-3 (11.1 p. 7d, C3-02)
     created_at             timestamptz NOT NULL DEFAULT now(),
     UNIQUE (rozwiazanie_id, wersja),
     CHECK ((zrodlo = 'AGENT_ROZPOZNAJACY') = (konfiguracja_modelu_id IS NOT NULL)),
@@ -1371,18 +1414,25 @@ CREATE TABLE konfiguracja_modelu (
 );
 CREATE UNIQUE INDEX ux_konfiguracja_aktywna ON konfiguracja_modelu (rola) WHERE aktywna;
 
--- Globalny ogranicznik szybkości (ADR-039): rejestr procesów korzystających z klucza API modelu;
--- przydział procesu i = 0.8 × limit_klucza × waga_i / Σ waga_j po wierszach z odnowiono_at > now() − 30 s
--- (jedna formuła w 13.2, 17.4, 22 i ADR-039; C3-04)
+-- Globalny ogranicznik szybkości (ADR-039): rejestr kubełków korzystających z klucza API modelu;
+-- przydział wiersza i = min(0.8 × limit_klucza × waga_i / Σ waga_j, 0.8 × limit_klucza − Σ_{j≠i} przydzial_j)
+-- po wierszach z odnowiono_at > now() − 30 s (jedna formuła w 13.2, 17.4, 22 i ADR-039; C3-04, C4-05);
+-- pojemność: stała 1 dla api, pozostałe wiersze dzielą B_całk − n_api proporcjonalnie do wagi (13.2), Σ pojemnosc ≤ B_całk
 CREATE UNLOGGED TABLE limit_szybkosci_modelu (
     konfiguracja_modelu_id uuid NOT NULL REFERENCES konfiguracja_modelu(id) ON DELETE CASCADE,
-    wykonawca              text NOT NULL,             -- np. 'worker#1', 'api#2'
+    wykonawca              text NOT NULL,             -- proces, np. 'worker#1', 'api#2'
+    pula                   text NOT NULL DEFAULT '*'
+                           CHECK (pula IN ('*','ROZPOZNAWANIE','SPRAWDZANIE')),
+                                                      -- '*' = cały proces (Jev: pule O i W, api); dla roli ROZPOZNAWANIE_PISMA
+                                                      -- osobny wiersz na pulę R i S tej samej repliki (C4-06 p. 8)
     waga                   numeric(3,2) NOT NULL CHECK (waga > 0 AND waga <= 1),
-                                                      -- z typu procesu: worker 1.00, api 0.10 (parametr 22)
-    pojemnosc              smallint NOT NULL CHECK (pojemnosc BETWEEN 1 AND 32),
-                                                      -- pojemność lokalnego kubełka: worker 16 (maks. fala), api 1
-    odnowiono_at           timestamptz NOT NULL DEFAULT now(),   -- odnawiane co 10 s
-    PRIMARY KEY (konfiguracja_modelu_id, wykonawca)
+                                                      -- Jev: worker 1.00, api 0.10; rozpoznawanie: R 1.00, S 0.30 (parametr 22)
+    pojemnosc              smallint NOT NULL CHECK (pojemnosc BETWEEN 1 AND 34),
+                                                      -- opublikowana pojemność kubełka; Jev, 2 workery + 2 api: worker 16, api 1
+    przydzial              numeric(6,2) NOT NULL DEFAULT 0 CHECK (przydzial >= 0),
+                                                      -- opublikowany przydział (wywołania/s; rozpoznawanie: /min), używany przez proces
+    odnowiono_at           timestamptz NOT NULL DEFAULT now(),   -- odnawiane co 10 s (co 2 s w trybie dołączania)
+    PRIMARY KEY (konfiguracja_modelu_id, wykonawca, pula)
 );
 ALTER TABLE transkrypcja ADD CONSTRAINT fk_transkrypcja_konfiguracja
     FOREIGN KEY (konfiguracja_modelu_id) REFERENCES konfiguracja_modelu(id);
@@ -1426,19 +1476,22 @@ CREATE TABLE stan_bezpiecznika (
     konfiguracja_modelu_id uuid NOT NULL REFERENCES konfiguracja_modelu(id),
     rodzaj_zadania         rodzaj_zadania NOT NULL CHECK (rodzaj_zadania = 'OTWARTE_OBLICZENIOWE'),
     typ                    typ_bezpiecznika NOT NULL,
-    aktywny                boolean NOT NULL DEFAULT false,      -- POPRAWKI: każda Transkrypcja z Poprawkami → T-7
-    okno_od                timestamptz NOT NULL DEFAULT now(),  -- początek okna oceny; ustawiany na chwilę ręcznego zdjęcia
+    aktywny                boolean NOT NULL DEFAULT false,      -- POPRAWKI: każda Transkrypcja z Poprawkami → T-7;
+                                                                -- TRAFNOSC (od 2.4, C4-02): Blokada obniżania progu po wyzwoleniu
+    okno_od                timestamptz NOT NULL DEFAULT now(),  -- początek okna oceny; ustawiany przy dezaktywacji (C4-04)
     n_eff                  numeric(8,1),                        -- ostatnia ocena: efektywna liczność Kontroli w oknie
     blad_ipw               numeric(5,4),                        -- ostatnia ocena: błąd ważony IPW
     dolna_granica_bledu    numeric(5,4),                        -- Wilson 95%, LB
     gorna_granica_bledu    numeric(5,4),                        -- Wilson 95%, UB
     ostatnie_wyzwolenie_at timestamptz,
-    zdjety_przez           uuid REFERENCES uzytkownik(id) ON DELETE SET NULL,
-    zdjeto_at              timestamptz,
-    uzasadnienie_zdjecia   text CHECK (char_length(uzasadnienie_zdjecia) <= 1000),
+    wyjscie_z_blokady_at   timestamptz,                         -- TRAFNOSC: automatyczne wyjście (UB ≤ 2% przy n_eff ≥ 189)
+    dezaktywowany_przez    uuid REFERENCES uzytkownik(id) ON DELETE SET NULL,   -- nazwy od 2.4 (C4-04)
+    dezaktywowano_at       timestamptz,
+    uzasadnienie_dezaktywacji text CHECK (char_length(uzasadnienie_dezaktywacji) <= 1000),
     updated_at             timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (konfiguracja_modelu_id, rodzaj_zadania, typ),
-    CHECK (typ = 'POPRAWKI' OR NOT aktywny)              -- TRAFNOSC działa przez prog_pewnosci (zrodlo = BEZPIECZNIK)
+    CHECK ((dezaktywowano_at IS NULL) = (uzasadnienie_dezaktywacji IS NULL))
+    -- TRAFNOSC podnosi próg przez prog_pewnosci (zrodlo = BEZPIECZNIK); aktywny = blokada obniżania (11.5.3, C4-02)
 );
 
 CREATE TABLE decyzja_modelu (
@@ -1960,9 +2013,9 @@ SLA rozpatrzenia 5 dni roboczych (metryka `zgloszenia_zadan_po_sla`). Przy
 do nowego Zestawu zadań), aż recenzent rozpatrzy zgłoszenia: `UWZGLEDNIONE`
 wymaga Przeglądu (`POPRAWIONE` albo wycofanie), `ODRZUCONE` wymaga
 komentarza; po rozpatrzeniu wszystkich otwartych zgłoszeń wstrzymanie jest
-zdejmowane — `DELETE FROM wstrzymanie_w_doborze` w transakcji rozpatrzenia
+usuwane — `DELETE FROM wstrzymanie_w_doborze` w transakcji rozpatrzenia
 ostatniego otwartego zgłoszenia (o ile Zadanie nie zostało wycofane). Ani
-wstrzymanie, ani jego zdjęcie nie zmienia `zadanie.version` (7.2, C3-09). Zgłaszający Nauczyciel
+wstrzymanie, ani jego usunięcie nie zmienia `zadanie.version` (7.2, C3-09). Zgłaszający Nauczyciel
 może do czasu rozpatrzenia usunąć Zadanie ze swoich Zestawów. Zawężenie
 prawa bezpośredniej poprawki Zadań `GLOBALNY` do recenzentów jest
 decyzją D-11 (23.4, G-0).
@@ -2273,8 +2326,13 @@ bieżącego przesłania (kolejne wersje `POPRAWKA_UCZNIA` nie „przesuwają”
 punktu odniesienia). Przy `422` UI proponuje „Wyślij nowe zdjęcia” (nowe
 przesłanie, ≤ 3) — jedyną drogę zmiany rozwiązania w większym zakresie.
 `OCEN_ROZWIAZANIE` czeka na rezultat sprawdzenia najwyżej do
-`min(zatwierdzono_at + 6 s, termin_miekki − 9 s)`, równolegle z SymPy i
-Modelem decyzyjnym; brak rezultatu → T-7 (Z-3).
+`zatwierdzono_at + 6 s` (wersja 2.4, C4-06 p. 10 — okno stałe, niezależne
+od `t_R`; wersja 2.3 skracała je do `termin_miekki − 9 s`, czyli do 1 s przy
+`t_R ≥ 18 s`), równolegle z SymPy i Modelem decyzyjnym; brak rezultatu →
+T-7 (Z-3). Okno stałe nie narusza terminu miękkiego: termin miękki ≥ 10 s,
+a zapis Oceny po oknie trwa ≤ 0,2 s (6,2 s < 10 s); rezerwa 9 s na model
+zapasowy nie jest potrzebna, bo model zapasowy startuje równolegle ze
+Sprawdzeniem (po błędzie Jev, najpóźniej w 4,2 s), a nie po nim.
 
 **Autozapis i czas Sprawdzenia (C3-05).** PWA wysyła `PUT …/transkrypcja`
 2 s po ostatniej zmianie kroku i przy opuszczeniu pola edycji (debounce), a
@@ -2290,7 +2348,9 @@ zatwierdzenia. Najgorszy przypadek to `G ≈ 0` (Uczeń zatwierdza od razu po
 edycji): przy rozkładzie log-normalnym czasu Sprawdzenia (p50 2,5 s, p95
 4,0 s, σ = 0,286) P(czas > 6 s) = P(Z > 3,06) ≈ 0,1%; z timeoutem 8 s i
 drugą próbą w puli `S` bez kolejki (17.4) brak rezultatu ≤ 0,5% Rozwiązań
-z Poprawkami (przyjęte w 17.7). Metryki `czas_od_put_do_zatwierdzenia_sekundy`
+z Poprawkami (przyjęte w 17.7). Rachunek obowiązuje dla każdego `t_R`, bo
+okno wynosi zawsze 6 s (C4-06 p. 10); przy oknie z wersji 2.3 (1 s przy
+`t_R ≥ 18 s`) wynosiłby P(czas > 1 s) = P(Z > −3,20) ≈ 99,9% dla `G ≈ 0`. Metryki `czas_od_put_do_zatwierdzenia_sekundy`
 i `sprawdzenie_poprawek_gotowe_przed_zatwierdzeniem` (odsetek) weryfikują
 założenie w pilotażu; alert przy odsetku braku rezultatu > 1% w 24 h.
 
@@ -2458,7 +2518,7 @@ sequenceDiagram
     PWA->>API: POST /weryfikacje/{id}/rozstrzygniecie (If-Match: version Weryfikacji)
     API->>DB: BEGIN, SELECT rozwiazanie FOR UPDATE, SELECT weryfikacja FOR UPDATE
     API->>DB: sprawdź W_TRAKCIE, podjeta_przez = ja, zablokowana_do > now(), version (treści, ADR-037), Ocena weryfikowana ≠ ZASTAPIONA
-    API->>DB: sprawdź konto Ucznia AKTYWNE (karencja ADR-040, C3-08)
+    API->>DB: SELECT status FROM uzytkownik WHERE id = :uczen_id FOR SHARE — konto Ucznia AKTYWNE (karencja ADR-040, C3-08, C4-06 p. 4)
     alt konto Ucznia USUWANE
         API-->>PWA: 409 KONTO_UCZNIA_NIEAKTYWNE (ROLLBACK, szkic zachowany, blokada wygasa normalnie)
     end
@@ -2471,6 +2531,18 @@ sequenceDiagram
     API-->>PWA: 200 OcenaWyjscie
     WRK->>DB: AKTUALIZUJ_PROFIL: odtworzenie theta dla Umiejętności Zadania
 ```
+
+**Blokada konta Ucznia (wersja 2.4, C4-06 p. 4).** Kolejność blokad w
+rozstrzygnięciu i korekcie: `rozwiazanie` (`FOR UPDATE`) → `weryfikacja`
+(`FOR UPDATE`) → `uzytkownik` Ucznia (`FOR SHARE`). Transakcja wniosku o
+usunięcie konta wykonuje `UPDATE uzytkownik SET status = 'USUWANE' …`, które
+wymaga blokady wiersza sprzecznej z `FOR SHARE`, więc obie transakcje są
+serializowane: wniosek zatwierdzony przed rozstrzygnięciem — rozstrzygnięcie
+odczytuje `USUWANE` i kończy się `409 KONTO_UCZNIA_NIEAKTYWNE`; rozstrzygnięcie,
+które pierwsze zablokowało wiersz — wniosek czeka na jego `COMMIT`, więc
+Ocena Nauczyciela powstaje przed wnioskiem. Transakcja wniosku Ucznia nie
+blokuje `rozwiazanie` ani `weryfikacja`, więc cykl blokad (zakleszczenie)
+nie powstaje.
 
 Reguły Wskazówki przy rozstrzygnięciu (FR-27, C1-14): pole
 `wskazowka.tryb` ∈ {`WLASNA` (tekst Nauczyciela, ≤ 400 znaków),
@@ -2486,7 +2558,9 @@ błędem ma Wskazówkę odnoszącą się do aktualnego błędnego kroku.
 
 `POST /rozwiazania/{id}/korekty` (If-Match: `version` Rozwiązania), stan
 `OCENIONE`, konto Ucznia `AKTYWNE` (inaczej `409 KONTO_UCZNIA_NIEAKTYWNE`,
-C3-08). W jednej transakcji z `SELECT rozwiazanie FOR UPDATE`:
+C3-08) — sprawdzane `SELECT status FROM uzytkownik … FOR SHARE` po blokadzie
+`rozwiazanie`, jak w 9.6.2 (C4-06 p. 4). W jednej transakcji z `SELECT
+rozwiazanie FOR UPDATE`:
 
 1. Jeśli istnieje otwarta Weryfikacja tego Rozwiązania (Kontrola losowa lub
    zgłoszenie błędu odczytu):
@@ -2564,11 +2638,14 @@ sequenceDiagram
     WRK->>DB: Próbki 90 dni per (konfiguracja, rodzaj), uwzgledniana_w_progu, do now() − 5 min
     WRK->>WRK: wagi IPW z korektą wykonania Kontroli (11.5.3)
     WRK->>WRK: regresja izotoniczna ważona, 5-krotna walidacja krzyżowa (pewność surowa → zgodność)
-    WRK->>WRK: wybór progu: min t z UB Wilsona ≤ 2% i n_eff ≥ 189 (wartości out-of-fold)
-    WRK->>WRK: reguły nadzoru: wykonanie Kontroli losowej, bezpieczniki trafności i poprawek — wyzwolenie tylko przy LB Wilsona > 2% i n_eff ≥ 50 (ADR-046)
-    WRK->>DB: UPSERT stan_bezpiecznika (n_eff, blad_ipw, LB, UB) dla TRAFNOSC i POPRAWKI
-    alt są zmiany i reguły nadzoru pozwalają
-        WRK->>DB: INSERT kalibrator_pewnosci, INSERT prog_pewnosci aktywny, poprzedni aktywny := false (1 transakcja)
+    WRK->>WRK: krok 1 — wybór progu p_wyb: min t z UB Wilsona ≤ 2% i n_eff ≥ 189 (wartości out-of-fold, okno 90 dni)
+    WRK->>WRK: krok 2 — ocena bezpieczników na stanie sprzed przebiegu (próg p0, kalibrator aktywny): wyzwolenie przy LB > 2% i n_eff ≥ 50 (ADR-046)
+    WRK->>WRK: krok 3 — Blokada obniżania progu: wejście przy wyzwoleniu, wyjście przy UB ≤ 2% i n_eff ≥ 189 powyżej p0 (C4-02)
+    WRK->>WRK: krok 4 — dozwolone obniżenie (≤ 0,02/dobę, test 30 dni powyżej docelowego progu, blokady)
+    WRK->>WRK: krok 5 — wynik dnia p_nowy = max(p_dol, p0 + 0,02) przy wyzwoleniu (p0 = 0,990 → 1,000), inaczej p_dol
+    WRK->>DB: UPSERT stan_bezpiecznika (n_eff, blad_ipw, LB, UB, aktywny) dla TRAFNOSC i POPRAWKI
+    alt p_nowy ≠ p0 lub nowy kalibrator
+        WRK->>DB: INSERT kalibrator_pewnosci, jeden INSERT prog_pewnosci aktywny (zrodlo wg kroku 5), poprzedni aktywny := false (1 transakcja)
     end
     opt bezpiecznik, ECE > 0.05 lub wykonanie Kontroli < 80%
         WRK->>DB: powiadomienie ALERT_KALIBRACJI do Administratorów
@@ -3221,7 +3298,13 @@ Przetwarzanie:
    i jest pokazywany Uczniowi jako „sprawdź odczyt”. Jeżeli krok **nie ma
    treści matematycznej** (`latex` pusty po normalizacji, `tekst` bez cyfr,
    bez znaków `= + − · : / ^ < > ≤ ≥` i bez tokenu ze Słownika terminów
-   matematycznych, ≤ 6 tokenów — typowa linia podpisu), jego `tekst` jest
+   matematycznych, ≤ 6 tokenów — typowa linia podpisu; **od wersji 2.4
+   (C4-03) przed tym sprawdzeniem z `tekst` są wyłączane tokeny równe
+   imieniu lub nazwisku z konta (dopasowanie jak w regule b, także gdy token
+   jest w Słowniku), inicjały imienia i nazwiska (`J.`, `P.`) oraz oznaczenie
+   klasy szkolnej (wyrażenie `(kl\.?|klasa)\s*[1-4]\s*[a-z]{0,3}` i token
+   `[1-4][a-z]{1,3}` bezpośrednio po nim)** — linia „Jan Pole, kl. 3b” nie
+   ma więc treści matematycznej), jego `tekst` jest
    zastępowany w całości znacznikiem `[DANE_OSOBOWE]` (`tylko_dane_osobowe =
    true`); taki krok pozostaje w Transkrypcji pod swoim numerem, a stan dla
    Modelu decyzyjnego oznacza go „linia z danymi osobowymi — nie jest krokiem
@@ -3235,10 +3318,19 @@ Przetwarzanie:
    diakrytyki): dla rdzeni ≥ 4 znaków — dopasowanie dokładne albo odległość
    Levenshteina ≤ 1 (rodzaj `PRZYBLIZONE`); dla imion i nazwisk krótszych niż
    4 znaki (Ewa, Jan, Ola, Iza, Ida, Lis) — dopasowanie dokładne całego tokenu
-   (rodzaj `DOKLADNE`). **Token ze Słownika terminów matematycznych nigdy nie
-   jest zastępowany** (np. „pole”, „kula”, „granica”, „suma”, „prosta”,
-   „koło”, „kąt” i ich formy odmiany), także gdy jest równy nazwisku Ucznia;
-   słownik `lemat/rozpoznawanie/slownik_matematyczny.txt` zawiera ≈ 350
+   (rodzaj `DOKLADNE`). **Token ze Słownika terminów matematycznych** (np.
+   „pole”, „kula”, „granica”, „suma”, „prosta”, „koło”, „kąt” i ich formy
+   odmiany) równy imieniu lub nazwisku Ucznia **jest zastępowany wyłącznie,
+   gdy** (wersja 2.4, C4-03): (b1) sąsiaduje (najbliższy token z pominięciem
+   znaków interpunkcyjnych, przed nim albo po nim) z tokenem dopasowanym do
+   drugiego członu imienia i nazwiska z konta albo z jego inicjałem („Jan
+   Pole”, „Pole Jan”, „J. Pole”) — dopasowanie `DOKLADNE`; albo (b2) leży w
+   kroku Transkrypcji agenta z `podejrzenie_danych_osobowych = true`
+   (wtedy krok ma i tak `konflikt_filtra` albo `tylko_dane_osobowe`, więc
+   Ocena idzie do Weryfikacji albo krok nie jest krokiem rozwiązania). W
+   pozostałych przypadkach (np. „Pole trójkąta jest równe 12” poza ramką
+   danych osobowych) token Słownika nie jest zastępowany, także gdy jest
+   równy nazwisku Ucznia; słownik `lemat/rozpoznawanie/slownik_matematyczny.txt` zawiera ≈ 350
    lematów terminów z podstawy programowej i nazw funkcji (sin, cos, log)
    rozwiniętych do wszystkich form odmiany (słownik fleksyjny generowany przy
    budowie obrazu, ≈ 4 000 form); (c) ciągi 11 cyfr (PESEL) i adresy e-mail
@@ -3256,6 +3348,22 @@ Przetwarzanie:
    dopasowania `PRZYBLIZONE` (Levenshtein = 1) nie są ponownie zastępowane,
    bo Uczeń sam przywrócił słowo. Imię i nazwisko z konta są porównywane po
    stronie Lemat i nigdy nie są wysyłane do modelu (16.3).
+   **Działanie filtra na Poprawkach (wersja 2.4, C4-03 p. 3)** — dla każdego
+   kroku Transkrypcji `POPRAWKA_UCZNIA`:
+
+   | Krok | Reguła (a) — ramka | Reguła (b) | Reguła (c) | `konflikt_filtra` |
+   |---|---|---|---|---|
+   | niezmieniony (`zmieniony_przez_ucznia = false`) | nie jest liczona ponownie: `podejrzenie_danych_osobowych`, `tylko_dane_osobowe` i treść kopiowane z kroku agenta | — (treść jak w kroku agenta) | — | liczony jak dla agenta |
+   | zmieniony, w tym przywrócony krok `tylko_dane_osobowe` | nie jest stosowana: `podejrzenie_danych_osobowych` kopiowane z kroku agenta, `tylko_dane_osobowe := false`, tekst nie jest ponownie maskowany w całości | `DOKLADNE` z warunkiem (b1); (b2) nie dotyczy kroku zmienionego, więc przywrócone słowo „Pole” zostaje, a „Jan Pole” jest zastępowane | stosowana | krok nie wlicza się (kontrolę przejmuje Sprawdzenie zgodności poprawek i T-7) |
+   | wstawiony | brak ramki (`obszar` NULL) | `DOKLADNE` z warunkiem (b1) | stosowana | nie wlicza się |
+
+   Krok przywrócony z `tylko_dane_osobowe` jest zwykłą Poprawką: wlicza się
+   do limitów 9.4 (odległość edycyjna liczona od zapisanego tekstu
+   `[DANE_OSOBOWE]`, więc cała przywrócona treść jest „zmienionymi znakami”),
+   trafia do Sprawdzenia zgodności poprawek z wycinkiem `obszar` i do
+   podwójnego odsetka Kontroli losowej (T-5). FR-18 działa więc także dla
+   kroku zamaskowanego w całości, a dowolny tekst wpisany w krok w ramce
+   przechodzi tę samą kontrolę co każda Poprawka.
 4. Maskowanie (ADR-031): dla każdego zdjęcia worker tworzy kopię z
    zamalowanymi na czarno ramkami `obszary_danych_osobowych` (margines 8 px)
    i zapisuje ją pod `klucz_obiektu_maskowany`. Kopię maskowaną widzą
@@ -3286,8 +3394,8 @@ każdego kroku także `"obszar": {"zdjecie": 1, "ramka": [380, 860, 1420, 96]}`
 
 #### 10.3.3 Sprawdzenie zgodności poprawek (ADR-036)
 
-Praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (pula R, zlecana przez `PUT
-…/transkrypcja`) wywołuje `RozpoznawaniePisma.sprawdz_poprawki()` z
+Praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (pula S — od wersji 2.3, C3-05;
+poprawka redakcyjna 2.4, C4-06 p. 1; zlecana przez `PUT …/transkrypcja`) wywołuje `RozpoznawaniePisma.sprawdz_poprawki()` z
 aktywną konfiguracją roli `ROZPOZNAWANIE_PISMA` i promptem
 `sprawdzenie-poprawek-v2` (wersja 2.3, C3-05): model dostaje zdjęcie
 poglądowe każdej strony (dłuższy bok 1024 px) oraz dla każdego zmienionego
@@ -3571,8 +3679,10 @@ Reguły 11.1–11.3 są wykonywane w podanej kolejności przez czystą funkcję
    (c) krok `pierwszy_bledny_krok` lub `krok_podejrzany_odczyt` ma
    `pewnosc_odczytu < 0.80` i nie był zmieniony przez Ucznia;
    (d) (wersja 2.3, C3-02) zatwierdzona Transkrypcja ma `konflikt_filtra =
-   true` — wtedy `krok_podejrzany_odczyt` = najmniejszy numer kroku z
-   `podejrzenie_danych_osobowych` i treścią matematyczną.
+   true` — wtedy `krok_podejrzany_odczyt` = najmniejszy numer kroku
+   niezmienionego przez Ucznia z `podejrzenie_danych_osobowych` i treścią
+   matematyczną (po wyłączeniu tokenów imienia, nazwiska, inicjałów i
+   oznaczenia klasy, 10.3.1 p. 3a, C4-03).
    Warunki (a) i (b) to decyzje Modelu decyzyjnego; (c) i (d) to sygnały LLM
    (pewność odczytu, ramki danych osobowych), które wyłącznie dodają powód
    Weryfikacji (Z-1). Kroki zmienione przez Ucznia są
@@ -3764,15 +3874,24 @@ może rozwiązać dowolne Zadanie z Przypisania.
 
 **Kontrola przyjęć per Klasa (napływ eskalacji, C2-12):** dla każdego
 Nauczyciela prowadzącego Klasę `odsetek_eskalacji_7d` = Weryfikacje
-`KLASA` z jego kolejki eskalowane w ostatnich 7 dniach / Weryfikacje `KLASA`
-utworzone w jego kolejce w ostatnich 7 dniach (przy ≥ 10 utworzonych). Gdy
+`KLASA` z jego kolejki eskalowane w ostatnich 7 dniach z `powod_eskalacji ≠
+KARENCJA_KONTA_NAUCZYCIELA` / Weryfikacje `KLASA` utworzone w jego kolejce w
+ostatnich 7 dniach (przy ≥ 10 utworzonych). Eskalacje z powodu karencji są
+wyłączone z licznika (wersja 2.4, C4-06 p. 6), także w odsetku globalnym:
+nie mierzą przepustowości Nauczyciela, a po przywróceniu konta ich wliczenie
+trzymałoby Klasy pod kontrolą przyjęć do spadku odsetka < 0,10 (do 7 dni) i
+fałszywie uruchamiało przeliczenie 17.7. W okresie karencji Klasy
+Nauczyciela `USUWANE` są objęte kontrolą przyjęć **wprost** (warunek „konto
+Nauczyciela prowadzącego `USUWANE`” w `klasy_z_kontrola_przyjec`), do
+Przekazania Klasy albo przywrócenia konta — przywrócenie kończy ją w tej
+samej transakcji. Gdy
 `odsetek_eskalacji_7d ≥ 0,20`, Uczniowie jego Klas dostają w rekomendacjach
 (nie w Przypisaniach) `dowody_dozwolone = false` i `udzial_zadan_otwartych =
 5`, Nauczyciel dostaje powiadomienie `ALERT_WERYFIKACJE` z liczbą
 zaległych Weryfikacji, a Administratorzy — wpis w raporcie obciążenia;
 ograniczenie znika, gdy odsetek spadnie < 0,10. Globalny
-`odsetek_eskalacji_7d > 0,10` (A-15) uruchamia przeliczenie modelu 17.7 i
-`ALERT_WERYFIKACJE`. Dzięki temu napływ eskalacji jest hamowany u źródła, a
+`odsetek_eskalacji_7d > 0,10` (A-15; licznik bez `KARENCJA_KONTA_NAUCZYCIELA`)
+uruchamia przeliczenie modelu 17.7 i `ALERT_WERYFIKACJE`. Dzięki temu napływ eskalacji jest hamowany u źródła, a
 nie tylko obsługiwany w puli globalnej.
 
 #### 11.4.4 Pseudonimizacja w kolejce globalnej (ADR-031)
@@ -3888,8 +4007,8 @@ Kontrola losowa) z **bezpiecznikiem poprawek** (ADR-046, reguła i rachunek
 w 11.5.3): wiersz `stan_bezpiecznika` typu `POPRAWKI` staje się aktywny, gdy
 dolna granica Wilsona 95% błędu Kontroli losowych Ocen automatycznych z
 Poprawkami przekracza 2% przy `n_eff ≥ 50`; aktywny bezpiecznik dodaje
-powód T-7 każdej Transkrypcji z Poprawkami, a zdejmuje go wyłącznie
-Administrator po analizie (wersja 2.2: flaga
+powód T-7 każdej Transkrypcji z Poprawkami, a dezaktywuje go wyłącznie
+Administrator po analizie (`POST /admin/bezpieczniki/dezaktywacja`, C4-04) (wersja 2.2: flaga
 `LEMAT_POPRAWKI_ZAWSZE_DO_WERYFIKACJI` ustawiana przy `n ≥ 50` i UB > 2%,
 czyli zawsze dla n < 189 — C3-01). Odsetek Rozwiązań z Poprawkami mierzy
 `odsetek_rozwiazan_z_poprawkami_30d`.
@@ -3923,7 +4042,9 @@ jeśli brak takiego t: prog_nowy = prog_obecny (bez obniżania)
 
 ECE (10 koszyków równej szerokości) jest liczone na `p_oof`. Nowy kalibrator
 i próg wchodzą w życie tylko, gdy liczba próbek ≥ 400; zmiana progu w dół
-jest ograniczona do 0.02 na dobę.
+jest ograniczona do 0.02 na dobę i podlega blokadom z kroku 4 algorytmu
+„Wynik dnia KALIBRUJ” niżej (C4-02); `prog_nowy` z powyższego pseudokodu
+jest w nim oznaczony `p_wyb`.
 
 **Reguły nadzoru (braki danych, C1-10):**
 
@@ -3954,15 +4075,76 @@ wagi:  w = 1 / (π_dobor × π_wykonanie(k))       (11.5.3, ten sam wzór co prz
 blad   = Σ w·[niezgodna] / Σ w;   n_eff = (Σ w)² / Σ w²
 LB, UB = granice przedziału Wilsona 95% (z = 1,96) dla (blad, n_eff)
 
-Reguła (codziennie, po wyborze progu):
+Klasyfikacja oceny (codziennie, krok 2 algorytmu „Wynik dnia KALIBRUJ”; P liczona dla progu p0 i
+kalibratora aktywnego PRZED przebiegiem — wybór progu tego samego dnia nie zmienia próby):
   1. n_eff < 50                    → brak działania (za mało danych; metryki i panel /admin/kalibracja)
   2. n_eff ≥ 50 i LB > 0,02        → WYZWOLENIE:
-        TRAFNOSC: prog := min(0,990, prog + 0,02), nowy rekord prog_pewnosci (zrodlo = BEZPIECZNIK), ALERT_KALIBRACJI
+        TRAFNOSC: podniesienie progu w kroku 5 (zrodlo = BEZPIECZNIK) i Blokada obniżania progu
+                  (stan_bezpiecznika.aktywny := true, ostatnie_wyzwolenie_at := now()), ALERT_KALIBRACJI
         POPRAWKI: stan_bezpiecznika.aktywny := true (każda Transkrypcja z Poprawkami → T-7), ALERT_KALIBRACJI
   3. n_eff ≥ 189 i UB > 0,02 i LB ≤ 0,02 → OSTRZEŻENIE: KALIBRUJ nie obniża progu tej pary (jak przy
         0,60 ≤ wykonanie_kontroli_30d < 0,80), alert informacyjny; progu nie podnosi
   4. pozostałe                     → brak działania
 ```
+
+**Wynik dnia KALIBRUJ dla pary (wersja 2.4, C4-02) — jedna, jawna kolejność.**
+W wersji 2.3 bezpiecznik działał „po wyborze progu” bez określenia, czy
+podnosi próg wybrany tego dnia, czy poprzedni, a wybór progu mógł codziennie
+cofać podniesienie (oscylacja 0,930 ↔ 0,950 przy trwałym LB > 2%). Od wersji
+2.4 każdy przebieg wykonuje kroki 1–6 w tej kolejności i zapisuje **jeden**
+rekord `prog_pewnosci`:
+
+```text
+Dane: p0 = wartość aktywnego progu przed przebiegiem; K0 = aktywny kalibrator; K1 = kalibrator_nowy
+      (gdy ≥ 400 próbek, inaczej K1 = K0); BT = stan_bezpiecznika (para, TRAFNOSC)
+Krok 1 (wybór):      p_wyb = min{ t : UB90(t) ≤ 0,02 ∧ n_eff90(t) ≥ 189 } na p_oof(K1), okno 90 dni;
+                     brak takiego t → p_wyb = p0
+Krok 2 (bezpieczniki, stan sprzed przebiegu): P(TRAFNOSC), P(POPRAWKI) powyżej p0 przy K0, okno
+                     [max(now − 30 dni, okno_od), now] → wyzwolenie_T, ostrzezenie_T, wyzwolenie_P (reguły 1–4)
+Krok 3 (Blokada obniżania progu):
+                     wyzwolenie_T                                  → BT.aktywny := true
+                     BT.aktywny ∧ ¬wyzwolenie_T ∧ n_eff ≥ 189 ∧ UB ≤ 0,02 (próba kroku 2)
+                                                                   → BT.aktywny := false, wyjscie_z_blokady_at := now()
+                     BT.aktywny ∧ p0 = 1,000                       → bez zmian (wyjście wyłącznie przez dezaktywację)
+Krok 4 (dozwolone obniżenie):
+                     zablokowane = BT.aktywny ∨ ostrzezenie_T ∨ wykonanie_kontroli_30d < 0,80
+                                   ∨ bezpiecznik braku nadzoru (tabela reguł nadzoru)
+                     p_dol = max(p_wyb, p0 − 0,02)
+                     p_dol < p0 ∧ ¬zablokowane → test obniżenia na oknie 30 dni: populacja wyboru progu
+                         (Próbki uwzgledniana_w_progu, wagi w z 11.5.3) z p(K1) > p_dol:
+                         wymagane n_eff ≥ 50 ∧ LB ≤ 0,02 ∧ (n_eff < 189 ∨ UB ≤ 0,02); niespełnione → p_dol := p0
+                     zablokowane → p_dol := max(p_dol, p0)
+Krok 5 (łączny wynik):
+                     wyzwolenie_T:               p_nowy = 1,000                          gdy p0 ≥ 0,990
+                                                 p_nowy = min(0,990, max(p_dol, p0 + 0,02)) w przeciwnym razie
+                     bezpiecznik braku nadzoru:  p_nowy = min(0,990, max(p_dol, p0 + 0,02))
+                     pozostałe:                  p_nowy = p_dol   (p_wyb > p0 podnosi próg bez limitu kroku)
+Krok 6 (zapis, 1 transakcja): gdy p_nowy ≠ p0 lub K1 ≠ K0 — INSERT kalibrator_pewnosci (gdy K1 ≠ K0),
+                     INSERT prog_pewnosci (wartosc = p_nowy, zrodlo = BEZPIECZNIK gdy p_nowy > p_dol,
+                     inaczej KALIBRACJA_AUTOMATYCZNA), poprzedni aktywny := false;
+                     UPSERT stan_bezpiecznika (TRAFNOSC, POPRAWKI)
+```
+
+Skutki: (1) dopóki trwa Blokada obniżania progu, próg pary jest
+**niemalejący** — wybór progu na oknie 90 dni (rozcieńczonym danymi sprzed
+degradacji) nie może go cofnąć, bo krok 4 ustawia `p_dol ≥ p0`; (2) kolejne
+wyzwolenia podnoszą próg o 0,02 dziennie od `p0`, a nie od progu wybranego
+tego dnia; (3) wyzwolenie przy `p0 = 0,990` przełącza parę w **tryb pełnej
+weryfikacji** (`wartosc = 1.000`, CHECK 7.3 dopuszcza 1.000; alert krytyczny
+`ALERT_KALIBRACJI`; `udzial_zadan_otwartych = 5` jak w 10.1.2) — decyzja D-16;
+(4) **reguła wyjścia**: blokada kończy się automatycznie dopiero przy dowodzie
+spełnienia NFR-03 powyżej bieżącego progu (UB ≤ 2% przy `n_eff ≥ 189` na
+oknie 30 dni); przy LB ≤ 2% < UB albo `n_eff < 189` (mniejsza próba powyżej
+wyższego progu) blokada trwa, próg się nie zmienia, a nowy wzrost LB > 2%
+podnosi go dalej; w trybie pełnej weryfikacji (`p0 = 1,000`) nie ma Ocen
+automatycznych, więc nie ma Kontroli losowych powyżej progu i wyjście
+następuje wyłącznie przez dezaktywację bezpiecznika trafności przez
+Administratora (`POST /admin/bezpieczniki/dezaktywacja`, typ `TRAFNOSC`),
+po której próg obniża się o ≤ 0,02 na dobę przez test kroku 4 (populacja
+wyboru progu zawiera wtedy Próbki `WERYFIKACJA_NISKA_PEWNOSC` wszystkich
+Ocen, `π_dobor = 1`); (5) po wyjściu z blokady obniżanie wymaga testu 30
+dni powyżej progu docelowego, więc błędy z okresu degradacji (do 30 dni)
+blokują powrót do niższego progu.
 
 Rachunek dla reguły 2 (rozkład dwumianowy przy wagach równych, `n_eff = n`;
 przy podwójnym odsetku Kontroli dla Poprawek `n_eff` jest o 3–6% mniejsze niż
@@ -3983,9 +4165,15 @@ rzeczywistym błędzie `e`:
 
 Przy zerze błędów LB = 0, więc reguła 2 **nigdy** nie wyzwala się przy
 bezbłędnej próbie, niezależnie od `n` (w szczególności dla 50 ≤ n < 189).
-Przy błędzie na granicy NFR-03 (e = 2%) jednorazowe fałszywe wyzwolenie ma
-prawdopodobieństwo 2,6–7,8% (test jednostronny na poziomie 2,5% z
-dyskretnością rozkładu), a przy e = 1% — ≤ 1,4%.
+**Rozmiar testu (wersja 2.4, C4-06 p. 5):** reguła 2 jest jednostronnym
+testem H0: e ≤ 2% o nominalnym poziomie 2,5%, ale granica Wilsona jest przy
+małym `n` antykonserwatywna, więc rzeczywisty rozmiar pojedynczej oceny przy
+e = 2% wynosi **2,6–7,8%** (kolumna „e = 2%” tabeli), a nie ≤ 2,5%; przy e =
+1% — ≤ 1,4%. Przy codziennej ocenie przez 90 dni P(≥ 1 wyzwolenie) przy e =
+2% wynosi 31–36% (tabela symulacji niżej). Jest to świadomie przyjęty koszt
+(D-16): na granicy NFR-03 bezpiecznik nie odróżnia e = 2% od e nieco
+wyższego. Oczekiwana liczba **fałszywych podniesień progu na kwartał** przy
+e = 2% (symulacja dynamiki niżej): **1,1**; przy e ≤ 1%: ≤ 0,01.
 
 Ocena codzienna na kroczącym oknie 30 dni (symulacja 2 000 przebiegów po 90
 dni, napływ zakończonych Kontroli: start 100/dobę, faza ustalona 35/dobę,
@@ -4003,19 +4191,60 @@ model zapasowy podczas awarii Jev 10/dobę; `tests/kalibracja/symulacja_bezpiecz
 Wnioski: (1) bezpiecznik nie wyłącza ocen automatycznych na starcie
 produkcji ani po awarii Jev przy modelu spełniającym założenie ZT-1 —
 model obciążenia 17.7 („Start: auto 47%”) pozostaje ważny (scenariusz
-startowy w 17.7); (2) degradacja do ≥ 4% błędu jest wykrywana w 2 dni na
-starcie i w 4 dni w fazie ustalonej; (3) błąd w przedziale (2%, 3%) nie jest
+startowy w 17.7); (2) model, którego błąd **od początku okna** wynosi ≥ 4%,
+jest wykrywany w 2 dni na starcie i w 4 dni w fazie ustalonej; **nagła**
+degradacja z 0,5% do 4% w fazie ustalonej jest wykrywana później, bo okno 30
+dni rozcieńcza ją danymi sprzed degradacji — mediana 13 dni od początku
+degradacji do pierwszego wyzwolenia (symulacja dynamiki niżej, C4-02);
+(3) błąd w przedziale (2%, 3%) nie jest
 wykrywany szybko przez bezpiecznik — chroni przed nim reguła wyboru progu
 (UB ≤ 2% przy `n_eff ≥ 189` na oknie 90 dni, KALIBRUJ nie obniża progu,
 reguła 3 blokuje obniżanie) oraz alert `gorna_granica_bledu_30d > 0,02`.
 
-**Zdjęcie bezpiecznika poprawek:** wyłącznie Administrator (`POST
-/admin/bezpieczniki/zdjecie`, uzasadnienie wymagane); ustawia `aktywny =
-false`, `okno_od = now()`, więc ponowne wyzwolenie wymaga nowego dowodu z
-Kontroli utworzonych po zdjęciu (stary materiał nie wyzwala go ponownie).
-Bezpiecznik trafności nie ma stanu „aktywny” — działa przez rekord
-`prog_pewnosci` (`zrodlo = BEZPIECZNIK`); próg obniża później zwykła reguła
-KALIBRUJ (o ≤ 0,02 na dobę).
+**Symulacja dynamiki progu (wersja 2.4, C4-02;
+`tests/kalibracja/symulacja_bezpiecznika.py --dynamika`).** Założenia: faza
+ustalona, 1 200 Ocen obliczeniowych na dobę, pewność skalibrowana z rozkładem
+`1 − p ~ Exp(0,0631)` (auto 67% przy progu 0,930; 54,7% przy 0,950; 37,8% przy
+0,970; 14,7% przy 0,990), Kontrola 5%, wykonanie 0,9 (≈ 36 Kontroli/dobę przy
+0,930), Próbki `WERYFIKACJA_NISKA_PEWNOSC` dla wszystkich Ocen poniżej progu,
+okno 30 dni wypełnione przed dniem 1, wybór progu pesymistyczny: `p_wyb =
+0,930` każdego dnia (krok 1 zawsze chce wrócić do progu sprzed degradacji),
+600 przebiegów po 90 dni; reguły kroków 1–6.
+
+| Scenariusz | P(wyzwolenie) | Mediana dni od degradacji do 1. wyzwolenia | Próg — mediana (p10–p90): dzień 70 / 75 / 80 / 90 | Udział auto — mediana: dzień 75 / 80 / 90 | P(tryb pełnej weryfikacji w dniu 90) | Spadek progu podczas blokady |
+|---|---|---|---|---|---|---|
+| e = 0,5% przez 90 dni | 0,0% | — | 0,930 / 0,930 / 0,930 / 0,930 | 67% / 67% / 67% | 0% | 0 |
+| degradacja jednorodna: e = 0,5% w dniach 1–60, 4% w dniach 61–90 (test (g)) | 98,7% | 13 | 0,930 (0,930–0,970) / 0,970 (0,930–1,000) / 0,990 (0,950–1,000) / 1,000 (0,990–1,000) | 38% / 15% / 0% | 61% | 0 |
+| degradacja skupiona: 8,5% dla p ∈ (0,930; 0,970], 0,5% powyżej, od dnia 61 (łącznie ≈ 4% przy 0,930) | 98,3% | 13 | 0,930 (0,930–0,950) / 0,950 (0,930–0,970) / 0,950 (0,950–0,970) / 0,970 (0,950–0,970) | 55% / 55% / 38% | 0% | 0 |
+| e = 2% przez 90 dni (granica NFR-03) | 44,7% | — | — | średnio 57,5% (zamiast 67%) | 11% | — (wyjście z blokady, potem obniżanie) |
+
+Wnioski: (1) we wszystkich przebiegach z degradacją próg jest
+niemalejący od pierwszego wyzwolenia (100%), więc reakcja jest skuteczna, a
+nie tylko alarmowa; (2) degradacja jednorodna (niezależna od pewności) nie
+maleje po podniesieniu progu, więc w ≤ 4 kolejnych wyzwoleniach para
+przechodzi w tryb pełnej weryfikacji (61% przebiegów do dnia 90); degradacja
+skupiona w niskiej pewności zatrzymuje się na progu 0,950–0,970, przy którym
+LB ≤ 2%; (3) przy e = 2% P(≥ 1 wyzwolenie w 90 dniach) = 44,7% przy oknie
+pełnym od dnia 1 (31–36% w tabeli wyżej, gdzie okno napełnia się od zera) —
+oba wyniki opisują ten sam koszt: średnio 1,1 fałszywego podniesienia na
+kwartał i 11% kwartałów z trybem pełnej weryfikacji na granicy NFR-03
+(D-16, R-22); (4) **odrzucona alternatywa** — dodatkowe okno 7 dni (wyzwolenie
+przy LB > 2% w oknie 30 **lub** 7 dni) skraca medianę wykrycia nagłej
+degradacji z 13 do 7 dni, ale przy e = 2% podnosi P(≥ 1 wyzwolenie) do 72,5%,
+średnią liczbę podniesień do 2,0 na kwartał i P(trybu pełnej weryfikacji) do
+28,5%, a przy e = 1% daje 2,3% kwartałów z wyzwoleniem (okno 30 dni: 0%).
+
+**Dezaktywacja bezpiecznika (wersja 2.4, C4-04 — dawniej „zdjęcie”):**
+wyłącznie Administrator (`POST /admin/bezpieczniki/dezaktywacja`,
+uzasadnienie wymagane), dla obu typów: ustawia `aktywny = false`, `okno_od =
+now()`, `dezaktywowano_at`, `dezaktywowany_przez`,
+`uzasadnienie_dezaktywacji`, więc ponowne wyzwolenie wymaga nowego dowodu z
+Kontroli utworzonych po dezaktywacji (stary materiał nie wyzwala go
+ponownie). Dla typu `POPRAWKI` kończy T-7 dla każdej Poprawki; dla typu
+`TRAFNOSC` kończy Blokadę obniżania progu (jedyne wyjście z trybu pełnej
+weryfikacji wywołanego bezpiecznikiem) — próg obniża potem krok 4 (o ≤ 0,02
+na dobę, z testem 30 dni). Bezpiecznik trafności nie zmienia trasy Oceny
+bezpośrednio: działa przez rekord `prog_pewnosci` (`zrodlo = BEZPIECZNIK`).
 
 **Testy jednostkowe** `tests/kalibracja/test_bezpiecznik.py`: (a) 0 błędów
 dla każdego n = 50 … 188 oraz n ∈ {189, 335, 500, 1 000, 2 000} → brak
@@ -4024,9 +4253,21 @@ błędów → brak, `k_min` → wyzwolenie (wartości z tabeli wyżej); (c)
 podniesienie progu z 0,930 do 0,950 przy 300 Próbkach powyżej 0,930 i 120
 powyżej 0,950 → ocena następnego dnia używa 120 Próbek, a nie 0 (brak
 zapadki); (d) `n_eff < 50` przy 5/40 błędów → brak wyzwolenia; (e)
-bezpiecznik poprawek po zdjęciu: Kontrole sprzed `okno_od` nie są liczone;
+bezpiecznik poprawek po dezaktywacji: Kontrole sprzed `okno_od` nie są liczone;
 (f) przypadek ostrzeżenia (n = 300, k = 3: UB 2,90%, LB 0,34%) → blokada
-obniżania bez podnoszenia progu.
+obniżania bez podnoszenia progu; od wersji 2.4 (C4-02): (g) degradacja 4%
+przez 30 dni (dni 61–90) na tle 60 dni z błędem 0,5% (dane deterministyczne:
+co 25. Kontrola błędna w dniach 61–90, co 200. w dniach 1–60), `p_wyb =
+0,930` każdego dnia → próg niemalejący w każdym dniu od pierwszego
+wyzwolenia, przyrosty wyłącznie o 0,02 (albo 0,990 → 1,000) i tylko w dniach
+z LB > 2%; (h) dzień N: wyzwolenie przy p0 = 0,930 → p_nowy = 0,950; dzień N
++ 1: `p_wyb = 0,930`, LB ≤ 2% < UB → p_nowy = 0,950 (bez oscylacji, krok 4);
+(i) wyjście z blokady: próba powyżej 0,950 z n = 400, k = 2 (UB 1,80%) →
+`aktywny = false`, następnego dnia obniżenie dopuszczone tylko przy
+spełnionym teście 30 dni powyżej progu docelowego; (j) wyzwolenie przy p0 =
+0,990 → `wartosc = 1.000`, a przy `p0 = 1.000` brak automatycznego wyjścia;
+(k) dezaktywacja typu `TRAFNOSC` ustawia `okno_od` i umożliwia obniżenie o
+0,02 na dobę.
 
 **Odsetek Kontroli losowej:** 0.20, dopóki para (konfiguracja, rodzaj) ma
 mniej niż 400 próbek `KONTROLA_LOSOWA` w oknie 90 dni; potem 0.05.
@@ -4137,7 +4378,7 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 | `OCENA_ZMIENIONA` | 409 | Ocena weryfikowana została zastąpiona w międzyczasie (korekta) |
 | `PRZYPISANIE_PO_TERMINIE` | 409 | Odpowiedź w kontekście Przypisania (także z elementu `R-PRZYPISANIE`) po terminie albo Rozwiązanie po terminie + 7 dni (12.5) |
 | `TEST_NIEDOSTEPNY` | 409 | Pula Zadań diagnostycznych pokrywa < 50% planowanych pozycji Testu diagnostycznego (9.1) |
-| `PULA_DIAGNOSTYCZNA_ZA_MALA` | 409 | Zdjęcie flagi `diagnostyczne` obniżyłoby pulę (Dział, poziom matury, Poziom trudności) poniżej 3 (bez `?wymus=true`) |
+| `PULA_DIAGNOSTYCZNA_ZA_MALA` | 409 | Wyłączenie flagi `diagnostyczne` obniżyłoby pulę (Dział, poziom matury, Poziom trudności) poniżej 3 (bez `?wymus=true`) |
 | `ZGLOSZENIE_ZADANIA_ISTNIEJE` | 409 | Nauczyciel ma już otwarte Zgłoszenie błędu w tym Zadaniu |
 | `OSTATNI_ADMINISTRATOR` | 409 | Usunięcie lub blokada ostatniego aktywnego konta Administratora |
 | `LIMIT_PRZESLAN` | 409 | Wyczerpane 3 przesłania zdjęć |
@@ -4148,7 +4389,7 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 | `ZESTAW_UZYWANY` | 409 | Usunięcie Zestawu zadań użytego w Przypisaniu |
 | `KONTO_NIE_DO_PRZYWROCENIA` | 409 | Konto nie jest `USUWANE` albo minęło 30 dni |
 | `KONTO_UCZNIA_NIEAKTYWNE` | 409 | Rozstrzygnięcie lub korekta dla Ucznia w okresie karencji usunięcia konta (ADR-040, C3-08); szkic rozstrzygnięcia pozostaje zapisany |
-| `BEZPIECZNIK_NIEAKTYWNY` | 409 | Zdjęcie bezpiecznika, który nie jest aktywny (ADR-046) |
+| `BEZPIECZNIK_NIEAKTYWNY` | 409 | Dezaktywacja bezpiecznika, który nie jest aktywny (ADR-046, C4-04) |
 | `BRAK_PROGU_DLA_KONFIGURACJI` | 409 | Aktywacja konfiguracji decyzyjnej bez Progu pewności z ZT-1 |
 | `BRAK_RETENCJI_DOSTAWCY` | 409 | Aktywacja konfiguracji bez potwierdzonej retencji dostawcy (A-07) |
 | `KONFLIKT_WERSJI` | 412 | `If-Match` niezgodny |
@@ -4268,7 +4509,7 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | POST | `/admin/progi-pewnosci` | A | — | FR-34 | `{konfiguracja_modelu_id, rodzaj_zadania, wartosc, uzasadnienie}` → `201` (ręczne ustawienie, zawsze ≥ wartości wyznaczonej przez 11.5.3 i bezpiecznik; audyt) |
 | GET | `/admin/kalibracja` | A | — | NFR-02…NFR-04 | → `MetrykiKalibracjiWyjscie` |
 | GET | `/admin/bezpieczniki` | A | — | NFR-03 | → `StanBezpiecznikaWyjscie[]` (ADR-046) |
-| POST | `/admin/bezpieczniki/zdjecie` | A | — | NFR-03 | `{konfiguracja_modelu_id, rodzaj_zadania, typ: "POPRAWKI", uzasadnienie}` → `200 StanBezpiecznikaWyjscie` (`aktywny = false`, `okno_od = now()`; audyt) / `409 BEZPIECZNIK_NIEAKTYWNY` |
+| POST | `/admin/bezpieczniki/dezaktywacja` | A | — | NFR-03 | `DezaktywacjaBezpiecznikaWejscie {konfiguracja_modelu_id, rodzaj_zadania, typ: "POPRAWKI" \| "TRAFNOSC", uzasadnienie (10–1000 znaków)}` → `200 StanBezpiecznikaWyjscie` (`aktywny = false`, `okno_od = dezaktywowano_at = now()`; audyt `BEZPIECZNIK_DEZAKTYWOWANY`) / `409 BEZPIECZNIK_NIEAKTYWNY` / `422 WALIDACJA` (C4-04; ścieżka `/admin/bezpieczniki/zdjecie` z wersji 2.3 nie istnieje) |
 | GET | `/admin/obciazenie-weryfikacji` | A | — | FR-33 | → `ObciazenieWeryfikacjiWyjscie` (model 17.7, G-7) |
 | POST | `/admin/wkladki-teoretyczne/szkice` | A | — | FR-06 | `{umiejetnosc_id}` → `202` (szkic Agenta generującego) |
 | GET | `/admin/praca-w-tle` | A | — | — | `?status=MARTWA&typ` → strona |
@@ -4423,7 +4664,13 @@ interface StanBezpiecznikaWyjscie {     // ADR-046
   konfiguracja_modelu_id: Uuid; rodzaj_zadania: RodzajZadania; typ: "TRAFNOSC" | "POPRAWKI";
   aktywny: boolean; okno_od: Czas; n_eff: number | null; blad_ipw: number | null;
   dolna_granica_bledu: number | null; gorna_granica_bledu: number | null;
-  ostatnie_wyzwolenie_at: Czas | null; zdjeto_at: Czas | null;
+  ostatnie_wyzwolenie_at: Czas | null; wyjscie_z_blokady_at: Czas | null;   // TRAFNOSC: aktywny = Blokada obniżania progu (C4-02)
+  dezaktywowano_at: Czas | null; uzasadnienie_dezaktywacji: string | null;   // nazwy od 2.4 (C4-04)
+  prog_aktywny: number | null;                                              // wartość aktywnego progu pary (1.000 = tryb pełnej weryfikacji)
+}
+interface DezaktywacjaBezpiecznikaWejscie {   // POST /admin/bezpieczniki/dezaktywacja (C4-04)
+  konfiguracja_modelu_id: Uuid; rodzaj_zadania: "OTWARTE_OBLICZENIOWE"; typ: "TRAFNOSC" | "POPRAWKI";
+  uzasadnienie: string;                       // 10..1000 znaków, zapis w stan_bezpiecznika.uzasadnienie_dezaktywacji i dziennik_audytu
 }
 interface ZakresPoprawek { zmienione: number; wstawione: number; kroki_agenta: number; odsetek_znakow: number;
                            limit_miekki_przekroczony: boolean }
@@ -4776,6 +5023,9 @@ class OgranicznikSzybkosci(Protocol):        # ADR-039; implementacja: lokalny t
                                              # False = brak tokenu przed terminy_fal[nr_fali] (nie jest błędem modelu)
     def zwolnij(self, przyjecie: PrzyjeciePlanu) -> None: ...   # usuwa niewykorzystane zapotrzebowanie (pytania warunkowe niezadane)
     def zmniejsz_przydzial(self, konfiguracja_modelu_id: UUID) -> None: ...   # po 429 dostawcy: × 0.5 na 30 s
+    async def odnow(self, konfiguracja_modelu_id: UUID, pula: str = "*") -> tuple[float, int]: ...
+                                             # co 10 s (co 2 s w trybie dołączania): pod pg_advisory_xact_lock liczy
+                                             # (przydzial, pojemnosc) wg 13.2 i publikuje w limit_szybkosci_modelu (C4-05)
 
 class Rownowaznosc(StrEnum):
     ROWNOWAZNE = "ROWNOWAZNE"; NIEROWNOWAZNE = "NIEROWNOWAZNE"; NIEROZSTRZYGNIETE = "NIEROZSTRZYGNIETE"
@@ -4828,27 +5078,68 @@ dla rozkładów z rundy 1. Dwa tryby (parametr konfiguracji
 
 Timeout żądania: `min(2 s, termin − teraz)`. Każde żądanie przechodzi przez
 **globalny ogranicznik szybkości** (ADR-039, C2-07; jedna formuła od wersji
-2.3, C3-04). Proces rejestruje się w `limit_szybkosci_modelu` z wagą swojego
-typu (worker 1,00, `api` 0,10) i pojemnością kubełka (worker 16, `api` 1),
-odnawia wiersz co 10 s i dostaje przydział
+2.3, C3-04; pojemność i dołączanie procesów od wersji 2.4, C4-05). Proces
+rejestruje się w `limit_szybkosci_modelu` (wiersz `pula = '*'`) z wagą
+swojego typu (worker 1,00, `api` 0,10), odnawia wiersz co 10 s i przy każdym
+odnowieniu wylicza **przydział i pojemność** w jednej transakcji z
+`pg_advisory_xact_lock(hashtext('ogranicznik:' || konfiguracja_modelu_id))`
+(odnowienia jednego klucza są serializowane):
 
 ```text
-r_i = 0,8 × limit_klucza × waga_i / Σ waga_j     (j: wiersze z odnowiono_at > now() − 30 s)
-2 workery + 2 api, limit 50/s:  Σ wag = 2,2;  worker r = 18,18/s;  api r = 1,82/s;  workery łącznie 36,36/s
+w_i      = waga wiersza i;  j: wiersze z odnowiono_at > now() − 30 s
+r_i      = min( 0,8 × limit × w_i / Σ w_j ,  0,8 × limit − Σ_{j≠i} przydzial_j )      (≥ 0)
+B_całk   = 34  (tolerancja A-01: 75 − 0,8 × 50 × 1 s − 1 wywołanie zapasu)   albo 10 (ścisłe okno 1 s: 50 − 40), parametr 22
+B_i      = 1                                                                  dla wiersza api
+B_i      = min( ⌊(B_całk − n_api) × w_i / Σ_{j ≠ api} w_j⌋ ,  B_całk − Σ_{j≠i} pojemnosc_j )   dla pozostałych
+publikacja: przydzial := r_i, pojemnosc := B_i; zmniejszenie stosowane lokalnie PRZED COMMIT,
+            zwiększenie — PO COMMIT (używana wartość ≤ opublikowanej w każdej chwili)
+niezmienniki: Σ przydzial_j ≤ 0,8 × limit;  Σ pojemnosc_j ≤ B_całk   (każde odnowienie je zachowuje, bo odczytuje
+            aktualne wartości pozostałych wierszy pod blokadą i ogranicza własną wartość do reszty)
+2 workery + 2 api, limit 50/s:  Σ w = 2,2;  worker r = 18,18/s, B = ⌊32 / 2⌋ = 16;  api r = 1,82/s, B = 1
 ```
 
 Lokalny token bucket procesu ma pojemność `B_i` (z wiersza) i uzupełnia
-się z szybkością `r_i`. **Granulacja: jeden token = jedno wywołanie HTTP**
+się z szybkością `r_i`; zmniejszenie `B_i` obcina bieżącą liczbę tokenów do
+nowej pojemności. **Dołączenie procesu** (start repliki): nowy wiersz
+startuje z pustym kubełkiem (0 tokenów), `r_nowy = min(formuła, 0,8 × limit
+− Σ przydziałów pozostałych)` i `B_nowy = min(formuła, B_całk − Σ
+pojemności pozostałych)` — przy pełnym wykorzystaniu przez dotychczasowe
+procesy oba wynoszą 0 — i odnawia wiersz co 2 s (tryb dołączania), aż
+osiągnie wartości z formuły; dotychczasowe procesy zmniejszają przydział i
+pojemność przy najbliższym odnowieniu (≤ 10 s), więc nowy proces osiąga
+pełny przydział w ≤ 12 s. W wersji 2.3 istniejące procesy do odnowienia
+miały stary przydział, a nowy — pełny (3. worker: 2 × 18,18 + 12,5 + 2 ×
+1,82 ≈ 52,5/s > 50/s); od wersji 2.4 suma opublikowanych przydziałów nigdy
+nie przekracza 40/s. Proces kończący pracę usuwa swój wiersz (`DELETE`);
+proces, który zniknął bez tego, wypada z sum po 30 s. Liczba wierszy innych
+niż `api` nie może przekroczyć `B_całk − n_api` (32): wiersz ponad tę liczbę
+dostaje `B_i = 0`, `r_i = 0` i alert operacyjny
+`ogranicznik_wiersze_ponad_limit > 0` (17.3; granica 8× powyżej 4 replik z
+17.4).
+
+**Granica chwilowa dla N workerów (C4-05).** W dowolnym oknie `T` s procesy
+wysyłają ≤ Σ B_i + Σ r_i × T ≤ B_całk + 0,8 × limit × T wywołań —
+**niezależnie od liczby procesów**, także w trakcie dołączania:
+
+| Konfiguracja (2 × `api`) | Σ w | `r` worker / `api` | `B` worker / `api` | Σ B | Granica 1 s / 5 s (`B_całk = 34`) | Wersja 2.3 (B stałe 16 / 1): granica 1 s | Oczekiwanie fali 16 przy pełnym kubełku | Ścisłe okno (`B_całk = 10`): `B` worker, granica 1 s |
+|---|---|---|---|---|---|---|---|---|
+| 2 workery | 2,2 | 18,18 / 1,82 | 16 / 1 | 34 | 74 / 234 | 74 | 0 s | 4, 50 |
+| 3 workery | 3,2 | 12,50 / 1,25 | 10 / 1 | 32 | 72 / 232 | 90 (> 75) | (16 − 10) / 12,5 = 0,48 s | 2, 48 |
+| 4 workery | 4,2 | 9,52 / 0,95 | 8 / 1 | 34 | 74 / 234 | 106 (> 75) | (16 − 8) / 9,52 = 0,84 s | 2, 50 |
+
+Granica 74 w oknie 1 s jest więc spełniona przy 2, 3 i 4 workerach (A-01:
+tolerancja 75), a w oknie 5 s ≤ 234 ≤ 250. Koszt skalowania: fala 16
+wywołań poza szczytem czeka do 0,48 s (3 repliki) albo 0,84 s (4 repliki)
+na uzupełnienie kubełka; w szczycie kubełki są puste niezależnie od `B`, więc
+oczekiwanie wynika z przydziału (17.4). Fala trybu pojedynczego (≤ 16
+wywołań) przy 2 workerach mieści się w kubełku (`B = 16 ≥ maks. fala`). **Granulacja: jeden token = jedno wywołanie HTTP**
 (tryb wsadowy: żądanie rundy; tryb pojedynczy: każde wywołanie fali). Fala
 trybu pojedynczego (≤ 16 wywołań) mieści się w kubełku workera (`B = 16 ≥
 maks. fala`), więc poza szczytem startuje bez czekania; przy pustym kubełku
-jej wywołania startują w miarę uzupełniania (16 / 18,18 ≈ 0,9 s). Ograniczenie
-chwilowe: w dowolnym oknie `T` s procesy wysyłają ≤ Σ B_i + 0,8 × limit × T =
-34 + 40 T wywołań (T = 1 s: 74 — mieści się w tolerancji A-01 do 75 w oknie
-1 s; T = 5 s: 234 ≤ 250). Gdy G-4 wykaże ścisłe okno 1 s bez tolerancji,
-parametr `pojemnosc_kubelka_workera = 4` daje Σ (B_i + r_i) = 2 × (4 +
-18,18) + 2 × (1 + 1,82) = 50,0 ≤ 50 (wtedy fala czeka do 0,66 s na tokeny,
-budżet 17.2 +1,1 s).
+jej wywołania startują w miarę uzupełniania (16 / 18,18 ≈ 0,9 s). Gdy G-4 wykaże ścisłe okno 1 s bez tolerancji, parametr
+`pojemnosc_laczna_kubelkow = 10` daje przy 2 workerach Σ (B_i + r_i) = 2 ×
+(4 + 18,18) + 2 × (1 + 1,82) = 50,0 ≤ 50 (wtedy fala czeka do 0,66 s na
+tokeny, budżet 17.2 +1,1 s), a przy 3 i 4 workerach ≤ 50 (tabela wyżej).
 
 Kolejność przydziału w procesie: **najpierw wywołania fal ≥ 2 Ocen już
 przyjętych**, potem fale 1 (FIFO w obrębie klasy) — Ocena rozpoczęta nie
@@ -4880,7 +5171,16 @@ i odpowiedzi niezgodne ze schematem. Test jednostkowy
 dostaje 16 tokenów w chwili 0; (b) przy pustym kubełku 16 wywołań kończy się
 w 0,88 s ± 0,01 s; (c) fale ≥ 2 wyprzedzają fale 1 złożone wcześniej; (d) plan
 z przewidywanym końcem > termin miękki jest odrzucany bez zużycia tokenów;
-(e) suma przydziałów = 0,8 × limit przy 2/3/4 workerach i 2 `api`.
+(e) suma przydziałów = 0,8 × limit przy 2/3/4 workerach i 2 `api`; od
+wersji 2.4 (C4-05): (f) **granica chwilowa** — symulowany zegar, N ∈ {2, 3,
+4} workerów i 2 `api`, każdy proces wysyła z maksymalną dozwoloną szybkością,
+losowe chwile dołączenia i odejścia procesów (`hypothesis`, 500 przypadków):
+maksimum wywołań w dowolnym przesuwnym oknie 1 s ≤ 74 przy `B_całk = 34` i ≤
+50 przy `B_całk = 10`, w oknie 5 s ≤ 234; (g) dołączenie 3. workera przy
+pełnym wykorzystaniu: przydział nowego procesu = 0 do odnowienia
+pozostałych, Σ opublikowanych przydziałów ≤ 40/s w każdej chwili, pełny
+przydział 12,5/s po ≤ 12 s; (h) dwa jednoczesne odnowienia (dwa wątki,
+blokada doradcza) nie przekraczają niezmienników.
 
 ```http
 POST {JEV_URL}/v1/decisions
@@ -4955,15 +5255,15 @@ Pule (13.4): `R` — ROZPOZNAWANIE, `S` — SPRAWDZANIE (od wersji 2.3, C3-05), 
 | `GENERUJ_SZKIC_WKLADKI` | W | `{umiejetnosc_id}` | `umiejetnosc_id` | 7 | 3 | 1 min, 10 min | brak Wkładki `SZKIC`/`DO_PRZEGLADU`/`OPUBLIKOWANA` dla Umiejętności; < 2 automatycznych szkiców tej Umiejętności `WYCOFANA` w 30 dniach (`ix_wkladka_automatyczne_odrzucone`); budżet generowania systemowego 12.7 nieprzekroczony (inaczej `dostepna_od` = 00:00 UTC następnego dnia); zapis `wygenerowana_automatycznie = true`, `koszt_generowania_pln` | alert dla Administratorów („Wkładka wymaga autora” po 2 odrzuceniach) |
 | `IMPORTUJ_ARKUSZ` | W | `{import_id}` | id | 5 | 1 | — | import `OCZEKUJE` | import `ODRZUCONY` |
 | `EWALUUJ_ZT1` | W | `{konfiguracja_modelu_id}` | id | 8 | 1 | — | brak `prog_pewnosci` `EWALUACJA_ZT1` dla konfiguracji | alert |
-| `KALIBRUJ` | W | `{data}` | data | 8 | 3 | 10 min | brak kalibratora `KALIBRACJA_AUTOMATYCZNA` z tą datą; po wyborze progu ocena bezpieczników trafności i poprawek (11.5.3, ADR-046) i `UPSERT stan_bezpiecznika` | alert |
+| `KALIBRUJ` | W | `{data}` | data | 8 | 3 | 10 min | brak kalibratora `KALIBRACJA_AUTOMATYCZNA` z tą datą; kroki 1–6 „Wynik dnia KALIBRUJ” (11.5.3, C4-02): wybór progu, ocena bezpieczników na stanie sprzed przebiegu, Blokada obniżania progu, dozwolone obniżenie, łączny wynik, jeden `INSERT prog_pewnosci` i `UPSERT stan_bezpiecznika` (ADR-046) | alert |
 | `USUN_ZDJECIA` | W | `{}` | `cykl` | 3 | 5 | 1 min | selekcja 9.10 | alert RODO |
 | `ESKALUJ_WERYFIKACJE` | W | `{godzina}` | godzina | 5 | 3 | 5 min | reguły 11.4.3 (terminy w dniach roboczych) + kontrola przyjęć globalna i per Klasa (`odsetek_eskalacji_7d`) + dzienne podsumowanie dla Nauczycieli (05:00 UTC, tylko w dni robocze) | alert |
 | `ZAMIATAJ_PROFILE` | W | `{}` | `cykl` | 2 | 3 | 1 min | `SELECT DISTINCT uczen_id FROM wynik_zadania` po `ix_wynik_do_profilu` z `created_at` lub `uniewazniony_at` < `now() − 2 min`, konto `AKTYWNE`, `LIMIT 500` → zlecenie `AKTUALIZUJ_PROFIL`; metryka `wynik_najstarszy_niezastosowany_sekundy` (C2-04) | alert |
 | `SPRAWDZ_PULE_DIAGNOSTYCZNA` | W | `{data}` | data | 8 | 3 | 10 min | dla każdej trójki (Dział, poziom matury, nominalny Poziom trudności ∈ {2, 4}) liczba Zadań diagnostycznych `OPUBLIKOWANE` ≥ 3 (9.1, G-5) | `ALERT_PULA_DIAGNOSTYCZNA` |
-| `UZGODNIJ_REJESTR_RODO` | W | `{}` | `cykl` | 3 | 5 | 1 min | (1) obiekty `rejestr-zdarzen-rodo/zdarzenia/` z ostatnich 24 h, starsze niż 5 min, z `zrodlo = API` i bez wiersza `zdarzenie_rodo` o tym `id` (zatwierdzenie transakcji `api` nie powiodło się) → zapis obiektu kompensującego `{typ: "UNIEWAZNIENIE", zdarzenie_id}`; (2) obiekty `zrodlo = WORKER` (`USUNIECIE_WYKONANE`) **nigdy nie są unieważniane** — stanem docelowym jest usunięcie konta: gdy 2 h po zapisie obiektu `uzytkownik` o tym `uzytkownik_id` nadal istnieje, praca zleca ponownie `USUN_KONTO` (klucz `uzytkownik_id`), a po 26 h — `ALERT_RODO` (ADR-041, C3-03) | `ALERT_RODO` |
+| `UZGODNIJ_REJESTR_RODO` | W | `{}` | `cykl` | 3 | 5 | 1 min | (1) obiekty `rejestr-zdarzen-rodo/zdarzenia/` z ostatnich 24 h, starsze niż 5 min, z `zrodlo = API` i bez wiersza `zdarzenie_rodo` o tym `id` (zatwierdzenie transakcji `api` nie powiodło się) → zapis obiektu kompensującego `{typ: "UNIEWAZNIENIE", zdarzenie_id}`; przy cyklu co 5 min (13.5) zdarzenie bez transakcji jest unieważniane najpóźniej **10 min** po zapisie obiektu (5 min wieku + ≤ 5 min do następnego przebiegu; wersja 2.3: cykl 10 min, czyli do 15 min — C4-06 p. 2); (2) obiekty `zrodlo = WORKER` (`USUNIECIE_WYKONANE`, prefiks `rejestr-zdarzen-rodo/wykonane/` bez daty) **nigdy nie są unieważniane** — stanem docelowym jest usunięcie konta: gdy 2 h po zapisie obiektu `uzytkownik` o tym `uzytkownik_id` nadal istnieje, praca zleca ponownie `USUN_KONTO` (klucz `uzytkownik_id`), a po 26 h — `ALERT_RODO` (ADR-041, C3-03) | `ALERT_RODO` |
 | `PORZUC_NIEZATWIERDZONE` | W | `{data}` | data | 5 | 3 | 10 min | Rozwiązania 7 dni w `PRZESLANE`/`TRANSKRYPCJA_GOTOWA`/`BLAD_ROZPOZNAWANIA` → `PORZUCONE`, `usun_po := now()` | alert |
 | `WYGAS_ELEMENTY` | W | `{}` | `cykl` | 5 | 3 | 1 min | konto `AKTYWNE`; `PROPONOWANY` z `wygasa_at < now()` → `WYGASLY`; `ROZPOCZETY` z `wygasa_at < now()` → `POMINIETY` (Wkładka bez przeczytania, 8.5; Zadanie bez Rozwiązania nieterminalnego); Seria nieaktywna 7 dni → zakończona | — |
-| `USUN_KONTO` | W | `{uzytkownik_id}` | id | 3 | 5 | 1 h | `status = USUWANE` i `usuniecie_zaplanowane_at ≤ now()` **albo** istnieje obiekt `USUNIECIE_WYKONANE` dla konta (ponowienie po awarii, PITR); kroki 0–6 z 16.4 (Uczeń) albo 16.4 „Usunięcie konta Nauczyciela lub Administratora”; krok 0 = zapis obiektu `USUNIECIE_WYKONANE` (`zrodlo = WORKER`, deterministyczne `id`, `If-None-Match: *` — istniejący obiekt oznacza ponowienie i jest akceptowany) | `ALERT_RODO` |
+| `USUN_KONTO` | W | `{uzytkownik_id}` | id | 3 | 5 | 1 h | `status = USUWANE` i `usuniecie_zaplanowane_at ≤ now()` **albo** istnieje obiekt `USUNIECIE_WYKONANE` dla konta (ponowienie po awarii, PITR); kroki wg `uzytkownik.rola`: 0–6 z 16.4 (`UCZEN`) albo (1)–(5) z 16.4 „Usunięcie konta Nauczyciela lub Administratora” (`NAUCZYCIEL`, `ADMINISTRATOR`); krok 0 = zapis obiektu `USUNIECIE_WYKONANE` (`zrodlo = WORKER`, deterministyczne `id`, `dane.rola`, klucz bez daty `rejestr-zdarzen-rodo/wykonane/{uzytkownik_id}/{id}.json`, `If-None-Match: *` — istniejący obiekt oznacza ponowienie w dowolnym dniu i jest akceptowany, C4-06 p. 3); każdy krok jest idempotentny, więc ponowienie po przerwaniu w dowolnym kroku (awaria, PITR) kończy usunięcie (C4-01) | `ALERT_RODO` |
 | `UTRZYMAJ_PARTYCJE` | W | `{}` | miesiąc | 8 | 3 | 1 h | brak partycji na 3 miesiące naprzód | alert |
 | `WYCZYSC_DANE_TECHNICZNE` | W | `{}` | data | 8 | 3 | 1 h | `decyzja_modelu.stan := NULL` po 180 dniach; klucze idempotencji po `wygasa_at`; `proba_logowania` po 30 dniach; zakończone prace po 7 dniach; `DELETE FROM zdarzenie_rodo WHERE created_at < now() − interval '2 years'` (16.4, C3-09) | alert |
 | `WYSLIJ_EMAIL` | W | `{szablon, adresat, dane}` | — | 4 | 5 | 1, 5, 15, 60 min | — | wpis w logu |
@@ -5050,9 +5350,16 @@ RETURNING id, typ, status;
   C3-05), `OCENIANIE` 15 (`OCEN_ROZWIAZANIE`, `PONOW_OCENE`), `POMOCNICZA` 6
   (`NAPISZ_WSKAZOWKE`, `AKTUALIZUJ_PROFIL`), `WOLNA` 4 (pozostałe). Dwie
   repliki: 30 / 8 / 30 / 12 / 8. Pule R i S korzystają z jednego limitu
-  dostawcy rozpoznawania (A-08 ≥ 150/min), pilnowanego ogranicznikiem
-  procesu o tej samej konstrukcji co 13.2 (przydział 0,8 × 150/min, wagi R
-  1,0 i S 0,3). Pule są rozłączne, więc szczyt rozpoznawania nie
+  dostawcy rozpoznawania (A-08 ≥ 150/min), pilnowanego ogranicznikiem o tej
+  samej konstrukcji co 13.2 (przydział 0,8 × 150 = 120/min, okno 60 s,
+  `B_całk = 150 − 120 = 30`, wagi R 1,0 i S 0,3). Klucz rejestru
+  `(konfiguracja_modelu_id, wykonawca, pula)` (C4-06 p. 8): każda replika ma
+  dwa wiersze konfiguracji roli `ROZPOZNAWANIE_PISMA` — `('worker#1',
+  'ROZPOZNAWANIE')` i `('worker#1', 'SPRAWDZANIE')`; przy 2 replikach Σ w =
+  2,6, R: 46,2/min i `B = ⌊30 × 1,0 / 2,6⌋ = 11`, S: 13,8/min i `B = ⌊30 ×
+  0,3 / 2,6⌋ = 3` na replikę (Σ B = 28 ≤ 30; w oknie 60 s ≤ 28 + 120 = 148 ≤
+  150). Wersja 2.3 miała klucz `(konfiguracja_modelu_id, wykonawca)`, w którym
+  dwie pule jednej repliki nie mieściły się jako osobne wiersze. Pule są rozłączne, więc szczyt rozpoznawania nie
   blokuje oceniania, a generowanie Zadań nie zagłodzi żadnej z nich.
 - Zakończone prace są usuwane po 7 dniach, `MARTWA` — po 30 dniach.
 
@@ -5066,7 +5373,7 @@ dedykowanym połączeniu; druga instancja czeka w trybie gotowości.
 | co 30 s | odzyskiwanie dzierżaw (13.4) |
 | co 1 min | `ZWOLNIJ_BLOKADY_WERYFIKACJI` (SQL 11.4.2, wykonywany bezpośrednio przez scheduler), `WYGAS_ELEMENTY` |
 | co 5 min | `ZAMIATAJ_PROFILE` (C2-04) |
-| co 10 min | `UZGODNIJ_REJESTR_RODO` (ADR-041) |
+| co 5 min | `UZGODNIJ_REJESTR_RODO` (ADR-041; od wersji 2.4 co 5 min — okno unieważniania ≤ 10 min, C4-06 p. 2) |
 | co 1 h | `USUN_ZDJECIA`, `USUN_KOPIE_TRENINGOWE`, `ESKALUJ_WERYFIKACJE` |
 | codziennie 02:00 UTC | `PORZUC_NIEZATWIERDZONE`, `USUN_KONTO` (dla zaplanowanych), `WYCZYSC_DANE_TECHNICZNE` |
 | codziennie 03:00 UTC | `KALIBRUJ` |
@@ -5097,8 +5404,8 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | `WkladkaDoPrzegladu` | `wkladka_teoretyczna_id` | powiadomienie `WKLADKA_DO_PRZEGLADU` dla recenzentów treści i Administratorów |
 | `PrzypisanieUtworzone` | `przypisanie_id` | powiadomienia `NOWE_PRZYPISANIE` |
 | `ZgloszenieBleduZadaniaUtworzone` | `zgloszenie_id, zadanie_id` | powiadomienie `ZGLOSZENIE_BLEDU_ZADANIA` dla recenzentów i Administratorów; przy 3 otwartych od różnych Nauczycieli `INSERT INTO wstrzymanie_w_doborze … ON CONFLICT DO NOTHING` (ADR-038) |
-| `KontoUsuwane` | `uzytkownik_id, rola` | (Nauczyciel) eskalacja jego Weryfikacji `KLASA` z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`, zwolnienie jego blokad `W_TRAKCIE` **z zachowaniem szkiców**; flagi `weryfikator_globalny` i `recenzent_tresci` pozostają do `USUN_KONTO` (konto `USUWANE` nie loguje się i nie jest liczone w puli G-7); `KLASA_DO_PRZEKAZANIA` dla Administratorów (ADR-044, C3-08) |
-| `KontoPrzywrocone` | `uzytkownik_id, rola` | wznowienie procesów wg tabel przywrócenia 16.4 (ADR-040): (Uczeń) ponowne zlecenie przerwanych prac, nowe `termin_at` otwartych Weryfikacji, `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` dla Rozwiązań bez aktualnej kopii; (Nauczyciel) powrót Weryfikacji eskalowanych z powodu karencji do kolejki `KLASA`, oznaczenie nieprzeczytanych `KLASA_DO_PRZEKAZANIA` jako nieaktualne (16.4) |
+| `KontoUsuwane` | `uzytkownik_id, rola` | publikowane przez funkcję domenową `SluzbaKont.zastosuj_wniosek_o_usuniecie` — w transakcji wniosku `api` **i** w ponowieniu `WNIOSEK_O_USUNIECIE` przez `ponow_zdarzenia_rodo` (16.4, C4-01); reakcje wykonywane w tej samej transakcji (UPDATE Weryfikacji, INSERT powiadomień), prace w tle wstawiane do `praca_w_tle`; (Nauczyciel) eskalacja jego Weryfikacji `KLASA` z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`, zwolnienie jego blokad `W_TRAKCIE` **z zachowaniem szkiców**; flagi `weryfikator_globalny` i `recenzent_tresci` pozostają do `USUN_KONTO` (konto `USUWANE` nie loguje się i nie jest liczone w puli G-7); `KLASA_DO_PRZEKAZANIA` dla Administratorów (ADR-044, C3-08) |
+| `KontoPrzywrocone` | `uzytkownik_id, rola` | publikowane przez `SluzbaKont.zastosuj_anulowanie_usuniecia` — w `api` i w `ponow_zdarzenia_rodo` (C4-01); wznowienie procesów wg tabeli przywrócenia 16.4 właściwej dla `rola` (ADR-040); (Nauczyciel) także koniec kontroli przyjęć Klas z warunku „konto `USUWANE`” (11.4.3): (Uczeń) ponowne zlecenie przerwanych prac, nowe `termin_at` otwartych Weryfikacji, `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` dla Rozwiązań bez aktualnej kopii; (Nauczyciel) powrót Weryfikacji eskalowanych z powodu karencji do kolejki `KLASA`, oznaczenie nieprzeczytanych `KLASA_DO_PRZEKAZANIA` jako nieaktualne (16.4) |
 
 ---
 
@@ -5128,7 +5435,7 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | E-18 | Import arkusza z błędami | walidacja schematu | import `ODRZUCONY`, raport per numer Zadania, nic nie zapisano | Administrator poprawia ZIP i ponawia |
 | E-19 | Brak Zadań w strefie rozwoju | dobór 10.1.2 krok 7 | Zadanie najbliższe + `UZUPELNIJ_PULE` | uzasadnienie z faktycznym P(sukces) |
 | E-20 | Brak opublikowanej Wkładki teoretycznej | dobór 10.1.2 krok 6 | Zadanie zamiast Wkładki, Seria rozpoczęta, praca `GENERUJ_SZKIC_WKLADKI` (szkic → `DO_PRZEGLADU` → powiadomienie recenzentów), metryka `brak_wkladki_total{umiejetnosc}` | Zadanie zamiast Wkładki do czasu publikacji szkicu |
-| E-21 | Trwałe pogorszenie trafności auto-ocen | bezpiecznik trafności 11.5.3: dolna granica Wilsona 95% błędu Kontroli losowych powyżej bieżącego progu > 2% przy `n_eff ≥ 50` (ADR-046; przy 0 błędach nigdy) | podniesienie progu o 0.02 na dobę, alert; przy UB > 2% i LB ≤ 2% (`n_eff ≥ 189`) — tylko blokada obniżania | więcej Ocen wstępnych |
+| E-21 | Trwałe pogorszenie trafności auto-ocen | bezpiecznik trafności 11.5.3: dolna granica Wilsona 95% błędu Kontroli losowych powyżej bieżącego progu > 2% przy `n_eff ≥ 50` (ADR-046; przy 0 błędach nigdy) | podniesienie progu o 0.02 względem progu sprzed przebiegu i Blokada obniżania progu do UB ≤ 2% przy `n_eff ≥ 189` (kroki 1–6 11.5.3, C4-02); wyzwolenie przy progu 0,990 → tryb pełnej weryfikacji (1.000, D-16), wyjście przez dezaktywację; przy UB > 2% i LB ≤ 2% (`n_eff ≥ 189`) — tylko blokada obniżania | więcej Ocen wstępnych |
 | E-22 | Zaległe usuwanie zdjęć > 24 h | metryka `zdjecia_zalegle` | alert krytyczny dla Administratora | brak |
 | E-23 | Niepowodzenie wysyłki e-mail | błąd SMTP | 5 ponowień (1–60 min) | e-mail resetu dociera z opóźnieniem |
 | E-24 | Nieznany wyjątek w handlerze | catch-all w pętli workera | log z `trace_id`, traktowany jak błąd przejściowy (ponowienia), potem `po_wyczerpaniu` | jak dla danego typu pracy |
@@ -5144,7 +5451,7 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | E-34 | Pula Zadań diagnostycznych niepełna | `SPRAWDZ_PULE_DIAGNOSTYCZNA`, dobór 9.1 | test częściowy (`pominiete_dzialy`) albo `409 TEST_NIEDOSTEPNY` przy < 50%; `ALERT_PULA_DIAGNOSTYCZNA` | Uczeń zaczyna z Profilem `DOMYSLNA` i może wykonać test później |
 | E-35 | Zdjęcie o nadmiernych wymiarach (bomba dekompresyjna) lub nieprawidłowy plik | odczyt nagłówka w piaskownicy `api`, `MAX_IMAGE_PIXELS`, `RLIMIT_AS` | `422 ZDJECIE_NIEPRAWIDLOWE`; proces piaskownicy zastępowany po przekroczeniu limitu | komunikat „Nie udało się odczytać zdjęcia — zrób je ponownie aparatem w aplikacji” |
 | E-36 | Bucket `rejestr-zdarzen-rodo` niedostępny przy Zdarzeniu RODO | wyjątek klienta S3 przed transakcją | `503 USLUGA_NIEDOSTEPNA`, nic nie zapisano w bazie (ADR-041); w `USUN_KONTO` — błąd przejściowy pracy, ponowienie co 1 h, żaden krok w bazie nie startuje przed zapisem obiektu | „Spróbuj za chwilę”; PWA ponawia z tym samym `Idempotency-Key` |
-| E-37 | Filtr danych osobowych: krok z treścią matematyczną w ramce danych osobowych (`konflikt_filtra`) | Filtr 10.3.1 p. 3a | treść kroku zachowana, T-3 (`PODEJRZENIE_BLEDU_ODCZYTU`) — Ocena wstępna wstrzymana do Weryfikacji (11.1 p. 7d); metryka `konflikt_filtra_total` | „Ocena wstrzymana — możliwy błąd odczytu…” (komunikat T-3) |
+| E-37 | Filtr danych osobowych: krok z treścią matematyczną (po wyłączeniu tokenów imienia, nazwiska, inicjałów i oznaczenia klasy, C4-03) w ramce danych osobowych (`konflikt_filtra`) | Filtr 10.3.1 p. 3a | treść kroku zachowana (poza zastąpieniami b1/b2/c), T-3 (`PODEJRZENIE_BLEDU_ODCZYTU`) — Ocena wstępna wstrzymana do Weryfikacji (11.1 p. 7d); metryka `konflikt_filtra_total` | „Ocena wstrzymana — możliwy błąd odczytu…” (komunikat T-3) |
 | E-38 | Obiekty magazynu bez wiersza w bazie (awaria między zapisem obiektu a transakcją albo odtworzenie PITR) | `SPRZATAJ_OSIEROCONE_OBIEKTY` | usunięcie obiektu (tryb `CODZIENNY` po 1 h; tryb `ODTWORZENIE` przed startem workerów), metryka; przyrost > 100 obiektów na dobę w trybie `CODZIENNY` → `ALERT_RODO` (ADR-047) | brak |
 
 ### 14.2 Terminy oceny i reguła T-6
@@ -5238,8 +5545,10 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | C-34 | Odtworzenie bazy z PITR do punktu sprzed żądania usunięcia konta lub odwołania zgody | Zdarzenia RODO w buckecie Object Lock zapisane **przed** transakcją; `ponow_zdarzenia_rodo` stosuje zdarzenia późniejsze niż punkt odtworzenia, zanim wystartują `worker` i `scheduler` (16.4, ADR-041) | konto wraca do `USUWANE` z pierwotnym `usuniecie_zaplanowane_at`, zgoda do `false`, kopie treningowe z `usun_po = now()`; żadna kopia nie powstaje wbrew odwołanej zgodzie (C2-09) |
 | C-35 | `PUT …/transkrypcja` (nowa wersja Poprawek) równolegle z zakończeniem `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` dla poprzedniej wersji | rezultat zapisywany `WHERE id = :transkrypcja_id` (wersja, którą sprawdzano); `OCEN_ROZWIAZANIE` czyta `zgodnosc_poprawek` **zatwierdzonej** wersji | rezultat starej wersji nie dotyczy nowej; brak rezultatu dla wersji zatwierdzonej → T-7 (C2-01) |
 | C-36 | Trzech Nauczycieli zgłasza błąd tego samego Zadania `GLOBALNY` równolegle | `ux_zgloszenie_zadania_otwarte`; każda transakcja zgłoszenia najpierw wykonuje `SELECT 1 FROM zadanie WHERE id = :id FOR UPDATE` (blokada bez modyfikacji wiersza — serializuje zgłoszenia), potem `INSERT` zgłoszenia i `INSERT INTO wstrzymanie_w_doborze (zadanie_id, liczba_zgloszen) SELECT :id, count(DISTINCT nauczyciel_id) FROM zgloszenie_bledu_zadania WHERE zadanie_id = :id AND status = 'OTWARTE' HAVING count(DISTINCT nauczyciel_id) >= 3 ON CONFLICT (zadanie_id) DO NOTHING` | wstrzymanie ustawione dokładnie raz; dobór pomija Zadanie od następnej rekomendacji (C2-03); `zadanie.version` bez zmian, więc recenzent z `If-Match` Z nie dostaje `412` po nowym zgłoszeniu (C3-09) |
-| C-37 | Nauczyciel rozstrzyga Weryfikację, a Uczeń w tym czasie składa wniosek o usunięcie konta (C3-08) | rozstrzygnięcie i korekta w transakcji z `SELECT rozwiazanie FOR UPDATE` sprawdzają `uzytkownik.status = 'AKTYWNE'` Ucznia po blokadzie; transakcja wniosku zmienia `status` w jednej transakcji | rozstrzygnięcie zatwierdzone przed wnioskiem — Ocena Nauczyciela istnieje (przetwarzanie przed wnioskiem); zatwierdzane po wniosku — `409 KONTO_UCZNIA_NIEAKTYWNE`, szkic zachowany, po przywróceniu konta Nauczyciel podejmuje Weryfikację ponownie |
+| C-37 | Nauczyciel rozstrzyga Weryfikację, a Uczeń w tym czasie składa wniosek o usunięcie konta (C3-08) | rozstrzygnięcie i korekta w transakcji z `SELECT rozwiazanie FOR UPDATE` odczytują stan konta Ucznia przez `SELECT status FROM uzytkownik WHERE id = :uczen_id FOR SHARE` (wersja 2.4, C4-06 p. 4 — w wersji 2.3 odczyt bez blokady wiersza `uzytkownik`, a transakcja wniosku nie blokowała `rozwiazanie`, więc wniosek zatwierdzony między sprawdzeniem a `COMMIT` dawał Ocenę Nauczyciela po wniosku); `UPDATE uzytkownik SET status = 'USUWANE'` wniosku czeka na zwolnienie `FOR SHARE` albo `FOR SHARE` czeka na `COMMIT` wniosku; kolejność blokad 9.6.2 wyklucza zakleszczenie | rozstrzygnięcie zatwierdzone przed wnioskiem — Ocena Nauczyciela istnieje (przetwarzanie przed wnioskiem); zatwierdzane po wniosku — `409 KONTO_UCZNIA_NIEAKTYWNE`, szkic zachowany, po przywróceniu konta Nauczyciel podejmuje Weryfikację ponownie |
 | C-38 | Autozapis Poprawki (`PUT`) w trakcie wykonywania `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` dla poprzedniej wersji (C3-05) | deduplikacja po `rozwiazanie_id` tylko wśród `OCZEKUJE` (nowa praca zlecana obok pracy `W_TOKU`); zapis rezultatu `UPDATE transkrypcja … WHERE id = :transkrypcja_id AND zgodnosc_poprawek IS NULL` i warunek „najnowsza wersja” | rezultat dla starszej wersji jest odrzucany (rezultat przestarzały); Ocena czeka na rezultat wersji zatwierdzonej |
+| C-39 | Odtworzenie bazy z PITR do punktu `T` w trakcie `USUN_KONTO` (po kroku 1, przed krokiem 5) albo w trakcie usunięcia konta Nauczyciela (C4-01) | dla `USUNIECIE_WYKONANE` kryterium zastosowania = „wiersz `uzytkownik` nie istnieje”, a nie „wiersz `zdarzenie_rodo` istnieje”; `ponow_zdarzenia_rodo` przegląda cały prefiks `wykonane/` i wykonuje idempotentne kroki właściwe dla `dane.rola` tymi samymi funkcjami domenowymi co `USUN_KONTO` (16.4) | konto usunięte przed startem workerów, dane Nauczyciela spseudonimizowane w uzasadnieniach rekomendacji; G-6 (a3), (a4) |
+| C-40 | Start 3. repliki workera w szczycie „koniec lekcji”, gdy 2 workery i 2 `api` wykorzystują pełny przydział (C4-05) | odnowienia wierszy `limit_szybkosci_modelu` pod `pg_advisory_xact_lock` klucza; nowy wiersz: pusty kubełek, `r = min(formuła, 0,8 × limit − Σ przydziałów pozostałych)` i `B = min(formuła, B_całk − Σ pojemności pozostałych)`; zmniejszenia stosowane przed `COMMIT`, zwiększenia po | Σ przydziałów ≤ 40/s i Σ pojemności ≤ 34 w każdej chwili, ≤ 74 wywołania w dowolnym oknie 1 s; nowa replika osiąga 12,5/s po ≤ 12 s; test 13.2 (f)–(h), G-3 (c) |
 
 ---
 
@@ -5354,8 +5663,9 @@ karencji (ADR-040, C2-08):
 
 1. `api` zapisuje Zdarzenie RODO `WNIOSEK_O_USUNIECIE` do bucketu
    `rejestr-zdarzen-rodo/zdarzenia/{rrrr-mm-dd}/{uzytkownik_id}/{id}.json`
-   (Object Lock COMPLIANCE, 60 dni; `{id, uzytkownik_id, typ, created_at,
-   dane: {usuniecie_zaplanowane_at}}`), a **potem** w jednej transakcji:
+   (Object Lock COMPLIANCE, 60 dni; `{id, uzytkownik_id, typ, zrodlo: "API",
+   created_at, dane: {rola, usuniecie_zaplanowane_at}}` — `rola` w każdym
+   zdarzeniu od wersji 2.4, C4-01), a **potem** w jednej transakcji:
    `status = USUWANE`, `usuniecie_zaplanowane_at = now() + 30 dni`, wiersz
    `zdarzenie_rodo`, unieważnienie refresh tokenów (brak logowania).
    Niedostępny bucket → `503`, nic nie zapisano (E-36).
@@ -5389,11 +5699,15 @@ zdarzenie wykonawcze zapisuje `worker`, a jego wiersz w bazie powstaje w
 pierwszej transakcji):
 
 0. zapis Zdarzenia RODO `USUNIECIE_WYKONANE` (`{id, uzytkownik_id, typ,
-   zrodlo: "WORKER", created_at, dane: {zaplanowano_at}}`, `id` =
+   zrodlo: "WORKER", created_at, dane: {rola, zaplanowano_at}}`, `id` =
    `uuid5(NS_RODO, 'USUNIECIE_WYKONANE:' || uzytkownik_id)`) do bucketu
-   `rejestr-zdarzen-rodo/zdarzenia/{rrrr-mm-dd}/{uzytkownik_id}/{id}.json`
-   (Object Lock COMPLIANCE, 60 dni, `If-None-Match: *` — istniejący obiekt
-   oznacza ponowienie pracy i jest akceptowany) — **przed** jakąkolwiek
+   `rejestr-zdarzen-rodo/wykonane/{uzytkownik_id}/{id}.json` — klucz **bez
+   daty** (wersja 2.4, C4-06 p. 3: w wersji 2.3 klucz zawierał datę zapisu,
+   więc ponowienie w innym dniu UTC — przez `UZGODNIJ_REJESTR_RODO` po 2 h
+   albo po PITR — tworzyło drugi obiekt z tym samym `id` mimo `If-None-Match:
+   *`) (Object Lock COMPLIANCE, 60 dni, `If-None-Match: *` — istniejący obiekt
+   oznacza ponowienie pracy w dowolnym dniu i jest akceptowany, a jego
+   `created_at` pozostaje pierwotne) — **przed** jakąkolwiek
    zmianą w bazie; `UZGODNIJ_REJESTR_RODO` nigdy nie unieważnia obiektów
    `zrodlo = WORKER` (13.3);
 1. jedna transakcja: `INSERT INTO zdarzenie_rodo (id, uzytkownik_id, typ,
@@ -5419,7 +5733,8 @@ pierwszej transakcji):
 
 **Odwołanie i udzielenie zgody na trening** (`PATCH /uczniowie/ja` z
 `zgoda_na_trening`): przed transakcją `api` zapisuje do bucketu Zdarzenie
-RODO `ODWOLANIE_ZGODY` albo `UDZIELENIE_ZGODY`; transakcja zmienia
+RODO `ODWOLANIE_ZGODY` albo `UDZIELENIE_ZGODY` (`dane: {rola: "UCZEN"}`);
+transakcja zmienia
 `uczen.zgoda_na_trening`, zapisuje `zdarzenie_rodo` i (odwołanie) ustawia
 `kopia_treningowa.usun_po := now()`.
 
@@ -5433,22 +5748,51 @@ odtworzenia (runbook, testowana w G-6):
    nie może działać na stanie sprzed zdarzeń), `api` działa w trybie
    konserwacji (`503`);
 2. skrypt `ponow_zdarzenia_rodo` czyta z bucketu `rejestr-zdarzen-rodo` (poza
-   odtwarzaną bazą) zdarzenia z `created_at > T − 5 min` (zakładka na
-   rozbieżność zegarów), pomija zdarzenia `zrodlo = API` unieważnione
-   obiektem kompensującym `UNIEWAZNIENIE` (`UZGODNIJ_REJESTR_RODO`) oraz
-   zdarzenia, których `id` już jest w `zdarzenie_rodo`, i stosuje pozostałe
-   chronologicznie, idempotentnie: `WNIOSEK_O_USUNIECIE` → `status =
-   USUWANE`, `usuniecie_zaplanowane_at` z danych zdarzenia (pierwotny
-   termin, nie przesunięty); `ANULOWANIE_USUNIECIA` → przywrócenie (tabela
-   wyżej); `USUNIECIE_WYKONANE` (`zrodlo = WORKER`, nigdy unieważniane) →
-   kroki 1–6 `USUN_KONTO` wykonywane **synchronicznie przez skrypt** (krok
-   0 jest już zapisany; usuwanie obiektów zdjęć i kopii jest idempotentne),
-   niezależnie od tego, ile czasu minęło od usunięcia — wersja 2.2
-   unieważniała to zdarzenie po 5 min, więc przywrócone dane konta
-   czekały na nocne `USUN_KONTO` (C3-03); `ODWOLANIE_ZGODY` →
-   `zgoda_na_trening = false` i `usun_po := now()` kopii;
-   `UDZIELENIE_ZGODY` → `zgoda_na_trening = true`; każde zastosowanie
-   zapisuje wiersz `zdarzenie_rodo` z tym samym `id` i `zrodlo`;
+   odtwarzaną bazą) dwa zbiory obiektów: (i) zdarzenia `zrodlo = API` z
+   prefiksów `zdarzenia/{rrrr-mm-dd}/` od daty `T − 5 min` do dziś, z
+   `created_at > T − 5 min` (zakładka na rozbieżność zegarów i czas
+   transakcji po zapisie obiektu); (ii) **wszystkie** obiekty prefiksu
+   `wykonane/` (`USUNIECIE_WYKONANE`, `zrodlo = WORKER`) bez filtra czasu —
+   retencja 60 dni ≥ okno PITR 14 dni, a obiekt zapisany przed `T − 5 min`
+   może dotyczyć usunięcia, którego kroki 2–5 trwały jeszcze po `T` (przy
+   górnym oszacowaniu 30 usunięć kont na dobę zbiór ma ≤ 1 800 obiektów, 2
+   wywołania LIST).
+   Zdarzenia są stosowane chronologicznie po `created_at`, a dla jednego
+   konta `USUNIECIE_WYKONANE` zawsze na końcu. **Kryterium „skutek już
+   zastosowany” zależy od źródła (wersja 2.4, C4-01):**
+
+   | Źródło zdarzenia | Zdarzenie pomijane, gdy | Uzasadnienie |
+   |---|---|---|
+   | `API` | unieważnione obiektem `UNIEWAZNIENIE` **albo** jego `id` jest w `zdarzenie_rodo` | wiersz powstaje w tej samej transakcji co skutek, więc jego istnienie oznacza zatwierdzony skutek |
+   | `WORKER` (`USUNIECIE_WYKONANE`) | wiersz `uzytkownik` o tym `uzytkownik_id` **nie istnieje** | wiersz `zdarzenie_rodo` powstaje w kroku 1, na **początku** usunięcia; punkt `T` między krokiem 1 a krokiem 5 (aktualizacja partycji `decyzja_modelu`, usuwanie obiektów, `DELETE`) daje bazę z wierszem zdarzenia **i** pełnymi danymi konta, więc wersja 2.3 (pomijanie po `id`) zostawiała konto `USUWANE` z danymi do `UZGODNIJ_REJESTR_RODO` (≥ 2 h) albo nocnego `USUN_KONTO` |
+
+   Zdarzenie `API` dla konta, którego wiersza `uzytkownik` nie ma w
+   odtworzonej bazie (konto założone po `T`), nie ma czego zmienić: skrypt
+   zapisuje tylko wiersz `zdarzenie_rodo` (rozliczalność) i metrykę
+   `ponowienie_rodo_brak_konta_total`. **Ponowienie zależy od roli konta**
+   (`dane.rola` obiektu; od wersji 2.4 każde Zdarzenie RODO ma `rola`, CHECK
+   7.3) i wywołuje **te same funkcje domenowe** co `api` i `USUN_KONTO`, więc
+   skutki i zdarzenia domenowe (13.6) są identyczne:
+
+   | Zdarzenie | `UCZEN` | `NAUCZYCIEL` | `ADMINISTRATOR` |
+   |---|---|---|---|
+   | `WNIOSEK_O_USUNIECIE` | `SluzbaKont.zastosuj_wniosek_o_usuniecie`: `status = USUWANE`, `usuniecie_zaplanowane_at` z danych zdarzenia (pierwotny termin, nie przesunięty), unieważnienie refresh tokenów | to samo **oraz** skutki `KontoUsuwane` w tej samej transakcji: zwolnienie blokad `W_TRAKCIE` (szkice zachowane), eskalacja jego Weryfikacji `KLASA` z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`, powiadomienia `KLASA_DO_PRZEKAZANIA`, kontrola przyjęć jego Klas (11.4.3) | jak `UCZEN` (bez procesów; ochrona ostatniego Administratora nie jest sprawdzana — zdarzenie zostało już przyjęte) |
+   | `ANULOWANIE_USUNIECIA` | `SluzbaKont.zastosuj_anulowanie_usuniecia`: tabela przywrócenia **Ucznia** (16.4, „Przywrócenie w okresie karencji”) i `KontoPrzywrocone` | tabela przywrócenia **Nauczyciela** (16.4, „Przywrócenie konta Nauczyciela lub Administratora”) i `KontoPrzywrocone` | wiersz konta |
+   | `USUNIECIE_WYKONANE` | `SluzbaKont.wykonaj_usuniecie`, kroki 1–6 `USUN_KONTO` (krok 0 jest już zapisany) | kroki (1)–(5) usunięcia konta Nauczyciela (archiwizacja nieprzekazanych Klas i zamknięcie Przypisań, `WYCOFANE` dla Zadań `PRYWATNY`, pseudonimizacja `rekomendacja.uzasadnienie` i `uzasadnienie_fakty` reguły `R-PRZYPISANIE`, `DELETE`, audyt) | kroki (1), (4), (5) |
+   | `ODWOLANIE_ZGODY` / `UDZIELENIE_ZGODY` | `zgoda_na_trening = false` i `usun_po := now()` kopii / `zgoda_na_trening = true` | — (zdarzenia tylko dla Ucznia) | — |
+
+   Kroki usunięcia są idempotentne (`ON CONFLICT DO NOTHING`, `UPDATE …
+   WHERE`, usuwanie obiektów po prefiksie, pseudonimizacja tekstu imienia i
+   nazwiska odczytanego z wiersza `uzytkownik`, który istnieje aż do
+   `DELETE`), więc skrypt wykonuje je w całości bez względu na to, w którym
+   kroku przerwano oryginalne `USUN_KONTO`, i niezależnie od tego, ile czasu
+   minęło od usunięcia (wersja 2.2 unieważniała to zdarzenie po 5 min, C3-03).
+   Prace w tle zlecone przez funkcje domenowe (np. ponowne `ROZPOZNAJ_PISMO`
+   po przywróceniu) są tylko wstawiane do `praca_w_tle` i wykonują się po
+   kroku 3. Każde zastosowanie zdarzenia `API` zapisuje wiersz `zdarzenie_rodo`
+   z tym samym `id` i `zrodlo`; dla `WORKER` wiersz zapisuje krok 1
+   (`ON CONFLICT DO NOTHING`), a brakujący wpis audytu `KONTO_USUNIETE` —
+   krok 6;
 2a. (ADR-047, C3-06) praca `SPRZATAJ_OSIEROCONE_OBIEKTY` w trybie
    `ODTWORZENIE` z `od = T − 5 min`, wykonywana przez skrypt odtworzenia:
    usuwa obiekty `zbior-treningowy/`, `zdjecia/` i `zdjecia-maskowane/`
@@ -5462,6 +5806,7 @@ odtworzenia (runbook, testowana w G-6):
 
 Zdarzenie `zrodlo = API` zapisane w buckecie, którego transakcja się nie
 powiodła (np. awaria bazy po zapisie obiektu), jest w ciągu 10 min
+(cykl co 5 min, obiekty starsze niż 5 min — 13.3, C4-06 p. 2)
 unieważniane przez `UZGODNIJ_REJESTR_RODO` obiektem kompensującym; zdarzenie
 `zrodlo = WORKER` nie jest unieważniane, tylko doprowadzane do stanu
 docelowego (ponowne `USUN_KONTO`, 13.3). Gdy odtworzenie nastąpi w
@@ -5482,7 +5827,7 @@ zachowane**), jego Weryfikacje `KLASA` eskalowane do `GLOBALNA` z
 `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` (11.4.3 p. 1), a
 Administratorzy dostają `KLASA_DO_PRZEKAZANIA` dla każdej
 niezarchiwizowanej Klasy. Flagi `weryfikator_globalny` i
-`recenzent_tresci` **nie są zdejmowane** (konto `USUWANE` nie może się
+`recenzent_tresci` **nie są odbierane** (konto `USUWANE` nie może się
 zalogować, a pula G-7 i przydział liczą tylko konta `AKTYWNE`); znikają
 razem z wierszem `nauczyciel` w `USUN_KONTO`.
 
@@ -5492,7 +5837,7 @@ razem z wierszem `nauczyciel` w `USUN_KONTO`.
 
 | Element | Działanie przy przywróceniu |
 |---|---|
-| konto | `status = AKTYWNE`, `usuniecie_zaplanowane_at = NULL`, wiersz `zdarzenie_rodo`; flagi `weryfikator_globalny`, `recenzent_tresci` i `deklarowane_minuty_weryfikacji` bez zmian (nie były zdejmowane) |
+| konto | `status = AKTYWNE`, `usuniecie_zaplanowane_at = NULL`, wiersz `zdarzenie_rodo`; flagi `weryfikator_globalny`, `recenzent_tresci` i `deklarowane_minuty_weryfikacji` bez zmian (nie były odbierane) |
 | szkice rozstrzygnięć | bez zmian (zachowane przy zwolnieniu blokad); Nauczyciel odzyskuje je przy ponownym podjęciu (9.6.1) |
 | Weryfikacje z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` i `status = OCZEKUJE` (także `W_TRAKCIE` z wygasłą blokadą) | `typ_kolejki := KLASA`, `eskalowano_at := NULL`, `powod_eskalacji := NULL`, `termin_at := dodaj_dni_robocze(now(), 3)`; Weryfikacje podjęte w międzyczasie przez weryfikatora globalnego (ważna blokada) lub zakończone — bez zmian |
 | Klasy nieprzekazane | pozostają przy Nauczycielu; nieprzeczytane powiadomienia `KLASA_DO_PRZEKAZANIA` dla tych Klas dostają `przeczytane_at := now()` i `dane = dane || '{"nieaktualne": true}'` |
@@ -5506,8 +5851,11 @@ Nauczyciela Klasę, jej otwarte Przypisania i ich Zestawy zadań, Zadania
 `PRYWATNY` użyte w tych Przypisaniach (`autor_id`) oraz otwarte Weryfikacje
 `KLASA` (`nauczyciel_docelowy_id`). Po 30 dniach `USUN_KONTO`:
 (1) Zdarzenie RODO `USUNIECIE_WYKONANE` zapisane przez `worker` (`zrodlo =
-WORKER`) przed pierwszą zmianą w bazie i wiersz `zdarzenie_rodo` w
-pierwszej transakcji, jak w krokach 0–1 dla Ucznia (C3-03); (2) Klasy nieprzekazane →
+WORKER`, `dane.rola = NAUCZYCIEL` albo `ADMINISTRATOR`, klucz bez daty)
+przed pierwszą zmianą w bazie i wiersz `zdarzenie_rodo` w pierwszej
+transakcji, jak w krokach 0–1 dla Ucznia (C3-03, C4-06 p. 3); kroki
+(1)–(5) są idempotentne i ponawiane w całości przez `USUN_KONTO` oraz
+`ponow_zdarzenia_rodo`, dopóki istnieje wiersz `uzytkownik` (C4-01); (2) Klasy nieprzekazane →
 `zarchiwizowana = true`, a ich Przypisania z `termin > now()` → `termin :=
 now()` (zamknięte); Zadania `PRYWATNY` autora nieprzekazane → `WYCOFANE`;
 (3) pseudonimizacja tekstów z danymi Nauczyciela: `rekomendacja.uzasadnienie`
@@ -5586,8 +5934,8 @@ termin miękki = `max(10 s, 28 s − t_R)`):
 | SymPy (wszystkie pary + wynik) | 3 s łącznie, 2 s CPU na parę | 1.5 s |
 | Model decyzyjny — Jev, tryb wsadowy (2 rundy = 2 żądania, A-01) | 2 s na żądanie | 1.6 s |
 | Model decyzyjny — Jev, tryb pojedynczy (2 rundy = ≤ 3 fale po ≤ 16 wywołań, 10.4.3; p95 fali 1.2 s) — **wartość przyjęta w budżecie** | 2 s na wywołanie | 3.6 s |
-| Oczekiwanie na przydział globalnego ogranicznika (13.2: przyjęcie planu, fale ≥ 2 z pierwszeństwem; wersja 2.3, C3-04) | plan przyjmowany tylko, gdy przewidywany koniec ≤ termin miękki; termin fali k: `termin_miekki − t_fali × (F − k + 1) − 0,2 s` | 0 s poza szczytem (fala 16 mieści się w kubełku 16); w szczycie A-03 łącznie ≤ 3,7 s na Ocenę (symulacja S-6) |
-| Sprawdzenie zgodności poprawek (tylko Transkrypcje z Poprawkami; startuje przy autozapisie `PUT …/transkrypcja`, pula `S`, równolegle z SymPy i Jev) | ≤ min(6 s, `termin_miekki` − 9 s) oczekiwania po zatwierdzeniu | 0 s na ścieżce krytycznej: p95 Sprawdzenia 4 s (A-08) < SymPy + Jev ≥ 3,1 s + odstęp od ostatniego `PUT`; brak rezultatu ≤ 0,5% Rozwiązań z Poprawkami (9.4, rachunek log-normalny) |
+| Oczekiwanie na przydział globalnego ogranicznika (13.2: przyjęcie planu, fale ≥ 2 z pierwszeństwem; wersja 2.3, C3-04) | plan przyjmowany tylko, gdy przewidywany koniec ≤ termin miękki; termin fali k: `termin_miekki − t_fali × (F − k + 1) − 0,2 s` | 0 s poza szczytem przy 2 workerach (fala 16 mieści się w kubełku 16); przy skalowaniu do 3 / 4 workerów poza szczytem ≤ 0,48 s / ≤ 0,84 s (`B_całk = 34` dzielone między repliki, 13.2, C4-05); w szczycie A-03 łącznie ≤ 3,7 s na Ocenę (symulacja S-6) |
+| Sprawdzenie zgodności poprawek (tylko Transkrypcje z Poprawkami; startuje przy autozapisie `PUT …/transkrypcja`, pula `S`, równolegle z SymPy i Jev) | ≤ 6 s oczekiwania po zatwierdzeniu, niezależnie od `t_R` (wersja 2.4, C4-06 p. 10) | 0 s na ścieżce krytycznej: p95 Sprawdzenia 4 s (A-08) < SymPy + Jev ≥ 3,1 s + odstęp od ostatniego `PUT`; brak rezultatu ≤ 0,5% Rozwiązań z Poprawkami (9.4, rachunek log-normalny) |
 | Model decyzyjny — zapasowy (1 wywołanie) | 9 s | 6.5 s |
 | Reguły, zapis wyniku | — | 0.2 s |
 | Odpytywanie klienta | interwał 1 s | +1 s |
@@ -5621,7 +5969,7 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
 | S-3 | Jak S-1, rozpoznanie trwające pełny timeout 14 s (`t_R` = 16.5 s, termin miękki 11.5 s) | po timeoutcie Jev zostało 7.3 s → model zapasowy z timeoutem 7.3 s; przebieg p95: 0.6 + 0.1 + 1.5 + 2 + 6.5 + 0.2 = 10.9 s; gdy model zapasowy przekroczy 7.3 s, praca jest ponawiana (0.5 s): Jev ponownie 2 s (timeout), model zapasowy 9 s (pozostało < 6 s) → t_O ≈ 25 s | 10.9 s (≈ 25 s) | 16.5 s | 27.4 s (≈ 41.5 s) | p95 spełnione; wariant z przekroczeniem — naruszenie, łączne prawdopodobieństwo < 0,05% (w granicy 1% SLO) |
 | S-4 | Obwód otwarty (praca ciągła na modelu zapasowym) | 0.6 + 0.1 + 1.5 + 6.5 + 0.2 | 8.9 s | 11.5 s | 20.4 s | spełnione |
 | S-5 | Oba modele decyzyjne niedostępne | ponowienia do 120 s → T-6 | — | — | — | naruszenie; Ocena później przez `PONOW_OCENE` |
-| S-6 | „Koniec lekcji” (wersja 2.3, C3-04): 90 zatwierdzeń w 120 s, z czego 30 w pierwszych 20 s (1,5 Oceny/s × 29 wywołań = 43,5 wywołania/s), Jev w trybie pojedynczym, przydział workerów 2 × 18,18 = 36,36/s, kubełek 16, fale ≥ 2 z pierwszeństwem | Jev: 0.6 + 0.1 + 1.5 + ≤ 3,7 (oczekiwanie łącznie, maksimum z symulacji) + 3.6 + 0.2; `t_R` ≤ 16,5 s | ≤ 9.7 s | ≤ 16,5 s | ≤ 26,2 s | spełnione: 0/90 do modelu zapasowego, 0/90 naruszeń (symulacja `tests/obciazenie/symulacja_ogranicznika.py`, tabela 17.4) |
+| S-6 | „Koniec lekcji” (wersja 2.3, C3-04; popyt ujednolicony w wersji 2.4, C4-06 p. 9): 90 zatwierdzeń w 120 s, z czego 30 w pierwszych 20 s (1,5 Oceny/s × 28 wywołań planu budżetowego 16 + 11 + 1 = 42 wywołania/s), Jev w trybie pojedynczym, przydział workerów 2 × 18,18 = 36,36/s, kubełek 16, fale ≥ 2 z pierwszeństwem | Jev: 0.6 + 0.1 + 1.5 + ≤ 3,7 (oczekiwanie łącznie, maksimum z symulacji) + 3.6 + 0.2; `t_R` ≤ 16,5 s | ≤ 9.7 s | ≤ 16,5 s | ≤ 26,2 s | spełnione: 0/90 do modelu zapasowego, 0/90 naruszeń (symulacja `tests/obciazenie/symulacja_ogranicznika.py`, tabela 17.4) |
 | S-6b | Jak S-6, ale fala zatwierdzeń zbiega się z nasyceniem puli R (`t_R` = 18,5 s, termin miękki 10 s) | plany z przewidywanym końcem > 10 s idą od razu do modelu zapasowego (0.6 + 0.1 + 1.5 + 6.5 + 0.2 = 8,9 s); pozostałe Jev | ≤ 9,7 s | 18,5 s | ≤ 28,2 s | 3/90 naruszeń (o ≤ 0,2 s) w takim szczycie; przy ≤ 1 zbiegu na dobę ≤ 3/1 500 = 0,2% dobowego wolumenu — pozycja w budżecie 1% SLO (S-7) |
 | S-7 | Rozpoznanie: 1. próba kończy się timeoutem 14 s, 2. próba udana (p95 9 s) | faza R: 1.5 + 0.5 + 14 + 1 (odstęp) + 9 + 0.5 = 26.5 s; faza O z terminem miękkim `max(10, 28 − 26.5)` = 10 s: 0.6 + 0.1 + 1.5 + 3.6 + 0.2 | 6.0 s | 26.5 s | 32.5 s | **naruszenie** (liczone w SLO); dopuszczalne wyłącznie dzięki wymaganiu A-08 (≤ 0,3% wywołań rozpoznawania z błędem lub timeoutem). Budżet 1% SLO (wersja 2.3): S-7 ≤ 0,3% + S-3 < 0,05% + T-6 ≤ 0,2% + S-6b ≤ 0,2% + ogon rozkładu czasu normalnej pracy ≤ 0,25% |
 
@@ -5664,7 +6012,14 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
   `dane_osobowe_w_transkrypcji_total{zrodlo,rodzaj}`,
   `obiekty_osierocone_usuniete_total{bucket,tryb}`,
   `usuniecie_wykonane_niedokonczone` (konta z obiektem `USUNIECIE_WYKONANE`
-  starszym niż 2 h).
+  starszym niż 2 h); od wersji 2.4: `prog_pewnosci_wartosc{model,rodzaj}`,
+  `blokada_obnizania_progu{model}` (0/1, C4-02),
+  `uczniowie_z_konfliktem_filtra_udzial` (odsetek Uczniów z ≥ 5
+  Rozwiązaniami obliczeniowymi w 30 dniach, u których ≥ 50% Transkrypcji ma
+  `konflikt_filtra`, C4-03), `ogranicznik_suma_przydzialow{konfiguracja}`,
+  `ogranicznik_suma_pojemnosci{konfiguracja}`,
+  `ogranicznik_wiersze_ponad_limit`, `ponowienie_rodo_zastosowane_total{typ,rola}`,
+  `ponowienie_rodo_brak_konta_total` (C4-01, C4-05).
 - **Alerty**: p95 `ocena_czas_systemowy_sekundy` > 20 s (10 min), odsetek
   > 28 s powyżej 1% (1 h), `odsetek_t6 > 0,2%` (24 h), obwód Jev otwarty
   > 15 min, `praca_w_tle_martwe_total` przyrost > 0 dla `OCEN_ROZWIAZANIE`,
@@ -5681,7 +6036,12 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
   na dobę, `pula_diagnostyczna_braki > 0`, `bezpiecznik_wyzwolenia_total`
   przyrost > 0 (`ALERT_KALIBRACJI`), odsetek braku rezultatu Sprawdzenia
   zgodności poprawek > 1% w 24 h, `konflikt_filtra_total` > 1% Transkrypcji
-  w 7 dniach.
+  w 7 dniach; od wersji 2.4: `uczniowie_z_konfliktem_filtra_udzial > 1%`
+  (`ALERT_RODO`, przegląd słownika i reguły b1), `prog_pewnosci_wartosc =
+  1.000` ustawione przez bezpiecznik (alert krytyczny `ALERT_KALIBRACJI`),
+  `ogranicznik_suma_przydzialow > 0,8 × limit` lub
+  `ogranicznik_suma_pojemnosci > B_całk` (naruszenie niezmiennika 13.2),
+  `ogranicznik_wiersze_ponad_limit > 0`.
 - **Logi**: JSON, pola `trace_id`, `uzytkownik_id` (UUID, nie e-mail),
   `rozwiazanie_id`; maskowanie pól `haslo`, `tresc_md`, `latex`, `tekst`.
 
@@ -5689,15 +6049,15 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
 
 | Zasób | Szacunek | Zapas |
 |---|---|---|
-| Żądania Jev — szczyt wieczorny | tryb pojedynczy: 300 Ocen/h × 29 = 8 700/h ≈ 2.4/s; tryb wsadowy: 600/h ≈ 0.2/s | globalny ogranicznik: 0,8 × 50 = 40/s (ADR-039) |
-| Żądania Jev — „koniec lekcji” | tryb pojedynczy: 90 Ocen w ~120 s × 29 ≈ 22/s, chwilowo do 44/s; tryb wsadowy: ≤ 3/s | jedna formuła `r_i = 0,8 × limit × waga_i / Σ wag` (13.2, ADR-039): worker 18,18/s × 2, `api` 1,82/s × 2 (wagi 1,0 / 0,1); kubełek workera 16; nadmiar ponad 36,36/s czeka w kolejce procesu z pierwszeństwem fal ≥ 2; plan nieprzyjęty → model zapasowy bez otwierania obwodu (E-33) |
+| Żądania Jev — szczyt wieczorny | tryb pojedynczy: 300 Ocen/h × 28 (plan budżetowy 16 + 11 + 1, C4-06 p. 9) = 8 400/h ≈ 2.3/s; tryb wsadowy: 600/h ≈ 0.2/s | globalny ogranicznik: 0,8 × 50 = 40/s (ADR-039) |
+| Żądania Jev — „koniec lekcji” | tryb pojedynczy: 90 Ocen w ~120 s × 28 = 21/s, chwilowo do 42/s; tryb wsadowy: ≤ 3/s | jedna formuła `r_i = min(0,8 × limit × waga_i / Σ wag, 0,8 × limit − Σ_{j≠i} r_j)` (13.2, ADR-039): worker 18,18/s × 2, `api` 1,82/s × 2 (wagi 1,0 / 0,1); łączna pojemność kubełków `B_całk = 34` (worker 16 przy 2 replikach, 10 przy 3, 8 przy 4); nadmiar ponad 36,36/s czeka w kolejce procesu z pierwszeństwem fal ≥ 2; plan nieprzyjęty → model zapasowy bez otwierania obwodu (E-33) |
 | Piaskownica normalizacji w `api` | szczyt: 90 przesłań × ≤ 3 zdjęcia w 60 s ≈ 4.5 zdjęcia/s × 80 ms ≈ 0.36 s CPU/s | 4 procesy (2 repliki × 2) — wykorzystanie ≈ 9%; HEIC bez kompresji klienta (400 ms) — ≈ 45% |
-| Pula `ROZPOZNAWANIE` | 30 korutyn; 90 przesłań/60 s przy średnim czasie 7 s → średnio 10.5 zajętych | 2.9× w szczycie lekcji; skalowanie: 3. replika workera |
+| Pula `ROZPOZNAWANIE` | 30 korutyn; 90 przesłań/60 s przy średnim czasie 7 s → średnio 10.5 zajętych | 2.9× w szczycie lekcji; skalowanie: 3. replika workera — nie zwiększa ruchu do Jev ani do dostawcy rozpoznawania ponad 0,8 × limit (przydział i `B_całk` dzielone między repliki, granica chwilowa Jev ≤ 72 w 1 s, 13.2, C4-05) |
 | Pula `OCENIANIE` | 30 korutyn; ≈ 4 s na Ocenę (Jev) → ≈ 7.5 Ocen/s | ≥ 30 jednoczesnych ocen (A-03) |
 | Dostawca rozpoznawania | szczyt lekcji: 90 rozpoznań/min + Sprawdzenie zgodności poprawek 90 × 0,8 (obliczeniowe) × 0,25 (Poprawki, górna granica D-10) × 1,5 wywołania na Rozwiązanie (autozapis) = 27/min → 117/min | limit A-08 ≥ 150/min; przydział procesu 0,8 × 150 = 120/min (wagi R 1,0, S 0,3) |
 | Pula `SPRAWDZANIE` | 8 korutyn; 27 Sprawdzeń/min × p95 4 s → średnio 1,8 zajętej | 4,4× w szczycie; Sprawdzenie nie czeka za rozpoznaniami (C3-05) |
 | Zdjęcia | 300 × 3 × 1.2 MB ≈ 1.1 GB/h szczytowo; ≈ 5 GB/dobę; przy retencji ≈ 30–90 dni realnie ~200 GB (oryginał + maskowane) | magazyn obiektów |
-| `decyzja_modelu` | ~43 500 wierszy/dobę (1 500 × 29) → ~16 mln/rok | partycje miesięczne |
+| `decyzja_modelu` | ≤ 43 500 wierszy/dobę (1 500 × 29 — maksimum pytań planu, 10.4.3; liczba wierszy = liczba pytań, a nie wywołań) → ≤ 16 mln/rok | partycje miesięczne |
 | PostgreSQL | 2 vCPU / 8 GB RAM / 200 GB SSD wystarcza do 20× A-03 | skalowanie pionowe |
 
 **Symulacja globalnego ogranicznika (C3-04)** — 2 workery, tryb pojedynczy,
@@ -5716,13 +6076,27 @@ C — 45 w 10 s, potem 45 w 110 s; D — 90 w 10 s (≈ 4× A-03).
 | C | 11,5 s | 21 / 10,4 s / 20,6 s / 3 | 0 | 36 / 4 |
 | D | 11,5 s | 64 / 10,4 s / 20,6 s / 2 | 2 | 78 / 2 |
 
+**Ujednolicenie popytu (wersja 2.4, C4-06 p. 9).** Budżet, S-6, 17.4 i
+symulacja używają jednej wartości: **28 wywołań na Ocenę** — plan budżetowy
+„1 wariant, 12 kryteriów, 12 par” (10.4.3) w 3 falach 16 + 11 + 1, najgorszy
+przypadek liczby fal. Plan wielowariantowy ma 29 wywołań (16 + 13), ale 2
+fale; w profilu B, gdyby wszystkie plany miały 29 wywołań, nadwyżka popytu
+nad przydziałem w 20-sekundowym szczycie rośnie z 42 − 36,36 = 5,64/s do
+43,5 − 36,36 = 7,14/s (×1,27), więc oszacowanie maksymalnego oczekiwania
+skalowane tym współczynnikiem wynosi 3,7 × 1,27 = 4,7 s, a `t_O` = 0,6 + 0,1
++ 1,5 + 4,7 + 2,4 (2 fale) + 0,2 = 9,5 s ≤ 9,7 s — S-6 pozostaje spełnione.
+Liczba 29 występuje wyłącznie jako maksimum pytań (rozmiar `decyzja_modelu`,
+ADR-039).
+
 Wnioski: przy profilu A-03 (A, B) i `t_R` ≤ 16,5 s żadna Ocena nie trafia
 do modelu zapasowego i nie narusza NFR-01; podział po równo z wersji 2.2
 kierowałby w profilu B 18% Ocen do modelu zapasowego i dawał 7% naruszeń
 w szczycie. Profile C i D przekraczają A-03 (90 przesłań w 60 s) — nadmiar
 degraduje do modelu zapasowego z ≤ 3,3% naruszeń szczytu. G-3 (b) mierzy
 profil B na środowisku testowym; rozbieżność z symulacją > 1 pp naruszeń
-blokuje start (17.6).
+blokuje start (17.6). G-3 (c) powtarza profil B przy 3 replikach workera
+(C4-05): 0 odpowiedzi `429`, maksimum wywołań w oknie 1 s ≤ 72 (pomiar po
+stronie zaślepki Jev).
 
 ### 17.5 Wdrożenie
 
@@ -5766,14 +6140,14 @@ flowchart LR
 
 | Bramka | Warunek |
 |---|---|
-| G-0 | **Akceptacja właściciela produktu i właścicieli słownika:** PZS-1 (3.4); interpretacja NFR-01 (A-11); założenie A-12; rozszerzenia względem wymagań: powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu (ADR-022); kolejka globalna z pseudonimizacją i kontrolą przyjęć (ADR-021, ADR-031); brak wpisu ręcznego (ADR-024); tryb pełnej weryfikacji, jeśli G-1(b) nie jest spełnione; zatwierdzanie kont Nauczycieli przez Administratora; **(2.1)** rekrutacja i finansowanie Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy (A-14, ADR-034); zawieszenie Wyniku zadania na czas Zgłoszenia błędu odczytu (11.6); rozstrzyganie na korzyść Ucznia po usunięciu zdjęć (11.4.3 p. 3); kopie treningowe za zgodą (ADR-035); **(2.2)** limity Poprawek Transkrypcji i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (ADR-036, D-10); Przegląd Zadań wygenerowanych przez zlecającego Nauczyciela i Zgłoszenia błędu w Zadaniu zamiast bezpośredniej poprawki Zadań `GLOBALNY` (ADR-028, ADR-038, D-11); kryterium G-1(a) dla dowodów LB ≥ 85% przy n ≥ 350 (11.5.1, D-12); SLA w dniach roboczych, pula 18 weryfikatorów globalnych i kontrola przyjęć per Klasa (A-15, ADR-043, D-13); pominięcie Testu diagnostycznego (D-14); **(2.3)** Klasy przekazane w karencji nie wracają do przywróconego Nauczyciela (D-15). Akceptacja zapisana jako podpisany wpis w `docs/` (decyzja produktowa z datą). |
+| G-0 | **Akceptacja właściciela produktu i właścicieli słownika:** PZS-1 (3.4); interpretacja NFR-01 (A-11); założenie A-12; rozszerzenia względem wymagań: powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu (ADR-022); kolejka globalna z pseudonimizacją i kontrolą przyjęć (ADR-021, ADR-031); brak wpisu ręcznego (ADR-024); tryb pełnej weryfikacji, jeśli G-1(b) nie jest spełnione; zatwierdzanie kont Nauczycieli przez Administratora; **(2.1)** rekrutacja i finansowanie Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy (A-14, ADR-034); zawieszenie Wyniku zadania na czas Zgłoszenia błędu odczytu (11.6); rozstrzyganie na korzyść Ucznia po usunięciu zdjęć (11.4.3 p. 3); kopie treningowe za zgodą (ADR-035); **(2.2)** limity Poprawek Transkrypcji i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (ADR-036, D-10); Przegląd Zadań wygenerowanych przez zlecającego Nauczyciela i Zgłoszenia błędu w Zadaniu zamiast bezpośredniej poprawki Zadań `GLOBALNY` (ADR-028, ADR-038, D-11); kryterium G-1(a) dla dowodów LB ≥ 85% przy n ≥ 350 (11.5.1, D-12); SLA w dniach roboczych, pula 18 weryfikatorów globalnych i kontrola przyjęć per Klasa (A-15, ADR-043, D-13); pominięcie Testu diagnostycznego (D-14); **(2.3)** Klasy przekazane w karencji nie wracają do przywróconego Nauczyciela (D-15); **(2.4)** automatyczne przejście pary w tryb pełnej weryfikacji przez bezpiecznik trafności przy progu 0,990 i koszt na granicy NFR-03 (D-16); zapas puli globalnej przy aktywnym bezpieczniku poprawek w fazie startowej (D-17). Akceptacja zapisana jako podpisany wpis w `docs/` (decyzja produktowa z datą). |
 | G-1 | ZT-1 (A-09: ≥ 700 obliczeniowych, ≥ 350 z dowodem), Transkrypcje referencyjne: (a) Zgodność Oceny (ADR-027) ≥ 90% — dla Jev **i** modelu zapasowego, osobno dla każdego rodzaju zadania otwartego (NFR-02) — oraz dolna granica Wilsona 95% ≥ 87,5% dla `OTWARTE_OBLICZENIOWE` i ≥ 85,0% dla `OTWARTE_Z_DOWODEM` (analiza mocy 11.5.1, tabela 2; D-12); (b) próg z 11.5.3 (wartości out-of-fold) z UB błędu auto ≤ 2% i `n_eff ≥ 189` — albo tryb pełnej weryfikacji zaakceptowany w G-0; (c) ECE ≤ 0.05 |
-| G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję); **(2.2)** Sprawdzenie zgodności poprawek (10.3.3): wykrywalność Poprawek „zastępujących” ≥ 95% na 200 syntetycznych przypadkach, **(2.3)** wykrywalność „wstawień rozwiązania” (T-7 albo `422`) ≥ 95% na 200 syntetycznych przypadkach i odsetek fałszywych alarmów ≤ 5% na 200 rzeczywistych Poprawkach błędów odczytu (wersja 2.2: ≤ 10%), p95 czasu Sprawdzenia ≤ 4 s; Filtr danych osobowych (2.3, C3-02): 0 wystąpień imienia i nazwiska z konta w zapisanych Transkrypcjach ≥ 150 kartek ZT-1 z danymi (w tym ≥ 30 z imionami lub nazwiskami < 4 znaków; górna granica Wilsona 95% odsetka kartek z wyciekiem 2,5%), ≥ 98% obszarów danych osobowych zamaskowanych, **0 zastąpień tokenów ze Słownika terminów matematycznych** i ≤ 0,5% kroków z fałszywym zastąpieniem innych tokenów na wszystkich 1 050 Transkrypcjach referencyjnych ZT-1 przefiltrowanych z syntetycznymi danymi konta (200 par imię–nazwisko z listy najczęstszych w Polsce, w tym nazwiska Pole, Kula, Granica, Suma, Prosta, Koło), `konflikt_filtra` ≤ 1% Transkrypcji, 0 zmian w `latex` |
-| G-3 | Test obciążeniowy: (a) 2× szczyt wieczorny A-03 (600 Rozwiązań/h) przez 30 min; (b) „koniec lekcji”: 90 przesłań w 60 s, następnie 90 zatwierdzeń w 120 s; kryterium w obu: p95 czasu systemowego ≤ 20 s, ≥ 99% ≤ 28 s (czas widoczny ≤ 30 s), 0 przypadków T-6 |
-| G-4 | Test chaosu NFR-07 przy 300 Rozwiązaniach/h, trzy scenariusze: (a) Jev zaczyna zwracać timeout na 100% wywołań przy obwodzie ZAMKNIĘTYM (pomiar 10 min od wstrzyknięcia awarii, obejmuje przejście obwodu); (b) Jev zwraca natychmiast 503; (c) Jev degraduje do p95 2.5 s; (d) Jev zwraca `429` dla 30% żądań przez 10 min — obwód nie może się otworzyć, a przydział ogranicznika spada i wraca (ADR-039); kryterium w każdym: ≥ 99% Ocen z czasem systemowym ≤ 28 s (czas widoczny ≤ 30 s) i 0 przypadków T-6. Przed G-4 ustalany jest `parametry.tryb_jev` (test wsadu 32 pytań; brak wsadu → `POJEDYNCZY` i G-3/G-4 w tym trybie) oraz **(2.3)** tolerancja limitu (A-01): seria 74 wywołań w 1 s po 10 s bezczynności bez `429` → pojemność kubełka workera 16, inaczej 4 (13.2) |
+| G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję); **(2.2)** Sprawdzenie zgodności poprawek (10.3.3): wykrywalność Poprawek „zastępujących” ≥ 95% na 200 syntetycznych przypadkach, **(2.3)** wykrywalność „wstawień rozwiązania” (T-7 albo `422`) ≥ 95% na 200 syntetycznych przypadkach i odsetek fałszywych alarmów ≤ 5% na 200 rzeczywistych Poprawkach błędów odczytu (wersja 2.2: ≤ 10%), p95 czasu Sprawdzenia ≤ 4 s; Filtr danych osobowych (2.3, C3-02): 0 wystąpień imienia i nazwiska z konta w zapisanych Transkrypcjach ≥ 150 kartek ZT-1 z danymi (w tym ≥ 30 z imionami lub nazwiskami < 4 znaków; górna granica Wilsona 95% odsetka kartek z wyciekiem 2,5%), ≥ 98% obszarów danych osobowych zamaskowanych, **0 zastąpień tokenów ze Słownika terminów matematycznych** i ≤ 0,5% kroków z fałszywym zastąpieniem innych tokenów na wszystkich 1 050 Transkrypcjach referencyjnych ZT-1 przefiltrowanych z syntetycznymi danymi konta (200 par imię–nazwisko z listy najczęstszych w Polsce, w tym nazwiska Pole, Kula, Granica, Suma, Prosta, Koło), `konflikt_filtra` ≤ 1% Transkrypcji, 0 zmian w `latex`; **(2.4, C4-03)** osobne kryterium dla ≥ 30 kartek z nazwiskiem równym terminowi matematycznemu (A-09): 0 wystąpień nazwiska w zapisanych Transkrypcjach, gdy stoi obok imienia lub inicjału albo w kroku w ramce danych osobowych (reguły a, b1, b2), i ≤ 1 kartka z `konflikt_filtra` wywołanym linią podpisu (≤ 3,3%); na 1 050 Transkrypcjach z syntetycznymi danymi konta `uczniowie_z_konfliktem_filtra_udzial` ≤ 1% (200 syntetycznych kont po ≥ 5 Transkrypcji); test Poprawek: przywrócenie kroku `tylko_dane_osobowe` na 50 przypadkach nie jest ponownie maskowane i trafia do Sprawdzenia zgodności poprawek (100%) |
+| G-3 | Test obciążeniowy: (a) 2× szczyt wieczorny A-03 (600 Rozwiązań/h) przez 30 min; (b) „koniec lekcji”: 90 przesłań w 60 s, następnie 90 zatwierdzeń w 120 s; kryterium w obu: p95 czasu systemowego ≤ 20 s, ≥ 99% ≤ 28 s (czas widoczny ≤ 30 s), 0 przypadków T-6; **(2.4, C4-05)** (c) scenariusz (b) przy 3 replikach workera i dołączeniu 4. repliki w trakcie szczytu: 0 odpowiedzi `429`, maksimum wywołań Jev w dowolnym oknie 1 s ≤ 74 (pomiar po stronie zaślepki), Σ opublikowanych przydziałów ≤ 40/s w każdej próbce co 1 s |
+| G-4 | Test chaosu NFR-07 przy 300 Rozwiązaniach/h, trzy scenariusze: (a) Jev zaczyna zwracać timeout na 100% wywołań przy obwodzie ZAMKNIĘTYM (pomiar 10 min od wstrzyknięcia awarii, obejmuje przejście obwodu); (b) Jev zwraca natychmiast 503; (c) Jev degraduje do p95 2.5 s; (d) Jev zwraca `429` dla 30% żądań przez 10 min — obwód nie może się otworzyć, a przydział ogranicznika spada i wraca (ADR-039); kryterium w każdym: ≥ 99% Ocen z czasem systemowym ≤ 28 s (czas widoczny ≤ 30 s) i 0 przypadków T-6. Przed G-4 ustalany jest `parametry.tryb_jev` (test wsadu 32 pytań; brak wsadu → `POJEDYNCZY` i G-3/G-4 w tym trybie) oraz **(2.3)** tolerancja limitu (A-01): seria 74 wywołań w 1 s po 10 s bezczynności bez `429` → łączna pojemność kubełków `B_całk = 34` (worker 16 przy 2 replikach), inaczej `B_całk = 10` (13.2, C4-05) |
 | G-5 | Wszystkie Umiejętności **obu poziomów matury** mają opublikowaną Wkładkę teoretyczną i ≥ 3 Zadania `GLOBALNY` na każdy z Poziomów trudności 2–4 (FR-06, FR-07); **(2.2)** pula Testu diagnostycznego: ≥ 3 Zadania `diagnostyczne = true` (`ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`) na każdą trójkę (Dział poziomu matury, poziom matury, nominalny Poziom trudności ∈ {2, 4}) — 12 × 2 × 3 = 72 dla `PODSTAWOWY` i 13 × 2 × 3 = 78 dla `ROZSZERZONY` (raport `GET /admin/pula-diagnostyczna`, FR-03, C2-13) |
-| G-6 | Przegląd RODO: umowy powierzenia z dostawcami z retencją zgodną z A-07, polityka prywatności (w tym kolejka globalna i pseudonimizacja), umowy poufności weryfikatorów globalnych, rejestr czynności przetwarzania, test procedury `ponow_zdarzenia_rodo` (odtworzenie PITR w środowisku testowym z rejestrem w buckecie Object Lock) w czterech scenariuszach: (a) wykonane usunięcie po punkcie odtworzenia — **(2.3, C3-03)** w dwóch wariantach: odtworzenie 3 min i 60 min po usunięciu (dłużej niż okno unieważniania 10 min); w obu konto jest usunięte przed startem workerów, a `zdarzenia_rodo_uniewaznione_total` się nie zmienia, (b) **wniosek** o usunięcie po punkcie odtworzenia (konto wraca do `USUWANE` z pierwotnym terminem), (c) **odwołanie zgody** po punkcie odtworzenia (zgoda `false`, brak nowych kopii, istniejące kopie usunięte), (d) **(2.3, C3-06)** kopia treningowa i zdjęcia utworzone po punkcie odtworzenia — po kroku 2a w `zbior-treningowy/`, `zdjecia/` i `zdjecia-maskowane/` nie ma obiektów bez wiersza w bazie oraz test przywrócenia konta w karencji (C-33), usunięcia konta Nauczyciela z Przekazaniem Klasy i bez niego (ADR-044) oraz **(2.3)** przywrócenia konta Nauczyciela w karencji (Weryfikacje z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` wracają do `KLASA`, szkice i flagi zachowane) i rozstrzygnięcia dla Ucznia w karencji (`409 KONTO_UCZNIA_NIEAKTYWNE`, C-37) |
-| G-7 | Pula weryfikatorów globalnych: liczba aktywnych weryfikatorów globalnych ≥ `wymagani_weryfikatorzy_globalni` z modelu tygodniowego 17.7 (na start: **18** = 10 Nauczycieli bez Klas + ≥ 8 współpracujących, A-14) i 5 × Σ `deklarowane_minuty_weryfikacji` ≥ 1,3 × tygodniowa prognoza kolejki `GLOBALNA` **łącznie z eskalacjami** (A-15); test eskalacji, alertu pustej puli i kontroli przyjęć. Gdy G-7 nie jest spełnione, a pozostałe bramki tak: start produkcyjny z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) — dopuszczalny wyłącznie za akceptacją w G-0 |
+| G-6 | Przegląd RODO: umowy powierzenia z dostawcami z retencją zgodną z A-07, polityka prywatności (w tym kolejka globalna i pseudonimizacja), umowy poufności weryfikatorów globalnych, rejestr czynności przetwarzania, test procedury `ponow_zdarzenia_rodo` (odtworzenie PITR w środowisku testowym z rejestrem w buckecie Object Lock) w czterech scenariuszach: (a) wykonane usunięcie po punkcie odtworzenia — **(2.3, C3-03)** w dwóch wariantach: odtworzenie 3 min i 60 min po usunięciu (dłużej niż okno unieważniania 10 min); **(2.4, C4-01)** (a3) punkt odtworzenia `T` **w trakcie** `USUN_KONTO` Ucznia — po kroku 1, 2, 3 i 4, a przed krokiem 5 (cztery przebiegi; zatrzymanie przez zmienną testową `LEMAT_TEST_ZATRZYMAJ_USUN_KONTO_PO_KROKU ∈ {1, 2, 3, 4}`, dostępną wyłącznie w środowisku testowym): odtworzona baza ma wiersz `zdarzenie_rodo` i pełne dane konta, a po skrypcie brak wiersza `uzytkownik`, 0 wierszy `decyzja_modelu` z `uczen_id` konta, 0 obiektów z prefiksem konta w `zdjecia/`, `zdjecia-maskowane/`, `zbior-treningowy/`; (a4) konto **Nauczyciela**: wniosek po `T` (po skrypcie Weryfikacje `KLASA` eskalowane z `KARENCJA_KONTA_NAUCZYCIELA`, blokady zwolnione, szkice zachowane, `KLASA_DO_PRZEKAZANIA` wysłane), usunięcie po `T` i w trakcie kroków (2)–(4) (Klasy zarchiwizowane, Zadania `PRYWATNY` `WYCOFANE`, 0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie` i `uzasadnienie_fakty`), anulowanie po `T` (tabela przywrócenia Nauczyciela); we wszystkich wariantach konto jest w stanie docelowym przed startem workerów, a `zdarzenia_rodo_uniewaznione_total` się nie zmienia, (b) **wniosek** o usunięcie po punkcie odtworzenia (konto wraca do `USUWANE` z pierwotnym terminem), (c) **odwołanie zgody** po punkcie odtworzenia (zgoda `false`, brak nowych kopii, istniejące kopie usunięte), (d) **(2.3, C3-06)** kopia treningowa i zdjęcia utworzone po punkcie odtworzenia — po kroku 2a w `zbior-treningowy/`, `zdjecia/` i `zdjecia-maskowane/` nie ma obiektów bez wiersza w bazie oraz test przywrócenia konta w karencji (C-33), usunięcia konta Nauczyciela z Przekazaniem Klasy i bez niego (ADR-044) oraz **(2.3)** przywrócenia konta Nauczyciela w karencji (Weryfikacje z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` wracają do `KLASA`, szkice i flagi zachowane) i rozstrzygnięcia dla Ucznia w karencji (`409 KONTO_UCZNIA_NIEAKTYWNE`, C-37) |
+| G-7 | Pula weryfikatorów globalnych: liczba aktywnych weryfikatorów globalnych ≥ `wymagani_weryfikatorzy_globalni` z modelu tygodniowego 17.7 (na start: **18** = 10 Nauczycieli bez Klas + ≥ 8 współpracujących, A-14) i 5 × Σ `deklarowane_minuty_weryfikacji` ≥ 1,3 × tygodniowa prognoza kolejki `GLOBALNA` **łącznie z eskalacjami** (A-15); test eskalacji, alertu pustej puli i kontroli przyjęć; **(2.4, C4-06 p. 7)** wariant z aktywnym bezpiecznikiem poprawek w fazie startowej wymaga 20 weryfikatorów — przy opcji domyślnej D-17 (18) współczynnik zapasu w tym wariancie wynosi 1,22 i nadwyżkę zatrzymuje kontrola przyjęć kolejki globalnej (17.7). Gdy G-7 nie jest spełnione, a pozostałe bramki tak: start produkcyjny z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) — dopuszczalny wyłącznie za akceptacją w G-0 |
 
 ZT-1 jest przechowywany w buckecie `zbiory-testowe/zt1/` (manifest JSON:
 Zadanie, zdjęcia, Transkrypcja referencyjna, Oceny 2–3 Nauczycieli). Praca
@@ -5874,10 +6248,51 @@ Reguła z wersji 2.2 unieważniałaby więc G-7 (18 zamiast 26 weryfikatorów)
 i limit 180 min (A-14) dokładnie w pierwszych dwóch tygodniach. Reguła 2.3
 nie wyzwala się przy błędzie 0,5% z prawdopodobieństwem ≥ 99,8% w 90
 dniach (symulacja 11.5.3), więc model „Start: auto 47%” i G-7 = 18
-pozostają ważne. Prawdziwa degradacja do ≥ 4% podnosi próg w dniu 2;
-wtedy obowiązuje plan awaryjny z G-0: tryb pełnej weryfikacji z
+pozostają ważne. Prawdziwa degradacja do ≥ 4% podnosi próg w dniu 2 (błąd od początku
+okna) albo — przy nagłej degradacji w fazie ustalonej — w medianie 13 dni
+(11.5.3); kolejne wyzwolenia prowadzą przy degradacji jednorodnej do trybu
+pełnej weryfikacji ustawianego automatycznie przez bezpiecznik (D-16), z
 `udzial_zadan_otwartych = 5` (wiersz „Tryb pełnej weryfikacji”, 16
 weryfikatorów).
+
+**Wariant: aktywny bezpiecznik poprawek (wersja 2.4, C4-06 p. 7).** Aktywny
+bezpiecznik kieruje do T-7 każdą Transkrypcję z Poprawkami, w tym te, które
+inaczej byłyby Ocenami automatycznymi: Rozwiązania obliczeniowe z Poprawkami
+ocenione automatycznie = p_P × auto × 1 200 = 0,20 × 0,47 × 1 200 ≈ 113 na
+dobę na starcie (0,20 × 0,67 × 1 200 ≈ 161 w fazie ustalonej). Każde z nich
+staje się Weryfikacją obliczeniową (3 min), a znikają Kontrole losowe, które
+by na nie przypadły (podwójny odsetek: 0,40 na starcie, 0,10 w fazie
+ustalonej; 2 min):
+
+| Faza | Dodatkowe Weryfikacje (3 min) | Kontrole, które znikają (2 min) | Δ`M` (min/dobę) | `M` | Na Nauczyciela prowadzącego (dzień roboczy) | `GLOBALNA` / dobę | Wymagani weryfikatorzy globalni |
+|---|---|---|---|---|---|---|---|
+| Start | 113 | 45 | 339 − 90 = +249 (+6,7%) | 3 951 | 0,8 × 3 951 × 0,95 × 7/5 / 40 = **105 min** | 790 + 158 = 948 min | ⌈1,3 × 7 × 948 / 450⌉ = ⌈19,17⌉ = **20** |
+| Ustalona | 161 | 16 | 483 − 32 = +451 (+16,0%) | 3 277 | 0,8 × 3 277 × 0,95 × 7/5 / 40 = **87 min** | 655 + 131 = 786 min | ⌈1,3 × 7 × 786 / 450⌉ = ⌈15,9⌉ = **16** |
+
+Wariant mieści się w G-7 = 18 w fazie ustalonej; w fazie startowej wymaga
+20 weryfikatorów. Opcja domyślna D-17: G-7 pozostaje 18, bo przy 18
+weryfikatorach pojemność tygodniowa 18 × 90 × 5 = 8 100 min pokrywa
+prognozę 7 × 948 = 6 636 min ze współczynnikiem 1,22 (zamiast 1,3), a
+nadwyżkę dzienną zatrzymuje kontrola przyjęć kolejki globalnej (11.4.3);
+cotygodniowe przeliczenie (punkt 4 wniosków) używa wariantu z bezpiecznikiem,
+gdy `stan_bezpiecznika.aktywny` typu `POPRAWKI` jest prawdą.
+
+**Wariant: koszt bezpiecznika trafności na granicy NFR-03 (C4-06 p. 5).**
+Przy rzeczywistym błędzie e = 2% (fazie ustalonej) symulacja dynamiki
+11.5.3 daje średnio 1,1 fałszywego podniesienia progu na kwartał, średni
+udział Ocen automatycznych 57,5% zamiast 67% (Weryfikacje obliczeniowe +
+0,095 × 1 200 ≈ 114 na dobę, `M` ≈ 2 826 + 114 × 3 − 114 × 0,05 × 2 ≈ 3 157
+min, 84 min na Nauczyciela prowadzącego) i 11% kwartałów kończących się
+trybem pełnej weryfikacji (wiersz „Tryb pełnej weryfikacji”, 16
+weryfikatorów). Wartości mieszczą się w G-7 = 18.
+
+**Konflikt Filtra danych osobowych per Uczeń (C4-03 p. 2).** Model zakłada
+`konflikt_filtra` ≤ 1% Transkrypcji (kryterium G-2) rozłożone na Uczniów, a
+nie skupione: Uczeń z nazwiskiem równym terminowi matematycznemu nie dostaje
+od wersji 2.4 konfliktu z linii podpisu (10.3.1 p. 3a). Metryka
+`uczniowie_z_konfliktem_filtra_udzial` > 1% (alert) oznacza systematyczną
+Weryfikację wąskiej grupy Uczniów i uruchamia przegląd reguły b1 i
+Słownika.
 
 ---
 
@@ -6040,6 +6455,8 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Decyzja:** reguły 3.1 (w tym „jedno słowo — jedno znaczenie” i lista dopuszczonych terminów technicznych); zmiany nazw: `DecyzjaSkladowa`, `RezultatPytan`, `RezultatOceny`, `RezultatRozpoznawania`, `Rownowaznosc`, `rezultat_walidacji`, `procent_grupy_eksperymentu`, `nr_kryterium`, `wymaga_nr_kryterium`, `wynik_koncowy_wzorcowy`, `typ_kolejki_weryfikacji`, `decyzja_modelu.wybor`; propozycja zmiany słownika PZS-1 (3.4).
 - **Konsekwencje:** brak tłumaczeń między warstwami; zmiany słownika wymagają akceptacji (G-0).
 
+- **Uzupełnienie (it. 6, wersja 2.4, C4-04):** „zdjęcie” = wyłącznie fotografia kartki; wyłączenie bezpiecznika = „dezaktywacja” (`POST /admin/bezpieczniki/dezaktywacja`, `dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`), odebranie flagi = „odebranie”, wyłączenie flagi danych = „wyłączenie”; „wstrzymanie” ma jedno znaczenie (3.1 p. 5); test CI, część 3, pilnuje tokenów `zdje*` i `wstrzym*` z listami dozwolonych użyć. Odrzucona alternatywa: „wyłączenie bezpiecznika” — słowo „wyłączenie” jest już używane dla flag danych i reguł 11.5.2 („wyłączenie powodów nielosowych”), więc łamałoby 3.1 p. 5 w ten sam sposób.
+
 ### ADR-017 Obowiązkowe zatwierdzenie Transkrypcji przez Ucznia — Zmieniona (it. 2)
 - **Kontekst:** FR-18, FR-28; FR-28 nie może zależeć wyłącznie od uważności Ucznia (C1-01).
 - **Decyzja:** brak automatycznego zatwierdzenia; po 7 dniach Rozwiązanie `PORZUCONE`. Zatwierdzenie jest pierwszą, a nie jedyną linią obrony FR-28: dochodzą T-3 (ADR-022, decyzje Modelu decyzyjnego) i zgłoszenie po Ocenie (11.6).
@@ -6161,6 +6578,8 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Konsekwencje:** Transkrypcja pochodzi ze zdjęcia także po Poprawkach; ≈ 3% Rozwiązań obliczeniowych więcej w Weryfikacji (17.7); Uczeń z rozległymi zmianami wysyła nowe zdjęcia. Limity zawężają literalne FR-18 — decyzja D-10 (G-0).
 - **Uzupełnienie (it. 5, wersja 2.3, C3-05):** kroki wstawione wchodzą do licznika odsetka zmienionych znaków (mianownik: wszystkie kroki agenta), krok wstawiony ≤ min(200, max(60, ⌈1,5 × mediana⌉)) znaków; autozapis Poprawek w PWA (debounce 2 s), deduplikacja Sprawdzenia po `rozwiazanie_id` tylko wśród `OCZEKUJE` z podmianą ładunku; osobna pula `S` (4 korutyny na replikę), wejście z wycinków i zdjęcia poglądowego 1024 px (A-08: p95 ≤ 4 s, limit ≥ 150/min); G-2: „wstawienia rozwiązania” ≥ 95%, fałszywe alarmy ≤ 5%; T-7 wyprowadzone z rozkładu w 17.7 (2,5–3,1%).
 
+- **Uzupełnienie (it. 6, wersja 2.4, C4-06 p. 10):** okno oczekiwania Oceny na rezultat Sprawdzenia zgodności poprawek jest stałe — `zatwierdzono_at + 6 s` — zamiast `min(zatwierdzono_at + 6 s, termin_miekki − 9 s)`, które przy `t_R ≥ 18 s` malało do 1 s i dawało brak rezultatu dla prawie każdej Poprawki zatwierdzonej od razu po edycji; rachunek p_brak ≤ 0,5% obowiązuje dla każdego `t_R` (9.4), a termin miękki (≥ 10 s) nie jest naruszany, bo model zapasowy startuje równolegle ze Sprawdzeniem.
+
 ### ADR-037 Wersja treści Weryfikacji oddzielona od blokady — Nowa (it. 4)
 - **Kontekst:** podjęcie, ponowne podjęcie, przedłużenie (co 5 min) i `ZWOLNIJ_BLOKADY` podnosiły `weryfikacja.version`, a odpowiedź przedłużenia nie zwracała ETag; rozstrzygnięcie Weryfikacji trwającej > 5 min kończyło się `412`, a sygnał „pojawiło się zgłoszenie” tracił znaczenie (C2-02).
 - **Decyzja:** `weryfikacja.version` = wersja **treści**; zmienia ją wyłącznie trigger `trg_weryfikacja_wersja` przy zmianie powodów, zgłoszenia, Oceny weryfikowanej, `ponowna_ocena_at`, Oceny Nauczyciela, anulowania lub zamknięcia; operacje blokady i trasowania (eskalacja, `termin_at`, priorytet po 80 dniach) oraz `opinia_pomocnicza` jej nie zmieniają. Przedłużenie zwraca `{zablokowana_do, version}` i ETag; `412` przy rozstrzygnięciu zawiera `zmiany_tresci`. Scenariusz C-31.
@@ -6179,13 +6598,14 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Alternatywy:** token bucket w PostgreSQL (wiersz na klucz, `UPDATE … RETURNING` na każde żądanie) — odrzucony (≈ 44 dodatkowe zapisy/s w szczycie i zależność ścieżki krytycznej od bazy); Redis jako licznik — odrzucony (nowy komponent, ADR-002).
 - **Konsekwencje:** szczyt „koniec lekcji” mieści się w limicie klucza; nadmiar degraduje do modelu zapasowego bez fałszywego otwarcia obwodu; G-4 (d) testuje `429`.
 - **Uzupełnienie (it. 5, wersja 2.3, C3-04):** jedna formuła przydziału `0,8 × limit × waga_i / Σ wag` z kolumną `waga` w `limit_szybkosci_modelu` (DDL, 13.2, 17.4, 22 zgodne); jeden token = jedno wywołanie HTTP; pojemność kubełka workera 16 ≥ maks. fala (kolumna `pojemnosc`; 4 przy ścisłym oknie 1 s po G-4); przyjęcie planu przed falą 1 z przewidywanym końcem ≤ termin miękki, terminy fal ≥ 2 i pierwszeństwo fal ≥ 2 zastępują „oczekiwanie do `termin_miekki − 11 s`”; symulacja profili A–D (17.4) i S-6/S-6b przeliczone.
+- **Uzupełnienie (it. 6, wersja 2.4, C4-05, C4-06 p. 8 i 9):** łączna pojemność kubełków `B_całk` (34 przy tolerancji A-01, 10 przy ścisłym oknie) dzielona między wiersze — `api` 1, pozostałe proporcjonalnie do wagi z podłogą — zamiast pojemności stałej per proces; przydział `r_i = min(formuła, 0,8 × limit − Σ_{j≠i} r_j)` i pojemność ograniczona resztą do `B_całk`, publikowane w kolumnach `przydzial` i `pojemnosc` i liczone pod blokadą doradczą klucza; nowy proces z pustym kubełkiem i odnowieniem co 2 s; granica chwilowa ≤ `B_całk` + 40 T niezależnie od liczby replik (2 / 3 / 4 workery: 74 / 72 / 74 w 1 s; wersja 2.3: 74 / 90 / 106); klucz rejestru `(konfiguracja_modelu_id, wykonawca, pula)` z wierszami R i S dla roli `ROZPOZNAWANIE_PISMA`; popyt 28 wywołań na Ocenę w budżecie, S-6 i 17.4 (29 = maksimum pytań). Odrzucona alternatywa: pojemność proporcjonalna do wagi bez wydzielenia `api` (`B_i = B_całk × w_i / Σ w`) — przy 2 workerach daje kubełek 15 < fala 16 i zmienia wyniki S-6 bez zysku dla granicy.
 
 ### ADR-040 Okres karencji usunięcia konta: procesy wstrzymane, nie anulowane — Nowa (it. 4)
 - **Kontekst:** żądanie usunięcia natychmiast anulowało Weryfikacje i Rozwiązania, a przywrócenie w 30 dniach zostawiało trwale zawieszone Wyniki, zużyty limit zgłoszeń, Rozwiązania `ANULOWANE` z Wynikami wstępnymi i Kontrole pominięte w `π_wykonanie` (C2-08).
 - **Decyzja:** w okresie karencji stany się nie zmieniają; handlery kończą się z `KONTO_USUWANE`, Kolejka weryfikacji pomija konta `USUWANE`, Kontrole tych kont są poza licznikiem i mianownikiem nadzoru; przywrócenie wznawia procesy (tabela 16.4: nowe `termin_at`, ponowne zlecenie rozpoznania, T-6 dla przerwanych ocen); anulowanie wykonuje `USUN_KONTO` w kroku 0. Scenariusz C-33.
 - **Alternatywy:** anulowanie przy żądaniu i odtwarzanie procesów przy przywróceniu — odrzucone (odtworzenie Weryfikacji wymagałoby zachowania pełnego stanu sprzed anulowania, czyli i tak wstrzymania danych).
 - **Konsekwencje:** przywrócenie jest bezstratne; przez 30 dni dane są przechowywane bez przetwarzania (art. 12 ust. 3 RODO — realizacja żądania w ciągu miesiąca).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-08):** rozstrzygnięcie i korekta wymagają konta Ucznia `AKTYWNE` (`409 KONTO_UCZNIA_NIEAKTYWNE`, szkic zachowany), więc w karencji nie powstaje Ocena Nauczyciela, Wynik zadania ani Próbka kalibracyjna — deklaracja „bez przetwarzania” nie ma wyjątków; przywrócenie zleca `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` dla Rozwiązań bez aktualnej kopii; dla kont Nauczycieli i Administratorów — osobna tabela przywrócenia (16.4) i odroczenie zdjęcia flag oraz usunięcia szkiców do `USUN_KONTO`.
+- **Uzupełnienie (it. 5, wersja 2.3, C3-08):** rozstrzygnięcie i korekta wymagają konta Ucznia `AKTYWNE` (`409 KONTO_UCZNIA_NIEAKTYWNE`, szkic zachowany), więc w karencji nie powstaje Ocena Nauczyciela, Wynik zadania ani Próbka kalibracyjna — deklaracja „bez przetwarzania” nie ma wyjątków; przywrócenie zleca `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` dla Rozwiązań bez aktualnej kopii; dla kont Nauczycieli i Administratorów — osobna tabela przywrócenia (16.4) i odroczenie odebrania flag oraz usunięcia szkiców do `USUN_KONTO`.
 
 ### ADR-041 Rejestr wszystkich Zdarzeń RODO w Object Lock przed transakcją — Nowa (it. 4)
 - **Kontekst:** do wersji 2.1 rejestr zawierał tylko wykonane usunięcia; odtworzenie PITR do punktu sprzed wniosku o usunięcie lub odwołania zgody przywracało konto `AKTYWNE` i zgodę `true` (C2-09).
@@ -6193,6 +6613,7 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Alternatywy:** wzorzec outbox (zapis w bazie, potem praca w tle do bucketu) — odrzucony, bo odtworzenie do chwili między zatwierdzeniem a wysyłką gubi zdarzenie; zapis do bucketu po transakcji — odrzucony z tego samego powodu.
 - **Konsekwencje:** żądania RODO przeżywają odtworzenie bazy; niejednoznaczność (zdarzenie bez transakcji w oknie 10 min) jest rozstrzygana w kierunku ochrony danych.
 - **Uzupełnienie (it. 5, wersja 2.3, C3-03, C3-07):** zdarzenia z inicjatywy użytkownika zapisuje `api` (`zrodlo = API`), a `USUNIECIE_WYKONANE` — `worker` (`zrodlo = WORKER`, deterministyczne `id`, obiekt przed pierwszą zmianą w bazie, wiersz `zdarzenie_rodo` w pierwszej transakcji `USUN_KONTO`); `UZGODNIJ_REJESTR_RODO` unieważnia wyłącznie zdarzenia `API` bez wiersza, a dla `WORKER` doprowadza konto do usunięcia (ponowne `USUN_KONTO` po 2 h, alert po 26 h); `ponow_zdarzenia_rodo` wykonuje kroki 1–6 synchronicznie niezależnie od czasu od usunięcia. Nazwy: `WNIOSEK_O_USUNIECIE` (zamiast `ZADANIE_USUNIECIA`), bucket `rejestr-zdarzen-rodo`, pojęcie „Rejestr Zdarzeń RODO”. Odrzucona alternatywa: unieważnianie także zdarzeń `WORKER` z wydłużonym oknem (np. 24 h) — każde okno skończone zostawia przypadek PITR wykonanego po oknie (C3-03 p. 3b).
+- **Uzupełnienie (it. 6, wersja 2.4, C4-01, C4-06 p. 2 i 3):** w `ponow_zdarzenia_rodo` kryterium zastosowania zależy od źródła — `API`: wiersz `zdarzenie_rodo` o tym `id`; `WORKER`: brak wiersza `uzytkownik` (wiersz zdarzenia powstaje na początku usunięcia, więc PITR w trakcie `USUN_KONTO` dawał bazę z wierszem zdarzenia i danymi konta); prefiks `wykonane/` przeglądany w całości; ponowienie każdego zdarzenia przez te same funkcje domenowe co `api`/`USUN_KONTO`, według `dane.rola` (kroki Nauczyciela, skutki `KontoUsuwane` / `KontoPrzywrocone`); `rola` w każdym zdarzeniu (CHECK); klucz `USUNIECIE_WYKONANE` bez daty (`wykonane/{uzytkownik_id}/{id}.json`), więc `If-None-Match: *` działa przy ponowieniu w innym dniu; `UZGODNIJ_REJESTR_RODO` co 5 min — okno unieważniania ≤ 10 min zgodne z 13.3, 16.4 i G-6; G-6 (a3), (a4), scenariusz C-39. Odrzucona alternatywa: wiersz `zdarzenie_rodo` dla `USUNIECIE_WYKONANE` zapisywany w ostatniej transakcji (krok 5) — wtedy PITR po kroku 4 traci informację, że usunięcie się rozpoczęło, a obiekty zdjęć są już skasowane; kryterium „konto nie istnieje” jest poprawne przy każdym punkcie `T`.
 
 ### ADR-042 Filtr danych osobowych w Transkrypcji — Nowa (it. 4)
 - **Kontekst:** Agent rozpoznający oznaczał ramki danych osobowych tylko do maskowania zdjęcia; nic nie zabraniało przepisania imienia i nazwiska do kroków, skąd trafiały do stanu Jev, promptów, obcego weryfikatora i kopii treningowej (C2-10).
@@ -6200,19 +6621,21 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Alternatywy:** drugi model wykrywający dane osobowe w tekście — odrzucony (koszt, opóźnienie fazy R, niedeterministyczność); poleganie wyłącznie na prompcie — odrzucone (brak gwarancji).
 - **Konsekwencje:** deklaracja 16.3 jest egzekwowana kodem; ryzyko pozostaje dla danych osób trzecich niewystępujących na koncie (np. imię kolegi) — pokrywa je reguła promptu i ramki maskowania.
 - **Uzupełnienie (it. 5, wersja 2.3, C3-02):** filtr nie usuwa kroków i nie zmienia `latex`; krok w ramce danych osobowych bez treści matematycznej jest maskowany w całości (`tylko_dane_osobowe`), z treścią matematyczną — zachowany z `konflikt_filtra` → T-3 (Z-1); dopasowanie nazw tylko w `tekst`, z wykluczeniem Słownika terminów matematycznych; nazwy < 4 znaków — dopasowanie dokładne; pozycje zastąpień w `zastapienia_danych_osobowych` i przywracanie słowa Poprawką (dopasowania przybliżone nie są ponownie filtrowane); G-2: 150 kartek, 0 zastąpień terminów matematycznych, ≤ 0,5% fałszywych zastąpień. Odrzucona alternatywa: usuwanie kroku z możliwością przywrócenia — usunięcie przed zatwierdzeniem zmienia Ocenę bez Weryfikacji, gdy Uczeń nie zauważy braku.
+- **Uzupełnienie (it. 6, wersja 2.4, C4-03):** w regule (a) tokeny imienia i nazwiska z konta, inicjały i oznaczenie klasy nie są treścią matematyczną, więc linia „Jan Pole” jest krokiem `tylko_dane_osobowe`, a nie `konflikt_filtra`; w regule (b) token Słownika równy nazwisku jest zastępowany przy sąsiedztwie z drugim członem imienia i nazwiska lub inicjałem (b1) albo w kroku agenta z podejrzeniem danych osobowych (b2); na Poprawkach reguła (a) nie jest liczona ponownie — krok przywrócony z `tylko_dane_osobowe` nie jest maskowany, podlega limitom 9.4, Sprawdzeniu zgodności poprawek i T-7; `konflikt_filtra` liczony wyłącznie z kroków niezmienionych; G-2: osobne kryterium dla kartek z nazwiskiem-terminem i metryka `uczniowie_z_konfliktem_filtra_udzial`. Odrzucona alternatywa: wyłączenie nazwisk-terminów ze Słownika dla konkretnego Ucznia (lista per konto) — zastępowałoby „Pole trójkąta” w każdym kroku tego Ucznia i zmieniało treść matematyczną w `tekst` poza ramką. Ryzyko resztkowe: samo nazwisko-termin bez imienia i poza ramką danych osobowych (np. podpis „Pole” niewykryty jako ramka) nie jest zastępowane — chroni je reguła promptu (R-19).
 
 ### ADR-043 SLA w dniach roboczych i tygodniowy model obciążenia z eskalacjami — Nowa (it. 4), G-0
 - **Kontekst:** model 17.7 liczył obciążenie na 7 dni przy pracy Nauczycieli 5 dni i pomijał napływ eskalacji z Klas do kolejki `GLOBALNA`; kontrola przyjęć nie hamowała eskalacji; G-7 = 12 było spełnialne „na papierze” (C2-12).
 - **Decyzja:** SLA = 3 dni robocze (`dodaj_dni_robocze`, tabela `dzien_wolny`); model tygodniowy (obciążenie dnia roboczego = 7/5 dobowego) z jawnym odsetkiem eskalacji 5% (A-15) i współczynnikiem 1,3; G-7 start = 18 (10 bez Klas + ≥ 8 współpracujących); `zaleglosc_globalna_min` z podziałem na źródło; kontrola przyjęć per Klasa przy `odsetek_eskalacji_7d ≥ 0,20`.
 - **Alternatywy:** SLA 72 h kalendarzowe z akceptacją ryzyka poniedziałkowych eskalacji — odrzucona jako opcja domyślna (pierwszy tydzień pilotażu dałby lawinę `opozniona`); obowiązkowa praca weekendowa weryfikatorów — odrzucona (koszt, brak podstaw w umowach).
 - **Konsekwencje:** termin dla Ucznia może wynosić do 5 dni kalendarzowych (Weryfikacja z piątku → środa); wyższy koszt puli globalnej; decyzja D-13 (G-0).
+- **Uzupełnienie (it. 6, wersja 2.4, C4-06 p. 6 i 7):** eskalacje z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` nie wliczają się do `odsetek_eskalacji_7d` (per Klasa i globalnie); Klasy Nauczyciela w karencji są objęte kontrolą przyjęć wprost do Przekazania Klasy albo przywrócenia; wariant 17.7 z aktywnym bezpiecznikiem poprawek (start: `M` = 3 951 min, 20 weryfikatorów; faza ustalona: 16) i decyzja D-17 o zapasie puli.
 
 ### ADR-044 Usuwanie kont Nauczycieli i Administratorów — Nowa (it. 4)
 - **Kontekst:** brak przepływu i endpointu usunięcia konta Nauczyciela, a klucze obce `RESTRICT` blokowały `DELETE FROM uzytkownik`; dane Nauczyciela są danymi osobowymi (C2-14).
-- **Decyzja:** `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` (ochrona ostatniego Administratora); okres karencji 30 dni; natychmiastowe zwolnienie blokad, zdjęcie flag, eskalacja Weryfikacji `KLASA`; Przekazanie Klasy przez Administratora; po karencji archiwizacja nieprzekazanych Klas i zamknięcie ich Przypisań, `WYCOFANE` dla nieprzekazanych Zadań `PRYWATNY`, pseudonimizacja uzasadnień `R-PRZYPISANIE`, klucze obce `ON DELETE SET NULL` (DDL 7.3), Oceny Nauczyciela bez wskazania osoby.
+- **Decyzja:** `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` (ochrona ostatniego Administratora); okres karencji 30 dni; natychmiastowe zwolnienie blokad, odebranie flag (od wersji 2.3 odroczone do `USUN_KONTO`), eskalacja Weryfikacji `KLASA`; Przekazanie Klasy przez Administratora; po karencji archiwizacja nieprzekazanych Klas i zamknięcie ich Przypisań, `WYCOFANE` dla nieprzekazanych Zadań `PRYWATNY`, pseudonimizacja uzasadnień `R-PRZYPISANIE`, klucze obce `ON DELETE SET NULL` (DDL 7.3), Oceny Nauczyciela bez wskazania osoby.
 - **Alternatywy:** wyłączenie z zakresu (NFR-09 wymienia Uczniów) — odrzucone (RODO dotyczy wszystkich osób); usuwanie miękkie z zachowaniem danych — odrzucone (brak podstawy przetwarzania po ustaniu umowy).
 - **Konsekwencje:** Uczniowie nie tracą historii Ocen; Klasa bez Nauczyciela istnieje tylko jako zarchiwizowana (CHECK w DDL).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-08):** natychmiastowe skutki karencji ograniczone do zwolnienia blokad (szkice zachowane) i eskalacji z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`; flagi zdejmuje dopiero `USUN_KONTO`; przywrócenie cofa eskalacje oczekujące, Klasy przekazane pozostają u nowego Nauczyciela (D-15).
+- **Uzupełnienie (it. 5, wersja 2.3, C3-08):** natychmiastowe skutki karencji ograniczone do zwolnienia blokad (szkice zachowane) i eskalacji z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`; flagi odbiera dopiero `USUN_KONTO`; przywrócenie cofa eskalacje oczekujące, Klasy przekazane pozostają u nowego Nauczyciela (D-15).
 
 ### ADR-045 Normalizacja zdjęć w piaskownicy procesowej `api` — Nowa (it. 4)
 - **Kontekst:** dekodowanie HEIC/PNG/WEBP i zmiana rozmiaru do 5 × 10 MB odbywały się w procesie `api` bez limitów, wbrew deklaracji 16.2 (bomba dekompresyjna, blokowanie pętli zdarzeń w szczycie „koniec lekcji”, C2-15).
@@ -6223,9 +6646,11 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 
 ### ADR-046 Bezpieczniki trafności i poprawek reagujące na dowód przekroczenia — Nowa (it. 5)
 - **Kontekst:** reguła „`n ≥ 50` i UB Wilsona > 2%” z wersji 2.2 była spełniona z konstrukcji dla 50 ≤ n < 189 przy zerze błędów (UB = z²/(n + z²)), więc na starcie produkcji i po awariach Jev podnosiła próg do 0,990, a bezpiecznik poprawek kierował każdą Poprawkę do Weryfikacji — sprzecznie z minimum `n_eff ≥ 189` z 11.5.1 i z modelem obciążenia 17.7 (C3-01).
-- **Decyzja:** wyzwolenie wyłącznie przy dowodzie przekroczenia: dolna granica Wilsona 95% błędu (wagi IPW) > 2% przy `n_eff ≥ 50`; próba = Kontrole losowe z 30 dni dla pary (konfiguracja, rodzaj) z pewnością (bieżący kalibrator) powyżej bieżącego progu — nie dla rekordu progu; UB > 2% przy `n_eff ≥ 189` tylko blokuje obniżanie progu; stan w tabeli `stan_bezpiecznika` (zastępuje flagę środowiskową), zdjęcie bezpiecznika poprawek przez Administratora ustawia `okno_od`; testy jednostkowe dla n = 50 … 188 bez błędów i dla progów `k_min` (11.5.3).
+- **Decyzja:** wyzwolenie wyłącznie przy dowodzie przekroczenia: dolna granica Wilsona 95% błędu (wagi IPW) > 2% przy `n_eff ≥ 50`; próba = Kontrole losowe z 30 dni dla pary (konfiguracja, rodzaj) z pewnością (bieżący kalibrator) powyżej bieżącego progu — nie dla rekordu progu; UB > 2% przy `n_eff ≥ 189` tylko blokuje obniżanie progu; stan w tabeli `stan_bezpiecznika` (zastępuje flagę środowiskową), dezaktywacja bezpiecznika poprawek przez Administratora (nazwa od wersji 2.4; w 2.3 „zdjęcie”) ustawia `okno_od`; testy jednostkowe dla n = 50 … 188 bez błędów i dla progów `k_min` (11.5.3).
 - **Alternatywy:** SPRT (H0: e ≤ 1%, H1: e ≥ 3%, α = β = 0,05) — odrzucony jako opcja domyślna: wymaga stanu sekwencyjnego per para i resetu po każdej zmianie progu (powrót problemu zapadki), a przy oknie kroczącym traci własności testu; samo minimum `n_eff ≥ 189` przed UB — odrzucone: przy e = 0,5% UB > 2% utrzymuje się do n ≈ 335 (11.5.1, tabela 1), więc w przedziale 189–335 bezpiecznik nadal wyzwalałby się bez dowodu.
-- **Konsekwencje:** przy e ≤ 0,5% fałszywe wyzwolenie w 90 dniach ≤ 0,2%, przy e = 1% ≤ 2,2% (symulacja 11.5.3); degradacja do 4% wykrywana w 2–4 dni (model zapasowy: 12 dni); błąd 2–3% nie jest szybko wykrywany przez bezpiecznik — chroni przed nim reguła wyboru progu (UB ≤ 2% przy `n_eff ≥ 189`) i blokada obniżania; model 17.7 i G-7 = 18 pozostają ważne (scenariusz startowy 17.7).
+- **Konsekwencje:** przy e ≤ 0,5% fałszywe wyzwolenie w 90 dniach ≤ 0,2%, przy e = 1% ≤ 2,2% (symulacja 11.5.3); model z błędem 4% od początku okna wykrywany w 2–4 dni (model zapasowy: 12 dni), nagła degradacja 0,5% → 4% w fazie ustalonej — w medianie 13 dni (doprecyzowanie wersji 2.4: „wykrywanie” oznacza pierwsze podniesienie progu, a skuteczną reakcję gwarantuje Blokada obniżania progu z uzupełnienia it. 6); błąd 2–3% nie jest szybko wykrywany przez bezpiecznik — chroni przed nim reguła wyboru progu (UB ≤ 2% przy `n_eff ≥ 189`) i blokada obniżania; model 17.7 i G-7 = 18 pozostają ważne (scenariusz startowy 17.7).
+
+- **Uzupełnienie (it. 6, wersja 2.4, C4-02, C4-04, C4-06 p. 5):** jawna kolejność dnia KALIBRUJ (kroki 1–6, 11.5.3): bezpieczniki oceniane na progu i kalibratorze sprzed przebiegu, wynik `p_nowy = max(p_dol, p0 + 0,02)` przy wyzwoleniu, jeden rekord `prog_pewnosci`; Blokada obniżania progu (`stan_bezpiecznika.aktywny` dla `TRAFNOSC`) od wyzwolenia do UB ≤ 2% przy `n_eff ≥ 189` powyżej bieżącego progu; obniżenie tylko po teście 30 dni powyżej progu docelowego (LB ≤ 2% i UB ≤ 2% przy `n_eff ≥ 189`); wyzwolenie przy 0,990 → tryb pełnej weryfikacji (1.000) z wyjściem przez dezaktywację (D-16); symulacja dynamiki (próg niemalejący w 100% przebiegów z degradacją, 61% przebiegów z degradacją jednorodną kończy w trybie pełnej weryfikacji w 30 dni); rozmiar testu przy e = 2% nazwany wprost (2,6–7,8% na ocenę, 1,1 fałszywego podniesienia na kwartał); „zdjęcie” → „dezaktywacja” dla obu typów. Odrzucone alternatywy: okno 7 dni obok 30 dni (wykrycie 7 zamiast 13 dni, ale 2,0 fałszywego podniesienia na kwartał i 28,5% kwartałów w trybie pełnej weryfikacji przy e = 2%); zatrzymanie na 0,990 bez trybu pełnej weryfikacji — przy degradacji jednorodnej błąd ocen automatycznych pozostaje > 2% bez końca (naruszenie NFR-03).
 
 ### ADR-047 Sprzątanie osieroconych obiektów magazynu — Nowa (it. 5)
 - **Kontekst:** po odtworzeniu bazy z PITR obiekty kopii treningowych i zdjęć utworzone po punkcie odtworzenia zostawały w magazynie bez wierszy `kopia_treningowa` / `zdjecie_rozwiazania`, więc odwołanie zgody i `USUN_KONTO` nie mogły ich usunąć (do reguły 24 miesięcy) — przypadek odrzucony w ADR-035; sprzątanie z E-02 obejmowało tylko prefiks `zdjecia/` (C3-06).
@@ -6267,12 +6692,13 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 | R-13 | Nadużywanie Zgłoszeń błędu odczytu do czasowego usuwania słabych Ocen z Profilu | niskie / niski | limity 1 na Rozwiązanie i 5 na 30 dni; raport uznawalności per Uczeń (9.12); zawieszenie trwa najwyżej do rozstrzygnięcia (SLA 3 dni robocze) |
 | R-14 | Uczeń zastępuje Transkrypcję gotowym rozwiązaniem (obejście kartki przez Poprawki) | średnie / wysoki | limity twarde i miękkie Poprawek, Sprawdzenie zgodności poprawek ze zdjęciem, T-7, podwójny odsetek Kontroli losowej i bezpiecznik poprawek (ADR-036, ADR-046); krok wstawiony ≤ 200 znaków i wliczony w odsetek znaków; G-2 (wykrywalność Poprawek „zastępujących” i „wstawień rozwiązania” ≥ 95%) |
 | R-15 | Rytm tygodniowy i eskalacje przeciążają pulę globalną w poniedziałki | średnie / średni | SLA w dniach roboczych, model tygodniowy z eskalacjami, kontrola przyjęć per Klasa, G-7 = 18 (ADR-043) |
-| R-16 | Odtworzenie bazy cofa Zdarzenia RODO | niskie / wysoki | rejestr wszystkich Zdarzeń RODO w Object Lock zapisywany przed transakcją, `ponow_zdarzenia_rodo` przed startem workerów, uzgadnianie co 10 min (ADR-041); G-6 (3 scenariusze); `USUNIECIE_WYKONANE` zapisywane przez `worker` i nigdy nieunieważniane, `SPRZATAJ_OSIEROCONE_OBIEKTY` w kroku 2a (ADR-041, ADR-047); G-6 (4 scenariusze) |
+| R-16 | Odtworzenie bazy cofa Zdarzenia RODO | niskie / wysoki | rejestr wszystkich Zdarzeń RODO w Object Lock zapisywany przed transakcją, `ponow_zdarzenia_rodo` przed startem workerów, uzgadnianie co 5 min (okno ≤ 10 min, ADR-041); `USUNIECIE_WYKONANE` zapisywane przez `worker` i nigdy nieunieważniane, `SPRZATAJ_OSIEROCONE_OBIEKTY` w kroku 2a (ADR-041, ADR-047); od wersji 2.4 kryterium „konto nie istnieje” dla zdarzeń `WORKER` i ponowienie według roli konta (C-39); G-6 (4 scenariusze, w tym (a3) PITR w trakcie `USUN_KONTO` i (a4) konto Nauczyciela) |
 | R-17 | Dostawca Jev bez trybu wsadowego lub z niższym limitem szybkości | średnie / średni | tryb `POJEDYNCZY` z budżetem 3 fal, globalny ogranicznik bez otwierania obwodu, model zapasowy dla nadmiaru (ADR-039); G-4 (d) |
 | R-18 | Zgłoszenia błędu w Zadaniu nierozpatrywane przez recenzentów | średnie / niski | SLA 5 dni roboczych z metryką, wstrzymanie w doborze po 3 zgłoszeniach, alert dla Administratorów (ADR-038) |
-| R-19 | Filtr danych osobowych zastępuje tokeny matematyczne albo przepuszcza krótkie imiona | średnie / średni | Słownik terminów matematycznych, filtr tylko w `tekst`, dopasowanie dokładne dla nazw < 4 znaków, `konflikt_filtra` → T-3 zamiast usuwania kroku, przywracanie słowa Poprawką; G-2 na 150 kartkach i 1 050 Transkrypcjach z syntetycznymi danymi konta (ADR-042) |
-| R-20 | Bezpiecznik nie wykrywa umiarkowanego wzrostu błędu (2–3%) | średnie / średni | reguła wyboru progu (UB ≤ 2% przy `n_eff ≥ 189`, okno 90 dni), ostrzeżenie z blokadą obniżania progu przy UB > 2%, alert `gorna_granica_bledu_30d > 0,02`, cotygodniowy przegląd `/admin/kalibracja` (ADR-046) |
-| R-21 | Dostawca Jev liczy limit w ścisłym oknie 1 s i odrzuca chwilowe przekroczenia | średnie / niski | test G-4 (seria 74 wywołań), pojemność kubełka 4 zamiast 16 (+1,1 s w trybie pojedynczym, 17.2), `429` poza circuit breakerem (ADR-039) |
+| R-19 | Filtr danych osobowych zastępuje tokeny matematyczne albo przepuszcza krótkie imiona lub nazwiska równe terminom matematycznym | średnie / średni | Słownik terminów matematycznych, filtr tylko w `tekst`, dopasowanie dokładne dla nazw < 4 znaków, `konflikt_filtra` → T-3 zamiast usuwania kroku, przywracanie słowa Poprawką; od wersji 2.4 imię i nazwisko nigdy nie są treścią matematyczną, reguły b1/b2 dla nazwisk-terminów, metryka `uczniowie_z_konfliktem_filtra_udzial`; G-2 na 150 kartkach (w tym ≥ 30 z nazwiskiem-terminem, osobne kryterium) i 1 050 Transkrypcjach z syntetycznymi danymi konta (ADR-042); ryzyko resztkowe: samo nazwisko-termin bez imienia poza ramką — reguła promptu |
+| R-20 | Bezpiecznik nie wykrywa umiarkowanego wzrostu błędu (2–3%) ani szybko nagłej degradacji (mediana 13 dni dla 0,5% → 4% w fazie ustalonej) | średnie / średni | reguła wyboru progu (UB ≤ 2% przy `n_eff ≥ 189`, okno 90 dni), ostrzeżenie z blokadą obniżania progu przy UB > 2%, Blokada obniżania progu po wyzwoleniu i test obniżenia na 30 dniach (wersja 2.4, C4-02), alert `gorna_granica_bledu_30d > 0,02`, cotygodniowy przegląd `/admin/kalibracja` (ADR-046); okno 7 dni odrzucone z powodu kosztu na granicy NFR-03 (11.5.3) |
+| R-21 | Dostawca Jev liczy limit w ścisłym oknie 1 s i odrzuca chwilowe przekroczenia; skalowanie liczby replik zwiększa ruch chwilowy | średnie / niski | test G-4 (seria 74 wywołań), `B_całk = 10` zamiast 34 (kubełek workera 4 przy 2 replikach, +1,1 s w trybie pojedynczym, 17.2), `429` poza circuit breakerem (ADR-039); od wersji 2.4 łączna pojemność i przydział dzielone między repliki z niezmiennikami pod blokadą doradczą — granica ≤ 74 w 1 s przy 2/3/4 workerach, także przy dołączaniu (13.2, C-40, G-3 c) |
+| R-22 | Bezpiecznik trafności na granicy NFR-03 (e ≈ 2%) fałszywie podnosi próg i przełącza parę w tryb pełnej weryfikacji | średnie / średni | koszt nazwany i policzony (1,1 podniesienia na kwartał, 11% kwartałów w trybie pełnej weryfikacji, auto 57,5% zamiast 67%, 11.5.3, 17.7); decyzja D-16 w G-0; wyjście z trybu pełnej weryfikacji przez dezaktywację Administratora po analizie `/admin/kalibracja`; plan obciążenia „Tryb pełnej weryfikacji” (16 weryfikatorów ≤ G-7) |
 
 ---
 
@@ -6309,7 +6735,7 @@ konfiguracją modeli (baza danych).
 | Min. próbek do kalibracji / n_eff powyżej progu | 400 / 189 | 11.5.3 |
 | Cel błędu auto (górna granica Wilsona 95%) | 0.02 | 11.5.3 |
 | Walidacja krzyżowa kalibratora | 5-krotna, wartości out-of-fold | 11.5.3 |
-| Bezpieczniki trafności i poprawek (ADR-046) | wyzwolenie: LB Wilsona 95% błędu > 0,02 przy `n_eff ≥ 50`; ostrzeżenie (blokada obniżania progu): UB > 0,02 przy `n_eff ≥ 189`; okno 30 dni dla pary (konfiguracja, rodzaj) powyżej bieżącego progu; krok +0.02 na dobę (maks. 0.990) | 11.5.3 |
+| Bezpieczniki trafności i poprawek (ADR-046) | wyzwolenie: LB Wilsona 95% błędu > 0,02 przy `n_eff ≥ 50`; ostrzeżenie (blokada obniżania progu): UB > 0,02 przy `n_eff ≥ 189`; okno 30 dni dla pary (konfiguracja, rodzaj) powyżej progu sprzed przebiegu; krok +0.02 na dobę od progu sprzed przebiegu (maks. 0.990; wyzwolenie przy 0.990 → 1.000, D-16); Blokada obniżania progu: wejście przy wyzwoleniu, wyjście przy UB ≤ 0,02 i `n_eff ≥ 189` albo przez dezaktywację; test obniżenia: okno 30 dni powyżej progu docelowego, `n_eff ≥ 50`, LB ≤ 0,02 i (n_eff < 189 lub UB ≤ 0,02) | 11.5.3 |
 | Progi wykonania Kontroli (alert / blokada obniżania / bezpiecznik) | 0.90 / 0.80 / 0.60 | 11.5.3 |
 | Strefa rozwoju (P sukcesu) | [0.60, 0.75], cel 0.675 | 10.1.2 |
 | Próg Wkładki / opanowania / wymagań | 0.40 / 0.80 / 0.50 | 10.1.2 |
@@ -6325,14 +6751,15 @@ konfiguracją modeli (baza danych).
 | Porzucenie niezatwierdzonego Rozwiązania | 7 dni | 8.1 |
 | Blokada Weryfikacji / przedłużenie / maks. łącznie | 15 min / co 5 min przez PWA / 2 h | 11.4.2 |
 | SLA Weryfikacji / eskalacja / alert przed usunięciem zdjęć | 3 dni robocze (`dodaj_dni_robocze`) / co 1 h / 80 dni | 11.4.3, A-15 |
-| Kontrola przyjęć per Klasa (eskalacje) | włączenie: `odsetek_eskalacji_7d ≥ 0,20` przy ≥ 10 Weryfikacjach; wyłączenie: < 0,10; alert globalny > 0,10 | 11.4.3 |
+| Kontrola przyjęć per Klasa (eskalacje) | włączenie: `odsetek_eskalacji_7d ≥ 0,20` przy ≥ 10 Weryfikacjach (licznik bez `KARENCJA_KONTA_NAUCZYCIELA`) albo konto Nauczyciela `USUWANE`; wyłączenie: < 0,10 albo przywrócenie / Przekazanie Klasy; alert globalny > 0,10 | 11.4.3 |
 | Model obciążenia: współczynnik zapasu / dni pracy / odsetek eskalacji | 1,3 / 5 dni roboczych / 5% | 17.7, A-15 |
 | Poprawki Transkrypcji — limity twarde | bez usuwania; ≤ 2 wstawione, każdy ≤ min(200, max(60, ⌈1,5 × mediana długości kroków agenta⌉)) znaków; zmienione + wstawione ≤ max(3, ⌈0,5 n⌉); odsetek znaków (z krokami wstawionymi) ≤ 0,50 | 9.4, ADR-036 |
 | Poprawki Transkrypcji — limity miękkie (T-7) | zmienione + wstawione ≤ max(2, ⌈0,25 n⌉); odsetek znaków ≤ 0,25; `p_zgodna_z_poprawka ≥ 0,50` | 9.4, 10.3.3 |
-| Sprawdzenie zgodności poprawek | pula `S` (4 korutyny na replikę); timeout 8 s, 2 próby; ≤ 6 wycinków + zdjęcie poglądowe 1024 px; autozapis PWA 2 s po edycji; oczekiwanie w Ocenie ≤ min(6 s, `termin_miekki` − 9 s) | 9.4, 10.3.3 |
+| Sprawdzenie zgodności poprawek | pula `S` (4 korutyny na replikę); timeout 8 s, 2 próby; ≤ 6 wycinków + zdjęcie poglądowe 1024 px; autozapis PWA 2 s po edycji; oczekiwanie w Ocenie do `zatwierdzono_at + 6 s` niezależnie od `t_R` (C4-06 p. 10) | 9.4, 10.3.3 |
 | Odsetek Kontroli losowej dla Transkrypcji z Poprawkami | 2 × odsetek bazowy (maks. 1) | 11.3 T-5 |
 | Jev: tryb / wsad / równoległość w trybie pojedynczym | `WSADOWY` (wymaganie A-01) albo `POJEDYNCZY` / ≤ 32 pytania / 16 na Ocenę | 13.2 |
-| Globalny ogranicznik szybkości modelu | `r_i = 0,8 × limit × waga_i / Σ wag`; wagi: worker 1,0, `api` 0,1; pojemność kubełka: worker 16 (4 przy ścisłym oknie 1 s, G-4), `api` 1; 1 token = 1 wywołanie; fale ≥ 2 z pierwszeństwem; `t_fali` 1,2 s (pojedynczy) / 0,8 s (wsadowy); odnowienie 10 s, wygasanie 30 s; po `429` przydział × 0,5 na 30 s | 13.2, ADR-039 |
+| Globalny ogranicznik szybkości modelu | `r_i = min(0,8 × limit × waga_i / Σ wag, 0,8 × limit − Σ_{j≠i} r_j)`; wagi: worker 1,0, `api` 0,1; łączna pojemność kubełków `B_całk` (`LEMAT_POJEMNOSC_LACZNA_KUBELKOW`): 34 (tolerancja A-01), 10 (ścisłe okno 1 s, G-4); pojemność `api` 1, pozostałe ⌊(B_całk − n_api) × w_i / Σ w⌋ (worker 16 / 10 / 8 przy 2 / 3 / 4 replikach); nowy wiersz z pustym kubełkiem, odnowienie co 2 s do osiągnięcia formuły; 1 token = 1 wywołanie; fale ≥ 2 z pierwszeństwem; `t_fali` 1,2 s (pojedynczy) / 0,8 s (wsadowy); odnowienie 10 s pod `pg_advisory_xact_lock`, wygasanie 30 s; po `429` przydział × 0,5 na 30 s; rozpoznawanie: 0,8 × 150 = 120/min, `B_całk = 30`, wiersze R (1,0) i S (0,3) na replikę | 13.2, 13.4, ADR-039 |
+| Popyt Jev na Ocenę (tryb pojedynczy) | 28 wywołań (plan budżetowy 16 + 11 + 1, 3 fale); maksimum pytań 29 (16 + 13, 2 fale) | 10.4.3, 17.2, 17.4 |
 | Normalizacja zdjęć w `api` | 2 procesy na replikę; `RLIMIT_AS` 512 MiB, `RLIMIT_CPU` 5 s, 8 s czasu ściennego; ≤ 40 Mpx, ≤ 12 000 px na wymiar; oczekiwanie > 5 s → `503` | 16.2, ADR-045 |
 | Pula Testu diagnostycznego | ≥ 3 Zadania na (Dział, poziom matury, nominalny Poziom trudności 2/4); test niedostępny < 50% pozycji | 9.1, G-5 |
 | Zgłoszenia błędu w Zadaniu | 10 / dobę na Nauczyciela; wstrzymanie w doborze przy 3 otwartych od różnych Nauczycieli; SLA 5 dni roboczych; Przegląd recenzentów po 14 dniach bez Przeglądu zlecającego | 8.4, ADR-038 |
@@ -6349,9 +6776,9 @@ konfiguracją modeli (baza danych).
 | Kopie treningowe | maks. 24 miesiące; usunięcie obiektów ≤ 1 h po odwołaniu zgody lub w `USUN_KONTO` | 16.4 |
 | Rozpoznawanie: dopuszczalny odsetek błędów/timeoutów dostawcy | ≤ 0,3% wywołań | A-08, 17.2 S-7 |
 | Weryfikator globalny prowadzący Klasę: maks. łączne obciążenie | 180 min na dzień roboczy (prognoza Klasy na dzień roboczy, 7/5 dobowej + deklaracja) | A-14 |
-| Filtr danych osobowych | tylko `tekst`; rdzeń ≥ 4 znaki: dokładnie lub Levenshtein ≤ 1; < 4 znaki: dokładnie; wykluczenie Słownika terminów matematycznych (≈ 4 000 form); krok bez treści matematycznej ≤ 6 tokenów → `[DANE_OSOBOWE]` w całości | 10.3.1, ADR-042 |
+| Filtr danych osobowych | tylko `tekst`; rdzeń ≥ 4 znaki: dokładnie lub Levenshtein ≤ 1; < 4 znaki: dokładnie; Słownik terminów matematycznych (≈ 4 000 form) niezastępowany poza regułami b1 (sąsiedztwo drugiego członu lub inicjału) i b2 (krok agenta w ramce); krok bez treści matematycznej (po wyłączeniu imienia, nazwiska, inicjałów i oznaczenia klasy) ≤ 6 tokenów → `[DANE_OSOBOWE]` w całości; na Poprawkach reguła (a) nie jest liczona ponownie | 10.3.1, ADR-042 |
 | Sprzątanie osieroconych obiektów | codziennie 04:30 UTC, obiekty starsze niż 1 h; przy odtworzeniu: od `T − 5 min`; alert > 100 obiektów na dobę | 13.3, 16.4, ADR-047 |
-| Uzgadnianie Rejestru Zdarzeń RODO | unieważnianie zdarzeń `API` bez wiersza po 5 min; `USUNIECIE_WYKONANE`: ponowne `USUN_KONTO` po 2 h, alert po 26 h | 13.3, ADR-041 |
+| Uzgadnianie Rejestru Zdarzeń RODO | cykl co 5 min; unieważnianie zdarzeń `API` bez wiersza starszych niż 5 min (okno ≤ 10 min); `USUNIECIE_WYKONANE` (klucz bez daty `wykonane/…`): ponowne `USUN_KONTO` po 2 h, alert po 26 h | 13.3, 13.5, ADR-041 |
 | Rejestracja Ucznia bez kodu zaproszenia | `LEMAT_REJESTRACJA_BEZ_KLASY` = true (false, gdy G-7 niespełnione) | A-14 |
 | Raport nadużyć zgłoszeń błędu odczytu | uznane < 20% przy ≥ 5 zgłoszeniach Ucznia | 9.12 |
 | Dzierżawa pracy / odnowienie | 60 s / 15 s | 13.4 |
@@ -6497,7 +6924,7 @@ opisuje opcję alternatywną, tak aby implementacja nie była blokowana
 
 | # | Decyzja | Opcja domyślna (w dokumencie) | Alternatywa i jej koszt | Uwagi źródłowe |
 |---|---|---|---|---|
-| D-1 | Zmiany słownika PZS-1 (83 nowe pojęcia w części A, definicje B-1…B-9; wersja 2.3: 5 nowych pojęć, B-5 ujednolicone z ADR-027, „Rejestr Zdarzeń RODO” zamiast „Rejestr usunięć”) | treść 3.3/3.4 | inne brzmienie → zmiana nazw w kodzie przed wdrożeniem produkcyjnym | C1-03, C1-04 |
+| D-1 | Zmiany słownika PZS-1 (86 nowych pojęć w części A, definicje B-1…B-9; wersja 2.3: 5 nowych pojęć, B-5 ujednolicone z ADR-027, „Rejestr Zdarzeń RODO” zamiast „Rejestr usunięć”; wersja 2.4: „Dezaktywacja bezpiecznika”, „Blokada obniżania progu”, „Wstrzymanie”, zawężenie wyjątku Słownika terminów matematycznych) | treść 3.3/3.4 | inne brzmienie → zmiana nazw w kodzie przed wdrożeniem produkcyjnym | C1-03, C1-04 |
 | D-2 | Interpretacja NFR-01 (A-11): czas systemowy, zobowiązanie ≥ 99% | A-11, 17.1, 17.2 (S-1…S-7) | 100% ≤ 30 s → model rozpoznawania hostowany we własnej infrastrukturze, poza budżetem pilotażu | C1-08 |
 | D-3 | Ocena wstępna wstrzymana (bez punktów) przy podejrzeniu błędu odczytu; zawieszenie Wyniku przy zgłoszeniu; rozstrzyganie na korzyść Ucznia bez zdjęć | ADR-022 z uzupełnieniem 2.1 | literalne FR-24 (pokazanie punktów modelu) → łamie FR-28 | C1-01 |
 | D-4 | Pula weryfikatorów globalnych: rekrutacja i finansowanie ≥ 8 Nauczycieli współpracujących (wersja 2.1: ≥ 2; model tygodniowy z eskalacjami, ADR-043) albo start bez rejestracji Uczniów bez Klasy (wtedy 4 weryfikatorów spośród 10 Nauczycieli bez Klas) | A-14, ADR-034 (obie opcje wspierane flagą) | automatyczna finalizacja po SLA — odrzucona, bo łamie FR-24/FR-26 | C1-02 |
@@ -6512,6 +6939,8 @@ opisuje opcję alternatywną, tak aby implementacja nie była blokowana
 | D-13 | SLA Weryfikacji 3 dni robocze, tygodniowy model obciążenia z 5% eskalacji, G-7 = 18 weryfikatorów globalnych na start, kontrola przyjęć per Klasa | A-15, ADR-043, 11.4.3, 17.7 | SLA 72 h kalendarzowe — wymaga pracy weekendowej weryfikatorów (≈ +40% pojemności w dniu roboczym) albo akceptacji poniedziałkowych przekroczeń SLA | C2-12 |
 | D-14 | Możliwość pominięcia Testu diagnostycznego (FR-03: „nowy uczeń rozwiązuje…”) | 9.1 (pominięcie dozwolone, Profil `DOMYSLNA`, test możliwy później) | test obowiązkowy przed pierwszą rekomendacją — `GET …/rekomendacje/nastepna` zwraca `409 TEST_WYMAGANY`, gdy brak testu `ZAKONCZONY` dla poziomu matury, a pula pozwala go utworzyć | C2-13 |
 | D-15 | Skutki przywrócenia konta Nauczyciela w okresie karencji dla Klas przekazanych przez Administratora | Klasy przekazane w karencji pozostają u nowego Nauczyciela; wracają tylko Weryfikacje eskalowane z powodu karencji i jeszcze niepodjęte; flagi i szkice zachowane (16.4, ADR-044) | automatyczny zwrot przekazanych Klas — wymaga zachowania historii przekazań (`klasa.poprzedni_nauczyciel_id`), powiadomienia nowego Nauczyciela i ponownego przypisania otwartych Weryfikacji `KLASA` oraz Przypisań (+1 kolumna, +1 krok przywrócenia), a Uczniowie i nowy Nauczyciel tracą ciągłość w trakcie roku | C3-08 |
+| D-16 | Reakcja bezpiecznika trafności na trwały dowód przekroczenia NFR-03 przy progu 0,990 i jej koszt na granicy NFR-03 | automatyczne przejście pary w tryb pełnej weryfikacji (`wartosc = 1.000`) z wyjściem wyłącznie przez dezaktywację Administratora; przy e = 2% koszt: 1,1 fałszywego podniesienia progu na kwartał, 11% kwartałów w trybie pełnej weryfikacji, auto 57,5% zamiast 67% (11.5.3, 17.7) | zatrzymanie na 0,990 z alertem — brak kosztu obciążenia, ale przy degradacji jednorodnej błąd ocen automatycznych > 2% trwa do decyzji Administratora (naruszenie NFR-03 przez ≥ 1 dobę) | C4-02, C4-06 p. 5 |
+| D-17 | Zapas puli weryfikatorów globalnych na wariant „aktywny bezpiecznik poprawek w fazie startowej” (20 wymaganych) | G-7 = 18; w tym wariancie współczynnik zapasu 1,22 zamiast 1,3, nadwyżkę zatrzymuje kontrola przyjęć kolejki globalnej (17.7) | G-7 = 20 (≥ 10 Nauczycieli współpracujących zamiast ≥ 8, koszt 2 umów) | C4-06 p. 7 |
 
 Do czasu akceptacji implementacja realizuje opcje domyślne; zmiana
 opcji dotyczy reguł w modułach `lemat.ocenianie`, `lemat.weryfikacja`,
@@ -6584,7 +7013,7 @@ sprzątanie zamiast Zdarzenia RODO dla kopii (ADR-047).
 
 | ID uwagi | Rozwiązanie | Miejsce rozwiązania |
 |---|---|---|
-| C3-01 (WYSOKA) | Bezpieczniki trafności i poprawek wyzwalane wyłącznie dowodem przekroczenia: LB Wilsona 95% błędu (IPW) > 2% przy `n_eff ≥ 50`; ostrzeżenie (blokada obniżania progu) przy UB > 2% i `n_eff ≥ 189`; próba dla pary (konfiguracja, rodzaj) powyżej bieżącego progu, nie dla rekordu progu (brak zapadki); rachunek: tabela `k_min` i P(wyzwolenie) dla n = 50 … 1 000 (przy 0 błędach LB = 0 — nigdy) i symulacja 90 dni dla startu, fazy ustalonej i modelu zapasowego; tabela `stan_bezpiecznika` zamiast flagi środowiskowej, zdjęcie przez Administratora z `okno_od`; testy jednostkowe (a)–(f), w tym „0 błędów przy n = 50 … 188 nie wyzwala”; scenariusz startowy w 17.7: reguła 2.2 dawałaby auto ≈ 0%, `M` = 5 154 min, 137 min na Nauczyciela i 26 weryfikatorów globalnych zamiast 18 — reguła 2.3 zachowuje „Start: auto 47%” i G-7 = 18 | 3.3 (Bezpiecznik), 7.3 (`typ_bezpiecznika`, `stan_bezpiecznika`), 9.8, 11.5.2, 11.5.3, 12.3 (`/admin/bezpieczniki`, `/admin/bezpieczniki/zdjecie`), 12.2 (`BEZPIECZNIK_NIEAKTYWNY`), 12.4 (`StanBezpiecznikaWyjscie`), 13.3 (`KALIBRUJ`), 14.1 (E-21), 17.1 (NFR-03), 17.3, 17.7, 20, 21 (R-20), 22, ADR-007 (uzupełnienie), ADR-046 |
+| C3-01 (WYSOKA) | Bezpieczniki trafności i poprawek wyzwalane wyłącznie dowodem przekroczenia: LB Wilsona 95% błędu (IPW) > 2% przy `n_eff ≥ 50`; ostrzeżenie (blokada obniżania progu) przy UB > 2% i `n_eff ≥ 189`; próba dla pary (konfiguracja, rodzaj) powyżej bieżącego progu, nie dla rekordu progu (brak zapadki); rachunek: tabela `k_min` i P(wyzwolenie) dla n = 50 … 1 000 (przy 0 błędach LB = 0 — nigdy) i symulacja 90 dni dla startu, fazy ustalonej i modelu zapasowego; tabela `stan_bezpiecznika` zamiast flagi środowiskowej, dezaktywacja (w wersji 2.3: „zdjęcie”) przez Administratora z `okno_od`; testy jednostkowe (a)–(f), w tym „0 błędów przy n = 50 … 188 nie wyzwala”; scenariusz startowy w 17.7: reguła 2.2 dawałaby auto ≈ 0%, `M` = 5 154 min, 137 min na Nauczyciela i 26 weryfikatorów globalnych zamiast 18 — reguła 2.3 zachowuje „Start: auto 47%” i G-7 = 18 | 3.3 (Bezpiecznik), 7.3 (`typ_bezpiecznika`, `stan_bezpiecznika`), 9.8, 11.5.2, 11.5.3, 12.3 (`/admin/bezpieczniki`, `/admin/bezpieczniki/zdjecie` — od wersji 2.4 `/admin/bezpieczniki/dezaktywacja`), 12.2 (`BEZPIECZNIK_NIEAKTYWNY`), 12.4 (`StanBezpiecznikaWyjscie`), 13.3 (`KALIBRUJ`), 14.1 (E-21), 17.1 (NFR-03), 17.3, 17.7, 20, 21 (R-20), 22, ADR-007 (uzupełnienie), ADR-046 |
 | C3-02 (ŚREDNIA) | Filtr danych osobowych nie usuwa kroków i nie zmienia `latex`; krok w ramce bez treści matematycznej → `[DANE_OSOBOWE]` w całości, z treścią matematyczną → zachowany, `konflikt_filtra` → T-3 (11.1 p. 7d, Z-1); dopasowanie nazw tylko w `tekst`, Słownik terminów matematycznych (≈ 350 lematów, ≈ 4 000 form) nigdy niezastępowany, nazwy < 4 znaków — dopasowanie dokładne; pozycje zastąpień w `zastapienia_danych_osobowych`, przywracanie słowa Poprawką (dopasowania przybliżone nie są ponownie filtrowane, Poprawka podlega Sprawdzeniu i podwójnej Kontroli); G-2: 150 kartek (UB 2,5%), w tym krótkie imiona i nazwiska-terminy, 0 zastąpień terminów matematycznych i ≤ 0,5% fałszywych zastąpień na 1 050 Transkrypcjach, `konflikt_filtra` ≤ 1% | 2 (A-09), 3.3 (Filtr, Słownik terminów matematycznych, Obszar kroku), 7.3 (`krok_transkrypcji`, `transkrypcja.konflikt_filtra`), 10.3.1 p. 3a, 11.1 p. 7d, 12.4 (`KrokTranskrypcji`, `TranskrypcjaWyjscie`), 14.1 (E-37), 17.3, 17.6 (G-2), 21 (R-19), 22, ADR-042 (uzupełnienie) |
 | C3-03 (ŚREDNIA) | `USUNIECIE_WYKONANE` zapisuje `worker` (`zrodlo = WORKER`, deterministyczne `id` = uuid5, `If-None-Match: *`) przed pierwszą zmianą w bazie, wiersz `zdarzenie_rodo` w pierwszej transakcji `USUN_KONTO` (krok 1, razem z anulowaniem procesów); `UZGODNIJ_REJESTR_RODO` unieważnia tylko zdarzenia `API`, a dla `WORKER` ponawia `USUN_KONTO` po 2 h i alarmuje po 26 h; `ponow_zdarzenia_rodo` wykonuje kroki 1–6 synchronicznie bez względu na czas od usunięcia; poprawione ADR-041 i komentarz `zdarzenie_rodo.id`; G-6 (a) z odtworzeniem 60 min po usunięciu | 3.3 (Zdarzenie RODO), 5.1, 7.3 (`zrodlo_zdarzenia_rodo`, `zdarzenie_rodo`), 13.3 (`UZGODNIJ_REJESTR_RODO`, `USUN_KONTO`), 14.1 (E-36), 16.4 (kroki 0–1, procedura odtworzenia, konto Nauczyciela p. 1), 17.3, 17.6 (G-6 a), 21 (R-16), 22, ADR-041 (uzupełnienie) |
 | C3-04 (ŚREDNIA) | Jedna formuła `0,8 × limit × waga_i / Σ wag` (kolumny `waga` i `pojemnosc` w `limit_szybkosci_modelu`); 1 token = 1 wywołanie HTTP; kubełek workera 16 ≥ maks. fala (4 przy ścisłym oknie 1 s, test G-4); przyjęcie planu przed falą 1 (przewidywany koniec ≤ termin miękki), terminy fal ≥ 2, pierwszeństwo fal ≥ 2; porty `przyjmij_plan`, `zarezerwuj_wywolanie`, `zwolnij`; testy jednostkowe (a)–(e); symulacja profili A–D: przy A-03 0 Ocen do modelu zapasowego (wersja 2.2: 18%), S-6 ≤ 26,2 s, S-6b w budżecie SLO; A-01 z tolerancją 75 wywołań w 1 s | 2 (A-01), 3.3 (Przyjęcie planu), 7.3 (`limit_szybkosci_modelu`), 9.9, 13.1 (`PrzyjeciePlanu`, `OgranicznikSzybkosci`), 13.2, 14.1 (E-33), 17.2 (S-6, S-6b, budżet SLO), 17.3, 17.4 (symulacja), 17.6 (G-4), 21 (R-21), 22, ADR-039 (uzupełnienie) |
@@ -6603,7 +7032,7 @@ Zmiany przekrojowe wersji 2.3: nowe typy `zrodlo_zdarzenia_rodo`,
 usunięta kolumna `zadanie.wstrzymane_w_doborze`; zmieniona wartość
 `ZADANIE_USUNIECIA` → `WNIOSEK_O_USUNIECIE`; nowa pula `SPRAWDZANIE`; nowa
 praca w tle `SPRZATAJ_OSIEROCONE_OBIEKTY`; nowe endpointy `GET
-/admin/bezpieczniki`, `POST /admin/bezpieczniki/zdjecie`; nowe kody błędów
+/admin/bezpieczniki`, `POST /admin/bezpieczniki/zdjecie` (od wersji 2.4 `POST /admin/bezpieczniki/dezaktywacja`, C4-04); nowe kody błędów
 `KONTO_UCZNIA_NIEAKTYWNE`, `BEZPIECZNIK_NIEAKTYWNY`; macierz błędów do
 E-38; scenariusze współbieżności do C-38; scenariusz budżetu S-6b; ryzyka
 R-19 … R-21; ADR-046, ADR-047 oraz uzupełnienia ADR-007, ADR-029, ADR-036,
@@ -6611,3 +7040,54 @@ ADR-039 … ADR-042, ADR-044; decyzja G-0 D-15; PZS-1: 83 pojęcia w części A;
 słowa ogólne dopisane do `tests/slownik_tokeny.yaml`: `sprzataj`,
 `osierocone`, `obiekty`, `wniosek`, `wywolania`, `pojemnosc`, `waga`,
 `okno`.
+
+### 23.7 Iteracja 6 (2026-11-01, wersja 2.4) — zamknięcie uwag C4-01 … C4-06
+
+Zaadresowano wszystkie 6 otwartych uwag z `docs/CRITIQUE_LOG.md`, iteracja 4
+(4 średnie, 2 niskie), w tym wszystkie 10 podpunktów C4-06. Dwie decyzje
+wymagają właściciela produktu (D-16, D-17; opcje domyślne w 11.5.3 i 17.7).
+Odstępstwa od sugerowanych poprawek: C4-02 — oprócz `prog_nowy = max(wybór,
+prog_obecny + 0,02)` i zakazu obniżania dodano tryb pełnej weryfikacji przy
+wyzwoleniu na 0,990 (bez niego reakcja na degradację jednorodną kończy się na
+0,990 z błędem > 2%), a symulacja wykazała, że okno 30 dni wykrywa nagłą
+degradację w medianie 13 dni (nie 2–4) — skorygowano ADR-046 i R-20, a okno
+7 dni odrzucono z rachunkiem; C4-04 — `dezaktywowany_przez` zamiast
+`dezaktywowal_id` (konwencja `utworzony_przez`, `podjeta_przez`), a
+„wstrzymanie” dostało jedną definicję zamiast zmiany nazw; C4-05 — pojemność
+`api` stała (1), a workery dzielą resztę `B_całk` proporcjonalnie do wagi,
+co przy 2 workerach zachowuje kubełek 16 i wyniki S-6.
+
+| ID uwagi | Rozwiązanie | Miejsce rozwiązania |
+|---|---|---|
+| C4-01 (ŚREDNIA) | `ponow_zdarzenia_rodo`: kryterium zastosowania zależne od źródła — `API`: wiersz `zdarzenie_rodo`; `WORKER`: brak wiersza `uzytkownik` (PITR w trakcie `USUN_KONTO` daje wiersz zdarzenia i pełne dane konta); cały prefiks `wykonane/` bez filtra czasu; ponowienie każdego zdarzenia według `dane.rola` tymi samymi funkcjami domenowymi co `api` i `USUN_KONTO` (kroki (1)–(5) Nauczyciela, skutki `KontoUsuwane` / `KontoPrzywrocone`, tabela przywrócenia właściwa dla roli); `rola` w każdym Zdarzeniu RODO (CHECK); G-6 (a3) PITR po krokach 1–4 i (a4) konto Nauczyciela; scenariusz C-39 | 7.3 (`zdarzenie_rodo.dane`, CHECK), 13.3 (`USUN_KONTO`), 13.6 (`KontoUsuwane`, `KontoPrzywrocone`), 15.2 (C-39), 16.4 (wniosek p. 1, krok 0, procedura odtworzenia p. 2, konto Nauczyciela p. (1)), 17.3, 17.6 (G-6), 21 (R-16), ADR-041 (uzupełnienie it. 6) |
+| C4-02 (ŚREDNIA) | „Wynik dnia KALIBRUJ”: kroki 1–6 w jawnej kolejności — wybór progu, ocena bezpieczników na progu i kalibratorze sprzed przebiegu, Blokada obniżania progu (wejście przy wyzwoleniu, wyjście przy UB ≤ 2% i `n_eff ≥ 189` powyżej bieżącego progu), dozwolone obniżenie z testem 30 dni powyżej progu docelowego, `p_nowy = max(p_dol, p0 + 0,02)` przy wyzwoleniu, 0,990 → 1,000, jeden rekord `prog_pewnosci`; `stan_bezpiecznika.aktywny` dla `TRAFNOSC`, `wyjscie_z_blokady_at`; testy (g)–(k), w tym „degradacja 4% przez 30 dni na tle 60 dni z błędem 0,5% → próg niemalejący”; symulacja dynamiki (trajektoria progu i udział auto: 67% → 38% → 15% → 0% przy degradacji jednorodnej, próg niemalejący w 100% przebiegów) | 3.3 (Blokada obniżania progu), 7.3 (`stan_bezpiecznika`), 9.8, 11.5.3, 12.4 (`StanBezpiecznikaWyjscie`), 13.3 (`KALIBRUJ`), 14.1 (E-21), 17.3, 17.7, 21 (R-20, R-22), 22, 23.4 (D-16), ADR-046 (konsekwencje, uzupełnienie it. 6) |
+| C4-03 (ŚREDNIA) | Reguła (a): imię i nazwisko z konta, inicjały i oznaczenie klasy nie są treścią matematyczną („Jan Pole” → `tylko_dane_osobowe`, bez `konflikt_filtra`); reguła (b): token Słownika równy nazwisku zastępowany przy sąsiedztwie z drugim członem lub inicjałem (b1) albo w kroku agenta w ramce (b2); Poprawki: reguła (a) nie jest liczona ponownie, krok przywrócony z `tylko_dane_osobowe` nie jest maskowany i podlega limitom 9.4, Sprawdzeniu zgodności i T-7, `konflikt_filtra` tylko z kroków niezmienionych; G-2: osobne kryterium dla ≥ 30 kartek z nazwiskiem-terminem; metryka `uczniowie_z_konfliktem_filtra_udzial` z alertem | 3.3 (Filtr, Słownik terminów matematycznych), 7.3 (`transkrypcja.konflikt_filtra`), 10.3.1 p. 3a, 11.1 p. 7d, 14.1 (E-37), 17.3, 17.6 (G-2), 17.7, 21 (R-19), 22, ADR-042 (uzupełnienie it. 6) |
+| C4-04 (ŚREDNIA) | „Dezaktywacja” zamiast „zdjęcie” dla bezpiecznika: `POST /admin/bezpieczniki/dezaktywacja` (oba typy, `DezaktywacjaBezpiecznikaWejscie`), kolumny `dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`, DTO `dezaktywowano_at`; „odebranie” flag i „wyłączenie” flagi `diagnostyczne` w prozie; definicja „wstrzymania” (jedno znaczenie) w 3.1 p. 5; nowe pojęcia PZS-1 (86); test CI: słowa zarezerwowane `zdje*`, `wstrzym*` z listami dozwolonych użyć i przypadek kontrolny `zdjeto_at` | 3.1 p. 5, 3.3, 3.4 (część A, test CI części 2 i 3), 7.3 (`stan_bezpiecznika`), 8.4, 11.5.2, 11.5.3, 12.2 (`BEZPIECZNIK_NIEAKTYWNY`, `PULA_DIAGNOSTYCZNA_ZA_MALA`), 12.3, 12.4, 16.4, 23.4 (D-1), ADR-016 (uzupełnienie it. 6), ADR-040, ADR-044 |
+| C4-05 (NISKA) | Łączna pojemność kubełków `B_całk` (34 / 10) dzielona między wiersze (`api` 1, pozostałe proporcjonalnie do wagi), przydział `min(formuła, 0,8 × limit − Σ pozostałych)`, publikacja `przydzial`/`pojemnosc` pod blokadą doradczą, zmniejszenie przed i zwiększenie po `COMMIT`, nowy proces z pustym kubełkiem i odnowieniem co 2 s; rachunek granicy dla 2 / 3 / 4 workerów: 74 / 72 / 74 w 1 s (wersja 2.3: 74 / 90 / 106) i ≤ 234 w 5 s; testy (f)–(h), G-3 (c), scenariusz C-40 | 2 (A-01), 7.3 (`limit_szybkosci_modelu`), 13.2, 15.2 (C-40), 17.2, 17.3, 17.4, 17.6 (G-3, G-4), 21 (R-21), 22, ADR-039 (uzupełnienie it. 6) |
+| C4-06 p. 1 | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` w puli S | 10.3.3 |
+| C4-06 p. 2 | `UZGODNIJ_REJESTR_RODO` co 5 min z wiekiem > 5 min → okno unieważniania ≤ 10 min, zgodne z 16.4, ADR-041 i G-6 | 13.3, 13.5, 16.4, 21 (R-16), 22, ADR-041 |
+| C4-06 p. 3 | Klucz `USUNIECIE_WYKONANE` bez daty: `rejestr-zdarzen-rodo/wykonane/{uzytkownik_id}/{id}.json`; `If-None-Match: *` działa przy ponowieniu w dowolnym dniu | 7.3 (`zdarzenie_rodo.klucz_obiektu`), 13.3, 16.4 (krok 0, procedura p. 2), 22, ADR-041 |
+| C4-06 p. 4 | `SELECT status FROM uzytkownik WHERE id = :uczen_id FOR SHARE` po blokadzie `rozwiazanie` i `weryfikacja` w rozstrzygnięciu i korekcie; kolejność blokad bez zakleszczenia | 9.6.2, 9.6.3, 15.2 (C-37) |
+| C4-06 p. 5 | Rozmiar testu nazwany wprost: 2,6–7,8% na ocenę przy e = 2% (antykonserwatywna granica Wilsona przy małym `n`), P(≥ 1 wyzwolenie w 90 dniach) 31–45% zależnie od napełnienia okna, 1,1 fałszywego podniesienia progu na kwartał, 11% kwartałów w trybie pełnej weryfikacji | 11.5.3, 17.7, 21 (R-22), 23.4 (D-16), ADR-046 |
+| C4-06 p. 6 | Eskalacje `KARENCJA_KONTA_NAUCZYCIELA` poza licznikiem `odsetek_eskalacji_7d` (per Klasa i globalnie); Klasy Nauczyciela w karencji pod kontrolą przyjęć wprost do przywrócenia albo Przekazania Klasy | 3.3 (Kontrola przyjęć), 11.4.3, 13.6, 22, ADR-043 |
+| C4-06 p. 7 | Wariant 17.7 „aktywny bezpiecznik poprawek”: start +249 min/dobę (`M` = 3 951, 105 min na Nauczyciela, 20 weryfikatorów), faza ustalona +451 min (`M` = 3 277, 16 weryfikatorów); G-7 = 18 z zapasem 1,22 i kontrolą przyjęć (D-17) | 17.6 (G-7), 17.7, 23.4 (D-17), ADR-043 |
+| C4-06 p. 8 | Klucz `limit_szybkosci_modelu (konfiguracja_modelu_id, wykonawca, pula)` z wierszami R (waga 1,0) i S (0,3) dla roli `ROZPOZNAWANIE_PISMA`; `B_całk = 30` dla rozpoznawania | 7.3, 13.4, 22, ADR-039 |
+| C4-06 p. 9 | Popyt 28 wywołań na Ocenę (plan 16 + 11 + 1) w S-6, 17.4 i symulacji; 29 wyłącznie jako maksimum pytań; oszacowanie S-6 dla planów 29 (t_O 9,5 s) | 17.2 (S-6), 17.4, 22, ADR-039 |
+| C4-06 p. 10 | Okno na rezultat Sprawdzenia stałe `zatwierdzono_at + 6 s`, niezależne od `t_R`; rachunek p_brak ≤ 0,5% dla każdego `t_R` | 9.4, 17.2, 22, ADR-036 (uzupełnienie it. 6) |
+
+Zmiany przekrojowe wersji 2.4: nowe kolumny `limit_szybkosci_modelu.pula`,
+`przydzial`, `stan_bezpiecznika.wyjscie_z_blokady_at`; zmienione nazwy
+kolumn `stan_bezpiecznika.zdjety_przez` → `dezaktywowany_przez`, `zdjeto_at`
+→ `dezaktywowano_at`, `uzasadnienie_zdjecia` → `uzasadnienie_dezaktywacji`;
+zmieniony klucz główny `limit_szybkosci_modelu`; usunięty CHECK `typ =
+'POPRAWKI' OR NOT aktywny`; nowy CHECK `zdarzenie_rodo.dane ? 'rola'`; nowy
+prefiks `rejestr-zdarzen-rodo/wykonane/`; endpoint `POST
+/admin/bezpieczniki/zdjecie` zastąpiony przez `POST
+/admin/bezpieczniki/dezaktywacja` (typ `DezaktywacjaBezpiecznikaWejscie`);
+cykl `UZGODNIJ_REJESTR_RODO` 5 min; scenariusze współbieżności do C-40;
+ryzyko R-22; uzupełnienia ADR-016, ADR-036, ADR-039, ADR-041, ADR-042,
+ADR-043, ADR-046; decyzje G-0 D-16, D-17; PZS-1: 86 pojęć w części A; słowa
+ogólne dopisane do `tests/slownik_tokeny.yaml`: `dezaktywacja`,
+`dezaktywowany`, `dezaktywowano`, `dezaktywacji`, `blokada`, `obnizania`,
+`przydzial`, `laczna`, `wykonane`, `podpisu`; nowy plik symulacji
+`tests/kalibracja/symulacja_bezpiecznika.py --dynamika` (założenia w 11.5.3).
