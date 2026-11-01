@@ -3,11 +3,11 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/ARCHITECTURE_DETAILED.md` |
-| Wersja | 2.1 (iteracja 3 pętli architekt → krytyk: weryfikacja zamknięcia uwag C1 i uzupełnienia) |
+| Wersja | 2.2 (iteracja 4 pętli architekt → krytyk: zamknięcie uwagi C1-21 i uwag C2-01 … C2-16) |
 | Data | 2026-11-01 |
 | Dokumenty źródłowe | `docs/vision.md`, `docs/glossary.md`, `docs/requirements.md`, `docs/architecture.md` |
-| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`, iteracja 1: C1-01 … C1-29 — wszystkie 29 (wersja 2.0 + uzupełnienia 2.1); mapowanie uwaga → miejsce rozwiązania w sekcji 23 (tabela 23.3) |
-| Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista w 23.4 |
+| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); mapowanie uwaga → miejsce rozwiązania: 23.3 (C1) i 23.5 (C1-21, C2) |
+| Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-14 w 23.4 |
 | Status | Do przeglądu przez krytyka (`docs/CRITIQUE_LOG.md`) |
 
 Dokument rozwija `docs/architecture.md` (wstępną) do poziomu, na którym można
@@ -42,7 +42,7 @@ startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
 20. Odpowiedzi na otwarte pytania z architektury wstępnej
 21. Ryzyka
 22. Parametry systemu (wartości domyślne)
-23. Changelog iteracji (23.3: mapowanie uwag krytyki → miejsca rozwiązania; 23.4: decyzje właściciela produktu)
+23. Changelog iteracji (23.3 i 23.5: mapowanie uwag krytyki → miejsca rozwiązania; 23.4: decyzje właściciela produktu)
 
 ---
 
@@ -66,7 +66,7 @@ Lemat to platforma przeglądarkowa (telefon i komputer), w której:
 
 | ID | Zasada | Konsekwencja |
 |---|---|---|
-| Z-1 | **Jev decyduje, LLM pisze.** | Każda decyzja, która **przyznaje punkty albo pozwala zaliczyć Rozwiązanie automatycznie**, pochodzi z **Modelu decyzyjnego** (Jev — Model System One — albo model zapasowy w tej samej roli, NFR-07) i ma zapisany rozkład prawdopodobieństwa. Sygnały pochodzące z **Modelu generatywnego (LLM)** — `pewnosc_odczytu`, `czytelne`, `zgodnosc_z_zadaniem` Agenta rozpoznającego, Opinia pomocnicza — są wyłącznie **danymi wejściowymi** i mogą działać tylko w kierunku bezpiecznym: dodać powód Weryfikacji albo zatrzymać przetwarzanie (Z-3). Nigdy nie podnoszą punktów ani nie zezwalają na trasę automatyczną. LLM produkuje tekst (zadania, wskazówki, wkładki, transkrypcje). |
+| Z-1 | **Jev decyduje, LLM pisze.** | Każda decyzja, która **przyznaje punkty albo pozwala zaliczyć Rozwiązanie automatycznie**, pochodzi z **Modelu decyzyjnego** (Jev — Model System One — albo model zapasowy w tej samej roli, NFR-07) i ma zapisany rozkład prawdopodobieństwa. Sygnały pochodzące z **Modelu generatywnego (LLM)** — `pewnosc_odczytu`, `czytelne`, `zgodnosc_z_zadaniem` Agenta rozpoznającego, Sprawdzenie zgodności poprawek (`zgodnosc_poprawek`, ADR-036), Opinia pomocnicza — są wyłącznie **danymi wejściowymi** i mogą działać tylko w kierunku bezpiecznym: dodać powód Weryfikacji albo zatrzymać przetwarzanie (Z-3). Nigdy nie podnoszą punktów ani nie zezwalają na trasę automatyczną. LLM produkuje tekst (zadania, wskazówki, wkładki, transkrypcje). |
 | Z-2 | **Wymagania > architektura wstępna.** | Np. druga opinia LLM nie może samodzielnie zaliczyć rozwiązania poniżej progu (FR-24, ADR-008). |
 | Z-3 | **Bezpieczna domyślność.** | W razie wątpliwości lub awarii rozwiązanie trafia do Weryfikacji, nigdy nie jest automatycznie zaliczane. Bezpieczna domyślność nigdy nie obniża Oceny Ucznia z powodu błędu odczytu (FR-28, ADR-022). |
 | Z-4 | **Każda decyzja jest zapisana.** | Tabela `decyzja_modelu` przechowuje pytanie, wybraną wartość i pełny rozkład prawdopodobieństw (NFR-05). |
@@ -88,7 +88,12 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 - powiadomienia push i e-mail o ocenach (wyłącznie powiadomienia w aplikacji;
   e-mail służy tylko do resetu hasła);
 - wpisywanie Rozwiązania zadania otwartego z klawiatury — Rozwiązanie to
-  zawsze zdjęcie kartki (ADR-024).
+  zawsze zdjęcie kartki (ADR-024); Poprawki Transkrypcji (FR-18) obejmują
+  wyłącznie fragmenty błędnie odczytane: zmianę istniejących kroków i
+  wstawienie najwyżej 2 kroków pominiętych przez Agenta rozpoznającego, w
+  limitach ADR-036;
+- usuwanie kont Nauczycieli i Administratorów jest **w zakresie** (RODO
+  dotyczy wszystkich ról, ADR-044), mimo że NFR-09 wymienia wprost Uczniów.
 
 ---
 
@@ -96,20 +101,21 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 
 | ID | Założenie | Skutek, jeśli fałszywe |
 |---|---|---|
-| A-01 | Jev udostępnia API HTTP/JSON z trzema typami pytań: `noul` (tak/nie z prawdopodobieństwem), `score` (rozkład na liczbach całkowitych w zadanym zakresie), `choice` (rozkład na zamkniętej liście opcji); stan wejściowy to tekst ≤ 32 000 znaków; p95 opóźnienia ≤ 800 ms; limit szybkości ≥ 50 żądań/s na klucz API (szczyt 17.4: 44 żądania/s). | Adapter `JevAdapter` (sekcja 13.2) jest jedynym miejscem do zmiany; przy braku dostępu cały ruch obsługuje model zapasowy (ADR-009). Przy niższym limicie szybkości adapter obniża globalny semafor (13.2), a część Ocen w szczycie korzysta z modelu zapasowego. |
+| A-01 | Jev udostępnia API HTTP/JSON z trzema typami pytań: `noul` (tak/nie z prawdopodobieństwem), `score` (rozkład na liczbach całkowitych w zadanym zakresie), `choice` (rozkład na zamkniętej liście opcji); stan wejściowy to tekst ≤ 32 000 znaków; **żądanie wsadowe** (`questions[]`, do 32 pytań o jednym stanie) z p95 ≤ 800 ms na żądanie; limit szybkości ≥ 50 żądań HTTP/s na klucz API. Wymaganie dla dostawcy: tryb wsadowy (sprawdzany w G-4). | Bez trybu wsadowego `JevAdapter` (13.2) działa w **trybie pojedynczym**: jedno pytanie na żądanie, ≤ 16 równolegle na Ocenę, plan w 3 falach (p95 3,6 s zamiast 1,6 s — budżet 17.2 i scenariusze S-1 … S-7 są liczone dla trybu pojedynczego jako najgorszego), szczyt „koniec lekcji” do 44 żądań/s (17.4). Globalny ogranicznik szybkości (13.2, ADR-039) utrzymuje ruch ≤ 80% limitu klucza; Ocena, dla której zabrakło przydziału, idzie do modelu zapasowego bez otwierania obwodu. Przy braku dostępu do Jev cały ruch obsługuje model zapasowy (ADR-009). |
 | A-02 | Jev jest we wczesnym dostępie — system musi działać produkcyjnie **bez** Jev. | Model zapasowy jest pełnoprawną, osobno skalibrowaną implementacją portu `ModelDecyzyjny`. |
-| A-03 | Skala pilotażu: 1 000 Uczniów, 50 Nauczycieli, 1 500 Rozwiązań zadań otwartych na dobę (20% z dowodem), szczyt 300 Rozwiązań/h wieczorem oraz szczyt „koniec lekcji”: 90 przesłań w ciągu 60 s (3 klasy jednocześnie), 30 jednoczesnych ocen. | Architektura (modularny monolit, kolejka w PostgreSQL) wystarcza do ok. 20× tej skali (17.4); model obciążenia Nauczycieli w 17.7. |
+| A-03 | Skala pilotażu: 1 000 Uczniów, 50 Nauczycieli, 1 500 Rozwiązań zadań otwartych na dobę (20% z dowodem), szczyt 300 Rozwiązań/h wieczorem oraz szczyt „koniec lekcji”: 90 przesłań w ciągu 60 s (3 klasy jednocześnie), 30 jednoczesnych ocen. | Architektura (modularny monolit, prace w tle w PostgreSQL) wystarcza do ok. 20× tej skali (17.4); model obciążenia Nauczycieli w 17.7. |
 | A-04 | Obowiązuje formuła matury od 2023 r. (podstawa programowa 2018) z 13 Działami (sekcja 7.4). | Działy i Umiejętności są danymi (tabele `dzial`, `umiejetnosc`), zmiana nie wymaga zmian kodu. |
 | A-05 | Kryteria oceniania CKE da się zapisać jako uporządkowaną listę kryteriów z całkowitą liczbą punktów, pogrupowaną w warianty (sposoby rozwiązania). | Kryterium ma pole `wariant`; Model decyzyjny najpierw wybiera wariant (pytanie Q-OC-00). |
 | A-06 | Uczniowie mają ukończone 16 lat (wiek zgody cyfrowej w Polsce). Rejestracja wymaga oświadczenia. | Dla osób < 16 lat potrzebny byłby przepływ zgody rodzica — poza zakresem. |
 | A-07 | Dostawcy modeli generatywnych i Jev przetwarzają dane w EOG lub na podstawie SCC, z umową powierzenia, wyłączonym trenowaniem na danych oraz **retencją danych wejściowych**: zero (tryb „zero data retention”) dla roli `ROZPOZNAWANIE_PISMA` (zdjęcia) i ≤ 30 dni (wyłącznie monitorowanie nadużyć) dla pozostałych ról. | Bez tego nie wolno wysyłać Transkrypcji ani zdjęć do dostawcy (sekcja 16); konfiguracja modelu z dostawcą bez potwierdzonej retencji nie może zostać aktywowana (pole `parametry.retencja_dostawcy_dni`, 13.1, G-6). |
 | A-08 | Wybrany multimodalny LLM obsługuje wejście obrazowe, wyjście zgodne ze schematem JSON, p95 ≤ 9 s dla 3 zdjęć, limit ≥ 120 żądań/min oraz **odsetek wywołań zakończonych błędem lub timeoutem 14 s ≤ 0,3%** (każde takie wywołanie oznacza naruszenie NFR-01, scenariusz S-7 w 17.2; razem z S-3 i T-6 mieści się w 1% SLO). | Wymagane przy wyborze dostawcy dla roli `ROZPOZNAWANIE_PISMA`; niższa wydajność łamie budżet NFR-01 (17.2). |
-| A-09 | Przed startem produkcyjnym powstaje zbiór testowy **ZT-1**: ≥ 950 odręcznych Rozwiązań z co najmniej 10 Działów — **≥ 700 zadań otwartych obliczeniowych i ≥ 250 zadań otwartych z dowodem** (oba rodzaje zadań otwartych) — każde ocenione niezależnie przez 2 Nauczycieli, rozbieżności rozstrzyga trzeci. Liczności wynikają z analizy mocy w 11.5.1. | Bez ZT-1 nie da się zmierzyć NFR-02 ani wyznaczyć początkowego Progu pewności — start produkcyjny jest zablokowany (bramka G-1). Gdy ZT-1 nie pozwala wyznaczyć progu spełniającego NFR-03, para (model, rodzaj) startuje w trybie pełnej weryfikacji (11.5.1). |
+| A-09 | Przed startem produkcyjnym powstaje zbiór testowy **ZT-1**: ≥ 1 050 odręcznych Rozwiązań z co najmniej 10 Działów — **≥ 700 zadań otwartych obliczeniowych i ≥ 350 zadań otwartych z dowodem** (oba rodzaje zadań otwartych) — każde ocenione niezależnie przez 2 Nauczycieli, rozbieżności rozstrzyga trzeci; ≥ 50 kartek z wpisanym imieniem i nazwiskiem (test filtra danych osobowych, ADR-042). Liczności wynikają z dwóch analiz mocy w 11.5.1: kryterium progu NFR-03 (tabela 1, zadania obliczeniowe) i kryterium zgodności G-1(a) (tabela 2, oba rodzaje). | Bez ZT-1 nie da się zmierzyć NFR-02 ani wyznaczyć początkowego Progu pewności — start produkcyjny jest zablokowany (bramka G-1). Gdy ZT-1 nie pozwala wyznaczyć progu spełniającego NFR-03, para (model, rodzaj) startuje w trybie pełnej weryfikacji (11.5.1). |
 | A-10 | Klient to nowoczesna przeglądarka (Chrome/Safari/Firefox/Edge — dwie ostatnie wersje główne), obsługująca `input capture`. | Starsze przeglądarki dostają komunikat o braku wsparcia. |
 | A-11 | **Interpretacja NFR-01 (do akceptacji w G-0):** „ocena rozwiązania” = czas pracy systemu nad Rozwiązaniem: rozpoznanie pisma (od ostatniego przesłania zdjęć do Transkrypcji gotowej) **plus** ocena (od zatwierdzenia Transkrypcji do Oceny widocznej dla Ucznia). Z pomiaru wyłączony jest wyłącznie czas, w którym Uczeń sprawdza i poprawia Transkrypcję (FR-18) — tego czasu system nie kontroluje. Zobowiązanie mierzalne: ≥ 99% Rozwiązań w miesiącu z czasem widocznym dla Ucznia ≤ 30 s (metryka serwerowa `czas_systemowy_ms` ≤ 28 s plus odpytywanie klienta co 1 s), p95 ≤ 20 s (≤ 23 s przy pracy na modelu zapasowym); skierowanie do Weryfikacji bez Oceny (T-6) i błąd rozpoznawania z winy dostawcy liczą się jako **naruszenie**, nie jako sukces (17.1, ADR-025). Wartość 100% nie jest gwarantowana architektonicznie, bo zależy od zewnętrznych dostawców modeli; każde przekroczenie i tak kończy się Oceną (termin twardy 120 s), a nie brakiem Oceny. | Jeśli właściciel produktu wymaga 100% ≤ 30 s, konieczna jest rezygnacja z zewnętrznego rozpoznawania pisma na rzecz modelu hostowanego we własnej infrastrukturze z gwarantowaną przepustowością (poza budżetem pilotażu) — decyzja w G-0. |
 | A-12 | W pilotażu co najwyżej 20% aktywnych Uczniów nie należy do żadnej Klasy (rekrutacja pilotażu przez szkoły). | Model obciążenia kolejki globalnej (17.7) i bramka G-7 są przeliczane co tydzień z rzeczywistego udziału; przekroczenie uruchamia kontrolę przyjęć (11.4.3). |
-| A-13 | Średni czas Weryfikacji: dowód 5 min, zadanie obliczeniowe 3 min, Kontrola losowa 2 min, zgłoszenie błędu odczytu 3 min (pomiar w pilotażu: `weryfikacja_czas_pracy_sekundy`). Weryfikator globalny deklaruje co najmniej 90 min pracy dziennie (`nauczyciel.deklarowane_minuty_weryfikacji`). | Model 17.7 jest przeliczany z wartości zmierzonych; G-7 używa wartości zmierzonej, gdy jest dostępna. |
-| A-14 | **Pula weryfikatorów globalnych (do akceptacji w G-0, ADR-034):** 50 Nauczycieli z A-03 to 40 prowadzących Klasy i 10 bez Klas. 10 Nauczycieli bez Klas nie wystarcza na G-7 (start: 12), więc pulę tworzą: (a) Nauczyciele bez Klas z A-03 oraz (b) Nauczyciele współpracujący z platformą na podstawie umowy (rekrutowani i wynagradzani przez operatora platformy), w liczbie uzupełniającej do wartości z 17.7. Nauczyciel prowadzący Klasę może być weryfikatorem globalnym tylko wtedy, gdy prognoza jego kolejki `KLASA` (17.7) + `deklarowane_minuty_weryfikacji` ≤ 180 min/dobę (walidacja w `PATCH /admin/uzytkownicy/{id}`, `422`). Na start: 10 Nauczycieli bez Klas + ≥ 2 Nauczycieli współpracujących. | Bez rekrutacji Nauczycieli współpracujących bramka G-7 nie jest spełniona i start produkcyjny dla Uczniów bez Klasy jest zablokowany: rejestracja Ucznia bez kodu zaproszenia jest wtedy wyłączona flagą `LEMAT_REJESTRACJA_BEZ_KLASY = false` (Uczeń bez Klasy nie powstaje, więc kolejka `GLOBALNA` obsługuje tylko eskalacje z Klas). |
+| A-13 | Średni czas Weryfikacji: dowód 5 min, zadanie obliczeniowe 3 min, Kontrola losowa 2 min, zgłoszenie błędu odczytu 3 min (pomiar w pilotażu: `weryfikacja_czas_pracy_sekundy`). Weryfikator globalny deklaruje co najmniej 90 min pracy w każdym dniu roboczym (`nauczyciel.deklarowane_minuty_weryfikacji`, A-15). | Model 17.7 jest przeliczany z wartości zmierzonych; G-7 używa wartości zmierzonej, gdy jest dostępna. |
+| A-14 | **Pula weryfikatorów globalnych (do akceptacji w G-0, ADR-034, ADR-043):** 50 Nauczycieli z A-03 to 40 prowadzących Klasy i 10 bez Klas. 10 Nauczycieli bez Klas nie wystarcza na G-7 (start: 18 weryfikatorów, model tygodniowy z eskalacjami 17.7), więc pulę tworzą: (a) Nauczyciele bez Klas z A-03 oraz (b) Nauczyciele współpracujący z platformą na podstawie umowy (rekrutowani i wynagradzani przez operatora platformy), w liczbie uzupełniającej do wartości z 17.7. Nauczyciel prowadzący Klasę może być weryfikatorem globalnym tylko wtedy, gdy prognoza jego kolejki `KLASA` na dzień roboczy (17.7) + `deklarowane_minuty_weryfikacji` ≤ 180 min (walidacja w `PATCH /admin/uzytkownicy/{id}`, `422`). Na start: 10 Nauczycieli bez Klas + ≥ 8 Nauczycieli współpracujących. | Bez rekrutacji Nauczycieli współpracujących bramka G-7 nie jest spełniona i start produkcyjny dla Uczniów bez Klasy jest zablokowany: rejestracja Ucznia bez kodu zaproszenia jest wtedy wyłączona flagą `LEMAT_REJESTRACJA_BEZ_KLASY = false` (Uczeń bez Klasy nie powstaje, więc kolejka `GLOBALNA` obsługuje tylko eskalacje z Klas; wtedy wymagani są weryfikatorzy wyłącznie dla eskalacji: start 4, 17.7). |
+| A-15 | **Rytm pracy Nauczycieli (do akceptacji w G-0, ADR-043):** Nauczyciele pracują w dni robocze (poniedziałek–piątek z wyłączeniem dni ustawowo wolnych z tabeli `dzien_wolny`); deklarowane minuty dotyczą dnia roboczego; SLA Weryfikacji = 3 dni robocze (`dodaj_dni_robocze`, 7.3); 5% Weryfikacji kolejki `KLASA` jest eskalowanych do `GLOBALNA` (`odsetek_eskalacji_7d`). Rozwiązania przesyłane są przez 7 dni w tygodniu z jednakowym wolumenem dobowym (A-03). | Odsetek eskalacji > 10% w 7 dniach: model 17.7 i G-7 używają wartości zmierzonej, włącza się kontrola przyjęć dla Klas Nauczycieli z odsetkiem eskalacji ≥ 20% (11.4.3) i alert `ALERT_WERYFIKACJE`. Weryfikatorzy pracujący także w weekendy zwiększają pojemność ponad model (model zakłada najgorszy przypadek 5/7). |
 
 ---
 
@@ -120,7 +126,8 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 1. Nazwy domenowe w kodzie, bazie i API to **pojęcia ze słownika** zapisane
    ASCII bez polskich znaków: `snake_case` w bazie/JSON/Pythonie,
    `PascalCase` dla klas, `kebab-case` w ścieżkach URL, `UPPER_SNAKE` dla
-   wartości wyliczeniowych.
+   wartości wyliczeniowych. Reguła obejmuje także klucze JSON schematów
+   odpowiedzi modeli, parametry zapytań i nazwy prac w tle.
 2. Kolumny czysto techniczne mają nazwy angielskie, ujednolicone w całym
    schemacie: `id`, `created_at`, `updated_at`, `version` (licznik
    optymistycznej blokady). Nie są pojęciami domenowymi.
@@ -137,16 +144,24 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
    operacji technicznej = **rezultat** (`RezultatOceny`,
    `RezultatRozpoznawania`, `rezultat_walidacji`); wynik porównania SymPy =
    **równoważność** (`Rownowaznosc`); grupa eksperymentu A/B = **grupa
-   eksperymentu** (`procent_grupy_eksperymentu`); pozycja w Kryteriach
-   oceniania = **kryterium** (`nr_kryterium`), nigdy „krok”; rodzaj kolejki =
-   **typ kolejki** (`typ_kolejki`).
+   eksperymentu** (`procent_grupy_eksperymentu`), nigdy „wariant”; pozycja w
+   Kryteriach oceniania = **kryterium** (`nr_kryterium`), nigdy „krok”; rodzaj
+   kolejki = **typ kolejki** (`typ_kolejki`); odpowiedź HTTP = **status i
+   ciało HTTP** (`kod_statusu_http`, `cialo_http`); opcje i klucz Zadania
+   zamkniętego = **opcje zamknięte** (`opcje_zamkniete`); postać pliku
+   zdjęcia = **wersja zdjęcia** (`?wersja_zdjecia=`); mechanizm pracy
+   asynchronicznej = **prace w tle** (nigdy „kolejka”); punkty i klucz
+   pokazywane po Odpowiedzi = **rezultat** (`OdpowiedzWyjscie.rezultat`,
+   `rezultat_ujawniony_od`); odrzucony zapis przestarzałego obliczenia =
+   **rezultat przestarzały** (`rezultat_przestarzaly`); możliwość wyboru w
+   decyzji właściciela produktu = **opcja** (23.4), nigdy „wariant”.
 6. **Dopuszczone terminy techniczne** (jedyne wyjątki od reguły 1 poza
    kolumnami z reguły 2): `theta` (θ — parametr umiejętności w modelu Elo),
    `trudnosc_b` (b — parametr trudności Zadania w modelu Elo), `ipw`
    (inverse probability weighting — waga odwrotności prawdopodobieństwa
    doboru), `ece` (Expected Calibration Error), `n_eff` (efektywna liczność
    próby), `cv5` (5-krotna walidacja krzyżowa), `sha256`, `latex`, `sympy`,
-   `jwt`, `url`, `mime`, `trace_id`, `hmac`, `fnv1a`; prefiksy obiektów bazy
+   `jwt`, `url`, `mime`, `trace_id`, `hmac`, `fnv1a`, `http`, `rodo`; prefiksy obiektów bazy
    `ux_` (indeks unikalny), `ix_` (indeks), `fk_` (klucz obcy), `trg_`
    (trigger). Każdy z nich ma definicję w PZS-1 (3.4, część C).
 
@@ -245,7 +260,7 @@ dopisania do słownika (PZS-1, część A).
 | Blokada weryfikacji | FR-33, ADR-033 | Wyłączne prawo jednego Nauczyciela do rozstrzygnięcia Weryfikacji przez 15 min (przedłużane, łącznie ≤ 2 h). | `weryfikacja.zablokowana_do` |
 | Szkic rozstrzygnięcia | ADR-033 | Autozapisany, niezatwierdzony stan rozstrzygnięcia jednego Nauczyciela dla jednej Weryfikacji. | `szkic_rozstrzygniecia` |
 | Pseudonim Ucznia | ADR-031 | Stały, nieodwracalny bez sekretu identyfikator Ucznia pokazywany weryfikatorowi globalnemu spoza jego Klasy. | `uczen_pseudonim` |
-| Kontrola przyjęć | 11.4.3 | Ograniczenie udziału zadań otwartych dla Uczniów bez Klasy, gdy zaległość kolejki globalnej przekracza jej pojemność. | `kontrola_przyjec_aktywna` |
+| Kontrola przyjęć | 11.4.3 | Ograniczenie udziału zadań otwartych w rekomendacjach: dla Uczniów bez Klasy, gdy zaległość kolejki globalnej przekracza jej pojemność, oraz dla Uczniów Klasy, której Nauczyciel ma `odsetek_eskalacji_7d ≥ 0,20`. | `kontrola_przyjec_aktywna`, `klasy_z_kontrola_przyjec` |
 | Tryb pełnej weryfikacji | 11.5.1 | Stan pary (model decyzyjny, rodzaj zadania), w którym Próg pewności = 1.000, więc każda Ocena trafia do Weryfikacji. | `prog_pewnosci.wartosc = 1.000` |
 | Zawieszenie Wyniku zadania | FR-28, ADR-022 | Wyłączenie Wyniku zadania z Profilu ucznia na czas rozpatrywania Zgłoszenia błędu odczytu. | `wynik_zadania.powod_uniewaznienia = 'ZGLOSZENIE_BLEDU_ODCZYTU'` |
 | Czas systemowy | NFR-01, A-11 | Czas pracy systemu nad Rozwiązaniem: rozpoznanie (przesłanie → Transkrypcja gotowa) plus ocena (zatwierdzenie → Ocena widoczna). | `rozwiazanie.czas_systemowy_ms` |
@@ -253,7 +268,24 @@ dopisania do słownika (PZS-1, część A).
 | Zlecenie generowania | FR-11 | Żądanie wygenerowania Zadania dla (Umiejętność, Poziom trudności, poziom matury, rodzaj), od Nauczyciela, Administratora albo systemu. | `zlecenie_generowania` |
 | Grupa eksperymentu | 10.1.6 | Przydział Ucznia do wariantu eksperymentu A/B rekomendacji na podstawie skrótu identyfikatora (nie mylić z Wariantem rozwiązania). | `procent_grupy_eksperymentu` |
 | Zbiór testowy ZT-1 | A-09 | Zbiór odręcznych Rozwiązań ocenionych przez Nauczycieli, używany do bramek G-1/G-2 i początkowej Kalibracji. | `zbiory-testowe/zt1/` |
-| Rejestr usunięć | NFR-09, 16.4 | Niezmienialny (Object Lock) zapis usuniętych kont poza bazą danych, używany do ponowienia usunięć po odtworzeniu bazy z kopii. | bucket `rejestr-usuniec` |
+| Rejestr usunięć | NFR-09, 16.4 | Niezmienialny (Object Lock) zapis Zdarzeń RODO poza bazą danych, używany do ponowienia usunięć, wstrzymań i odwołań zgody po odtworzeniu bazy z kopii (ADR-041). | bucket `rejestr-usuniec` |
+| Pewność surowa | FR-22, 11.2.1 | Minimum prawdopodobieństw decyzji składowych Oceny, ograniczone do 0.50 przy niespójności, przed Kalibracją. | `pewnosc_surowa` |
+| Punkty surowe | FR-20, 11.1 | Suma punktów za kryteria przed zastosowaniem reguły FR-20. | `punkty_surowe` |
+| Niespójność | 11.2.1 | Sprzeczność między decyzjami składowymi jednej Oceny (kody N-1 … N-6), która zawsze kieruje do Weryfikacji. | `niespojnosci`, `N-x` |
+| Rozstrzygnięcie | FR-34 | Ocena Nauczyciela kończąca Weryfikację podjętą z Kolejki weryfikacji. | `/rozstrzygniecie`, `RozstrzygniecieWejscie` |
+| Korekta | FR-34 | Ocena Nauczyciela wystawiona z poziomu Rozwiązania `OCENIONE`, zastępująca aktualną Ocenę (9.6.3). | `/korekty`, `KOREKTA_NAUCZYCIELA` |
+| Eskalacja | 11.4.3 | Przeniesienie Weryfikacji z kolejki `KLASA` do `GLOBALNA` po terminie SLA albo po utracie Nauczyciela docelowego. | `eskalowano_at`, `odsetek_eskalacji_7d` |
+| Poprawka Transkrypcji | FR-18, ADR-036 | Zmiana treści istniejącego kroku Transkrypcji albo wstawienie kroku pominiętego przez Agenta rozpoznającego, wykonana przez Ucznia przed zatwierdzeniem; usunięcie kroku nie jest Poprawką. | `POPRAWKA_UCZNIA`, `nr_kroku_agenta` |
+| Zakres poprawek | ADR-036 | Miary rozległości Poprawek Transkrypcji względem odczytu Agenta rozpoznającego: liczba zmienionych i wstawionych kroków, odsetek zmienionych znaków. | `transkrypcja.zakres_poprawek` |
+| Sprawdzenie zgodności poprawek | ADR-036 | Porównanie zmienionych kroków ze zdjęciem kartki przez Model generatywny w roli `ROZPOZNAWANIE_PISMA`; działa tylko w kierunku bezpiecznym (Z-1). | `transkrypcja.zgodnosc_poprawek`, `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` |
+| Powody początkowe | 11.5.2 | Powody Weryfikacji w chwili dołączenia Oceny weryfikowanej; wyznaczają źródło Próbki kalibracyjnej i nie zmieniają się po dopisaniu zgłoszenia. | `weryfikacja.powody_poczatkowe` |
+| Zgłoszenie błędu w Zadaniu | FR-14, ADR-038 | Wniosek Nauczyciela o Przegląd Zadania o zasięgu globalnym z opisem błędu, rozpatrywany przez recenzenta treści albo Administratora. | `zgloszenie_bledu_zadania` |
+| Wstrzymanie w doborze | ADR-038 | Wyłączenie Zadania z doboru rekomendacji do czasu rozpatrzenia Zgłoszeń błędu w Zadaniu. | `zadanie.wstrzymane_w_doborze` |
+| Dzień roboczy | A-15 | Dzień od poniedziałku do piątku, który nie jest dniem ustawowo wolnym; jednostka SLA Weryfikacji. | `dzien_wolny`, `dodaj_dni_robocze` |
+| Zdarzenie RODO | NFR-09, ADR-041 | Żądanie usunięcia konta, anulowanie żądania (przywrócenie), wykonanie usunięcia, odwołanie albo udzielenie zgody na trening; zapisywane w Rejestrze usunięć przed zmianą w bazie. | `zdarzenie_rodo`, `typ_zdarzenia_rodo` |
+| Okres karencji | NFR-09, ADR-040 | 30 dni między żądaniem usunięcia konta a usunięciem danych; procesy konta są w tym czasie wstrzymane, a nie anulowane. | `uzytkownik.usuniecie_zaplanowane_at` |
+| Filtr danych osobowych | NFR-09, ADR-042 | Przetwarzanie Transkrypcji (odczytu i Poprawek) usuwające dane identyfikacyjne Ucznia przed zapisem w bazie. | `FiltrDanychOsobowych`, `[DANE_OSOBOWE]` |
+| Przekazanie Klasy | FR-30, ADR-044 | Zmiana Nauczyciela prowadzącego Klasę przez Administratora, wymagana przed usunięciem konta Nauczyciela. | `POST /admin/klasy/{id}/przekazanie` |
 
 ### 3.4 Propozycja zmiany słownika PZS-1
 
@@ -265,35 +297,61 @@ powstawać, ale nie może zostać wdrożona produkcyjnie. Dokument nie edytuje
 właściciela produktu.
 
 **Część A — nowe pojęcia.** Wszystkie wiersze tabeli 3.3 w podanym tam
-brzmieniu (61 pojęć: 42 z wersji 2.0 i 19 dopisanych w wersji 2.1 po
-przeglądzie wszystkich nazw tabel, kolumn, endpointów i parametrów
-dokumentu — od „Element Ścieżki nauki” do „Rejestr usunięć”). Test w CI
-(`tests/test_slownik.py`) porównuje nazwy tabel z DDL 7.3 z listą
-identyfikatorów w 3.2 i 3.3; tabela bez wpisu kończy test błędem. Lista
-wyłączeń testu jest zamknięta: tabele techniczne (`uzytkownik` — konto
-logowania wspólne dla ról, `token_odswiezania`,
-`proba_logowania`, `klucz_idempotencji`, `praca_w_tle`, `powiadomienie`,
-`dziennik_audytu`, `import_arkusza`) oraz tabele łączące, których nazwa
-składa się wyłącznie z pojęć słownikowych (`czlonkostwo_klasy`,
-`pozycja_zestawu`, `przypisanie_uczen`, `pozycja_testu_diagnostycznego`,
-`umiejetnosc_wymagana`, `zadanie_umiejetnosc`, `zalacznik_zadania`,
-`ocena_kryterium`).
+brzmieniu (78 pojęć: 42 z wersji 2.0, 19 dopisanych w wersji 2.1 — od
+„Element Ścieżki nauki” do „Rejestr usunięć” — i 17 dopisanych w wersji 2.2
+— od „Pewność surowa” do „Przekazanie Klasy”).
+
+**Test w CI `tests/test_slownik.py`** (wersja 2.2, C2-11) ma cztery części,
+każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
+
+1. **Tabele:** nazwy tabel z DDL 7.3 (odczyt `information_schema.tables` w
+   bazie testowej po migracjach) muszą mieć wpis w 3.2/3.3. Lista
+   wyłączeń: tabele techniczne (`uzytkownik` — konto logowania wspólne dla
+   ról, `token_odswiezania`, `proba_logowania`, `klucz_idempotencji`,
+   `praca_w_tle`, `powiadomienie`, `dziennik_audytu`, `import_arkusza`,
+   `limit_szybkosci_modelu`) oraz tabele łączące, których nazwa składa się
+   wyłącznie z pojęć słownikowych (`czlonkostwo_klasy`, `pozycja_zestawu`,
+   `przypisanie_uczen`, `pozycja_testu_diagnostycznego`,
+   `umiejetnosc_wymagana`, `zadanie_umiejetnosc`, `zalacznik_zadania`,
+   `ocena_kryterium`).
+2. **Tokeny identyfikatorów:** kolumny (`information_schema.columns`), typy
+   wyliczeniowe i ich wartości (`pg_enum`), ścieżki, parametry i właściwości
+   schematów OpenAPI (`/api/v1/openapi.json`), klucze schematów JSON
+   odpowiedzi modeli (`lemat/modele/schematy/*.json`) i typy prac w tle
+   (13.3) są dzielone na tokeny (`_`, `-`, granice `PascalCase`); każdy token
+   musi należeć do słownika tokenów `tests/slownik_tokeny.yaml`, generowanego
+   z identyfikatorów 3.2/3.3, terminów technicznych 3.1 p. 2 i p. 6 oraz
+   zamkniętej listy słów ogólnych (np. `nr`, `opis`, `status`, `liczba`,
+   `termin`, `tresc`, `koszt`).
+3. **Słowa zarezerwowane (3.1 p. 5):** identyfikator zawierający token
+   `odpowiedz*`, `wariant*`, `krok*`, `wynik*` albo `kolejk*` musi być na
+   liście dozwolonych użyć tego słowa (np. dla `wynik*`: `wynik_zadania`,
+   `wynik_zadania_id`, `wynik_koncowy`, `wynik_koncowy_wzorcowy`,
+   `ix_wynik_*`, `ux_wynik_*`, `WynikZadaniaSkrot`; dla `odpowiedz*`:
+   `odpowiedz`, `odpowiedz_id`, `OdpowiedzWejscie`, `OdpowiedzWyjscie`,
+   `OdpowiedzZapisana`, `ux_odpowiedz_*`); każde inne użycie kończy test
+   błędem.
+4. **Zakazane synonimy (3.1 p. 4)** w identyfikatorach i w plikach
+   tłumaczeń UI.
 
 **Część B — zmiany definicji istniejących pojęć.**
 
 | ID | Pojęcie | Obecna definicja | Proponowana definicja | Przyczyna |
 |---|---|---|---|---|
-| B-1 | Transkrypcja | Tekstowa postać rozwiązania (tekst + LaTeX) uzyskana ze zdjęcia przez moduł rozpoznawania pisma. | Tekstowa postać rozwiązania (tekst + LaTeX) uzyskana ze zdjęcia przez moduł rozpoznawania pisma, **ewentualnie poprawiona przez Ucznia przed oceną (FR-18)**. | FR-18 wymaga poprawek Ucznia; wersja z poprawkami nadal pochodzi ze zdjęcia. Wpis ręczny bez zdjęcia nie istnieje (ADR-024). |
-| B-2 | Weryfikacja | Sprawdzenie oceny przez nauczyciela, gdy pewność systemu jest zbyt niska. | Sprawdzenie oceny przez nauczyciela, gdy pewność systemu jest zbyt niska **albo gdy wymagają tego reguły: poprawny wynik przy błędnych krokach (FR-25), zadanie z dowodem (FR-26), podejrzenie lub zgłoszenie błędu odczytu (FR-28), Kontrola losowa (NFR-03), błąd przetwarzania**. | Wymagania FR-25, FR-26 i NFR-03 wymuszają Weryfikację niezależnie od pewności. |
+| B-1 | Transkrypcja | Tekstowa postać rozwiązania (tekst + LaTeX) uzyskana ze zdjęcia przez moduł rozpoznawania pisma. | Tekstowa postać rozwiązania (tekst + LaTeX) uzyskana ze zdjęcia przez moduł rozpoznawania pisma, **ewentualnie poprawiona przez Ucznia przed oceną (FR-18) w zakresie fragmentów odczytanych błędnie (Poprawka Transkrypcji: zmiana istniejących kroków, wstawienie ≤ 2 kroków, bez usuwania; ADR-036)**. | FR-18 wymaga poprawek Ucznia; limity Poprawek i Sprawdzenie zgodności poprawek ze zdjęciem gwarantują, że Transkrypcja nadal pochodzi ze zdjęcia. Wpis ręczny bez zdjęcia nie istnieje (ADR-024). |
+| B-2 | Weryfikacja | Sprawdzenie oceny przez nauczyciela, gdy pewność systemu jest zbyt niska. | Sprawdzenie oceny przez nauczyciela, gdy pewność systemu jest zbyt niska **albo gdy wymagają tego reguły: poprawny wynik przy błędnych krokach (FR-25), zadanie z dowodem (FR-26), podejrzenie lub zgłoszenie błędu odczytu (FR-28), Poprawki Transkrypcji niezgodne ze zdjęciem lub zbyt rozległe (ADR-036), Kontrola losowa (NFR-03), błąd przetwarzania**. | Wymagania FR-25, FR-26 i NFR-03 wymuszają Weryfikację niezależnie od pewności; ADR-036 chroni FR-18 przed obejściem kartki. |
 | B-3 | Ścieżka nauki | Kolejność wkładek teoretycznych i zadań zaproponowana uczniowi przez agenta rekomendującego. | Kolejność wkładek teoretycznych i zadań zaproponowana uczniowi przez agenta rekomendującego, **z uwzględnieniem Zadań przypisanych przez nauczyciela (agent decyduje, kiedy je zaproponować) oraz powtórek**. | Element z Przypisania jest proponowany przez agenta (reguła R-PRZYPISANIE), więc definicja się utrzymuje; dopisek usuwa niejednoznaczność. Zadania rozwiązywane bezpośrednio z listy Przypisań **nie są** elementami Ścieżki nauki (ADR-032). |
 | B-4 | Poziom trudności | Skala trudności zadania (np. 1–5), kalibrowana na podstawie wyników uczniów. | Skala trudności zadania 1–5, kalibrowana na podstawie wyników uczniów; **wartość startowa (nominalna) pochodzi ze wskaźnika łatwości CKE, od autora albo z zlecenia generowania**. | Rozdzielenie wartości nominalnej (tag, FR-36) od skalibrowanej (ADR-029). |
 | B-5 | Pewność oceny | Oszacowane przez system prawdopodobieństwo, że ocena jest poprawna. | Oszacowane przez system prawdopodobieństwo, że ocena jest poprawna, **tj. zgodna z oceną nauczyciela co do liczby punktów i wskazania pierwszego błędnego kroku (Zgodność Oceny)**. | Mierzalność NFR-02 i NFR-04 (ADR-027). |
 | B-6 | Rozwiązanie | Praca ucznia nad zadaniem przesłana jako zdjęcie kartki. | Praca ucznia nad **zadaniem otwartym** przesłana jako zdjęcie kartki (jedno lub kilka). **Wybór w zadaniu zamkniętym to Odpowiedź.** | FR-15/FR-16 rozróżniają oba przypadki. |
 | B-7 | Model System One | (bez zmiany treści) | Dopisek: „W systemie jedynym Modelem System One jest Jev; rolę modelu decyzyjnego może pełnić także model zapasowy (Model decyzyjny), który Modelem System One nie jest.” | Usunięcie niejednoznaczności mapowania (3.2). |
+| B-8 | Agent | Komponent AI realizujący jedno zadanie w systemie (rekomendacja, generowanie, rozpoznawanie, ocenianie). | Komponent AI realizujący jedno zadanie w systemie: rekomendację, generowanie, rozpoznawanie, ocenianie **albo wyjaśnianie (Agent wyjaśniający pisze Wskazówkę na podstawie decyzji Agenta oceniającego)**. | `architecture.md` i FR-27 przewidują Agenta wyjaśniającego; obecna definicja wylicza tylko cztery zadania. |
+| B-9 | Jev | Model typu System One firmy TypeSafe; w projekcie używany jako silnik decyzyjny agenta oceniającego. | Model typu System One firmy TypeSafe; w projekcie silnik decyzyjny Agenta oceniającego, **a także Walidacji zadania (pytania Q-WA-*) i eksperymentalnej strategii Agenta rekomendującego (Q-RE-01)**. | `architecture.md` używa Jev w Walidacji i w rekomendacji; definicja musi to obejmować. |
 
 **Część C — terminy techniczne dopuszczone w identyfikatorach** (3.1 p. 6):
 θ/`theta`, `trudnosc_b`, `ipw`, `ece`, `n_eff`, `cv5`, `sha256`, `latex`,
-`sympy`, `jwt`, `url`, `mime`, `trace_id`, `hmac`, `fnv1a`, prefiksy `ux_`,
+`sympy`, `jwt`, `url`, `mime`, `trace_id`, `hmac`, `fnv1a`, `http` (protokół
+odpowiedzi API), `rodo` (RODO — rozporządzenie 2016/679), prefiksy `ux_`,
 `ix_`, `fk_`, `trg_` — z definicjami jak w 3.1 p. 6.
 
 ---
@@ -337,8 +395,9 @@ flowchart TB
         WRK["worker<br/>Python 3.12, asyncio<br/>2 repliki × 4 pule korutyn (R15/O15/P6/W4)"]
         SCH["scheduler<br/>1 aktywna instancja<br/>(blokada doradcza PG)"]
         SBX["piaskownica SymPy + Pillow<br/>pula 4 procesów na replikę workera<br/>RLIMIT CPU/RAM"]
+        SBXA["piaskownica Pillow api<br/>pula 2 procesów na replikę api<br/>RLIMIT CPU/RAM (ADR-045)"]
     end
-    PG[("PostgreSQL 16<br/>dane + kolejka praca_w_tle")]
+    PG[("PostgreSQL 16<br/>dane + prace w tle (praca_w_tle)")]
     OBJ[("Magazyn obiektów S3 (UE)<br/>zdjęcia, zdjęcia maskowane, importy")]
     REJ[("Bucket rejestr-usuniec<br/>Object Lock COMPLIANCE 60 dni")]
     JEV["Jev API"]
@@ -347,6 +406,8 @@ flowchart TB
     PWA -->|HTTPS JSON| RP --> API
     API --> PG
     API --> OBJ
+    API --> SBXA
+    API --> REJ
     API -->|"Q-RE-01, timeout 1,5 s (ADR-023)"| JEV
     WRK --> PG
     WRK --> OBJ
@@ -360,7 +421,9 @@ flowchart TB
 ```
 
 Wysyłka e-mail odbywa się wyłącznie przez pracę w tle `WYSLIJ_EMAIL`
-(worker), więc proces `api` nie łączy się z SMTP.
+(worker), więc proces `api` nie łączy się z SMTP. Proces `api` zapisuje do
+bucketu `rejestr-usuniec` Zdarzenia RODO (żądanie usunięcia, przywrócenie,
+odwołanie i udzielenie zgody) **przed** zatwierdzeniem transakcji (ADR-041).
 
 ### 5.2 Stos technologiczny
 
@@ -369,10 +432,10 @@ Wysyłka e-mail odbywa się wyłącznie przez pracę w tle `WYSLIJ_EMAIL`
 | Frontend | React 18 + TypeScript 5, Vite, PWA (manifest + service worker do cache statyk), KaTeX do renderowania LaTeX, `react-i18next` z jednym językiem `pl-PL` | NFR-08, NFR-10; jedna baza kodu dla telefonu i komputera. |
 | Zdjęcia w kliencie | `<input type="file" accept="image/*" capture="environment" multiple>`; kompresja w kliencie (canvas → JPEG q=0.85, dłuższy bok ≤ 2560 px); ekran aparatu z instrukcją „nie podpisuj kartki imieniem i nazwiskiem” | NFR-08; zmniejsza transfer, koszt rozpoznawania i ilość danych osobowych na zdjęciu (ADR-031). |
 | Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (Core + ORM), Alembic | Ekosystem SymPy i SDK modeli AI w Pythonie. |
-| Baza danych | PostgreSQL 16 (rozszerzenia `citext`, `pg_trgm`) | Jedno źródło prawdy + kolejka prac w tle (ADR-002). |
-| Kolejka | Tabela `praca_w_tle` z kolumną `pula` + `SELECT … FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY` | Transakcyjne zlecanie prac razem ze zmianą stanu (ADR-002); osobne pule dla rozpoznawania i oceniania (13.4). |
+| Baza danych | PostgreSQL 16 (rozszerzenia `citext`, `pg_trgm`) | Jedno źródło prawdy + prace w tle (ADR-002). |
+| Prace w tle | Tabela `praca_w_tle` z kolumną `pula` + `SELECT … FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY` | Transakcyjne zlecanie prac razem ze zmianą stanu (ADR-002); osobne pule dla rozpoznawania i oceniania (13.4). |
 | Magazyn obiektów | S3-kompatybilny w regionie UE (lokalnie MinIO), szyfrowanie SSE, **wersjonowanie wyłączone** na bucketach ze zdjęciami (16.4) | Zdjęcia poza bazą; NFR-09. |
-| Obróbka obrazu | Pillow ≥ 10 + `pillow-heif` (normalizacja w `api`, maskowanie w `worker`) | Usuwanie EXIF, maskowanie danych osobowych (ADR-031). |
+| Obróbka obrazu | Pillow ≥ 10 + `pillow-heif`; normalizacja w piaskownicy procesowej `api` (2 procesy na replikę, ADR-045), maskowanie w piaskownicy `worker` | Usuwanie EXIF, maskowanie danych osobowych (ADR-031); dekodowanie obrazów nigdy w procesie obsługującym pętlę zdarzeń. |
 | Obliczenia symboliczne | SymPy ≥ 1.13 (`parse_latex` z backendem `lark`) w puli procesów z limitami | FR-21, walidacja FR-13 (ADR-013). |
 | Obserwowalność | OpenTelemetry (ślady), Prometheus (metryki), Grafana, logi JSON | NFR-01, NFR-03, NFR-04. |
 | Wdrożenie | Docker Compose na 2 maszynach wirtualnych w UE + zarządzany PostgreSQL z PITR | Skala A-03 (ADR-001). |
@@ -439,17 +502,17 @@ flowchart LR
 
 | Moduł | Odpowiedzialność | Właściciel danych (tabele) |
 |---|---|---|
-| `lemat.http` | Routery, uwierzytelnianie, DTO, mapowanie błędów RFC 9457, idempotencja żądań | `klucz_idempotencji` |
-| `lemat.konta` | Rejestracja, logowanie, tokeny, role, flagi Nauczyciela (`weryfikator_globalny`, `recenzent_tresci`), statusy kont, usuwanie i przywracanie konta (RODO) | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania` |
+| `lemat.http` | Routery, uwierzytelnianie, DTO, mapowanie błędów RFC 9457, idempotencja żądań, globalny ogranicznik szybkości modeli dla procesu `api` (13.2) | `klucz_idempotencji`, `limit_szybkosci_modelu` (wspólnie z `lemat.modele`) |
+| `lemat.konta` | Rejestracja, logowanie, tokeny, role, flagi Nauczyciela (`weryfikator_globalny`, `recenzent_tresci`), statusy kont, usuwanie i przywracanie kont wszystkich ról (RODO, ADR-040, ADR-044), Zdarzenia RODO i ich rejestr poza bazą (ADR-041), kalendarz dni roboczych | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania`, `zdarzenie_rodo`, `dzien_wolny` |
 | `lemat.klasy` | Klasy, kody zaproszeń, członkostwo, archiwizacja, Zestawy zadań, Przypisania | `klasa`, `czlonkostwo_klasy`, `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` |
-| `lemat.tresci` | Zadania i ich wersje, zasięg, Kryteria oceniania, Wkładki teoretyczne, Działy, Umiejętności, import Arkuszy CKE, Walidacja i Przegląd zadań, zlecenia generowania i budżet generowania systemowego | `dzial`, `umiejetnosc`, `umiejetnosc_wymagana`, `arkusz_cke`, `import_arkusza`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `zalacznik_zadania`, `wkladka_teoretyczna`, `walidacja_zadania`, `przeglad_zadania`, `zlecenie_generowania` |
+| `lemat.tresci` | Zadania i ich wersje, zasięg, Kryteria oceniania, Wkładki teoretyczne, Działy, Umiejętności, import Arkuszy CKE, Walidacja i Przegląd zadań, Zgłoszenia błędu w Zadaniu i wstrzymanie w doborze, pula Zadań diagnostycznych, zlecenia generowania i budżet generowania systemowego | `dzial`, `umiejetnosc`, `umiejetnosc_wymagana`, `arkusz_cke`, `import_arkusza`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `zalacznik_zadania`, `wkladka_teoretyczna`, `walidacja_zadania`, `przeglad_zadania`, `zlecenie_generowania`, `zgloszenie_bledu_zadania` |
 | `lemat.profil` | Profil ucznia, Wynik zadania, Test diagnostyczny, powtórki, odtwarzanie Profilu | `profil_ucznia`, `opanowanie_umiejetnosci`, `wynik_zadania`, `test_diagnostyczny`, `pozycja_testu_diagnostycznego` |
 | `lemat.rekomendacje` | Ścieżka nauki, Seria, Rekomendacje (korzysta z Agenta rekomendującego przez fasadę Orkiestratora) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` |
-| `lemat.rozwiazania` | Przyjęcie i normalizacja zdjęć, maskowanie, Transkrypcja i jej poprawki, Odpowiedzi, zgłoszenia błędu odczytu (przyjęcie wniosku), kopie treningowe (za zgodą) | `rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `odpowiedz`, `kopia_treningowa` |
+| `lemat.rozwiazania` | Przyjęcie i normalizacja zdjęć (piaskownica `api`), maskowanie, Transkrypcja, Poprawki Transkrypcji z limitami i Sprawdzeniem zgodności poprawek (ADR-036), Filtr danych osobowych (ADR-042), Odpowiedzi i kontekst próby (ADR-032), zgłoszenia błędu odczytu (przyjęcie wniosku), kopie treningowe (za zgodą) | `rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `odpowiedz`, `kopia_treningowa` |
 | `lemat.ocenianie` | Ocena, reguły FR-20/21/25/26/28, trasowanie do Weryfikacji, Wskazówki | `ocena`, `ocena_kryterium` |
 | `lemat.weryfikacja` | Kolejka weryfikacji, blokady i ich zwalnianie, szkice rozstrzygnięć, rozstrzygnięcia, korekty, eskalacja, kontrola przyjęć | `weryfikacja`, `szkic_rozstrzygniecia` |
 | `lemat.kalibracja` | Próbki kalibracyjne, kalibratory pewności, Próg pewności, kalibracja Poziomu trudności, metryki NFR-02/03/04 | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `kalibracja_trudnosci` |
-| `lemat.modele` | Porty, adaptery, Konfiguracja modeli, dziennik decyzji, circuit breaker | `konfiguracja_modelu`, `decyzja_modelu` |
+| `lemat.modele` | Porty, adaptery, Konfiguracja modeli, dziennik decyzji, circuit breaker, globalny ogranicznik szybkości (ADR-039) | `konfiguracja_modelu`, `decyzja_modelu`, `limit_szybkosci_modelu` |
 | `lemat.orkiestrator` | Maszyny stanów, zlecanie i wykonywanie prac w tle, pule workera, harmonogram, fasada synchroniczna dla rekomendacji (ADR-023) | `praca_w_tle` |
 | `lemat.powiadomienia` | Powiadomienia w aplikacji | `powiadomienie` |
 | `lemat.audyt` | Dziennik działań Nauczycieli, Administratorów i zmian systemowych (np. zmiana skalibrowanego Poziomu trudności) | `dziennik_audytu` |
@@ -475,7 +538,7 @@ wykonywanym w dwóch trybach:
   3. Wywołania modeli odbywają się **poza transakcją**; wynik zapisywany jest
      warunkowo (`UPDATE … WHERE status = :oczekiwany AND version = :v`). Jeśli
      warunek nie jest spełniony, wynik jest odrzucany i logowany jako
-     `wynik_przestarzaly` (sekcja 15).
+     `rezultat_przestarzaly` (sekcja 15).
   4. Każdy handler jest idempotentny (sekcja 13.3).
 - **Tryb synchroniczny (proces `api`)** — jeden przepływ:
   `Orkiestrator.rekomenduj_synchronicznie(uczen_id)` wywoływany przez
@@ -544,6 +607,9 @@ erDiagram
     KALIBRATOR_PEWNOSCI ||--o{ PROG_PEWNOSCI : "progi"
     KONFIGURACJA_MODELU ||--o{ DECYZJA_MODELU : "decyzje"
     UCZEN ||--o{ KOPIA_TRENINGOWA : "kopie za zgodą (ADR-035)"
+    ZADANIE ||--o{ ZGLOSZENIE_BLEDU_ZADANIA : "zgłoszenia błędu (ADR-038)"
+    NAUCZYCIEL ||--o{ ZGLOSZENIE_BLEDU_ZADANIA : "zgłasza"
+    UZYTKOWNIK ||--o{ ZDARZENIE_RODO : "zdarzenia RODO (bez FK, ADR-041)"
 ```
 
 ### 7.2 Konwencje schematu
@@ -555,6 +621,10 @@ erDiagram
 - Optymistyczna blokada: kolumna `version integer NOT NULL DEFAULT 1`,
   zwiększana przy każdej modyfikacji **wykonanej przez człowieka albo przez
   przejście maszyny stanów**; API eksponuje ją jako nagłówek `ETag`.
+  Wyjątek: `weryfikacja.version` jest **wersją treści** — zmienia ją wyłącznie
+  trigger `trg_weryfikacja_wersja` przy zmianie kolumn treści (powody,
+  zgłoszenie, Ocena weryfikowana, zamknięcie); podjęcie, przedłużenie,
+  zwolnienie blokady i eskalacja jej nie zmieniają (ADR-037).
   Statystyki aktualizowane automatycznie (kalibracja Poziomu trudności,
   liczniki) są w osobnych tabelach i nie zmieniają `version` encji, do której
   należą (ADR-029).
@@ -588,6 +658,7 @@ CREATE TYPE typ_bledu               AS ENUM ('RACHUNKOWY','MERYTORYCZNY','NIEPEL
 CREATE TYPE zrodlo_wskazowki        AS ENUM ('AGENT_WYJASNIAJACY','SZABLON','NAUCZYCIEL');
 CREATE TYPE powod_weryfikacji       AS ENUM ('NISKA_PEWNOSC','POPRAWNY_WYNIK_BLEDNE_KROKI','ZADANIE_Z_DOWODEM',
                                              'PODEJRZENIE_BLEDU_ODCZYTU','ZGLOSZENIE_BLEDU_ODCZYTU',
+                                             'POPRAWKI_NIEZGODNE_ZE_ZDJECIEM',          -- T-7, ADR-036
                                              'KONTROLA_LOSOWA','BLAD_PRZETWARZANIA');
 CREATE TYPE status_weryfikacji      AS ENUM ('OCZEKUJE','W_TRAKCIE','ZAKONCZONA','ANULOWANA');
 CREATE TYPE powod_anulowania        AS ENUM ('USUNIECIE_KONTA','PONOWNA_OCENA_AUTOMATYCZNA');
@@ -615,6 +686,9 @@ CREATE TYPE status_testu            AS ENUM ('W_TOKU','ZAKONCZONY','POMINIETY');
 CREATE TYPE decyzja_przegladu       AS ENUM ('ZATWIERDZONE','POPRAWIONE','ODRZUCONE');
 CREATE TYPE rezultat_walidacji      AS ENUM ('POZYTYWNY','NEGATYWNY');
 CREATE TYPE inicjalizacja_opanowania AS ENUM ('DOMYSLNA','TEST_DIAGNOSTYCZNY','PROPAGACJA_Z_DZIALU');
+CREATE TYPE status_zgloszenia_zadania AS ENUM ('OTWARTE','UWZGLEDNIONE','ODRZUCONE');           -- ADR-038
+CREATE TYPE typ_zdarzenia_rodo      AS ENUM ('ZADANIE_USUNIECIA','ANULOWANIE_USUNIECIA','USUNIECIE_WYKONANE',
+                                             'ODWOLANIE_ZGODY','UDZIELENIE_ZGODY');           -- ADR-041
 
 -- ===================== KONTA =====================
 CREATE TABLE uzytkownik (
@@ -625,7 +699,7 @@ CREATE TABLE uzytkownik (
     status           status_konta NOT NULL DEFAULT 'AKTYWNE',
     imie             text   NOT NULL CHECK (char_length(imie) BETWEEN 1 AND 60),
     nazwisko         text   NOT NULL CHECK (char_length(nazwisko) BETWEEN 1 AND 80),
-    usuniecie_zaplanowane_at timestamptz,             -- RODO: twarde usunięcie po 30 dniach
+    usuniecie_zaplanowane_at timestamptz,             -- RODO: koniec okresu karencji (ADR-040), usunięcie po 30 dniach
     ostatnie_logowanie_at    timestamptz,
     created_at       timestamptz NOT NULL DEFAULT now(),
     updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -676,6 +750,28 @@ CREATE TABLE proba_logowania (
 );
 CREATE INDEX ix_proba_logowania_email ON proba_logowania (email, created_at DESC);
 
+-- Zdarzenia RODO (ADR-041): kopia w bazie dziennika zapisanego wcześniej w buckecie rejestr-usuniec
+CREATE TABLE zdarzenie_rodo (
+    id             uuid PRIMARY KEY,                  -- generowany w api przed zapisem obiektu do bucketu
+    uzytkownik_id  uuid NOT NULL,                     -- bez FK: wpis przeżywa usunięcie konta
+    typ            typ_zdarzenia_rodo NOT NULL,
+    dane           jsonb NOT NULL DEFAULT '{}',       -- np. {"usuniecie_zaplanowane_at":"…"}; bez danych osobowych
+    klucz_obiektu  text NOT NULL UNIQUE,              -- rejestr-usuniec/zdarzenia/{rrrr-mm-dd}/{uzytkownik_id}/{id}.json
+    created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_zdarzenie_rodo_uzytkownik ON zdarzenie_rodo (uzytkownik_id, created_at);
+
+-- Kalendarz dni roboczych (A-15, ADR-043)
+CREATE TABLE dzien_wolny (
+    data  date PRIMARY KEY,                           -- dzień ustawowo wolny od pracy (Polska)
+    nazwa text NOT NULL
+);
+-- Funkcja dodaj_dni_robocze(od timestamptz, n integer) RETURNS timestamptz (STABLE, strefa Europe/Warsaw):
+-- jeśli `od` przypada na sobotę, niedzielę lub dzień z dzien_wolny, liczenie zaczyna się od najbliższego
+-- dnia roboczego o 08:00; następnie dodaje n dni roboczych z zachowaniem godziny. Przykłady:
+-- piątek 18:00 + 3 → środa 18:00; sobota 10:00 + 3 → czwartek 08:00. Dane: migracja z dniami wolnymi
+-- 2026–2030; praca UTRZYMAJ_PARTYCJE alarmuje, gdy brak wpisów na 12 miesięcy naprzód.
+
 -- ===================== DZIAŁY, UMIEJĘTNOŚCI, WKŁADKI =====================
 CREATE TABLE dzial (
     id                integer PRIMARY KEY,
@@ -709,6 +805,8 @@ CREATE TABLE wkladka_teoretyczna (
     tresc_md           text NOT NULL CHECK (char_length(tresc_md) <= 12000), -- Markdown + LaTeX ($…$)
     szacowany_czas_min smallint NOT NULL CHECK (szacowany_czas_min BETWEEN 1 AND 15),
     wygenerowana       boolean NOT NULL,              -- true = szkic Agenta generującego
+    wygenerowana_automatycznie boolean NOT NULL DEFAULT false, -- true = GENERUJ_SZKIC_WKLADKI (E-20); budżet 12.7
+    koszt_generowania_pln numeric(10,4) NOT NULL DEFAULT 0,
     status             status_wkladki NOT NULL DEFAULT 'SZKIC',
     zatwierdzona_przez uuid REFERENCES uzytkownik(id) ON DELETE SET NULL,  -- recenzent treści lub Administrator
     created_at         timestamptz NOT NULL DEFAULT now(),
@@ -716,6 +814,8 @@ CREATE TABLE wkladka_teoretyczna (
     version            integer NOT NULL DEFAULT 1
 );
 CREATE UNIQUE INDEX ux_wkladka_opublikowana ON wkladka_teoretyczna (umiejetnosc_id) WHERE status = 'OPUBLIKOWANA';
+CREATE INDEX ix_wkladka_automatyczne_odrzucone ON wkladka_teoretyczna (umiejetnosc_id, updated_at)
+    WHERE wygenerowana_automatycznie AND status = 'WYCOFANA';   -- limit 2 odrzuceń / 30 dni (13.3)
 
 -- ===================== ARKUSZE CKE, ZADANIA =====================
 CREATE TABLE arkusz_cke (
@@ -729,7 +829,7 @@ CREATE TABLE arkusz_cke (
 
 CREATE TABLE import_arkusza (
     id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    administrator_id uuid NOT NULL REFERENCES uzytkownik(id),
+    administrator_id uuid REFERENCES uzytkownik(id) ON DELETE SET NULL,  -- NULL po usunięciu konta (ADR-044)
     klucz_obiektu    text NOT NULL,                   -- ZIP w magazynie obiektów
     status           status_importu NOT NULL DEFAULT 'OCZEKUJE',
     raport           jsonb,                            -- lista błędów per numer zadania
@@ -775,6 +875,7 @@ CREATE TABLE zadanie (
     poziom_trudnosci_nominalny smallint NOT NULL CHECK (poziom_trudnosci_nominalny BETWEEN 1 AND 5),
     diagnostyczne          boolean NOT NULL DEFAULT false,
     zweryfikowane_przez_nauczyciela boolean NOT NULL DEFAULT false,
+    wstrzymane_w_doborze   boolean NOT NULL DEFAULT false,  -- ≥ 3 otwarte Zgłoszenia błędu w Zadaniu (ADR-038)
     created_at             timestamptz NOT NULL DEFAULT now(),
     updated_at             timestamptz NOT NULL DEFAULT now(),
     version                integer NOT NULL DEFAULT 1,
@@ -787,6 +888,8 @@ CREATE TABLE zadanie (
 ALTER TABLE zlecenie_generowania ADD CONSTRAINT fk_zlecenie_zadanie FOREIGN KEY (zadanie_id) REFERENCES zadanie(id);
 CREATE INDEX ix_zadanie_dobor ON zadanie (poziom_matury, status, zasieg, rodzaj);
 CREATE INDEX ix_zadanie_autor ON zadanie (autor_id) WHERE zasieg = 'PRYWATNY';
+CREATE INDEX ix_zadanie_diagnostyczne ON zadanie (poziom_matury, dzial_id, poziom_trudnosci_nominalny)
+    WHERE diagnostyczne AND status = 'OPUBLIKOWANE';      -- pula Testu diagnostycznego (9.1, G-5)
 
 -- Kalibracja Poziomu trudności (ADR-029): statystyka aktualizowana atomowo, poza zadanie.version
 CREATE TABLE kalibracja_trudnosci (
@@ -804,7 +907,7 @@ CREATE TABLE zadanie_wersja (
     zadanie_id           uuid NOT NULL REFERENCES zadanie(id),
     nr_wersji            integer NOT NULL CHECK (nr_wersji >= 1),
     tresc_md             text NOT NULL CHECK (char_length(tresc_md) <= 8000),
-    odpowiedzi_zamkniete jsonb,     -- schemat 7.5.1; NOT NULL dla ZAMKNIETE
+    opcje_zamkniete jsonb,     -- schemat 7.5.1; NOT NULL dla ZAMKNIETE
     rozwiazanie_wzorcowe jsonb NOT NULL, -- schemat 7.5.2
     wynik_koncowy_wzorcowy jsonb,   -- schemat 7.5.3; NULL wyłącznie dla OTWARTE_Z_DOWODEM i ZAMKNIETE
     punkty_max           smallint NOT NULL CHECK (punkty_max BETWEEN 1 AND 6),
@@ -873,10 +976,30 @@ CREATE TABLE przeglad_zadania (
     CHECK ((decyzja = 'POPRAWIONE') = (nowa_wersja_id IS NOT NULL))
 );
 
+-- Zgłoszenie błędu w Zadaniu (FR-14, ADR-038): Nauczyciel bez prawa Przeglądu zgłasza błąd Zadania GLOBALNY
+CREATE TABLE zgloszenie_bledu_zadania (
+    id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    zadanie_id             uuid NOT NULL REFERENCES zadanie(id),
+    zadanie_wersja_id      uuid NOT NULL REFERENCES zadanie_wersja(id),  -- wersja, której dotyczy zgłoszenie
+    nauczyciel_id          uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL,
+    opis                   text NOT NULL CHECK (char_length(opis) BETWEEN 10 AND 1000),
+    status                 status_zgloszenia_zadania NOT NULL DEFAULT 'OTWARTE',
+    rozpatrzone_przez      uuid REFERENCES uzytkownik(id) ON DELETE SET NULL,   -- recenzent treści lub Administrator
+    przeglad_zadania_id    uuid REFERENCES przeglad_zadania(id),               -- Przegląd wykonany przy rozpatrzeniu
+    komentarz_rozpatrzenia text CHECK (char_length(komentarz_rozpatrzenia) <= 1000),
+    created_at             timestamptz NOT NULL DEFAULT now(),
+    rozpatrzono_at         timestamptz,
+    CHECK ((status = 'OTWARTE') = (rozpatrzono_at IS NULL)),
+    CHECK (status <> 'UWZGLEDNIONE' OR przeglad_zadania_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX ux_zgloszenie_zadania_otwarte ON zgloszenie_bledu_zadania (zadanie_id, nauczyciel_id)
+    WHERE status = 'OTWARTE';                              -- 1 otwarte zgłoszenie Nauczyciela na Zadanie
+CREATE INDEX ix_zgloszenie_zadania_status ON zgloszenie_bledu_zadania (status, created_at);
+
 -- ===================== KLASY, ZESTAWY, PRZYPISANIA =====================
 CREATE TABLE klasa (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    nauczyciel_id   uuid NOT NULL REFERENCES nauczyciel(uzytkownik_id),
+    nauczyciel_id   uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL, -- NULL tylko po usunięciu konta bez Przekazania Klasy (ADR-044)
     nazwa           text NOT NULL CHECK (char_length(nazwa) BETWEEN 1 AND 80),
     poziom_matury   poziom_matury NOT NULL,
     kod_zaproszenia char(8) NOT NULL UNIQUE,          -- alfabet [A-HJ-NP-Z2-9]
@@ -885,7 +1008,8 @@ CREATE TABLE klasa (
     zarchiwizowano_at timestamptz,
     created_at      timestamptz NOT NULL DEFAULT now(),
     version         integer NOT NULL DEFAULT 1,
-    CHECK (zarchiwizowana = (zarchiwizowano_at IS NOT NULL))
+    CHECK (zarchiwizowana = (zarchiwizowano_at IS NOT NULL)),
+    CHECK (nauczyciel_id IS NOT NULL OR zarchiwizowana)
 );
 
 CREATE TABLE czlonkostwo_klasy (
@@ -898,7 +1022,7 @@ CREATE INDEX ix_czlonkostwo_uczen ON czlonkostwo_klasy (uczen_id);
 
 CREATE TABLE zestaw_zadan (
     id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    nauczyciel_id uuid NOT NULL REFERENCES nauczyciel(uzytkownik_id),
+    nauczyciel_id uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL,   -- NULL po usunięciu konta (ADR-044)
     nazwa         text NOT NULL CHECK (char_length(nazwa) BETWEEN 1 AND 120),
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz NOT NULL DEFAULT now(),
@@ -916,7 +1040,7 @@ CREATE TABLE pozycja_zestawu (
 CREATE TABLE przypisanie (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     zestaw_zadan_id uuid NOT NULL REFERENCES zestaw_zadan(id),   -- RESTRICT: Zestawu z Przypisaniem nie można usunąć
-    nauczyciel_id   uuid NOT NULL REFERENCES nauczyciel(uzytkownik_id),
+    nauczyciel_id   uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL, -- NULL po usunięciu konta (ADR-044)
     klasa_id        uuid REFERENCES klasa(id),        -- informacyjnie; adresaci w przypisanie_uczen
     termin          timestamptz NOT NULL,
     created_at      timestamptz NOT NULL DEFAULT now()
@@ -956,6 +1080,7 @@ CREATE TABLE test_diagnostyczny (
     uczen_id      uuid NOT NULL REFERENCES uczen(uzytkownik_id) ON DELETE CASCADE,
     poziom_matury poziom_matury NOT NULL,
     status        status_testu NOT NULL DEFAULT 'W_TOKU',
+    pominiete_dzialy integer[] NOT NULL DEFAULT '{}', -- Działy bez Zadań diagnostycznych w chwili utworzenia (9.1)
     created_at    timestamptz NOT NULL DEFAULT now(),
     zakonczono_at timestamptz,
     CHECK ((status = 'W_TOKU') = (zakonczono_at IS NULL))
@@ -996,10 +1121,11 @@ CREATE TABLE element_sciezki (
     zadanie_id             uuid REFERENCES zadanie(id),
     zadanie_wersja_id      uuid REFERENCES zadanie_wersja(id), -- wersja pokazana Uczniowi; ustawiana przy rozpoczęciu (C1-20)
     wkladka_teoretyczna_id uuid REFERENCES wkladka_teoretyczna(id),
-    przypisanie_id         uuid REFERENCES przypisanie(id) ON DELETE SET NULL,  -- tylko reguła R-PRZYPISANIE
+    przypisanie_id         uuid REFERENCES przypisanie(id),  -- tylko reguła R-PRZYPISANIE; dziedziczone przez próbę (ADR-032)
     w_serii                boolean NOT NULL DEFAULT false,
     status                 status_elementu_sciezki NOT NULL DEFAULT 'PROPONOWANY',
-    wygasa_at              timestamptz NOT NULL,       -- 8.5: PROPONOWANY +24 h; ROZPOCZETY: Zadanie +7 dni, Wkładka +24 h
+    wygasa_at              timestamptz NOT NULL,       -- 8.5: PROPONOWANY +24 h; ROZPOCZETY: Zadanie +7 dni, Wkładka +24 h;
+                                                       -- R-PRZYPISANIE z Zadaniem zamkniętym: najpóźniej termin Przypisania
     created_at             timestamptz NOT NULL DEFAULT now(),
     rozpoczeto_at          timestamptz,
     zakonczono_at          timestamptz,
@@ -1036,7 +1162,7 @@ CREATE TABLE rozwiazanie (
     zadanie_id               uuid NOT NULL REFERENCES zadanie(id),
     zadanie_wersja_id        uuid NOT NULL REFERENCES zadanie_wersja(id),
     element_sciezki_id       uuid REFERENCES element_sciezki(id) ON DELETE SET NULL,
-    przypisanie_id           uuid REFERENCES przypisanie(id) ON DELETE SET NULL,
+    przypisanie_id           uuid REFERENCES przypisanie(id),  -- także odziedziczone z elementu R-PRZYPISANIE (trg_kontekst_proby)
     status                   status_rozwiazania NOT NULL DEFAULT 'PRZESLANE',
     liczba_przeslan          smallint NOT NULL DEFAULT 1 CHECK (liczba_przeslan BETWEEN 1 AND 3),
                              -- przesłania zdjęć przez Ucznia (nowe zdjęcia), C1-28
@@ -1048,12 +1174,14 @@ CREATE TABLE rozwiazanie (
     przeslano_at             timestamptz NOT NULL DEFAULT now(),   -- ostatnie przesłanie lub ponowienie
     transkrypcja_gotowa_at   timestamptz,              -- pierwsza Transkrypcja po ostatnim przesłaniu
     zatwierdzono_at          timestamptz,
-    ocena_wystawiona_at      timestamptz,              -- pierwsza Ocena widoczna dla Ucznia
+    ocena_wystawiona_at      timestamptz,              -- pierwsza Ocena widoczna dla Ucznia (NFR-01); okno zgłoszenia liczone od Oceny aktualnej (11.6)
     czas_systemowy_ms        integer,                  -- NFR-01: (transkrypcja_gotowa − przeslano) + (ocena_wystawiona − zatwierdzono)
     created_at               timestamptz NOT NULL DEFAULT now(),
     updated_at               timestamptz NOT NULL DEFAULT now(),
     version                  integer NOT NULL DEFAULT 1,
-    CHECK (element_sciezki_id IS NOT NULL OR przypisanie_id IS NOT NULL)   -- kontekst próby (ADR-032)
+    -- kontekst próby (ADR-032, C1-21): element Ścieżki nauki, pozycja Przypisania albo oba — wtedy
+    -- przypisanie_id = element_sciezki.przypisanie_id (element R-PRZYPISANIE), co egzekwuje trg_kontekst_proby
+    CHECK (element_sciezki_id IS NOT NULL OR przypisanie_id IS NOT NULL)
 );
 CREATE INDEX ix_rozwiazanie_uczen ON rozwiazanie (uczen_id, created_at DESC);
 CREATE INDEX ix_rozwiazanie_status ON rozwiazanie (status, updated_at);
@@ -1061,6 +1189,11 @@ CREATE UNIQUE INDEX ux_rozwiazanie_element ON rozwiazanie (element_sciezki_id)
     WHERE element_sciezki_id IS NOT NULL AND status NOT IN ('PORZUCONE','ANULOWANE');
 CREATE UNIQUE INDEX ux_rozwiazanie_przypisanie ON rozwiazanie (uczen_id, przypisanie_id, zadanie_id)
     WHERE przypisanie_id IS NOT NULL AND status NOT IN ('PORZUCONE','ANULOWANE');
+-- Trigger trg_kontekst_proby (BEFORE INSERT na rozwiazanie i odpowiedz), C1-21:
+--   gdy element_sciezki_id IS NOT NULL: e := element_sciezki(element_sciezki_id);
+--     e.przypisanie_id IS NOT NULL i NEW.przypisanie_id IS NULL → NEW.przypisanie_id := e.przypisanie_id (dziedziczenie);
+--     NEW.przypisanie_id IS NOT NULL i NEW.przypisanie_id IS DISTINCT FROM e.przypisanie_id → wyjątek 'KONTEKST_PROBY_NIESPOJNY'.
+--   Dzięki temu ux_*_przypisanie obejmują obie drogi (element R-PRZYPISANIE i lista Przypisań).
 
 CREATE TABLE zdjecie_rozwiazania (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1091,6 +1224,7 @@ CREATE TABLE kopia_treningowa (
     pseudonim_ucznia  uuid NOT NULL DEFAULT gen_random_uuid(), -- losowy per kopia; jedyne powiązanie z kontem to ten wiersz
     rozwiazanie_id    uuid,                           -- informacyjnie; NULL po usunięciu Rozwiązania
     klucz_obiektu     text NOT NULL UNIQUE,           -- zbior-treningowy/{pseudonim}/{id}.jpg (+ .json z Transkrypcją)
+    ocena_id          uuid,                           -- informacyjnie: Ocena aktualna zapisana w .json; nowsza Ocena → nadpisanie .json
     usun_po           timestamptz NOT NULL,           -- created_at + 24 miesiące; now() po odwołaniu zgody
     usunieto_at       timestamptz,
     created_at        timestamptz NOT NULL DEFAULT now(),
@@ -1107,9 +1241,14 @@ CREATE TABLE transkrypcja (
     przeslanie_nr          smallint NOT NULL CHECK (przeslanie_nr BETWEEN 1 AND 3), -- zdjęcia, z których pochodzi
     konfiguracja_modelu_id uuid,                       -- dla AGENT_ROZPOZNAJACY (FK niżej)
     zgodnosc_z_zadaniem    numeric(4,3),               -- sygnał agenta: czy kartka dotyczy Zadania
+    zakres_poprawek        jsonb,                      -- ADR-036: {"zmienione":2,"wstawione":0,"kroki_agenta":9,"odsetek_znakow":0.08}
+    zgodnosc_poprawek      jsonb,                      -- ADR-036: rezultat SPRAWDZ_POPRAWKI_TRANSKRYPCJI (schemat 10.3.3); NULL = brak rezultatu
+    dane_osobowe_usuniete  smallint NOT NULL DEFAULT 0,-- liczba zastąpień Filtra danych osobowych (ADR-042)
     created_at             timestamptz NOT NULL DEFAULT now(),
     UNIQUE (rozwiazanie_id, wersja),
-    CHECK ((zrodlo = 'AGENT_ROZPOZNAJACY') = (konfiguracja_modelu_id IS NOT NULL))
+    CHECK ((zrodlo = 'AGENT_ROZPOZNAJACY') = (konfiguracja_modelu_id IS NOT NULL)),
+    CHECK ((zrodlo = 'POPRAWKA_UCZNIA') = (zakres_poprawek IS NOT NULL)),
+    CHECK (zrodlo = 'POPRAWKA_UCZNIA' OR zgodnosc_poprawek IS NULL)
 );
 ALTER TABLE rozwiazanie ADD CONSTRAINT fk_rozwiazanie_transkrypcja
     FOREIGN KEY (zatwierdzona_transkrypcja_id) REFERENCES transkrypcja(id);
@@ -1122,9 +1261,15 @@ CREATE TABLE krok_transkrypcji (
     latex               text NOT NULL CHECK (char_length(latex) <= 2000),   -- wzory
     pewnosc_odczytu     numeric(4,3) CHECK (pewnosc_odczytu BETWEEN 0 AND 1), -- NULL dla kroku zmienionego przez Ucznia
     niepewne_fragmenty  jsonb NOT NULL DEFAULT '[]',   -- schemat 10.3.2
+    obszar              jsonb,                         -- {"zdjecie":1,"ramka":[x,y,w,h]} linii kroku (10.3.2); NULL dla wstawionego
     zmieniony_przez_ucznia boolean NOT NULL DEFAULT false,
+    nr_kroku_agenta     smallint CHECK (nr_kroku_agenta BETWEEN 1 AND 40),
+                        -- numer kroku w Transkrypcji agenta, który ten krok poprawia (ADR-036); NULL = krok wstawiony
+    odleglosc_edycyjna  numeric(4,3) CHECK (odleglosc_edycyjna BETWEEN 0 AND 1),
+                        -- znormalizowana odległość Levenshteina od kroku agenta; NULL dla kroku agenta i wstawionego
     UNIQUE (transkrypcja_id, nr),
-    CHECK (zmieniony_przez_ucznia = (pewnosc_odczytu IS NULL))
+    CHECK (zmieniony_przez_ucznia = (pewnosc_odczytu IS NULL)),
+    CHECK (nr_kroku_agenta IS NOT NULL OR zmieniony_przez_ucznia)
 );
 
 CREATE TABLE odpowiedz (
@@ -1133,18 +1278,20 @@ CREATE TABLE odpowiedz (
     zadanie_id         uuid NOT NULL REFERENCES zadanie(id),
     zadanie_wersja_id  uuid NOT NULL REFERENCES zadanie_wersja(id),
     element_sciezki_id uuid REFERENCES element_sciezki(id) ON DELETE SET NULL,
-    przypisanie_id     uuid REFERENCES przypisanie(id) ON DELETE SET NULL,
+    przypisanie_id     uuid REFERENCES przypisanie(id),          -- także odziedziczone z elementu R-PRZYPISANIE
     pozycja_testu_diagnostycznego_id uuid REFERENCES pozycja_testu_diagnostycznego(id) ON DELETE CASCADE,
     wybor              jsonb NOT NULL,                -- {"opcja":"B"} | {"stwierdzenia":{"1":true,"2":false}}
     czy_poprawna       boolean NOT NULL,
     punkty             smallint NOT NULL,
     punkty_max         smallint NOT NULL,
-    wynik_ujawniony_od timestamptz NOT NULL,          -- now() albo termin Przypisania (ADR-032)
+    rezultat_ujawniony_od timestamptz,                -- przypisanie_id → greatest(now(), termin); element bez Przypisania → now();
+                                                      -- Test diagnostyczny → NULL do …/zakonczenie lub …/pominiecie (C2-16)
     created_at         timestamptz NOT NULL DEFAULT now(),
     CHECK (punkty BETWEEN 0 AND punkty_max),
-    -- kontekst próby (C1-21, C1-28): co najmniej jeden; Test diagnostyczny wyklucza pozostałe
-    CHECK (num_nonnulls(element_sciezki_id, przypisanie_id, pozycja_testu_diagnostycznego_id) >= 1),
-    CHECK (pozycja_testu_diagnostycznego_id IS NULL OR (element_sciezki_id IS NULL AND przypisanie_id IS NULL))
+    -- kontekst próby (C1-21): dozwolone kombinacje {E}, {P}, {E, P} (element R-PRZYPISANIE, trg_kontekst_proby), {T}
+    CHECK (num_nonnulls(element_sciezki_id, przypisanie_id, pozycja_testu_diagnostycznego_id) BETWEEN 1 AND 2),
+    CHECK (pozycja_testu_diagnostycznego_id IS NULL OR (element_sciezki_id IS NULL AND przypisanie_id IS NULL)),
+    CHECK (pozycja_testu_diagnostycznego_id IS NOT NULL OR rezultat_ujawniony_od IS NOT NULL)
 );
 CREATE UNIQUE INDEX ux_odpowiedz_element ON odpowiedz (element_sciezki_id) WHERE element_sciezki_id IS NOT NULL;
 CREATE UNIQUE INDEX ux_odpowiedz_test ON odpowiedz (pozycja_testu_diagnostycznego_id)
@@ -1165,6 +1312,15 @@ CREATE TABLE konfiguracja_modelu (
     created_at       timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX ux_konfiguracja_aktywna ON konfiguracja_modelu (rola) WHERE aktywna;
+
+-- Globalny ogranicznik szybkości (ADR-039): rejestr procesów korzystających z klucza API modelu;
+-- przydział procesu = 0.8 × limit_klucza / liczba wierszy z odnowiono_at > now() − 30 s
+CREATE UNLOGGED TABLE limit_szybkosci_modelu (
+    konfiguracja_modelu_id uuid NOT NULL REFERENCES konfiguracja_modelu(id) ON DELETE CASCADE,
+    wykonawca              text NOT NULL,             -- np. 'worker#1', 'api#2'
+    odnowiono_at           timestamptz NOT NULL DEFAULT now(),   -- odnawiane co 10 s
+    PRIMARY KEY (konfiguracja_modelu_id, wykonawca)
+);
 ALTER TABLE transkrypcja ADD CONSTRAINT fk_transkrypcja_konfiguracja
     FOREIGN KEY (konfiguracja_modelu_id) REFERENCES konfiguracja_modelu(id);
 
@@ -1284,12 +1440,14 @@ CREATE TABLE weryfikacja (
     rozwiazanie_id          uuid NOT NULL REFERENCES rozwiazanie(id) ON DELETE CASCADE,
     ocena_weryfikowana_id   uuid REFERENCES ocena(id),  -- NULL wyłącznie przy BLAD_PRZETWARZANIA przed PONOW_OCENE
     powody                  powod_weryfikacji[] NOT NULL CHECK (cardinality(powody) >= 1),
+    powody_poczatkowe       powod_weryfikacji[] NOT NULL CHECK (cardinality(powody_poczatkowe) >= 1),
+                            -- powody w chwili dołączenia Oceny weryfikowanej (INSERT albo PONOW_OCENE); źródło Próbki (11.5.2)
     priorytet               smallint NOT NULL CHECK (priorytet BETWEEN 1 AND 3),
     typ_kolejki             typ_kolejki_weryfikacji NOT NULL,
     klasa_id                uuid REFERENCES klasa(id) ON DELETE SET NULL,
     nauczyciel_docelowy_id  uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL,
     status                  status_weryfikacji NOT NULL DEFAULT 'OCZEKUJE',
-    termin_at               timestamptz NOT NULL,     -- SLA: created_at + 72 h; po eskalacji: eskalowano_at + 72 h
+    termin_at               timestamptz NOT NULL,     -- SLA: dodaj_dni_robocze(created_at, 3); po eskalacji: dodaj_dni_robocze(eskalowano_at, 3)
     eskalowano_at           timestamptz,
     podjeta_przez           uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL,
     podjeta_at              timestamptz,              -- początek bieżącej blokady (limit 2 h, 11.4.2)
@@ -1301,7 +1459,7 @@ CREATE TABLE weryfikacja (
     opinia_pomocnicza       jsonb,                    -- schemat 10.4.5
     created_at              timestamptz NOT NULL DEFAULT now(),
     zakonczono_at           timestamptz,
-    version                 integer NOT NULL DEFAULT 1,
+    version                 integer NOT NULL DEFAULT 1,  -- wersja TREŚCI (ADR-037), ustawiana wyłącznie przez trg_weryfikacja_wersja
     CHECK ((status = 'W_TRAKCIE') = (podjeta_przez IS NOT NULL AND zablokowana_do IS NOT NULL AND podjeta_at IS NOT NULL)),
     CHECK ((status = 'ZAKONCZONA') = (ocena_nauczyciela_id IS NOT NULL)),
     CHECK ((status = 'ANULOWANA') = (powod_anulowania IS NOT NULL)),
@@ -1312,6 +1470,14 @@ CREATE TABLE weryfikacja (
 CREATE UNIQUE INDEX ux_weryfikacja_otwarta ON weryfikacja (rozwiazanie_id) WHERE status IN ('OCZEKUJE','W_TRAKCIE');
 CREATE INDEX ix_weryfikacja_kolejka ON weryfikacja (typ_kolejki, nauczyciel_docelowy_id, status, priorytet, termin_at);
 CREATE INDEX ix_weryfikacja_blokady ON weryfikacja (zablokowana_do) WHERE status = 'W_TRAKCIE';
+-- Trigger trg_weryfikacja_wersja (BEFORE UPDATE), ADR-037:
+--   NEW.version := OLD.version + 1, gdy zmienia się którakolwiek kolumna TREŚCI: powody, zgloszenie,
+--   ocena_weryfikowana_id, ponowna_ocena_at, ocena_nauczyciela_id, powod_anulowania albo status przechodzi
+--   do ZAKONCZONA/ANULOWANA; w przeciwnym razie NEW.version := OLD.version. Kolumny BLOKADY (status
+--   OCZEKUJE↔W_TRAKCIE, podjeta_przez, podjeta_at, zablokowana_do), TRASOWANIA (typ_kolejki, eskalowano_at,
+--   termin_at, priorytet, klasa_id, nauczyciel_docelowy_id) i opinia_pomocnicza nie zmieniają version.
+-- Trigger trg_powody_poczatkowe (BEFORE UPDATE): powody_poczatkowe może zmienić wyłącznie przejście
+--   ocena_weryfikowana_id NULL → wartość (PONOW_OCENE, 9.13); każda inna zmiana → wyjątek 'POWODY_NIEZMIENNE'.
 
 -- Autozapis rozstrzygnięcia w toku (C1-06); widoczny tylko dla autora
 CREATE TABLE szkic_rozstrzygniecia (
@@ -1403,8 +1569,12 @@ CREATE TABLE praca_w_tle (
     created_at        timestamptz NOT NULL DEFAULT now(),
     updated_at        timestamptz NOT NULL DEFAULT now()
 );
+-- Deduplikacja (C2-04): dla AKTUALIZUJ_PROFIL obejmuje tylko prace OCZEKUJE — zlecenie w trakcie wykonania
+-- poprzedniej tworzy nową pracę, więc żadne wybudzenie nie ginie; dla pozostałych typów OCZEKUJE i W_TOKU.
 CREATE UNIQUE INDEX ux_praca_dedup ON praca_w_tle (typ, klucz_deduplikacji)
-    WHERE status IN ('OCZEKUJE','W_TOKU') AND klucz_deduplikacji IS NOT NULL;
+    WHERE status IN ('OCZEKUJE','W_TOKU') AND klucz_deduplikacji IS NOT NULL AND typ <> 'AKTUALIZUJ_PROFIL';
+CREATE UNIQUE INDEX ux_praca_dedup_oczekujace ON praca_w_tle (typ, klucz_deduplikacji)
+    WHERE status = 'OCZEKUJE' AND klucz_deduplikacji IS NOT NULL AND typ = 'AKTUALIZUJ_PROFIL';
 CREATE INDEX ix_praca_pobieranie ON praca_w_tle (pula, priorytet, dostepna_od) WHERE status = 'OCZEKUJE';
 CREATE INDEX ix_praca_dzierzawa ON praca_w_tle (zablokowana_do) WHERE status = 'W_TOKU';
 
@@ -1412,8 +1582,8 @@ CREATE TABLE klucz_idempotencji (
     uzytkownik_id     uuid NOT NULL REFERENCES uzytkownik(id) ON DELETE CASCADE,
     klucz             uuid NOT NULL,                  -- nagłówek Idempotency-Key
     skrot_zapytania   bytea NOT NULL,                 -- SHA-256(metoda + ścieżka + ciało)
-    kod_odpowiedzi    smallint,
-    cialo_odpowiedzi  jsonb,
+    kod_statusu_http  smallint,                       -- zapisany status HTTP odpowiedzi (3.1 p. 5)
+    cialo_http        jsonb,                          -- zapisane ciało odpowiedzi HTTP
     wygasa_at         timestamptz NOT NULL,           -- created_at + 24 h
     created_at        timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (uzytkownik_id, klucz)
@@ -1425,7 +1595,8 @@ CREATE TABLE powiadomienie (
     typ           text NOT NULL CHECK (typ IN ('OCENA_WYSTAWIONA','OCENA_SKORYGOWANA','NOWE_PRZYPISANIE',
                                               'NOWA_WERYFIKACJA','ZADANIE_DO_PRZEGLADU','WKLADKA_DO_PRZEGLADU',
                                               'TRANSKRYPCJA_GOTOWA','BLAD_ROZPOZNAWANIA','WERYFIKACJA_OPOZNIONA',
-                                              'ALERT_KALIBRACJI','ALERT_WERYFIKACJE')),
+                                              'ALERT_KALIBRACJI','ALERT_WERYFIKACJE','ZGLOSZENIE_BLEDU_ZADANIA',
+                                              'KLASA_DO_PRZEKAZANIA','ALERT_PULA_DIAGNOSTYCZNA','ALERT_RODO')),
     dane          jsonb NOT NULL,
     przeczytane_at timestamptz,
     created_at    timestamptz NOT NULL DEFAULT now()
@@ -1471,7 +1642,7 @@ egzaminacyjne = udział punktów danej Umiejętności w Arkuszach CKE 2023–202
 
 ### 7.5 Schematy pól JSONB
 
-#### 7.5.1 `zadanie_wersja.odpowiedzi_zamkniete`
+#### 7.5.1 `zadanie_wersja.opcje_zamkniete`
 
 ```json
 {
@@ -1540,7 +1711,7 @@ stateDiagram-v2
     ROZPOZNAWANIE --> BLAD_ROZPOZNAWANIA: NIECZYTELNE, ZBYT_WIELE_KROKOW lub wyczerpane ponowienia pracy
     BLAD_ROZPOZNAWANIA --> PRZESLANE: nowe zdjęcia (liczba_przeslan < 3)
     BLAD_ROZPOZNAWANIA --> PRZESLANE: ponowienie rozpoznania tych samych zdjęć (błąd dostawcy, ≤ 5)
-    TRANSKRYPCJA_GOTOWA --> TRANSKRYPCJA_GOTOWA: poprawka Ucznia (nowa wersja)
+    TRANSKRYPCJA_GOTOWA --> TRANSKRYPCJA_GOTOWA: Poprawka Transkrypcji w limitach ADR-036 (nowa wersja)
     TRANSKRYPCJA_GOTOWA --> ZATWIERDZONE: zatwierdzenie Ucznia
     ZATWIERDZONE --> OCENIANIE: worker pobiera OCEN_ROZWIAZANIE
     OCENIANIE --> OCENIONE: Ocena OSTATECZNA (automatyczna)
@@ -1551,35 +1722,44 @@ stateDiagram-v2
     PRZESLANE --> PORZUCONE: 7 dni bez postępu
     TRANSKRYPCJA_GOTOWA --> PORZUCONE: 7 dni bez zatwierdzenia lub POST porzucenie
     BLAD_ROZPOZNAWANIA --> PORZUCONE: 7 dni bez akcji lub POST porzucenie
-    PRZESLANE --> ANULOWANE: usunięcie konta Ucznia
-    ROZPOZNAWANIE --> ANULOWANE: usunięcie konta Ucznia
-    BLAD_ROZPOZNAWANIA --> ANULOWANE: usunięcie konta Ucznia
-    TRANSKRYPCJA_GOTOWA --> ANULOWANE: usunięcie konta Ucznia
-    ZATWIERDZONE --> ANULOWANE: usunięcie konta Ucznia
-    OCENIANIE --> ANULOWANE: usunięcie konta Ucznia
-    OCZEKUJE_NA_WERYFIKACJE --> ANULOWANE: usunięcie konta Ucznia
+    PRZESLANE --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
+    ROZPOZNAWANIE --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
+    BLAD_ROZPOZNAWANIA --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
+    TRANSKRYPCJA_GOTOWA --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
+    ZATWIERDZONE --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
+    OCENIANIE --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
+    OCZEKUJE_NA_WERYFIKACJE --> ANULOWANE: USUN_KONTO po okresie karencji (krok 0)
     OCENIONE --> [*]
     PORZUCONE --> [*]
     ANULOWANE --> [*]
 ```
 
-Rozwiązanie `OCENIONE` z otwartą Weryfikacją (Kontrola losowa, zgłoszenie)
-przy usunięciu konta pozostaje `OCENIONE`, a Weryfikacja przechodzi do
-`ANULOWANA` (`USUNIECIE_KONTA`). Zdjęcia Rozwiązań `PORZUCONE` i `ANULOWANE`
-dostają `usun_po := now()` w tej samej transakcji (16.4).
+**Okres karencji (ADR-040, C2-08):** żądanie usunięcia konta **nie zmienia**
+stanów Rozwiązań ani Weryfikacji. Przez 30 dni konto ma status `USUWANE`, a
+procesy są **wstrzymane**: handlery prac w tle kończą się bez efektu
+(warunek „konto `AKTYWNE`”, rezultat `KONTO_USUWANE`), zapytania Kolejki
+weryfikacji pomijają Weryfikacje Uczniów `USUWANE`, `PORZUC_NIEZATWIERDZONE`
+i `WYGAS_ELEMENTY` ich nie dotykają. Przywrócenie konta wznawia procesy
+(16.4, C-33). Przejścia do `ANULOWANE` wykonuje dopiero `USUN_KONTO` w
+kroku 0 (pierwszy zapis w bazie, 16.4), aby worker, który pobrał pracę przed
+usunięciem, zastał stan terminalny; Rozwiązanie `OCENIONE` z otwartą
+Weryfikacją pozostaje `OCENIONE`, a Weryfikacja przechodzi do `ANULOWANA`
+(`USUNIECIE_KONTA`). Zdjęcia Rozwiązań `PORZUCONE` dostają `usun_po :=
+now()` w tej samej transakcji (16.4); zdjęcia Rozwiązań `ANULOWANE` usuwa
+krok 4 `USUN_KONTO`.
 
 Dozwolone operacje API w stanach (wszystkie inne → `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`):
 
 | Operacja | Dozwolona w stanach | Zasób `If-Match` |
 |---|---|---|
-| `PUT /rozwiazania/{id}/transkrypcja` | `TRANSKRYPCJA_GOTOWA` | Rozwiązanie |
+| `PUT /rozwiazania/{id}/transkrypcja` | `TRANSKRYPCJA_GOTOWA` (limity Poprawek ADR-036, 12.5) | Rozwiązanie |
 | `POST /rozwiazania/{id}/zatwierdzenie` | `TRANSKRYPCJA_GOTOWA` | Rozwiązanie |
 | `POST /rozwiazania/{id}/zdjecia` | `BLAD_ROZPOZNAWANIA` (gdy `liczba_przeslan < 3`) | Rozwiązanie |
 | `POST /rozwiazania/{id}/ponowienie-rozpoznania` | `BLAD_ROZPOZNAWANIA` z kodem `BLAD_DOSTAWCY` lub `PRZEKROCZONY_CZAS` (gdy `liczba_ponowien_rozpoznania < 5`) | Rozwiązanie |
 | `POST /rozwiazania/{id}/porzucenie` | `TRANSKRYPCJA_GOTOWA`, `BLAD_ROZPOZNAWANIA` | Rozwiązanie |
 | `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu` | `OCENIONE`, `OCZEKUJE_NA_WERYFIKACJE` (warunki 11.6) | Rozwiązanie |
 | `POST /rozwiazania/{id}/korekty` | `OCENIONE` (warunki 9.6.3) | Rozwiązanie |
-| `POST /weryfikacje/{id}/rozstrzygniecie` | Rozwiązanie w `OCZEKUJE_NA_WERYFIKACJE` lub `OCENIONE` (Kontrola losowa, zgłoszenie) | Weryfikacja |
+| `POST /weryfikacje/{id}/rozstrzygniecie` | Rozwiązanie w `OCZEKUJE_NA_WERYFIKACJE` lub `OCENIONE` (Kontrola losowa, zgłoszenie) | Weryfikacja (wersja treści, ADR-037) |
 
 ### 8.2 Ocena
 
@@ -1611,14 +1791,15 @@ Wskazówki do czasu Weryfikacji.
 ```mermaid
 stateDiagram-v2
     [*] --> OCZEKUJE: Agent oceniający, T-6 lub zgłoszenie Ucznia
-    OCZEKUJE --> OCZEKUJE: eskalacja do GLOBALNA, PONOW_OCENE, dopisanie zgłoszenia
-    OCZEKUJE --> W_TRAKCIE: POST podjecie (blokada 15 min)
-    W_TRAKCIE --> W_TRAKCIE: POST przedluzenie lub ponowne podjęcie przez właściciela (łącznie ≤ 2 h)
+    OCZEKUJE --> OCZEKUJE: eskalacja do GLOBALNA (bez zmiany version), PONOW_OCENE, dopisanie zgłoszenia (version + 1)
+    OCZEKUJE --> W_TRAKCIE: POST podjecie (blokada 15 min, bez zmiany version)
+    W_TRAKCIE --> W_TRAKCIE: POST przedluzenie lub ponowne podjęcie przez właściciela (łącznie ≤ 2 h, bez zmiany version)
+    W_TRAKCIE --> W_TRAKCIE: dopisanie zgłoszenia błędu odczytu (version + 1)
     W_TRAKCIE --> OCZEKUJE: POST zwolnienie lub ZWOLNIJ_BLOKADY po wygaśnięciu
     W_TRAKCIE --> ZAKONCZONA: POST rozstrzygniecie lub korekta przez właściciela blokady
     OCZEKUJE --> ZAKONCZONA: korekta Nauczyciela z poziomu Rozwiązania (9.6.3)
-    OCZEKUJE --> ANULOWANA: usunięcie konta Ucznia lub PONOW_OCENE z trasą automatyczną
-    W_TRAKCIE --> ANULOWANA: usunięcie konta Ucznia
+    OCZEKUJE --> ANULOWANA: USUN_KONTO po okresie karencji lub PONOW_OCENE z trasą automatyczną
+    W_TRAKCIE --> ANULOWANA: USUN_KONTO po okresie karencji
     ZAKONCZONA --> [*]
     ANULOWANA --> [*]
 ```
@@ -1630,6 +1811,18 @@ dodatkowo każde zapytanie kolejki traktuje `W_TRAKCIE` z
 opóźnienie schedulera nie ukrywa Weryfikacji. Eskalację wykonuje
 `ESKALUJ_WERYFIKACJE` co godzinę (11.4.3).
 
+**Wersja treści (ADR-037, C2-02):** `weryfikacja.version` (ETag `W`) zmienia
+się wyłącznie przy zmianie treści, którą Nauczyciel musi zobaczyć przed
+rozstrzygnięciem: dopisanie powodu lub zgłoszenia błędu odczytu, dołączenie
+Oceny weryfikowanej przez `PONOW_OCENE`, zamknięcie lub anulowanie.
+Podjęcie, ponowne podjęcie, przedłużenie, zwolnienie, `ZWOLNIJ_BLOKADY` i
+eskalacja wersji nie zmieniają (trigger `trg_weryfikacja_wersja`, 7.3).
+Dlatego ETag otrzymany przy podjęciu pozostaje ważny przez cały czas pracy
+Nauczyciela (C-31), a `412 KONFLIKT_WERSJI` przy rozstrzygnięciu zawsze
+oznacza zmianę treści; ciało `412` zawiera aktualny zasób i pole
+`zmiany_tresci` (lista: `POWODY`, `ZGLOSZENIE`, `OCENA_WERYFIKOWANA`,
+`ZAMKNIETA`), które PWA wyróżnia przed ponownym wysłaniem.
+
 ### 8.4 Zadanie
 
 ```mermaid
@@ -1637,11 +1830,11 @@ stateDiagram-v2
     [*] --> WALIDACJA: Agent generujący (Zadanie wygenerowane)
     [*] --> OPUBLIKOWANE: import Arkusza CKE (GLOBALNY) lub POST /zadania po W-1, W-2, W-8 (PRYWATNY)
     WALIDACJA --> ODRZUCONE_W_WALIDACJI: walidacja negatywna
-    WALIDACJA --> OPUBLIKOWANE: walidacja pozytywna, rodzaj inny niż z dowodem (GLOBALNY)
-    WALIDACJA --> DO_PRZEGLADU: walidacja pozytywna, OTWARTE_Z_DOWODEM
-    DO_PRZEGLADU --> OPUBLIKOWANE: Przegląd ZATWIERDZONE lub POPRAWIONE
+    WALIDACJA --> OPUBLIKOWANE: walidacja pozytywna, zlecenie Administratora lub systemu, rodzaj inny niż z dowodem (GLOBALNY)
+    WALIDACJA --> DO_PRZEGLADU: walidacja pozytywna, zlecenie Nauczyciela (każdy rodzaj) lub OTWARTE_Z_DOWODEM
+    DO_PRZEGLADU --> OPUBLIKOWANE: Przegląd ZATWIERDZONE lub POPRAWIONE (zlecający → PRYWATNY, NR/A → GLOBALNY)
     DO_PRZEGLADU --> ODRZUCONE: Przegląd ODRZUCONE
-    OPUBLIKOWANE --> OPUBLIKOWANE: Przegląd POPRAWIONE (nowa wersja) lub ZATWIERDZONE (PRYWATNY → GLOBALNY)
+    OPUBLIKOWANE --> OPUBLIKOWANE: Przegląd POPRAWIONE (nowa wersja), ZATWIERDZONE (PRYWATNY → GLOBALNY), rozpatrzenie Zgłoszenia błędu w Zadaniu
     OPUBLIKOWANE --> WYCOFANE: POST wycofanie
     ODRZUCONE_W_WALIDACJI --> [*]
     ODRZUCONE --> [*]
@@ -1652,10 +1845,36 @@ Uprawnienia do przejść (ADR-028):
 
 | Przejście | Kto |
 |---|---|
-| Przegląd Zadania `GLOBALNY` (`POPRAWIONE`), wycofanie Zadania `GLOBALNY` | recenzent treści, Administrator |
-| Przegląd `DO_PRZEGLADU` | zlecający Nauczyciel (wynik: `PRYWATNY`), recenzent treści lub Administrator (wynik: `GLOBALNY`) |
-| Przegląd i wycofanie Zadania `PRYWATNY` | autor, recenzent treści, Administrator |
+| Przegląd Zadania `GLOBALNY` (`POPRAWIONE`), wycofanie Zadania `GLOBALNY`, rozpatrzenie Zgłoszenia błędu w Zadaniu | recenzent treści, Administrator |
+| Zgłoszenie błędu w Zadaniu `GLOBALNY` (`POST /zadania/{id}/zgloszenia-bledu`) | każdy Nauczyciel (FR-14, ADR-038) |
+| Przegląd `DO_PRZEGLADU` Zadania wygenerowanego na zlecenie Nauczyciela | zlecający Nauczyciel (wynik: `PRYWATNY`, natychmiast do użycia w jego Przypisaniach), recenzent treści lub Administrator (wynik: `GLOBALNY`) |
+| Przegląd `DO_PRZEGLADU` dowodu ze zlecenia Administratora | recenzent treści, Administrator (wynik: `GLOBALNY`) |
+| Przegląd i wycofanie Zadania `PRYWATNY` | autor (dla Zadań wygenerowanych: zlecający), recenzent treści, Administrator |
 | Promocja `PRYWATNY → GLOBALNY` (Przegląd `ZATWIERDZONE`) | recenzent treści, Administrator |
+
+**FR-14 a zasięg (ADR-038, C2-03):** Zadanie wygenerowane na zlecenie
+Nauczyciela (`zlecenie_generowania.zlecajacy_id` z rolą `NAUCZYCIEL`) po
+pozytywnej Walidacji **zawsze** trafia do `DO_PRZEGLADU`, a zlecający
+Nauczyciel może je przejrzeć, poprawić albo odrzucić (FR-14 w pełni).
+Zatwierdzone przez niego jest `PRYWATNY` i może trafić do doboru dla
+wszystkich dopiero po promocji przez recenzenta treści lub Administratora.
+Po 14 dniach bez Przeglądu zlecającego Zadanie jest widoczne także w
+kolejce Przeglądu recenzentów (`GET /zadania?status=DO_PRZEGLADU`).
+Zadanie `GLOBALNY` (z Arkusza CKE, systemowe, promowane) wpływa na
+wszystkich Uczniów, więc Nauczyciel bez flagi `recenzent_tresci` nie
+poprawia go bezpośrednio, tylko składa **Zgłoszenie błędu w Zadaniu**:
+1 otwarte zgłoszenie na (Zadanie, Nauczyciel), limit 10 zgłoszeń na dobę;
+powiadomienie `ZGLOSZENIE_BLEDU_ZADANIA` dla recenzentów i Administratorów;
+SLA rozpatrzenia 5 dni roboczych (metryka `zgloszenia_zadan_po_sla`). Przy
+**3 otwartych zgłoszeniach od różnych Nauczycieli** Zadanie dostaje
+`wstrzymane_w_doborze = true` (nie jest rekomendowane i nie może być dodane
+do nowego Zestawu zadań), aż recenzent rozpatrzy zgłoszenia: `UWZGLEDNIONE`
+wymaga Przeglądu (`POPRAWIONE` albo wycofanie), `ODRZUCONE` wymaga
+komentarza; po rozpatrzeniu wszystkich otwartych zgłoszeń wstrzymanie jest
+zdejmowane (o ile Zadanie nie zostało wycofane). Zgłaszający Nauczyciel
+może do czasu rozpatrzenia usunąć Zadanie ze swoich Zestawów. Zawężenie
+prawa bezpośredniej poprawki Zadań `GLOBALNY` do recenzentów jest
+decyzją D-11 (23.4, G-0).
 
 Wycofanie Zadania nie przerywa trwających Rozwiązań — są one oceniane według
 swojej `zadanie_wersja` (ADR-012); Zadanie znika z doboru rekomendacji i z
@@ -1667,14 +1886,15 @@ pozostają aktywne do `wygasa_at` (Uczeń mógł już pisać na kartce).
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PROPONOWANY: Agent rekomendujący (wygasa_at = +24 h)
+    [*] --> PROPONOWANY: Agent rekomendujący (wygasa_at = +24 h, R-PRZYPISANIE z Zadaniem zamkniętym — najpóźniej termin)
     PROPONOWANY --> ROZPOCZETY: POST rozpoczecie — otwarcie treści (Zadanie +7 dni, Wkładka +24 h)
     PROPONOWANY --> POMINIETY: POST pominiecie
     PROPONOWANY --> WYGASLY: 24 h bez otwarcia lub wycofanie Zadania
-    ROZPOCZETY --> UKONCZONY: Wynik zadania zarejestrowany lub Wkładka przeczytana
-    ROZPOCZETY --> UKONCZONY: Wkładka otwarta ≥ 60 s, a Uczeń prosi o kolejny element lub mija 24 h
+    ROZPOCZETY --> UKONCZONY: Wynik zadania zarejestrowany lub POST przeczytanie (Wkładka)
+    ROZPOCZETY --> UKONCZONY: Wkładka otwarta ≥ 60 s, a Uczeń prosi o kolejny element
     ROZPOCZETY --> POMINIETY: POST pominiecie lub wygasa_at bez Rozwiązania w toku
     ROZPOCZETY --> POMINIETY: Wkładka otwarta < 60 s, a Uczeń prosi o kolejny element
+    ROZPOCZETY --> POMINIETY: Wkładka bez przeczytania i bez kolejnej prośby do wygasa_at (WYGAS_ELEMENTY)
     UKONCZONY --> [*]
     POMINIETY --> [*]
     WYGASLY --> [*]
@@ -1694,6 +1914,19 @@ Reguły:
   wraz z Wynikiem zadania.
 - Odpowiedź na Zadanie zamknięte w elemencie `PROPONOWANY` wykonuje
   rozpoczęcie i ukończenie w jednej transakcji.
+- **Ukończenie Wkładki (C2-16 p. 6)** wymaga dowodu przeczytania: wywołania
+  `POST …/przeczytanie` albo prośby o kolejny element po ≥ 60 s od
+  `rozpoczeto_at`. `WYGAS_ELEMENTY` przenosi Wkładkę `ROZPOCZETY` po
+  `wygasa_at` do `POMINIETY` (brak dowodu), więc 8.5 i 13.3 stosują tę samą
+  regułę, a reguła FR-06 („Wkładka nieprzeczytana w 14 dniach”) może ją
+  zaproponować ponownie.
+- **Element `R-PRZYPISANIE` (C1-21):** ma `przypisanie_id`; każda próba z
+  niego dziedziczy `przypisanie_id` (trigger `trg_kontekst_proby`), więc
+  podlega tym samym regułom co próba z listy Przypisań (unikalność,
+  ujawnianie klucza od terminu, kolejka Nauczyciela Przypisania, postęp
+  Przypisania). Dla Zadania zamkniętego `wygasa_at = least(created_at +
+  24 h, termin)`, a po terminie element przechodzi do `WYGASLY`; dla
+  Zadania otwartego obowiązuje okno Przypisania „termin + 7 dni” (12.5).
 
 ### 8.6 Wynik zadania (wersja 2.1)
 
@@ -1740,15 +1973,21 @@ sequenceDiagram
     PWA->>API: PATCH /uczniowie/ja
     API->>DB: UPDATE uczen, INSERT opanowanie_umiejetnosci (theta=0, DOMYSLNA) dla brakujących Umiejętności poziomu
     PWA->>API: POST /uczniowie/ja/test-diagnostyczny
-    API->>DB: INSERT test (ux_test_jeden), losuj 2 Zadania diagnostyczne na Dział (Poziom trudności 2 i 4)
-    API-->>PWA: 201 lista pozycji (bez kluczy odpowiedzi)
+    API->>DB: dobór z puli (ix_zadanie_diagnostyczne): na Dział 1 Zadanie z poziomem nominalnym 2 i 1 z poziomem 4
+    alt pula pokrywa < 50% planowanych pozycji
+        API-->>PWA: 409 TEST_NIEDOSTEPNY (UczenWyjscie.test_diagnostyczny = NIEDOSTEPNY), alert ALERT_PULA_DIAGNOSTYCZNA
+    else
+        API->>DB: INSERT test (ux_test_jeden, pominiete_dzialy), pozycje
+        API-->>PWA: 201 TestDiagnostycznyWyjscie (bez kluczy odpowiedzi, z pominiete_dzialy)
+    end
     loop każda pozycja
         U->>PWA: zaznacza Odpowiedź
         PWA->>API: POST /testy-diagnostyczne/{id}/pozycje/{pid}/odpowiedz
-        API->>DB: INSERT odpowiedz (porównanie z kluczem, wynik_ujawniony_od = koniec testu)
+        API->>DB: INSERT odpowiedz (porównanie z kluczem, rezultat_ujawniony_od = NULL)
     end
     PWA->>API: POST /testy-diagnostyczne/{id}/zakonczenie
     API->>DB: BEGIN, status ZAKONCZONY, zakonczono_at = now()
+    API->>DB: UPDATE odpowiedz SET rezultat_ujawniony_od = zakonczono_at (pozycje testu)
     API->>DB: INSERT wynik_zadania per Odpowiedź (test_diagnostyczny_id, created_at = zakonczono_at)
     API->>DB: INSERT praca_w_tle AKTUALIZUJ_PROFIL (dedup uczen_id), COMMIT
     API-->>PWA: 202 TestDiagnostycznyWyjscie
@@ -1762,7 +2001,32 @@ sequenceDiagram
 Test diagnostyczny aktualizuje Profil ucznia wyłącznie przez Wyniki zadania i
 pracę `AKTUALIZUJ_PROFIL` (ta sama blokada `FOR UPDATE` co pozostałe
 aktualizacje, C-11). Uczeń może pominąć test (`POST …/pominiecie`): status
-`POMINIETY`, Umiejętności zostają z `theta = 0` i `inicjalizacja = DOMYSLNA`.
+`POMINIETY`, Umiejętności zostają z `theta = 0` i `inicjalizacja = DOMYSLNA`;
+Odpowiedzi udzielone przed pominięciem dostają `rezultat_ujawniony_od =
+now()` i **nie** tworzą Wyników zadania. Możliwość pominięcia testu jest
+rozszerzeniem FR-03 („nowy uczeń rozwiązuje…”) — decyzja D-14 (23.4, G-0);
+opcja domyślna: pominięcie dozwolone.
+
+**Pula i dobór (C2-13):** dobór używa **nominalnego** Poziomu trudności
+(`zadanie.poziom_trudnosci_nominalny`), bo pula jest kuratorowana przez
+Administratora (`PUT /admin/zadania/{id}/diagnostyczne`) i nie może zmieniać
+składu wraz z kalibracją; aktualizacja Profilu po teście używa bieżącego
+`kalibracja_trudnosci.trudnosc_b` (10.1.3). Planowane pozycje: Działy
+poziomu matury Ucznia (12 dla `PODSTAWOWY`, 13 dla `ROZSZERZONY`) × 2
+Poziomy trudności (2 i 4) = 24 / 26 pozycji; z ≥ 3 kandydatów losowany jest
+jeden (różnorodność między Uczniami). Brak kandydata na poziomie 2 (4) →
+kandydat z poziomem nominalnym 1 lub 3 (3 lub 5); brak i takiego → Dział
+trafia do `pominiete_dzialy`, a jego Umiejętności pozostają `DOMYSLNA`
+(propagacja 10.1.3 działa tylko w obrębie przetestowanego Działu). Gdy dobrane pozycje stanowią < 50%
+planowanych, test nie powstaje (`409 TEST_NIEDOSTEPNY`), Uczeń zaczyna z
+Profilem `DOMYSLNA`, a Administratorzy dostają `ALERT_PULA_DIAGNOSTYCZNA`;
+test można wykonać później, gdy pula zostanie uzupełniona. Bramka G-5
+wymaga ≥ 3 Zadań diagnostycznych na każdą trójkę (Dział, poziom matury,
+nominalny Poziom trudności ∈ {2, 4}); `SPRAWDZ_PULE_DIAGNOSTYCZNA` (13.3)
+sprawdza to codziennie, a `PUT …/diagnostyczne` z `diagnostyczne = false`,
+które obniżyłoby pulę poniżej 3, kończy się `409
+PULA_DIAGNOSTYCZNA_ZA_MALA` (chyba że `?wymus=true` — Zadanie z błędem —
+wtedy alert).
 Pominięty test można później wykonać **raz** (indeks `ux_test_jeden`
 obejmuje `W_TOKU` i `ZAKONCZONY`); ponowna próba → `409 TEST_JUZ_WYKONANY`.
 Ponieważ Wyniki zadania z testu są zdarzeniami w historii (z datą
@@ -1828,14 +2092,14 @@ sequenceDiagram
     U->>PWA: zaznacza Odpowiedź
     PWA->>API: POST /zadania/{id}/odpowiedzi (Idempotency-Key, element_sciezki_id albo przypisanie_id)
     API->>DB: BEGIN
-    API->>DB: sprawdź kontekst (12.5), ux_odpowiedz_element / ux_odpowiedz_przypisanie
-    API->>DB: INSERT odpowiedz (wynik_ujawniony_od = now() lub termin Przypisania)
+    API->>DB: sprawdź kontekst (12.5), element R-PRZYPISANIE → przypisanie_id dziedziczone (trg_kontekst_proby)
+    API->>DB: INSERT odpowiedz (ux_odpowiedz_element / ux_odpowiedz_przypisanie, rezultat_ujawniony_od = greatest(now(), termin) przy przypisanie_id, inaczej now())
     API->>DB: INSERT wynik_zadania (waga wg 10.1.3), element_sciezki ROZPOCZETY→UKONCZONY
     API->>DB: INSERT praca_w_tle AKTUALIZUJ_PROFIL (dedup uczen_id), COMMIT
-    alt wynik ujawniony
-        API-->>PWA: 201 czy_poprawna, punkty, poprawna odpowiedź
-    else Przypisanie przed terminem
-        API-->>PWA: 201 zapisano, wynik_ujawniony_od = termin
+    alt rezultat ujawniony
+        API-->>PWA: 201 OdpowiedzWyjscie.rezultat (czy_poprawna, punkty, klucz)
+    else próba w kontekście Przypisania (także z elementu R-PRZYPISANIE) przed terminem
+        API-->>PWA: 201 rezultat = null, rezultat_ujawniony_od = termin
     end
     WRK->>DB: AKTUALIZUJ_PROFIL: SELECT profil_ucznia FOR UPDATE
     WRK->>DB: aktualizacja theta, atomowa aktualizacja kalibracja_trudnosci, powtórki, Seria
@@ -1857,7 +2121,7 @@ sequenceDiagram
     PWA->>PWA: kompresja JPEG q=0.85, dłuższy bok ≤ 2560 px
     PWA->>API: POST /rozwiazania multipart (zadanie_wersja_id, element_sciezki_id lub przypisanie_id, zdjecia[]) + Idempotency-Key
     API->>API: walidacja (typ, rozmiar, limit 30/h, kontekst i wersja 12.5)
-    API->>API: normalizacja: HEIC→JPEG, obrót EXIF, usunięcie EXIF/GPS
+    API->>API: piaskownica Pillow api (ADR-045): nagłówek → limit pikseli, potem HEIC→JPEG, obrót EXIF, usunięcie EXIF/GPS
     API->>S3: PUT zdjęcia (klucz z uuid)
     API->>DB: BEGIN, INSERT rozwiazanie PRZESLANE (przeslano_at), zdjecie_rozwiazania, praca_w_tle ROZPOZNAJ_PISMO (pula R), COMMIT
     API-->>PWA: 202 {id, status: PRZESLANE, nastepne_odpytanie_ms: 1000}
@@ -1866,21 +2130,52 @@ sequenceDiagram
     ROZ->>S3: GET zdjęcia
     ROZ->>LLM: obrazy + prompt (schemat JSON 10.3.2)
     LLM-->>ROZ: kroki, LaTeX, pewność odczytu, niepewne fragmenty, obszary danych osobowych
-    ROZ->>ROZ: post-processing (parsowanie SymPy, oznaczanie niepewnych)
+    ROZ->>ROZ: post-processing (parsowanie SymPy, oznaczanie niepewnych), Filtr danych osobowych (ADR-042)
     WRK->>WRK: maskowanie obszarów danych osobowych (Pillow) → zdjęcia maskowane
     WRK->>S3: PUT zdjecia-maskowane/…
     WRK->>DB: INSERT transkrypcja v1 + kroki, transkrypcja_gotowa_at, status := TRANSKRYPCJA_GOTOWA, powiadomienie
     loop odpytywanie co 1 s w stanach PRZESLANE/ROZPOZNAWANIE
         PWA->>API: GET /rozwiazania/{id}
     end
-    U->>PWA: poprawia błędnie odczytane kroki
+    U->>PWA: poprawia błędnie odczytane kroki (edycja istniejących, wstawienie ≤ 2)
     PWA->>API: PUT /rozwiazania/{id}/transkrypcja (If-Match: version Rozwiązania)
-    API->>DB: INSERT transkrypcja v2 (POPRAWKA_UCZNIA), zmienione kroki z pewnosc_odczytu = NULL
+    API->>API: limity twarde ADR-036 (bez usuwania kroków, zakres poprawek), Filtr danych osobowych
+    alt limit twardy przekroczony
+        API-->>PWA: 422 POPRAWKI_ZBYT_ROZLEGLE (UI: „Wyślij nowe zdjęcia”)
+    else
+        API->>DB: INSERT transkrypcja vN (POPRAWKA_UCZNIA, zakres_poprawek), kroki (nr_kroku_agenta, odleglosc_edycyjna)
+        API->>DB: praca_w_tle SPRAWDZ_POPRAWKI_TRANSKRYPCJI (pula R, klucz rozwiazanie_id:wersja), COMMIT
+        API-->>PWA: 200 RozwiazanieWyjscie
+    end
+    WRK->>LLM: zdjęcia + pary (odczyt agenta, Poprawka) zmienionych kroków (rola ROZPOZNAWANIE_PISMA, prompt sprawdzenie-poprawek)
+    WRK->>DB: UPDATE transkrypcja SET zgodnosc_poprawek (tylko gdy wersja nadal najnowsza)
     U->>PWA: „Zatwierdzam i oceniam”
     PWA->>API: POST /rozwiazania/{id}/zatwierdzenie (If-Match)
     API->>DB: status := ZATWIERDZONE, zatwierdzona_transkrypcja_id, zatwierdzono_at, praca_w_tle OCEN_ROZWIAZANIE (pula O)
     API-->>PWA: 202
 ```
+
+**Poprawki Transkrypcji (ADR-036, C2-01).** Uczeń poprawia **fragmenty
+odczytu**, a nie pisze rozwiązania od nowa:
+
+| Limit | Wartość | Skutek przekroczenia |
+|---|---|---|
+| usunięcie kroku Transkrypcji agenta | zabronione (każdy krok agenta występuje dokładnie raz, w tej samej kolejności) | `422 POPRAWKI_ZBYT_ROZLEGLE` |
+| kroki wstawione (`nr_kroku_agenta = NULL`) | ≤ 2 | `422` |
+| kroki zmienione + wstawione — limit twardy | ≤ max(3, ⌈0,5 × n⌉), `n` = liczba kroków agenta | `422` |
+| odsetek zmienionych znaków (Σ Levenshtein(odczyt, poprawka) / Σ długość odczytu, `tekst` + `latex` po normalizacji LaTeX) — limit twardy | ≤ 0,50 | `422` |
+| kroki zmienione + wstawione — limit miękki | ≤ max(2, ⌈0,25 × n⌉) | powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (T-7) |
+| odsetek zmienionych znaków — limit miękki | ≤ 0,25 | T-7 |
+| Sprawdzenie zgodności poprawek (10.3.3) | każdy zmieniony krok z `p_zgodna_z_poprawka ≥ 0,50`; rezultat dostępny przed zapisem Oceny | T-7 |
+
+Zakres poprawek jest zawsze liczony względem Transkrypcji agenta
+bieżącego przesłania (kolejne wersje `POPRAWKA_UCZNIA` nie „przesuwają”
+punktu odniesienia). Przy `422` UI proponuje „Wyślij nowe zdjęcia” (nowe
+przesłanie, ≤ 3) — jedyną drogę zmiany rozwiązania w większym zakresie.
+`OCEN_ROZWIAZANIE` czeka na rezultat sprawdzenia najwyżej do
+`min(zatwierdzono_at + 6 s, termin_miekki − 9 s)`, równolegle z SymPy i
+Modelem decyzyjnym; brak rezultatu → T-7 (Z-3). Sprawdzenie zwykle kończy
+się przed zatwierdzeniem, bo startuje przy `PUT …/transkrypcja`.
 
 Błędy rozpoznawania (14.1 E-03 … E-06): Uczeń może przesłać nowe zdjęcia
 (łącznie ≤ 3 przesłania), ponowić rozpoznanie tych samych zdjęć po błędzie
@@ -1899,32 +2194,37 @@ sequenceDiagram
     participant WYJ as Agent wyjaśniający
     participant LLM
     WRK->>DB: pobiera OCEN_ROZWIAZANIE, ZATWIERDZONE → OCENIANIE
-    WRK->>WRK: termin_miekki = zatwierdzono_at + max(10 s, 30 s − t_R), termin_twardy = zatwierdzono_at + 120 s
+    WRK->>WRK: termin_miekki = zatwierdzono_at + max(10 s, 28 s − t_R), termin_twardy = zatwierdzono_at + 120 s
     WRK->>DB: wczytaj zadanie_wersja, kryteria, transkrypcję, aktywną konfigurację, Próg pewności i kalibrator
     WRK->>OCE: ocen(KontekstOceny)
     OCE->>SYM: równoważność par kroków + wynik końcowy vs wzorcowy (limit 3 s)
     SYM-->>OCE: ROWNOWAZNE / NIEROWNOWAZNE / NIEROZSTRZYGNIETE
     OCE->>OCE: zbuduj PlanPytan (10.4.3) i stan (10.4.2)
     OCE->>MD: wykonaj_plan(stan, plan, termin_miekki)
-    alt Jev (obwód ZAMKNIETY)
-        MD->>MD: runda 1: Q-OC-00, Q-OC-01, Q-OC-03, Q-OC-05.*, Q-OC-06 (≤ 8 równolegle)
-        MD->>MD: runda 2: Q-OC-02.* wybranego wariantu, Q-OC-04.j dla mody Q-OC-03
+    par oczekiwanie na Sprawdzenie zgodności poprawek (tylko Transkrypcja POPRAWKA_UCZNIA, ≤ 6 s)
+        WRK->>DB: odczyt transkrypcja.zgodnosc_poprawek
+    end
+    alt Jev (obwód ZAMKNIETY, przydział ogranicznika dostępny)
+        MD->>MD: runda 1: Q-OC-00, Q-OC-01, Q-OC-02.* (gdy 1 wariant), Q-OC-03, Q-OC-05.*, Q-OC-06 (wsad: 1 żądanie, pojedynczo: ≤ 2 fale po 16)
+        MD->>MD: runda 2: Q-OC-02.* wybranego wariantu (gdy > 1 wariant), Q-OC-04.j dla mody Q-OC-03 (1 żądanie / 1 fala)
     else model zapasowy
         MD->>MD: jedno wywołanie LLM z całym planem (pytania warunkowe zwinięte, 13.2)
     end
     MD-->>OCE: RezultatPytan (decyzje składowe + konfiguracja_modelu_id)
-    OCE->>OCE: punkty (11.1), pewność surowa i kalibrowana (11.2), trasa (11.3), uzasadnienie (11.7)
+    OCE->>OCE: punkty (11.1), pewność surowa i kalibrowana (11.2), trasa (11.3, w tym T-7), uzasadnienie (11.7)
     OCE-->>WRK: RezultatOceny
     WRK->>DB: BEGIN
     WRK->>DB: UPDATE rozwiazanie WHERE status = OCENIANIE AND version = v (ocena_wystawiona_at, czas_systemowy_ms)
     WRK->>DB: INSERT ocena (wskazowka NULL), ocena_kryterium, decyzja_modelu[] (z uczen_id)
     alt trasa automatyczna
         WRK->>DB: ocena OSTATECZNA, rozwiazanie OCENIONE, wynik_zadania (waga 1.00 lub 0.50 przy powtórzonej próbie), usun_po zdjęć
-        opt reguła T-5
-            WRK->>DB: INSERT weryfikacja KONTROLA_LOSOWA (termin_at = now + 72 h), usun_po zdjęć = created_at + 90 dni
+        alt reguła T-5
+            WRK->>DB: INSERT weryfikacja KONTROLA_LOSOWA (powody_poczatkowe = powody, termin_at = dodaj_dni_robocze(now, 3)), usun_po zdjęć = created_at + 90 dni
+        else bez Kontroli losowej i zgoda_na_trening
+            WRK->>DB: praca_w_tle KOPIUJ_DO_ZBIORU_TRENINGOWEGO
         end
     else trasa Weryfikacja
-        WRK->>DB: ocena WSTEPNA, rozwiazanie OCZEKUJE_NA_WERYFIKACJE, INSERT weryfikacja (11.4)
+        WRK->>DB: ocena WSTEPNA, rozwiazanie OCZEKUJE_NA_WERYFIKACJE, INSERT weryfikacja (11.4, powody_poczatkowe = powody)
         opt brak mozliwy_blad_odczytu
             WRK->>DB: wynik_zadania (waga 0.50 lub 0.25)
         end
@@ -1947,7 +2247,10 @@ Ocena jest widoczna dla Ucznia zaraz po pierwszym `COMMIT` (to jest moment
 (cel p95 ≤ 10 s po Ocenie); do tego czasu `OcenaWyjscie.wskazowka_w_przygotowaniu
 = true`, a PWA odpytuje co 1 s, maks. 15 s (ADR-025). Gdy termin twardy
 minie przed zapisem Oceny, handler wykonuje T-6 (14.2). `t_R` = czas
-rozpoznania (`transkrypcja_gotowa_at − przeslano_at`).
+rozpoznania (`transkrypcja_gotowa_at − przeslano_at`). Termin miękki
+`max(10 s, 28 s − t_R)` jest zgodny z SLO serwerowym 28 s (17.1); wersja
+2.1 liczyła go od 30 s, przez co scenariusze z ponowieniem Jev mieściły się
+w 30 s, ale nie w 28 s (C2-07).
 
 ### 9.6 Weryfikacja przez Nauczyciela (FR-33, FR-34)
 
@@ -1976,34 +2279,47 @@ sequenceDiagram
     end
     loop co 5 min, gdy karta jest aktywna
         PWA->>API: POST /weryfikacje/{id}/przedluzenie
-        API->>DB: zablokowana_do = least(now() + 15 min, podjeta_at + 2 h)
+        API->>DB: zablokowana_do = least(now() + 15 min, podjeta_at + 2 h) — version bez zmian (ADR-037)
+        API-->>PWA: 200 {zablokowana_do, version} + ETag (ten sam, o ile nie zmieniła się treść)
     end
+    N->>PWA: zatwierdza rozstrzygnięcie (po np. 40 min, 8 przedłużeniach)
+    PWA->>API: POST /weryfikacje/{id}/rozstrzygniecie (If-Match = ETag z podjęcia lub ostatniego przedłużenia)
+    API-->>PWA: 200 (412 wyłącznie po zmianie treści, z polem zmiany_tresci)
 ```
 
 ```sql
--- Podjęcie (także idempotentne ponowne podjęcie przez właściciela blokady)
-UPDATE weryfikacja
+-- Podjęcie (także idempotentne ponowne podjęcie przez właściciela ważnej blokady);
+-- version NIE jest zmieniana (trg_weryfikacja_wersja, ADR-037)
+UPDATE weryfikacja w
 SET status = 'W_TRAKCIE',
     podjeta_przez = :ja,
-    podjeta_at = CASE WHEN status = 'W_TRAKCIE' AND podjeta_przez = :ja AND zablokowana_do >= now()
-                      THEN podjeta_at ELSE now() END,
-    zablokowana_do = now() + interval '15 minutes',
-    version = version + 1
-WHERE id = :id
-  AND (status = 'OCZEKUJE'
-       OR (status = 'W_TRAKCIE' AND (zablokowana_do < now() OR podjeta_przez = :ja)))
-  AND (nauczyciel_docelowy_id = :ja
-       OR (typ_kolejki = 'GLOBALNA' AND :ja_jest_weryfikatorem_globalnym)
-       OR klasa_id IN (SELECT id FROM klasa WHERE nauczyciel_id = :ja))
+    podjeta_at = CASE WHEN w.status = 'W_TRAKCIE' AND w.podjeta_przez = :ja AND w.zablokowana_do >= now()
+                      THEN w.podjeta_at ELSE now() END,
+    zablokowana_do = CASE WHEN w.status = 'W_TRAKCIE' AND w.podjeta_przez = :ja AND w.zablokowana_do >= now()
+                          THEN least(now() + interval '15 minutes', w.podjeta_at + interval '2 hours')
+                          ELSE now() + interval '15 minutes' END
+WHERE w.id = :id
+  AND (w.status = 'OCZEKUJE'
+       OR (w.status = 'W_TRAKCIE' AND w.zablokowana_do < now())
+       OR (w.status = 'W_TRAKCIE' AND w.podjeta_przez = :ja
+           AND w.podjeta_at + interval '2 hours' > now()))                 -- limit 2 h także przy ponownym podjęciu (C2-16)
+  AND (w.nauczyciel_docelowy_id = :ja
+       OR (w.typ_kolejki = 'GLOBALNA' AND :ja_jest_weryfikatorem_globalnym)
+       OR w.klasa_id IN (SELECT id FROM klasa WHERE nauczyciel_id = :ja))
+  AND EXISTS (SELECT 1 FROM rozwiazanie r JOIN uzytkownik u ON u.id = r.uczen_id
+              WHERE r.id = w.rozwiazanie_id AND u.status = 'AKTYWNE')     -- okres karencji (ADR-040)
 RETURNING *;
+-- 0 wierszy: inny właściciel ważnej blokady → 409 WERYFIKACJA_ZAJETA.
+-- Ponowne podjęcie przez właściciela nie wydłuża blokady poza podjeta_at + 2 h (least), więc po 2 h blokada
+-- wygasa, `ZWOLNIJ_BLOKADY` zwraca Weryfikację do kolejki w ≤ 1 min, a kolejne podjęcie (przez dowolnego
+-- uprawnionego, także dawnego właściciela) zaczyna nową sesję z nowym podjeta_at; szkic jest zachowany.
 
--- Przedłużenie (tylko właściciel; łączny czas blokady ≤ 2 h od podjeta_at)
+-- Przedłużenie (tylko właściciel; łączny czas blokady ≤ 2 h od podjeta_at); version bez zmian
 UPDATE weryfikacja
-SET zablokowana_do = least(now() + interval '15 minutes', podjeta_at + interval '2 hours'),
-    version = version + 1
+SET zablokowana_do = least(now() + interval '15 minutes', podjeta_at + interval '2 hours')
 WHERE id = :id AND status = 'W_TRAKCIE' AND podjeta_przez = :ja
   AND zablokowana_do >= now() AND podjeta_at + interval '2 hours' > now()
-RETURNING zablokowana_do;
+RETURNING zablokowana_do, version;
 -- 0 wierszy: blokada wygasła/przejęta → 409 WERYFIKACJA_NIE_PODJETA; limit 2 h → 409 BLOKADA_MAKS_CZAS
 ```
 
@@ -2024,13 +2340,13 @@ sequenceDiagram
     N->>PWA: punkty per kryterium, pierwszy błędny krok, typ błędu, Wskazówka (tryb), kroki z błędem odczytu
     PWA->>API: POST /weryfikacje/{id}/rozstrzygniecie (If-Match: version Weryfikacji)
     API->>DB: BEGIN, SELECT rozwiazanie FOR UPDATE, SELECT weryfikacja FOR UPDATE
-    API->>DB: sprawdź W_TRAKCIE, podjeta_przez = ja, zablokowana_do > now(), version, Ocena weryfikowana ≠ ZASTAPIONA
+    API->>DB: sprawdź W_TRAKCIE, podjeta_przez = ja, zablokowana_do > now(), version (treści, ADR-037), Ocena weryfikowana ≠ ZASTAPIONA
     API->>DB: UPDATE poprzednia ocena → ZASTAPIONA (najpierw, ux_ocena_aktualna)
     API->>DB: INSERT ocena (NAUCZYCIEL, OSTATECZNA, wersja = max + 1), ocena_kryterium
     API->>DB: UPDATE weryfikacja ZAKONCZONA, DELETE szkic, rozwiazanie OCENIONE (version + 1), usun_po zdjęć
     API->>DB: UPDATE wynik_zadania stary: uniewazniony_at, powod OCENA_ZASTAPIONA (zawieszony przez zgłoszenie — bez zmian), INSERT nowy (waga 1.00 lub 0.50)
-    API->>DB: INSERT probka_kalibracyjna (reguła 11.5.2, ON CONFLICT DO NOTHING), dziennik_audytu
-    API->>DB: praca_w_tle AKTUALIZUJ_PROFIL, NAPISZ_WSKAZOWKE (tryb AUTOMATYCZNA), powiadomienie Ucznia, COMMIT
+    API->>DB: INSERT probka_kalibracyjna (reguła 11.5.2 na powody_poczatkowe, ON CONFLICT DO NOTHING), dziennik_audytu
+    API->>DB: praca_w_tle AKTUALIZUJ_PROFIL, NAPISZ_WSKAZOWKE (tryb AUTOMATYCZNA), KOPIUJ_DO_ZBIORU_TRENINGOWEGO (gdy brak innej otwartej Weryfikacji i zgoda), powiadomienie Ucznia, COMMIT
     API-->>PWA: 200 OcenaWyjscie
     WRK->>DB: AKTUALIZUJ_PROFIL: odtworzenie theta dla Umiejętności Zadania
 ```
@@ -2095,14 +2411,16 @@ sequenceDiagram
     GEN->>SYM: zgodność wyników, ciągłość Rozwiązania wzorcowego, unikalność dystraktorów
     GEN->>MD: NOUL Q-WA-01 jednoznaczność, NOUL Q-WA-02 zgodność z podstawą, SCORE Q-WA-03 Poziom trudności
     GEN->>DB: podobieństwo pg_trgm do opublikowanych Zadań
-    alt walidacja pozytywna
+    alt walidacja pozytywna, zlecenie Nauczyciela
+        WRK->>DB: INSERT walidacja_zadania POZYTYWNY, status DO_PRZEGLADU, powiadomienie ZADANIE_DO_PRZEGLADU dla zlecającego (FR-14)
+    else walidacja pozytywna, zlecenie Administratora lub systemu
         WRK->>DB: INSERT walidacja_zadania POZYTYWNY, status OPUBLIKOWANE (GLOBALNY) lub DO_PRZEGLADU (dowód)
     else negatywna i liczba_cykli < 3
         WRK->>DB: ODRZUCONE_W_WALIDACJI, nowa praca GENERUJ_ZADANIE z listą niespełnionych sprawdzeń
     else negatywna i liczba_cykli = 3
         WRK->>DB: zlecenie NIEUDANE
     end
-    Note over API,DB: FR-14: uprawniony Nauczyciel lub Administrator → POST /zadania/{id}/przeglad
+    Note over API,DB: FR-14: zlecający Nauczyciel, recenzent treści lub Administrator → POST /zadania/{id}/przeglad, Zadanie GLOBALNY → POST /zadania/{id}/zgloszenia-bledu (8.4)
 ```
 
 `liczba_cykli` liczy pełne cykle „generowanie + Walidacja” (≤ 3);
@@ -2145,10 +2463,16 @@ sequenceDiagram
     participant ZAP as ZapasowyLlmAdapter
     OCE->>CB: wykonaj_plan(stan, plan, termin_miekki)
     alt obwód ZAMKNIETY
-        CB->>JEV: plan w ≤ 2 rundach (timeout 2 s na wywołanie)
+        CB->>CB: OgranicznikSzybkosci.zarezerwuj (przydział procesu, ADR-039)
+        alt brak przydziału przed termin_miekki − 11 s
+            CB->>ZAP: cały plan jednym wywołaniem (OGRANICZENIE_LOKALNE, obwód bez zmian)
+        end
+        CB->>JEV: plan w ≤ 2 rundach (wsad: 1 żądanie na rundę, pojedynczo: ≤ 3 fale, timeout 2 s na żądanie)
         alt sukces
             JEV-->>CB: decyzje składowe
-        else błąd / timeout / 429 / 5xx
+        else 429
+            CB->>CB: przydział × 0,5 na 30 s (bez licznika błędów obwodu), ponowienie lub model zapasowy jak niżej
+        else błąd / timeout / 5xx / niezgodność ze schematem
             CB->>CB: licznik błędów++ (3 kolejne lub ≥ 50% w 20 s przy ≥ 6 wywołaniach → OTWARTY)
             opt do terminu miękkiego zostało ≥ 13 s (ponowienie 2 s + zapasowy 9 s + zapas 2 s)
                 CB->>JEV: 1 ponowienie nieudanych pytań
@@ -2228,11 +2552,11 @@ sequenceDiagram
     U->>PWA: „Zgłoś błąd odczytu” przy Ocenie (wybiera kroki, opis)
     PWA->>API: POST /rozwiazania/{id}/zgloszenie-bledu-odczytu (If-Match)
     API->>DB: BEGIN, SELECT rozwiazanie FOR UPDATE
-    API->>DB: sprawdź warunki 11.6 (okno 14 dni, limity, zdjęcia dostępne, brak wcześniejszego zgłoszenia)
+    API->>DB: sprawdź warunki 11.6 (okno 14 dni od Oceny aktualnej, limity, zdjęcia dostępne, brak wcześniejszego zgłoszenia)
     alt otwarta Weryfikacja istnieje (OCZEKUJE lub W_TRAKCIE)
-        API->>DB: UPDATE weryfikacja: powody += ZGLOSZENIE_BLEDU_ODCZYTU, zgloszenie, priorytet = min(priorytet, 2), version + 1
+        API->>DB: UPDATE weryfikacja: powody += ZGLOSZENIE_BLEDU_ODCZYTU, zgloszenie, priorytet = min(priorytet, 2) (trigger: version + 1, powody_poczatkowe bez zmian)
     else brak otwartej Weryfikacji (OCENIONE)
-        API->>DB: INSERT weryfikacja (ZGLOSZENIE_BLEDU_ODCZYTU, ocena_weryfikowana = aktualna, priorytet 2, kolejka 11.4)
+        API->>DB: INSERT weryfikacja (ZGLOSZENIE_BLEDU_ODCZYTU, powody_poczatkowe = {ZGLOSZENIE_BLEDU_ODCZYTU}, ocena_weryfikowana = aktualna, priorytet 2, Kolejka weryfikacji 11.4)
         API->>DB: usun_po zdjęć = created_at + 90 dni
     end
     API->>DB: UPDATE wynik_zadania aktualnej Oceny: uniewazniony_at = now(), powod_uniewaznienia = ZGLOSZENIE_BLEDU_ODCZYTU
@@ -2248,14 +2572,18 @@ błąd odczytu nie obniża Profilu nawet przez czas trwania Weryfikacji. Ocena
 pozostaje widoczna z komunikatem „Zgłoszenie błędu odczytu jest sprawdzane”
 (11.3). Rozstrzygnięcie zawsze tworzy nową Ocenę Nauczyciela i nowy Wynik
 zadania (9.6.2), więc zawieszony Wynik nigdy nie wraca do Profilu — zastępuje
-go Wynik z Oceny Nauczyciela. Gdy Weryfikacja zostanie anulowana z powodu
-usunięcia konta, zawieszenia nie trzeba cofać. Nadużycie (zgłaszanie każdej
+go Wynik z Oceny Nauczyciela. W okresie karencji usunięcia konta
+Weryfikacja zgłoszenia nie jest anulowana, tylko wstrzymana (ADR-040); po
+przywróceniu konta wraca do kolejki z nowym terminem SLA i jest
+rozstrzygana normalnie, więc zawieszony Wynik zostaje zastąpiony (C-33).
+Gdy konto zostanie faktycznie usunięte, Wynik znika wraz z kontem. Nadużycie (zgłaszanie każdej
 słabej Oceny, by usunąć ją z Profilu) ogranicza limit 1 zgłoszenia na
 Rozwiązanie i 5 na 30 dni, a metryka `zgloszenia_bledu_odczytu_uznane_30d`
 (11.8) per Uczeń < 20% przy ≥ 5 zgłoszeniach oznacza konto w raporcie
 Administratora.
 
-Zgłoszenie do Weryfikacji `W_TRAKCIE` podnosi `weryfikacja.version`, więc
+Zgłoszenie do Weryfikacji `W_TRAKCIE` zmienia treść, więc trigger
+`trg_weryfikacja_wersja` podnosi `weryfikacja.version` (ADR-037), a
 rozstrzygnięcie Nauczyciela wysłane z poprzednim `If-Match` dostaje `412
 KONFLIKT_WERSJI` z aktualnym zasobem (w tym `zgloszenie`). To zamierzone:
 Nauczyciel nie może rozstrzygnąć Weryfikacji bez zobaczenia zgłoszenia.
@@ -2276,9 +2604,9 @@ sequenceDiagram
     WRK->>DB: BEGIN
     WRK->>DB: UPDATE weryfikacja … WHERE id = :id AND status = OCZEKUJE AND version = v
     alt 0 wierszy (Nauczyciel podjął lub rozstrzygnął)
-        WRK->>DB: ROLLBACK, log wynik_przestarzaly
+        WRK->>DB: ROLLBACK, log rezultat_przestarzaly
     else trasa Weryfikacja (powody T-1…T-4)
-        WRK->>DB: INSERT ocena WSTEPNA, weryfikacja: ocena_weryfikowana_id, powody := powody z 11.3, priorytet, ponowna_ocena_at
+        WRK->>DB: INSERT ocena WSTEPNA, weryfikacja: ocena_weryfikowana_id, powody := powody z 11.3, powody_poczatkowe := te same powody, priorytet, ponowna_ocena_at
         WRK->>DB: rozwiazanie (version = r) ocena_wystawiona_at, wynik_zadania (o ile brak mozliwy_blad_odczytu)
         WRK->>DB: NAPISZ_WSKAZOWKE (gdy błąd i brak mozliwy_blad_odczytu), OPINIA_POMOCNICZA (NISKA_PEWNOSC)
         WRK->>DB: AKTUALIZUJ_PROFIL (gdy powstał Wynik zadania), powiadomienie OCENA_WYSTAWIONA, COMMIT
@@ -2286,7 +2614,7 @@ sequenceDiagram
         WRK->>DB: najpierw weryfikacja ANULOWANA (PONOWNA_OCENA_AUTOMATYCZNA), potem INSERT ocena OSTATECZNA
         WRK->>DB: rozwiazanie OCENIONE, wynik_zadania (1.00 lub 0.50), usun_po zdjęć
         WRK->>DB: T-5: INSERT weryfikacja KONTROLA_LOSOWA po anulowaniu (ux_weryfikacja_otwarta, 15.1 p. 3), usun_po = created_at + 90 dni
-        WRK->>DB: NAPISZ_WSKAZOWKE (gdy błąd), AKTUALIZUJ_PROFIL, powiadomienie OCENA_WYSTAWIONA, COMMIT
+        WRK->>DB: NAPISZ_WSKAZOWKE (gdy błąd), AKTUALIZUJ_PROFIL, KOPIUJ_DO_ZBIORU_TRENINGOWEGO (bez Kontroli, za zgodą), powiadomienie OCENA_WYSTAWIONA, COMMIT
     end
 ```
 
@@ -2294,8 +2622,10 @@ sequenceDiagram
 zapisany jako naruszenie NFR-01 (T-6). Ocena powstała w `PONOW_OCENE`
 podlega tym samym regułom 11.1–11.3 co pierwsza ocena. Nauczyciel, który
 podjął Weryfikację (`W_TRAKCIE`), zawsze ma pierwszeństwo: warunek na
-`status = OCZEKUJE AND version = v` gwarantuje, że wynik `PONOW_OCENE` nie
-nadpisze jego pracy (C-23).
+`status = OCZEKUJE AND version = v` gwarantuje, że rezultat `PONOW_OCENE`
+nie nadpisze jego pracy (C-23). Od wersji 2.2 podjęcie nie zmienia
+`version` (ADR-037), więc ochronę daje warunek `status = 'OCZEKUJE'`; warunek
+`version = v` chroni przed równoległą zmianą treści (np. zgłoszeniem).
 
 ---
 
@@ -2326,7 +2656,7 @@ class WejscieRekomendacji(BaseModel):
     opanowanie: list[OpanowanieUmiejetnosci]          # migawka Profilu ucznia
     ostatnie_wyniki: list[WynikZadaniaSkrot]          # 50 ostatnich nieunieważnionych, malejąco po czasie
     ostatnie_elementy: list[ElementSciezkiSkrot]      # 10 ostatnich elementów Ścieżki nauki
-    otwarte_przypisania: list[PrzypisanieSkrot]       # pozycje bez Wyniku zadania i bez próby w toku
+    otwarte_przypisania: list[PrzypisanieSkrot]       # pozycje bez próby w kontekście Przypisania (ux_*_przypisanie), z termin
     seria: SeriaSkrot | None                          # ADR-030
     wkladki_przeczytane: dict[int, datetime]          # umiejetnosc_id → ostatnie przeczytanie
     udzial_zadan_otwartych: Literal[3, 5]             # co który element ZADANIE jest otwarty (11.4.3, 11.5.1)
@@ -2366,10 +2696,15 @@ Kroki wykonywane w kolejności; pierwszy, który zwraca decyzję, kończy algory
 „Poziom trudności” oznacza skalibrowany `kalibracja_trudnosci.poziom_trudnosci`.
 
 1. **Przypisania (FR-32).** Jeśli istnieje otwarte Przypisanie — wybierz
-   pozycję z najbliższym terminem, która nie ma Wyniku zadania ani próby w
-   toku (Rozwiązania nieterminalnego); Zadanie `WYCOFANE` jest pomijane;
-   `R-PRZYPISANIE`, element z `przypisanie_id`. Przypisanie ma pierwszeństwo
-   przed Serią (Seria nie jest kończona, tylko wstrzymana).
+   pozycję z najbliższym terminem, dla której nie istnieje żadna próba w
+   kontekście tego Przypisania (Odpowiedź albo nieporzucone Rozwiązanie z
+   tym `przypisanie_id`, z dowolnej drogi — ten sam warunek co indeksy
+   `ux_odpowiedz_przypisanie`, `ux_rozwiazanie_przypisanie`); Zadanie
+   `WYCOFANE` jest pomijane; pozycja z Zadaniem zamkniętym jest pomijana po
+   terminie (klucz jest już ujawniony Klasie, 12.5); `R-PRZYPISANIE`,
+   element z `przypisanie_id`, z którego każda próba dziedziczy
+   `przypisanie_id` (trigger `trg_kontekst_proby`, ADR-032). Przypisanie ma
+   pierwszeństwo przed Serią (Seria nie jest kończona, tylko wstrzymana).
 2. **Zakres.** Kandydackie Umiejętności = Umiejętności poziomu matury Ucznia
    (`tylko_rozszerzony = false` dla `PODSTAWOWY`), zawężone do
    `wybrany_dzial_id`, jeśli ustawiony (FR-09).
@@ -2418,7 +2753,8 @@ Kroki wykonywane w kolejności; pierwszy, który zwraca decyzję, kończy algory
      `seria.poziom_trudnosci` = Poziom trudności (≤ 3) Zadania o P
      najbliższym 0.675.
 7. **Zadanie (FR-05, FR-07).** Kandydaci: Zadania `OPUBLIKOWANE`,
-   `zasieg = GLOBALNY`, z tą Umiejętnością główną, poziomu matury Ucznia,
+   `zasieg = GLOBALNY`, `wstrzymane_w_doborze = false` (ADR-038; warunek
+   obowiązuje w każdym kroku doboru 3–8), z tą Umiejętnością główną, poziomu matury Ucznia,
    bez Wyniku zadania tego Ucznia w ostatnich 60 dniach i nieobecne w jego
    otwartych Przypisaniach. Rodzaj: co `udzial_zadan_otwartych`-ty element
    typu `ZADANIE` w Ścieżce nauki jest otwarty (`OTWARTE_OBLICZENIOWE` lub —
@@ -2558,7 +2894,7 @@ maturalnego” z wizji.
 
 Uzasadnienie jest generowane deterministycznie z faktów (ADR-011); liczebniki
 odmieniane funkcją `odmien(n, "zadanie", "zadania", "zadań")`. Każda
-wartość `regula` (także wariantu JEV_CHOICE) i stan „brak elementu” mają
+wartość `regula` (także strategii JEV_CHOICE) i stan „brak elementu” mają
 szablon — test jednostkowy sprawdza pokrycie wszystkich wartości `Literal`.
 
 | Reguła | Szablon | Fakty |
@@ -2582,7 +2918,7 @@ Gdy ustawiony jest `wybrany_dzial_id`, uzasadnienie zaczyna się od
 uzasadnienia R-WKLADKA/R-WKLADKA-DIAG/R-NAJSLABSZA dopisywane jest „Po tej
 części zaczniesz serię zadań z rosnącym poziomem trudności.”.
 
-#### 10.1.6 Wariant eksperymentalny JEV_CHOICE
+#### 10.1.6 Strategia eksperymentalna JEV_CHOICE (grupa eksperymentu)
 
 - Przydział: `uczen.procent_grupy_eksperymentu < LEMAT_REKOMENDACJA_PROCENT_JEV`
   (domyślnie 0; plan pilotażu: 20 od 4. tygodnia).
@@ -2631,7 +2967,7 @@ class ZadanieWygenerowaneDto(BaseModel):
     tresc_md: constr(max_length=8000)
     rodzaj: RodzajZadania
     forma_zamknieta: FormaZamknieta | None
-    odpowiedzi_zamkniete: OdpowiedziZamkniete | None  # 7.5.1
+    opcje_zamkniete: OpcjeZamkniete | None  # 7.5.1
     rozwiazanie_wzorcowe: RozwiazanieWzorcowe         # 7.5.2
     wynik_koncowy_wzorcowy: WynikKoncowyWzorcowy | None   # 7.5.3
     kryteria_oceniania: list[KryteriumOcenianiaDto]   # wariant, nr_kryterium, opis, punkty_max, czy_wynik_koncowy, wymaga_nr_kryterium
@@ -2643,7 +2979,12 @@ Szkice Wkładek teoretycznych (`GENERATYWNY_WKLADKI`) powstają przez to samo
 API agenta (`generuj_wkladke(umiejetnosc) -> WkladkaDto`) w dwóch
 przypadkach: na żądanie Administratora (`POST /admin/wkladki-teoretyczne/szkice`)
 albo automatycznie, gdy rekomendacja natrafi na brak opublikowanej Wkładki
-(praca `GENERUJ_SZKIC_WKLADKI`, E-20). Szkic zawsze kończy w statusie
+(praca `GENERUJ_SZKIC_WKLADKI`, E-20, z limitami C2-16: najwyżej 2
+automatyczne szkice tej Umiejętności odrzucone (`WYCOFANA`) w 30 dniach — po
+drugim odrzuceniu automatyczne szkice są wstrzymane na 30 dni, a
+Administratorzy dostają alert „Wkładka wymaga autora”; koszt szkicu
+automatycznego liczy się do dziennego budżetu generowania systemowego
+12.7). Szkic zawsze kończy w statusie
 `DO_PRZEGLADU` i jest publikowany wyłącznie przez recenzenta treści lub
 Administratora (ADR-015, ADR-028); powiadomienie `WKLADKA_DO_PRZEGLADU`
 otrzymują recenzenci treści i Administratorzy.
@@ -2693,24 +3034,71 @@ class RezultatRozpoznawania(BaseModel):
     zgodnosc_z_zadaniem: confloat(ge=0, le=1)
     kroki: conlist(KrokTranskrypcjiDto, max_length=40)
     obszary_danych_osobowych: list[ObszarDanychOsobowych]   # imię, nazwisko, podpis, nazwa szkoły
+
+class PoprawkaDoSprawdzenia(BaseModel):  # ADR-036
+    nr: int                             # nr kroku w Transkrypcji z Poprawkami
+    nr_kroku_agenta: int | None         # None = krok wstawiony
+    odczyt_agenta: KrokTranskrypcjiDto | None
+    poprawka: KrokTranskrypcjiDto
+    obszar: ObszarDanychOsobowych | None  # ramka linii kroku agenta (miejsce do porównania); None dla wstawionego
+
+class WejscieSprawdzeniaPoprawek(BaseModel):
+    rozwiazanie_id: UUID
+    transkrypcja_id: UUID
+    zdjecia: list[ZdjecieRef]
+    poprawki: conlist(PoprawkaDoSprawdzenia, min_length=1, max_length=22)
+    termin: datetime                    # początek próby + 8 s
+
+class RezultatSprawdzeniaPoprawek(BaseModel):   # schemat 10.3.3; sygnał LLM — tylko kierunek bezpieczny (Z-1)
+    kroki: list[ZgodnoscKroku]          # dla każdej poprawki
+    konfiguracja_modelu_id: UUID
+
+class ZgodnoscKroku(BaseModel):
+    nr: int
+    p_zgodna_z_poprawka: confloat(ge=0, le=1)   # zapis na zdjęciu odpowiada Poprawce
+    p_zgodna_z_odczytem: confloat(ge=0, le=1)   # zapis odpowiada odczytowi agenta
+    widoczny_na_zdjeciu: bool                   # dla wstawionego: czy linia istnieje na kartce
 ```
 
 Przetwarzanie:
 
-1. Normalizacja (w `api` przed zapisem): HEIC/PNG/WEBP → JPEG q=0.85,
-   zastosowanie orientacji EXIF, **usunięcie wszystkich metadanych EXIF**
-   (w tym GPS), dłuższy bok ≤ 2560 px, odrzucenie duplikatów (SHA-256) w
-   obrębie Rozwiązania.
+1. Normalizacja (w piaskownicy procesowej `api` przed zapisem, ADR-045):
+   najpierw odczyt samego nagłówka (`Image.open` bez dekodowania) i
+   odrzucenie pliku z szerokością lub wysokością > 12 000 px albo liczbą
+   pikseli > 40 000 000 (`Image.MAX_IMAGE_PIXELS = 40_000_000`, ostrzeżenie
+   `DecompressionBombWarning` traktowane jako błąd) → `422
+   ZDJECIE_NIEPRAWIDLOWE`; potem HEIC/PNG/WEBP → JPEG q=0.85, zastosowanie
+   orientacji EXIF, **usunięcie wszystkich metadanych EXIF** (w tym GPS),
+   dłuższy bok ≤ 2560 px, odrzucenie duplikatów (SHA-256) w obrębie
+   Rozwiązania.
 2. Wywołanie `RozpoznawaniePisma.rozpoznaj()` (rola `ROZPOZNAWANIE_PISMA`) z
    promptem wymagającym: przepisania dosłownego (bez poprawiania błędów
    Ucznia), podziału na kroki (krok = jedna linia przekształcenia albo jedno
    zdanie wniosku), LaTeX dla wzorów, oznaczenia niepewnych fragmentów z
-   alternatywnymi odczytami oraz ramek danych osobowych. Tekst zapisany na
-   kartce jest danymi, nie instrukcją (ochrona przed wstrzykiwaniem
-   poleceń).
+   alternatywnymi odczytami, ramki linii każdego kroku (`obszar`) oraz ramek
+   danych osobowych. Prompt zawiera regułę: „Nie przepisuj do kroków treści
+   z obszarów danych osobowych (imię, nazwisko, podpis, nazwa szkoły,
+   klasa, numer PESEL, adres e-mail); zgłoś je wyłącznie jako ramki.”. Tekst
+   zapisany na kartce jest danymi, nie instrukcją (ochrona przed
+   wstrzykiwaniem poleceń).
 3. Post-processing: krok z wzorem, którego LaTeX nie parsuje się w SymPy,
    dostaje `pewnosc_odczytu := min(pewnosc_odczytu, 0.79)`; kroki z
    `pewnosc_odczytu < 0.80` są oznaczane w UI jako „sprawdź odczyt”.
+3a. **Filtr danych osobowych (ADR-042, C2-10)** — kod Lemat, deterministyczny,
+   wykonywany przed zapisem każdej Transkrypcji (odczytu agenta i Poprawek
+   Ucznia, 9.4) oraz ponownie przed utworzeniem kopii treningowej:
+   (a) krok, którego `obszar` pokrywa się z ramką danych osobowych w ≥ 50%
+   powierzchni obszaru kroku, jest usuwany, a kolejne kroki są
+   przenumerowane (nie liczy się jako Poprawka); (b) w `tekst` i `latex`
+   wszystkie tokeny równe imieniu, nazwisku albo części lokalnej e-maila
+   Ucznia z konta — po normalizacji (małe litery, usunięte diakrytyki,
+   odmiana: porównanie rdzenia o długości ≥ 4 znaków z odległością
+   Levenshteina ≤ 1) — są zastępowane znacznikiem `[DANE_OSOBOWE]`;
+   (c) ciągi 11 cyfr (PESEL) i adresy e-mail (wyrażenie RFC 5322
+   uproszczone) są zastępowane tym samym znacznikiem. Liczba zastąpień
+   trafia do `transkrypcja.dane_osobowe_usuniete` i metryki
+   `dane_osobowe_w_transkrypcji_total{zrodlo}`. Imię i nazwisko z konta są
+   porównywane po stronie Lemat i nigdy nie są wysyłane do modelu (16.3).
 4. Maskowanie (ADR-031): dla każdego zdjęcia worker tworzy kopię z
    zamalowanymi na czarno ramkami `obszary_danych_osobowych` (margines 8 px)
    i zapisuje ją pod `klucz_obiektu_maskowany`. Kopię maskowaną widzą
@@ -2735,7 +3123,36 @@ Przetwarzanie:
 }
 ```
 `ramka` = `[x, y, szerokość, wysokość]` w pikselach znormalizowanego zdjęcia;
-UI rysuje ją na podglądzie zdjęcia obok kroku.
+UI rysuje ją na podglądzie zdjęcia obok kroku. Wyjście modelu zawiera dla
+każdego kroku także `"obszar": {"zdjecie": 1, "ramka": [380, 860, 1420, 96]}`
+— ramkę całej linii kroku (filtr 3a, Sprawdzenie zgodności poprawek).
+
+#### 10.3.3 Sprawdzenie zgodności poprawek (ADR-036)
+
+Praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (pula R, zlecana przez `PUT
+…/transkrypcja`) wywołuje `RozpoznawaniePisma.sprawdz_poprawki()` z
+aktywną konfiguracją roli `ROZPOZNAWANIE_PISMA` i promptem
+`sprawdzenie-poprawek-v1`: model dostaje zdjęcia, a dla każdego zmienionego
+kroku — wycinek `obszar` powiększony o 40 px, odczyt agenta i Poprawkę
+Ucznia (bez Rozwiązania wzorcowego i bez informacji, która wersja jest
+poprawna matematycznie). Rezultat zapisywany w `transkrypcja.zgodnosc_poprawek`:
+
+```json
+{ "konfiguracja_modelu_id": "…", "sprawdzono_at": "2026-11-02T17:41:03Z",
+  "kroki": [ {"nr": 2, "p_zgodna_z_poprawka": 0.93, "p_zgodna_z_odczytem": 0.05, "widoczny_na_zdjeciu": true},
+             {"nr": 5, "p_zgodna_z_poprawka": 0.12, "p_zgodna_z_odczytem": 0.71, "widoczny_na_zdjeciu": true} ],
+  "niezgodne": [5] }
+```
+
+`niezgodne` = kroki z `p_zgodna_z_poprawka < 0.50` albo (dla wstawionych)
+`widoczny_na_zdjeciu = false`. Niepusta lista `niezgodne`, brak rezultatu
+przed zapisem Oceny albo przekroczenie limitu miękkiego (9.4) dodaje powód
+`POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (T-7). Rezultat nigdy nie zmienia punktów
+ani nie dopuszcza trasy automatycznej (Z-1). Skuteczność mierzy G-2:
+na podzbiorze 200 Rozwiązań ZT-1 z syntetycznymi Poprawkami „zastępującymi”
+(krok przepisany na poprawny krok Rozwiązania wzorcowego) wykrywalność
+≥ 95%, a na 200 rzeczywistych Poprawkach błędów odczytu odsetek fałszywych
+alarmów ≤ 10%.
 
 ### 10.4 Agent oceniający
 
@@ -2827,9 +3244,20 @@ wynik_koncowy_ucznia vs wzorcowy: NIEROWNOWAZNE
 Wybraną wartością każdego pytania jest **moda rozkładu**; prawdopodobieństwo
 decyzji to masa rozkładu w modzie. Wyjątek: „wariant wybrany” =
 `argmax` rozkładu Q-OC-00 po opcjach `W1…Wn` (z pominięciem `ZADEN`); gdy
-moda to `ZADEN`, rejestrowana jest niespójność N-5. Liczba wywołań Jev na
+moda to `ZADEN`, rejestrowana jest niespójność N-5. Liczba pytań do Jev na
 Ocenę: ≤ 1 + 1 + 12 + 1 + 1 + 12 + 1 = **29**, w **2 rundach** (runda 1:
 pytania bezwarunkowe; runda 2: pytania, których warunek jest spełniony).
+Skład rund (C2-07):
+
+| Przypadek | Runda 1 (pytania) | Runda 2 (pytania) | Tryb wsadowy (A-01): żądania HTTP | Tryb pojedynczy: fale po ≤ 16 |
+|---|---|---|---|---|
+| 1 wariant, 12 kryteriów, 12 par | Q-OC-01, 12 × Q-OC-02, Q-OC-03, 12 × Q-OC-05, Q-OC-06 = **27** (+ Q-OC-00 nie występuje) | Q-OC-04.j = **1** | 2 | ⌈27/16⌉ + 1 = **3** |
+| > 1 wariant (łącznie ≤ 24 kryteria, wariant ≤ 12), 12 par | Q-OC-00, Q-OC-01, Q-OC-03, 12 × Q-OC-05, Q-OC-06 = **16** | ≤ 12 × Q-OC-02 + Q-OC-04.j = **13** | 2 | 1 + 1 = **2** |
+| Najgorszy przypadek budżetu | — | — | 2 żądania | **3 fale** (p95 fali 1,2 s = max z 16 wywołań) |
+
+W trybie wsadowym Jev dostaje jedno żądanie na rundę (≤ 32 pytania); w
+trybie pojedynczym — jedno żądanie na pytanie, z limitem 16 równoległych
+wywołań na Ocenę.
 
 #### 10.4.4 Plan pytań Oceny (ADR-026)
 
@@ -2977,7 +3405,10 @@ Reguły 11.1–11.3 są wykonywane w podanej kolejności przez czystą funkcję
    (c) krok `pierwszy_bledny_krok` lub `krok_podejrzany_odczyt` ma
    `pewnosc_odczytu < 0.80` i nie był zmieniony przez Ucznia.
    Warunki (a) i (b) to decyzje Modelu decyzyjnego; (c) to sygnał LLM, który
-   wyłącznie dodaje powód Weryfikacji (Z-1). Uzasadnienie τ_odczyt = 0.20:
+   wyłącznie dodaje powód Weryfikacji (Z-1). Kroki zmienione przez Ucznia są
+   wyłączone z (c), bo nie mają `pewnosc_odczytu`; ich zgodność ze zdjęciem
+   sprawdza reguła T-7 (11.3, ADR-036), więc Poprawka nie może ominąć
+   kontroli odczytu. Uzasadnienie τ_odczyt = 0.20:
    Próg pewności ≥ 0.80, więc decyzja z prawdopodobieństwem przeciwnej opcji
    ≥ 0.20 i tak nie mogłaby przejść automatycznie; reguła jedynie nadaje jej
    właściwy powód i priorytet oraz chroni Ucznia przed obniżeniem Oceny.
@@ -3035,7 +3466,8 @@ Reguły są oceniane wszystkie; powody są sumowane.
 | T-2 | `rodzaj = OTWARTE_OBLICZENIOWE` **i** (SymPy: wynik końcowy `ROWNOWAZNE` **lub** p_tak(Q-OC-01) ≥ τ_FR25) **i** (moda Q-OC-03 ≠ `BRAK_BLEDU` **lub** p(Q-OC-03 ≠ `BRAK_BLEDU`) ≥ τ_FR25 **lub** istnieje kryterium nie-końcowe z `pk < punkty_max`) | `POPRAWNY_WYNIK_BLEDNE_KROKI` | FR-25 |
 | T-3 | `mozliwy_blad_odczytu` (11.1 p. 7) | `PODEJRZENIE_BLEDU_ODCZYTU` | FR-28 |
 | T-4 | `rodzaj = OTWARTE_OBLICZENIOWE` **i** (`pewnosc_oceny ≤ prog.wartosc` **lub** `niespojnosci ≠ ∅`) — automatyczna tylko, gdy pewność **przekracza** próg i nie ma niespójności | `NISKA_PEWNOSC` | FR-23, FR-24 |
-| T-5 | brak powodów T-1…T-4 **i** `(fnv1a(rozwiazanie_id) mod 10000) < odsetek_kontroli × 10000` | `KONTROLA_LOSOWA` (Ocena `OSTATECZNA`) | NFR-03, NFR-04 |
+| T-7 | Transkrypcja zatwierdzona ma `zrodlo = POPRAWKA_UCZNIA` **i** (Sprawdzenie zgodności poprawek ma niepustą listę `niezgodne` **lub** brak jego rezultatu przed zapisem Oceny **lub** przekroczony limit miękki zakresu poprawek, 9.4) | `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` | FR-18, FR-23 (ADR-036) |
+| T-5 | brak powodów T-1…T-4 i T-7 **i** `(fnv1a(rozwiazanie_id) mod 10000) < odsetek_kontroli_efektywny × 10000`, gdzie `odsetek_kontroli_efektywny = min(1, 2 × odsetek_kontroli)` dla Transkrypcji z Poprawkami i `odsetek_kontroli` w pozostałych przypadkach | `KONTROLA_LOSOWA` (Ocena `OSTATECZNA`) | NFR-03, NFR-04 |
 | T-6 | termin twardy (`zatwierdzono_at + 120 s`) minął lub wyczerpano ponowienia (14.2) | `BLAD_PRZETWARZANIA` (bez Oceny wstępnej) | Z-3 |
 
 **τ_FR25 = 0.20** (parametr 22). Uzasadnienie: FR-25 wymaga Weryfikacji
@@ -3050,7 +3482,7 @@ gwarantuje, że rozwiązanie z poprawnym wynikiem i błędnym krokiem zawsze
 trafi do Nauczyciela z właściwym powodem i priorytetem 2, także gdy
 kalibrator lub próg zmienią się w przyszłości.
 
-Wynik: jeśli są powody z T-1…T-4 → Ocena `WSTEPNA`, Rozwiązanie
+Rezultat trasowania: jeśli są powody z T-1…T-4 lub T-7 → Ocena `WSTEPNA`, Rozwiązanie
 `OCZEKUJE_NA_WERYFIKACJE`, Uczeń widzi Ocenę wstępną z adnotacją powodu
 (FR-24; przy T-3 z wstrzymanymi punktami, ADR-022). T-6 → Rozwiązanie
 `OCZEKUJE_NA_WERYFIKACJE` bez Oceny. W przeciwnym razie Ocena `OSTATECZNA`,
@@ -3059,7 +3491,7 @@ losowa.
 
 **Priorytet** Weryfikacji = minimum z: `BLAD_PRZETWARZANIA` → 1;
 `POPRAWNY_WYNIK_BLEDNE_KROKI`, `PODEJRZENIE_BLEDU_ODCZYTU`,
-`ZGLOSZENIE_BLEDU_ODCZYTU` → 2; `NISKA_PEWNOSC`, `ZADANIE_Z_DOWODEM`,
+`ZGLOSZENIE_BLEDU_ODCZYTU`, `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` → 2; `NISKA_PEWNOSC`, `ZADANIE_Z_DOWODEM`,
 `KONTROLA_LOSOWA` → 3. Kolejność w Kolejce weryfikacji: `priorytet`, potem
 `termin_at` (najbliższy SLA pierwszy). Kontrola losowa ma ten sam priorytet
 co zwykłe Weryfikacje i własny termin (C1-10).
@@ -3071,6 +3503,7 @@ co zwykłe Weryfikacje i własny termin (C1-10).
 | Ocena wstępna, `widocznosc_dla_ucznia = PELNA` | „Ocena wstępna — rozwiązanie czeka na sprawdzenie przez nauczyciela.” |
 | Ocena wstępna, `WSTRZYMANA_BLAD_ODCZYTU` | „Ocena wstrzymana — możliwy błąd odczytu pisma{ w kroku {n}}. Nauczyciel porówna rozwiązanie ze zdjęciem. Błąd odczytu nie obniży Twojej oceny.” |
 | T-6 (brak Oceny) | „Rozwiązanie zostanie ocenione przez nauczyciela.” |
+| Ocena wstępna z powodem T-7 | „Ocena wstępna — nauczyciel porówna Twoje poprawki odczytu ze zdjęciem kartki.” |
 | otwarte Zgłoszenie błędu odczytu (11.6) | „Zgłoszenie błędu odczytu jest sprawdzane przez nauczyciela. Do tego czasu ta ocena nie wpływa na Twój profil.” |
 | Weryfikacja po terminie SLA (`opozniona`) | dopisek: „Sprawdzenie trwa dłużej niż zwykle — przepraszamy za opóźnienie.” |
 
@@ -3078,13 +3511,17 @@ co zwykłe Weryfikacje i własny termin (C1-10).
 
 #### 11.4.1 Przydział
 
-1. Rozwiązanie z `przypisanie_id` → `typ_kolejki = KLASA`, Nauczyciel
-   Przypisania, `klasa_id` Przypisania.
+1. Rozwiązanie z `przypisanie_id` (także odziedziczonym z elementu
+   `R-PRZYPISANIE`, ADR-032) → `typ_kolejki = KLASA`, Nauczyciel
+   Przypisania, `klasa_id` Przypisania; gdy Przypisanie nie ma już
+   Nauczyciela (`nauczyciel_id = NULL`, ADR-044) — reguła p. 2.
 2. W przeciwnym razie, jeśli Uczeń należy do niezarchiwizowanej Klasy →
    Klasa z najpóźniejszym `dolaczono_at`, jej Nauczyciel.
 3. W przeciwnym razie → `typ_kolejki = GLOBALNA` (Nauczyciele z
    `weryfikator_globalny = true`).
-4. `termin_at = created_at + 72 h` (SLA Weryfikacji, wszystkie powody).
+4. `termin_at = dodaj_dni_robocze(created_at, 3)` — SLA Weryfikacji: 3 dni
+   robocze, wszystkie powody (A-15, ADR-043); np. Weryfikacja z piątku 18:00
+   ma termin w środę 18:00, a nie w poniedziałek.
 
 #### 11.4.2 Dostępność i blokady
 
@@ -3092,11 +3529,16 @@ co zwykłe Weryfikacje i własny termin (C1-10).
   W_TRAKCIE AND zablokowana_do < now()` (reguła odczytu w każdym zapytaniu
   kolejki i w SQL podjęcia, 9.6.1).
 - Blokada: 15 min od podjęcia lub przedłużenia, łącznie ≤ 2 h od
-  `podjeta_at`; PWA przedłuża ją co 5 min, gdy karta jest aktywna.
+  `podjeta_at` (także przy ponownym podjęciu przez właściciela, 9.6.1); PWA
+  przedłuża ją co 5 min, gdy karta jest aktywna. Żadna operacja na blokadzie
+  nie zmienia `version` (ADR-037).
 - `ZWOLNIJ_BLOKADY_WERYFIKACJI` (scheduler co 1 min): `UPDATE weryfikacja
   SET status = 'OCZEKUJE', podjeta_przez = NULL, podjeta_at = NULL,
-  zablokowana_do = NULL, version = version + 1 WHERE status = 'W_TRAKCIE'
-  AND zablokowana_do < now()`.
+  zablokowana_do = NULL WHERE status = 'W_TRAKCIE' AND zablokowana_do <
+  now()` (bez zmiany `version`).
+- Weryfikacje Uczniów z kontem `USUWANE` (okres karencji, ADR-040) nie są
+  dostępne: zapytania kolejki i SQL podjęcia wymagają `uzytkownik.status =
+  'AKTYWNE'` Ucznia.
 - Uprawnieni do podjęcia: Nauczyciel docelowy, Nauczyciel prowadzący Klasę
   z `klasa_id` oraz — dla `GLOBALNA` — każdy `weryfikator_globalny`.
 
@@ -3105,9 +3547,11 @@ co zwykłe Weryfikacje i własny termin (C1-10).
 `ESKALUJ_WERYFIKACJE` (co godzinę) dla Weryfikacji dostępnych (11.4.2):
 
 1. `typ_kolejki = KLASA` i `now() > termin_at` albo Nauczyciel docelowy
-   zablokowany/usunięty → `typ_kolejki = GLOBALNA`, `eskalowano_at = now()`,
-   `termin_at = now() + 72 h` (`nauczyciel_docelowy_id` pozostaje, by
-   Nauczyciel nadal ją widział).
+   zablokowany lub w okresie karencji usunięcia konta (`USUWANE`) →
+   `typ_kolejki = GLOBALNA`, `eskalowano_at = now()`, `termin_at =
+   dodaj_dni_robocze(now(), 3)` (`nauczyciel_docelowy_id` pozostaje, by
+   Nauczyciel nadal ją widział; po usunięciu konta przyjmuje `NULL`).
+   Eskalacja nie zmienia `version` (ADR-037).
 2. `typ_kolejki = GLOBALNA` i `now() > termin_at` (naruszenie SLA) →
    Weryfikacja jest oznaczana jako `opozniona` (wartość wyliczana:
    `now() > termin_at`), Uczeń dostaje jednorazowo powiadomienie
@@ -3130,9 +3574,14 @@ co zwykłe Weryfikacje i własny termin (C1-10).
    (12.5) (FR-28: brak dowodu, że to błąd Ucznia, nie obniża Oceny).
 
 **Kontrola przyjęć kolejki globalnej:** `zaleglosc_globalna_min` = Σ
-szacowanego czasu (A-13) dostępnych Weryfikacji `GLOBALNA`;
+szacowanego czasu (A-13) dostępnych Weryfikacji `GLOBALNA` — **łącznie z
+eskalowanymi z Klas** (`eskalowano_at IS NOT NULL`), co pokazuje osobno
+metryka `zaleglosc_globalna_min{zrodlo="ESKALACJA"|"BEZ_KLASY"}`;
 `pojemnosc_globalna_min` = Σ `deklarowane_minuty_weryfikacji` weryfikatorów
-globalnych aktywnych w ostatnich 7 dniach. Gdy
+globalnych aktywnych w ostatnich 7 dniach, liczona **na dzień roboczy**
+(w sobotę, niedzielę i dzień wolny pojemność = 0, a zaległość nie
+uruchamia kontroli przyjęć, jeśli `zaleglosc_globalna_min ≤ 2 ×
+pojemnosc_globalna_min` następnego dnia roboczego). Gdy
 `zaleglosc_globalna_min > 2 × pojemnosc_globalna_min`, dla Uczniów bez Klasy
 Agent rekomendujący dostaje `dowody_dozwolone = false` i
 `udzial_zadan_otwartych = 5` (co piąty element zadaniowy otwarty), a
@@ -3140,6 +3589,19 @@ uzasadnienie dopisuje „Teraz proponujemy więcej zadań zamkniętych, bo
 sprawdzanie rozwiązań przez nauczycieli trwa dłużej.”. Ograniczenie
 znika, gdy `zaleglosc_globalna_min < pojemnosc_globalna_min`. Uczeń nadal
 może rozwiązać dowolne Zadanie z Przypisania.
+
+**Kontrola przyjęć per Klasa (napływ eskalacji, C2-12):** dla każdego
+Nauczyciela prowadzącego Klasę `odsetek_eskalacji_7d` = Weryfikacje
+`KLASA` z jego kolejki eskalowane w ostatnich 7 dniach / Weryfikacje `KLASA`
+utworzone w jego kolejce w ostatnich 7 dniach (przy ≥ 10 utworzonych). Gdy
+`odsetek_eskalacji_7d ≥ 0,20`, Uczniowie jego Klas dostają w rekomendacjach
+(nie w Przypisaniach) `dowody_dozwolone = false` i `udzial_zadan_otwartych =
+5`, Nauczyciel dostaje powiadomienie `ALERT_WERYFIKACJE` z liczbą
+zaległych Weryfikacji, a Administratorzy — wpis w raporcie obciążenia;
+ograniczenie znika, gdy odsetek spadnie < 0,10. Globalny
+`odsetek_eskalacji_7d > 0,10` (A-15) uruchamia przeliczenie modelu 17.7 i
+`ALERT_WERYFIKACJE`. Dzięki temu napływ eskalacji jest hamowany u źródła, a
+nie tylko obsługiwany w puli globalnej.
 
 #### 11.4.4 Pseudonimizacja w kolejce globalnej (ADR-031)
 
@@ -3181,11 +3643,33 @@ Wnioski i decyzje:
    kalibratora **out-of-fold** z 5-krotnej walidacji krzyżowej, więc
    wszystkie 700 próbek służą jednocześnie do kalibracji i wyboru progu (bez
    utraty 20% na zbiór odłożony).
-3. Zadania z dowodem nie mają progu (`wartosc = 1.000`); 250 próbek służy do
-   pomiaru NFR-02 (półszerokość przedziału ufności 95% ≈ ±3,7 pp przy 90%
+3. Zadania z dowodem nie mają progu (`wartosc = 1.000`); 350 próbek służy do
+   pomiaru NFR-02 (półszerokość przedziału ufności 95% ≈ ±3,1 pp przy 90%
    zgodności) i do kalibratora prezentowanego Nauczycielowi.
 4. Ten sam ZT-1 jest oceniany oboma modelami decyzyjnymi (Jev i zapasowy),
    więc G-1 dla modelu zapasowego nie wymaga dodatkowych danych.
+**Analiza mocy kryterium G-1(a) (C2-06).** Kryterium zgodności mierzy
+dolną granicę Wilsona 95% (LB) Zgodności Oceny na ZT-1, osobno dla każdego
+rodzaju. Tabela podaje LB przy obserwowanej zgodności 90% oraz moc
+(prawdopodobieństwo spełnienia kryterium) przy rzeczywistej zgodności 92%
+(założenie projektowe: model o 2 pp lepszy niż NFR-02):
+
+| Rodzaj | n | Kryterium | LB przy obserwowanych 90% | Minimalna obserwowana zgodność spełniająca kryterium | Moc przy rzeczywistych 92% |
+|---|---|---|---|---|---|
+| `OTWARTE_OBLICZENIOWE` | 700 | zgodność ≥ 90% **i** LB ≥ 87,5% | 87,5% | 90,0% | 97% |
+| `OTWARTE_Z_DOWODEM` (wersja 2.1) | 250 | zgodność ≥ 90% i LB ≥ 87,5% | 85,7% | 91,6% | 65% |
+| `OTWARTE_Z_DOWODEM` (wersja 2.2) | 350 | zgodność ≥ 90% **i** LB ≥ 85,0% | 86,4% | 90,0% (samo LB wymagałoby 88,9%) | 93% |
+| `OTWARTE_Z_DOWODEM` (opcja D-12) | 700 | zgodność ≥ 90% i LB ≥ 87,5% | 87,5% | 90,0% | 97% |
+
+Decyzja: dla dowodów **n ≥ 350 i LB ≥ 85,0%** (A-09). Uzasadnienie
+łagodniejszego LB: Ocena dowodu nigdy nie jest wystawiana automatycznie
+(FR-26, próg 1.000), więc błąd modelu nie trafia do Ucznia jako Ocena
+ostateczna; kryterium punktowe 90% (NFR-02) pozostaje bez zmian. Kryterium
+zostaje przekazane do akceptacji w G-0 (D-12); opcja alternatywna — 700
+dowodów z LB ≥ 87,5% — kosztuje dodatkowo ≈ 350 × 2 oceny × 5 min ≈ 58 h
+pracy Nauczycieli. Obie analizy (próg i zgodność) są liczone dla obu modeli
+decyzyjnych na tym samym ZT-1.
+
 5. **Gdy ZT-1 nie daje progu** (żaden `t` nie spełnia UB ≤ 2% i `n_eff ≥
    189`) dla pary (model, `OTWARTE_OBLICZENIOWE`): para startuje w **trybie
    pełnej weryfikacji** — `prog_pewnosci.wartosc = 1.000`, `zrodlo =
@@ -3200,15 +3684,39 @@ Wnioski i decyzje:
 
 Próbka kalibracyjna powstaje przy każdym rozstrzygnięciu lub korekcie, w
 której Ocena zastępowana jest automatyczna, z deduplikacją
-`ux_probka_ocena_auto` (jedna próbka na Ocenę automatyczną). Źródło:
+`ux_probka_ocena_auto` (jedna próbka na Ocenę automatyczną). **Źródło
+wynika z `weryfikacja.powody_poczatkowe`** — powodów w chwili dołączenia
+Oceny weryfikowanej (INSERT albo `PONOW_OCENE`), a nie z bieżących `powody`
+(C2-05). Powody dopisane później (Zgłoszenie błędu odczytu) nie zmieniają
+źródła, bo dobór Rozwiązania do Weryfikacji odbył się wcześniej i nie
+zależał od zgłoszenia; wykluczenie takich próbek wprowadzałoby nielosowe
+braki (Uczniowie zgłaszają głównie niskie Oceny), które zaniżałyby
+`blad(t)` pod progiem i obniżały próg.
 
-| Powody Weryfikacji (zbiór) | `zrodlo_probki` | W kalibratorze i progu |
+| `powody_poczatkowe` (zbiór) | `zrodlo_probki` | W kalibratorze i progu |
 |---|---|---|
-| dokładnie {`NISKA_PEWNOSC`} | `WERYFIKACJA_NISKA_PEWNOSC` (prawdopodobieństwo doboru 1) | tak |
-| dokładnie {`KONTROLA_LOSOWA`} | `KONTROLA_LOSOWA` (prawdopodobieństwo doboru = odsetek Kontroli w chwili Oceny) | tak |
-| {`KONTROLA_LOSOWA`, `ZGLOSZENIE_BLEDU_ODCZYTU`} | `KONTROLA_LOSOWA` (dobór był losowy, zgłoszenie dopisano później) | tak |
-| każdy inny zbiór (np. {`NISKA_PEWNOSC`, `POPRAWNY_WYNIK_BLEDNE_KROKI`}, {`ZGLOSZENIE_BLEDU_ODCZYTU`}) | `WERYFIKACJA_INNY_POWOD` | nie (te Rozwiązania nie byłyby zaliczone automatycznie albo dobór nie był losowy) |
+| dokładnie {`NISKA_PEWNOSC`} (bez względu na powody dopisane później) | `WERYFIKACJA_NISKA_PEWNOSC` (prawdopodobieństwo doboru 1) | tak |
+| dokładnie {`KONTROLA_LOSOWA`} (bez względu na powody dopisane później) | `KONTROLA_LOSOWA` (prawdopodobieństwo doboru = `odsetek_kontroli_efektywny` w chwili Oceny, 11.3 T-5) | tak |
+| każdy inny zbiór (np. {`NISKA_PEWNOSC`, `POPRAWNY_WYNIK_BLEDNE_KROKI`}, {`POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`}, {`ZGLOSZENIE_BLEDU_ODCZYTU`}) | `WERYFIKACJA_INNY_POWOD` | nie (te Rozwiązania nie byłyby zaliczone automatycznie albo dobór nie był losowy) |
 | korekta bez otwartej Weryfikacji | `KOREKTA_NAUCZYCIELA` | nie (silna selekcja); tylko raporty |
+
+Test jednostkowy `tests/kalibracja/test_zrodlo_probki.py` sprawdza każdy
+wiersz tabeli, w tym przypadki „{`NISKA_PEWNOSC`} + dopisane
+`ZGLOSZENIE_BLEDU_ODCZYTU`” → `WERYFIKACJA_NISKA_PEWNOSC`, „{`KONTROLA_LOSOWA`}
++ dopisane zgłoszenie” → `KONTROLA_LOSOWA` oraz „`PONOW_OCENE` z trasą
+Weryfikacja i powodem {`NISKA_PEWNOSC`}” → `WERYFIKACJA_NISKA_PEWNOSC`.
+
+**Poprawki Transkrypcji a populacja progu (C2-01):** Oceny z powodem T-7
+mają źródło `WERYFIKACJA_INNY_POWOD` i nie wchodzą do populacji progu.
+Oceny automatyczne z Poprawkami, które przeszły T-7, pozostają w populacji
+(są częścią populacji ocen automatycznych, której dotyczy NFR-03) i są
+dobierane do Kontroli losowej z podwójnym odsetkiem (T-5), co zapewnia im
+osobny nadzór: metryka `blad_automatycznych_z_poprawkami_30d` (IPW, tylko
+Kontrola losowa) z **bezpiecznikiem poprawek** — przy `n ≥ 50` i UB > 2%
+flaga `LEMAT_POPRAWKI_ZAWSZE_DO_WERYFIKACJI` ustawia się automatycznie
+(każda Transkrypcja z Poprawkami dostaje T-7) do czasu zdjęcia jej przez
+Administratora po analizie. Odsetek Rozwiązań z Poprawkami mierzy
+`odsetek_rozwiazan_z_poprawkami_30d`.
 
 Wszystkie źródła zasilają metrykę zgodności NFR-02 (17.1), a
 `uwzgledniana_w_progu` (kolumna generowana) wyznacza populację 11.5.3.
@@ -3220,7 +3728,8 @@ Populacja dla pary (konfiguracja, `OTWARTE_OBLICZENIOWE`), okno 90 dni,
 
 ```text
 π_dobor        = probka.prawdopodobienstwo_doboru
-π_wykonanie(k) = (Kontrole losowe zakończone z próbką) / (Kontrole losowe utworzone, bez ANULOWANA z USUNIECIE_KONTA)
+π_wykonanie(k) = (Kontrole losowe zakończone z próbką) / (Kontrole losowe utworzone, bez ANULOWANA z USUNIECIE_KONTA
+                 i bez Kontroli Uczniów z kontem USUWANE w chwili obliczenia — okres karencji, ADR-040)
                  w koszyku k pewności surowej {[0.80,0.90), [0.90,0.95), [0.95,1.00]} w oknie 90 dni
 w              = 1 / π_dobor                                   dla WERYFIKACJA_NISKA_PEWNOSC
 w              = 1 / (π_dobor × π_wykonanie(k))                dla KONTROLA_LOSOWA
@@ -3244,7 +3753,7 @@ jest ograniczona do 0.02 na dobę.
 
 | Warunek (okno 30 dni) | Skutek |
 |---|---|
-| `wykonanie_kontroli_30d` = Kontrole zakończone w ≤ 72 h / utworzone ≥ 0.90 | normalna praca |
+| `wykonanie_kontroli_30d` = Kontrole zakończone do `termin_at` (3 dni robocze) / utworzone (bez kont `USUWANE`) ≥ 0.90 | normalna praca |
 | 0.80 ≤ `wykonanie_kontroli_30d` < 0.90 | alert `ALERT_KALIBRACJI` (ostrzeżenie) |
 | 0.60 ≤ `wykonanie_kontroli_30d` < 0.80 | próg **nie może spadać** (KALIBRUJ nie obniża), alert |
 | `wykonanie_kontroli_30d` < 0.60 lub liczba Kontroli zakończonych < 50 przy ≥ 100 utworzonych | **bezpiecznik braku nadzoru:** `prog := min(0.990, prog + 0.02)` na dobę, `zrodlo = BEZPIECZNIK`, alert |
@@ -3257,8 +3766,8 @@ Administratorów.
 **Odsetek Kontroli losowej:** 0.20, dopóki para (konfiguracja, rodzaj) ma
 mniej niż 400 próbek `KONTROLA_LOSOWA` w oknie 90 dni; potem 0.05.
 
-**Termin Kontroli losowej:** `termin_at = created_at + 72 h` (jak każda
-Weryfikacja); zdjęcia Rozwiązania z otwartą Kontrolą są przechowywane do
+**Termin Kontroli losowej:** `termin_at = dodaj_dni_robocze(created_at, 3)`
+(jak każda Weryfikacja); zdjęcia Rozwiązania z otwartą Kontrolą są przechowywane do
 jej zamknięcia (maks. 90 dni, 16.4), więc Kontrola zawsze odbywa się z
 dostępem do zdjęcia w obrębie twardego limitu.
 
@@ -3273,7 +3782,7 @@ wyłącznie do pokazania Nauczycielowi Pewności oceny.
 | Warunek | Błąd przy niespełnieniu |
 |---|---|
 | Rozwiązanie w `OCENIONE` lub `OCZEKUJE_NA_WERYFIKACJE` i ma aktualną Ocenę | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` |
-| `now() ≤ ocena_wystawiona_at + 14 dni` (okno) | `409 ZGLOSZENIE_NIEDOSTEPNE` |
+| `now() ≤ ocena_aktualna.created_at + 14 dni` (okno liczone od Oceny aktualnej, także Oceny Nauczyciela wystawionej po Kontroli losowej lub korekcie, C2-16) | `409 ZGLOSZENIE_NIEDOSTEPNE` |
 | zdjęcia Rozwiązania nie zostały usunięte | `409 ZGLOSZENIE_NIEDOSTEPNE` |
 | brak wcześniejszego zgłoszenia dla tego Rozwiązania (1 na Rozwiązanie) | `409 ZGLOSZENIE_NIEDOSTEPNE` |
 | ≤ 5 zgłoszeń Ucznia w ostatnich 30 dniach | `429 LIMIT_PRZEKROCZONY` |
@@ -3281,7 +3790,7 @@ wyłącznie do pokazania Nauczycielowi Pewności oceny.
 
 Skutek: dopisanie powodu `ZGLOSZENIE_BLEDU_ODCZYTU` do otwartej Weryfikacji
 albo nowa Weryfikacja wskazująca aktualną Ocenę (9.12), priorytet 2, SLA
-72 h. Ocena pozostaje widoczna do rozstrzygnięcia, ale jej Wynik zadania
+3 dni robocze. Ocena pozostaje widoczna do rozstrzygnięcia, ale jej Wynik zadania
 jest **zawieszony** (`powod_uniewaznienia = 'ZGLOSZENIE_BLEDU_ODCZYTU'`) i
 nie wpływa na Profil ucznia; po rozstrzygnięciu Ocena Nauczyciela zastępuje
 Ocenę zgłoszoną, powstaje nowy Wynik zadania, a Profil ucznia jest
@@ -3326,8 +3835,8 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 | Format | JSON UTF-8; czasy ISO-8601 w UTC (`2026-10-31T18:00:00Z`); identyfikatory UUID v4 |
 | Specyfikacja | OpenAPI 3.1 generowane z FastAPI, publikowane pod `/api/v1/openapi.json`; test kontraktowy w CI porównuje z wersją w repozytorium |
 | Uwierzytelnianie | `Authorization: Bearer <JWT>` (EdDSA, 15 min, claims: `sub`, `rola`, `exp`, `jti`); refresh token w cookie `lemat_rt` (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`) |
-| Optymistyczna blokada | Odpowiedź z zasobem wersjonowanym zawiera `ETag: "<version>"`; operacje modyfikujące wymagają `If-Match` (brak → `428 WYMAGANY_IF_MATCH`, niezgodność → `412 KONFLIKT_WERSJI`). **Zasób `If-Match`** jest podany w kolumnie „ETag” katalogu 12.3: `R` — Rozwiązanie, `W` — Weryfikacja, `Z` — Zadanie, `U` — Uczeń/Użytkownik, `S` — Zestaw zadań, `K` — Klasa, `WT` — Wkładka teoretyczna |
-| Idempotencja | `Idempotency-Key: <uuid>` wymagany dla `POST /rozwiazania`, `POST /zadania/{id}/odpowiedzi`, `POST /zadania/generowanie`, `POST /przypisania`, `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu`; powtórka z tym samym kluczem i ciałem zwraca zapisaną odpowiedź; inne ciało → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`; ważność 24 h; właściciel: `lemat.http` |
+| Optymistyczna blokada | Odpowiedź z zasobem wersjonowanym zawiera `ETag: "<version>"` (dla Weryfikacji — wersja treści, ADR-037); operacje modyfikujące wymagają `If-Match` (brak → `428 WYMAGANY_IF_MATCH`, niezgodność → `412 KONFLIKT_WERSJI`). **Zasób `If-Match`** jest podany w kolumnie „ETag” katalogu 12.3: `R` — Rozwiązanie, `W` — Weryfikacja, `Z` — Zadanie, `U` — Uczeń/Użytkownik, `S` — Zestaw zadań, `K` — Klasa, `WT` — Wkładka teoretyczna |
+| Idempotencja | `Idempotency-Key: <uuid>` wymagany dla `POST /rozwiazania`, `POST /zadania/{id}/odpowiedzi`, `POST /zadania/generowanie`, `POST /przypisania`, `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu`, `POST /zadania/{id}/zgloszenia-bledu`, `DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`; zapisane są `kod_statusu_http` i `cialo_http`; powtórka z tym samym kluczem i ciałem zwraca zapisaną odpowiedź; inne ciało → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`; ważność 24 h; właściciel: `lemat.http` |
 | Stronicowanie | `?limit=1..100` (domyślnie 50) i `?kursor=<nieprzezroczysty>`; odpowiedź `{ "elementy": [...], "nastepny_kursor": string \| null }` |
 | Język | Komunikaty `title`/`detail` po polsku (NFR-10) |
 | Odpytywanie | `GET /rozwiazania/{id}` zwraca `nastepne_odpytanie_ms`: 1000 w stanach `PRZESLANE`, `ROZPOZNAWANIE`, `ZATWIERDZONE`, `OCENIANIE` oraz gdy `ocena.wskazowka_w_przygotowaniu`; `null` w pozostałych (ADR-014) |
@@ -3361,6 +3870,11 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 | `WERYFIKACJA_NIE_PODJETA` | 409 | Rozstrzygnięcie, przedłużenie lub szkic bez aktualnej blokady |
 | `BLOKADA_MAKS_CZAS` | 409 | Przedłużenie przekroczyłoby 2 h od podjęcia |
 | `OCENA_ZMIENIONA` | 409 | Ocena weryfikowana została zastąpiona w międzyczasie (korekta) |
+| `PRZYPISANIE_PO_TERMINIE` | 409 | Odpowiedź w kontekście Przypisania (także z elementu `R-PRZYPISANIE`) po terminie albo Rozwiązanie po terminie + 7 dni (12.5) |
+| `TEST_NIEDOSTEPNY` | 409 | Pula Zadań diagnostycznych pokrywa < 50% planowanych pozycji Testu diagnostycznego (9.1) |
+| `PULA_DIAGNOSTYCZNA_ZA_MALA` | 409 | Zdjęcie flagi `diagnostyczne` obniżyłoby pulę (Dział, poziom matury, Poziom trudności) poniżej 3 (bez `?wymus=true`) |
+| `ZGLOSZENIE_ZADANIA_ISTNIEJE` | 409 | Nauczyciel ma już otwarte Zgłoszenie błędu w tym Zadaniu |
+| `OSTATNI_ADMINISTRATOR` | 409 | Usunięcie lub blokada ostatniego aktywnego konta Administratora |
 | `LIMIT_PRZESLAN` | 409 | Wyczerpane 3 przesłania zdjęć |
 | `LIMIT_PONOWIEN_ROZPOZNANIA` | 409 | Wyczerpane 5 ponowień rozpoznania |
 | `ZGLOSZENIE_NIEDOSTEPNE` | 409 | Zgłoszenie błędu odczytu poza warunkami 11.6 |
@@ -3375,12 +3889,14 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 | `NIEOBSLUGIWANY_FORMAT` | 415 | Inny niż JPEG/PNG/HEIC/WEBP |
 | `KLUCZ_IDEMPOTENCJI_KONFLIKT` | 422 | Ten sam klucz, inne ciało |
 | `ZA_DUZO_ZDJEC` | 422 | Więcej niż 5 zdjęć w jednym przesłaniu lub 0 zdjęć |
+| `ZDJECIE_NIEPRAWIDLOWE` | 422 | Plik nie dekoduje się albo przekracza 12 000 px w jednym wymiarze lub 40 mln pikseli (ADR-045) |
+| `POPRAWKI_ZBYT_ROZLEGLE` | 422 | Poprawka Transkrypcji przekracza limit twardy ADR-036 (usunięcie kroku, > 2 kroki wstawione, zbyt wiele zmienionych kroków lub znaków); `detail` podaje limit i wartość |
 | `WYMAGANY_KOD_ZAPROSZENIA` | 422 | Rejestracja Ucznia bez kodu zaproszenia, gdy `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) |
 | `LIMIT_OBCIAZENIA_WERYFIKATORA` | 422 | Nadanie flagi `weryfikator_globalny` Nauczycielowi, którego prognoza kolejki `KLASA` + deklarowany czas > 180 min/dobę (A-14) |
 | `WYMAGANY_IF_MATCH` | 428 | Brak `If-Match` |
 | `LIMIT_PRZEKROCZONY` | 429 | Limit szybkości (nagłówek `Retry-After`) |
 | `BLAD_WEWNETRZNY` | 500 | Nieobsłużony wyjątek; `instance` zawiera `trace_id`, bez szczegółów technicznych |
-| `USLUGA_NIEDOSTEPNA` | 503 | Baza lub magazyn obiektów niedostępne (`Retry-After: 5`) |
+| `USLUGA_NIEDOSTEPNA` | 503 | Baza, magazyn obiektów lub bucket `rejestr-usuniec` niedostępne, albo piaskownica normalizacji zdjęć zajęta > 5 s (`Retry-After: 5`) |
 
 ### 12.3 Katalog endpointów
 
@@ -3399,14 +3915,15 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | POST | `/auth/reset-hasla/potwierdzenie` | — | — | FR-01 | `{token, nowe_haslo}` → `204` |
 | GET | `/uczniowie/ja` | U | — | FR-02 | → `UczenWyjscie` + ETag |
 | PATCH | `/uczniowie/ja` | U | U | FR-02, FR-09, NFR-09 | `{poziom_matury?, termin_egzaminu?, wybrany_dzial_id?, zgoda_na_trening?}` → `UczenWyjscie` (skutki zmiany poziomu: 9.1; odwołanie zgody `zgoda_na_trening = false` → `kopia_treningowa.usun_po := now()` w tej samej transakcji, 16.4) |
-| DELETE | `/uczniowie/ja` | U | — | NFR-09 | `{haslo}` → `202` (usunięcie po 30 dniach, 16.4) |
+| DELETE | `/uczniowie/ja` | U | — | NFR-09 | `{haslo}` + Idempotency-Key → `202` (Zdarzenie RODO `ZADANIE_USUNIECIA` w rejestrze przed zmianą w bazie; okres karencji 30 dni, ADR-040, ADR-041, 16.4) |
+| DELETE | `/nauczyciele/ja` | N | — | NFR-09 | `{haslo}` + Idempotency-Key → `202` (usunięcie konta Nauczyciela po 30 dniach, ADR-044; Administratorzy dostają `KLASA_DO_PRZEKAZANIA` dla każdej niezarchiwizowanej Klasy) |
 | GET | `/uczniowie/ja/eksport-danych` | U | — | NFR-09 | → `200 application/zip` (dane osobowe, Rozwiązania, Oceny) |
 | DELETE | `/uczniowie/ja/klasy/{klasaId}` | U | — | FR-30 | → `204` (opuszczenie Klasy; otwarte Weryfikacje tej Klasy pozostają u Nauczyciela docelowego) |
-| POST | `/uczniowie/ja/test-diagnostyczny` | U | — | FR-03 | — → `201 TestDiagnostycznyWyjscie` (lub `200` istniejący `W_TOKU`; `409 TEST_JUZ_WYKONANY`) |
+| POST | `/uczniowie/ja/test-diagnostyczny` | U | — | FR-03 | — → `201 TestDiagnostycznyWyjscie` (lub `200` istniejący `W_TOKU`; `409 TEST_JUZ_WYKONANY`; `409 TEST_NIEDOSTEPNY`, 9.1) |
 | GET | `/testy-diagnostyczne/{id}` | U | — | FR-03 | → `TestDiagnostycznyWyjscie` |
 | POST | `/testy-diagnostyczne/{id}/pozycje/{pozycjaId}/odpowiedz` | U | — | FR-03 | `{wybor}` → `201 {czy_zapisano: true}` (bez ujawniania poprawności do końca testu) |
 | POST | `/testy-diagnostyczne/{id}/zakonczenie` | U | — | FR-03 | — → `202 TestDiagnostycznyWyjscie` (Profil aktualizuje `AKTUALIZUJ_PROFIL`, 9.1) |
-| POST | `/testy-diagnostyczne/{id}/pominiecie` | U | — | FR-03 | — → `204` |
+| POST | `/testy-diagnostyczne/{id}/pominiecie` | U | — | FR-03 | — → `204` (D-14; Odpowiedzi bez Wyników zadania) |
 | GET | `/uczniowie/{uczenId}/profil` | U (`ja`), N (Uczeń swojej Klasy) | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` |
 | GET | `/uczniowie/ja/rekomendacje/nastepna` | U | — | FR-05…FR-10 | → `200 RekomendacjaWyjscie` |
 | GET | `/uczniowie/ja/sciezka-nauki` | U | — | FR-05 | `?kursor` → strona `ElementSciezkiWyjscie` |
@@ -3422,8 +3939,8 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | POST | `/rozwiazania` | U | — | FR-16 | multipart `RozwiazanieWejscie` + Idempotency-Key → `202 RozwiazanieWyjscie` |
 | GET | `/rozwiazania` | U | — | FR-24 | `?status&kursor` → strona `RozwiazanieWyjscie` (własne) |
 | GET | `/rozwiazania/{id}` | U (własne), N (Uczeń Klasy / Weryfikacja) | — | FR-17, FR-24 | → `RozwiazanieWyjscie` + ETag |
-| GET | `/rozwiazania/{id}/zdjecia/{zdjecieId}` | U (własne), N | — | FR-16, FR-33 | `?wariant=MASKOWANE` → `302` na podpisany URL (ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) |
-| PUT | `/rozwiazania/{id}/transkrypcja` | U | R | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` |
+| GET | `/rozwiazania/{id}/zdjecia/{zdjecieId}` | U (własne), N | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINAL\|MASKOWANE` (domyślnie `ORYGINAL`) → `302` na podpisany URL (ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) |
+| PUT | `/rozwiazania/{id}/transkrypcja` | U | R | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` (z `transkrypcja.zakres_poprawek`) / `422 POPRAWKI_ZBYT_ROZLEGLE` (ADR-036) |
 | POST | `/rozwiazania/{id}/zatwierdzenie` | U | R | FR-18, FR-19 | — → `202 RozwiazanieWyjscie` |
 | POST | `/rozwiazania/{id}/zdjecia` | U | R | FR-16 | multipart `zdjecia[]` → `202` (nowe przesłanie; `409 LIMIT_PRZESLAN`) |
 | POST | `/rozwiazania/{id}/ponowienie-rozpoznania` | U | R | FR-17 | — → `202` (te same zdjęcia; `409 LIMIT_PONOWIEN_ROZPOZNANIA`) |
@@ -3453,23 +3970,29 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | POST | `/zadania` | N | — | FR-36 | `ZadanieWejscie` → `201` (Zadanie bazowe `BAZOWE_NAUCZYCIEL`, `PRYWATNY`, `OPUBLIKOWANE` po walidacji W-1, W-2, W-8) |
 | POST | `/zadania/generowanie` | N, A | — | FR-11 | `{umiejetnosc_id, poziom_trudnosci, poziom_matury, rodzaj}` + Idempotency-Key → `202 {zlecenie_generowania_id}` |
 | GET | `/zlecenia-generowania/{id}` | N, A | — | FR-11 | → `{status, liczba_cykli, zadanie_id, walidacja}` |
-| POST | `/zadania/{id}/przeglad` | N (uprawniony wg 8.4), NR, A | Z | FR-14 | `PrzegladWejscie` → `200 ZadaniePelneWyjscie` |
-| POST | `/zadania/{id}/wycofanie` | N (autor `PRYWATNY`), NR, A | Z | FR-14 | `{powod}` → `200 ZadaniePelneWyjscie` |
+| POST | `/zadania/{id}/przeglad` | N (zlecający lub autor wg 8.4), NR, A | Z | FR-14 | `PrzegladWejscie` → `200 ZadaniePelneWyjscie` |
+| POST | `/zadania/{id}/wycofanie` | N (autor lub zlecający, `PRYWATNY`), NR, A | Z | FR-14 | `{powod}` → `200 ZadaniePelneWyjscie` |
+| POST | `/zadania/{id}/zgloszenia-bledu` | N | — | FR-14 | `ZgloszenieBleduZadaniaWejscie` + Idempotency-Key → `201 ZgloszenieBleduZadaniaWyjscie` (tylko `GLOBALNY` i `OPUBLIKOWANE`; `409 ZGLOSZENIE_ZADANIA_ISTNIEJE`; 3 otwarte od różnych Nauczycieli → `wstrzymane_w_doborze`, ADR-038) |
+| GET | `/zgloszenia-bledu-zadan` | N (własne), NR, A | — | FR-14 | `?status=OTWARTE&zadanie_id&kursor` → strona `ZgloszenieBleduZadaniaWyjscie` (sortowanie: `created_at`) |
+| POST | `/zgloszenia-bledu-zadan/{id}/rozpatrzenie` | NR, A | Z | FR-14 | `RozpatrzenieZgloszeniaWejscie` → `200 ZgloszenieBleduZadaniaWyjscie` (`UWZGLEDNIONE` wymaga `przeglad` albo `wycofanie` w tej samej transakcji; powiadomienie zgłaszającego) |
 | GET | `/weryfikacje` | N | — | FR-33 | `?dostepnosc=DOSTEPNE\|MOJE_W_TRAKCIE\|WSZYSTKIE&powod&klasa_id&typ_kolejki&kursor` → strona `WeryfikacjaNaLiscie` (sortowanie: priorytet, termin_at) |
 | GET | `/weryfikacje/{id}` | N | — | FR-33 | → `WeryfikacjaSzczegoly` + ETag |
 | POST | `/weryfikacje/{id}/podjecie` | N | — | FR-33 | — → `200 WeryfikacjaSzczegoly` + ETag / `409 WERYFIKACJA_ZAJETA` |
-| POST | `/weryfikacje/{id}/przedluzenie` | N | — | FR-33 | — → `200 {zablokowana_do}` / `409 WERYFIKACJA_NIE_PODJETA` / `409 BLOKADA_MAKS_CZAS` |
+| POST | `/weryfikacje/{id}/przedluzenie` | N | — | FR-33 | — → `200 {zablokowana_do, version}` + ETag (wersja treści, niezmieniona przez przedłużenie, ADR-037) / `409 WERYFIKACJA_NIE_PODJETA` / `409 BLOKADA_MAKS_CZAS` |
 | PUT | `/weryfikacje/{id}/szkic` | N | — | FR-33 | `SzkicRozstrzygnieciaWejscie` → `204` (tylko właściciel blokady) |
 | POST | `/weryfikacje/{id}/zwolnienie` | N | — | FR-33 | — → `204` (szkic zachowany) |
-| POST | `/weryfikacje/{id}/rozstrzygniecie` | N | W | FR-34 | `RozstrzygniecieWejscie` → `200 OcenaWyjscie` |
+| POST | `/weryfikacje/{id}/rozstrzygniecie` | N | W | FR-34 | `RozstrzygniecieWejscie` → `200 OcenaWyjscie` / `412 KONFLIKT_WERSJI` tylko po zmianie treści (ciało: aktualny zasób + `zmiany_tresci`, 8.3) |
 | GET | `/powiadomienia` | * | — | FR-24, FR-33 | `?nieprzeczytane=true` → lista |
 | POST | `/powiadomienia/{id}/przeczytanie` | * | — | — | → `204` |
 | POST | `/admin/arkusze-cke/importy` | A | — | FR-35 | multipart ZIP (`ArkuszImportV1`) → `202 {import_id}` |
 | GET | `/admin/arkusze-cke/importy/{id}` | A | — | FR-35 | → `{status, raport}` |
-| PUT | `/admin/zadania/{id}/diagnostyczne` | A | Z | FR-03 | `{diagnostyczne: boolean}` → `200` (tylko `ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`; pula 9.1) |
+| PUT | `/admin/zadania/{id}/diagnostyczne` | A | Z | FR-03 | `{diagnostyczne: boolean}`, `?wymus=true` → `200` (tylko `ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`; pula 9.1; `409 PULA_DIAGNOSTYCZNA_ZA_MALA`) |
+| GET | `/admin/pula-diagnostyczna` | A | — | FR-03 | → `[{dzial_id, poziom_matury, poziom_trudnosci_nominalny, liczba}]` (G-5) |
 | GET | `/admin/uzytkownicy` | A | — | — | `?rola&status&kursor` → strona |
 | PATCH | `/admin/uzytkownicy/{id}` | A | U | — | `{status?, weryfikator_globalny?, recenzent_tresci?, deklarowane_minuty_weryfikacji?}` → `200` / `422 LIMIT_OBCIAZENIA_WERYFIKATORA` (A-14) |
-| POST | `/admin/uzytkownicy/{id}/przywrocenie` | A | U | NFR-09 | — → `200` (konto `USUWANE`, < 30 dni; `409 KONTO_NIE_DO_PRZYWROCENIA`) |
+| POST | `/admin/uzytkownicy/{id}/przywrocenie` | A | U | NFR-09 | — → `200` (konto `USUWANE`, < 30 dni; Zdarzenie RODO `ANULOWANIE_USUNIECIA`; wznowienie procesów 16.4; `409 KONTO_NIE_DO_PRZYWROCENIA`) |
+| POST | `/admin/uzytkownicy/{id}/usuniecie` | A | U | NFR-09 | `{powod}` → `202` (konto Nauczyciela lub innego Administratora; okres karencji 30 dni, ADR-044; `409 OSTATNI_ADMINISTRATOR`) |
+| POST | `/admin/klasy/{id}/przekazanie` | A | K | FR-30 | `{nauczyciel_id}` → `200 KlasaWyjscie` (nowy Nauczyciel prowadzący: Klasa, jej otwarte Przypisania, Zadania `PRYWATNY` użyte w tych Przypisaniach, Weryfikacje `KLASA` z `nauczyciel_docelowy_id` = poprzedni; ADR-044) |
 | GET | `/admin/konfiguracje-modeli` | A | — | NFR-06 | → lista |
 | POST | `/admin/konfiguracje-modeli` | A | — | NFR-06 | `KonfiguracjaModeluWejscie` → `201` (nieaktywna) |
 | POST | `/admin/konfiguracje-modeli/{id}/aktywacja` | A | — | NFR-06 | — → `200` / `409 BRAK_PROGU_DLA_KONFIGURACJI` / `409 BRAK_RETENCJI_DOSTAWCY` |
@@ -3494,7 +4017,8 @@ type StatusRozwiazania = "PRZESLANE" | "ROZPOZNAWANIE" | "BLAD_ROZPOZNAWANIA" | 
 type StatusOceny = "WSTEPNA" | "OSTATECZNA" | "ZASTAPIONA";
 type TypBledu = "RACHUNKOWY" | "MERYTORYCZNY" | "NIEPELNE_ROZWIAZANIE";
 type PowodWeryfikacji = "NISKA_PEWNOSC" | "POPRAWNY_WYNIK_BLEDNE_KROKI" | "ZADANIE_Z_DOWODEM"
-  | "PODEJRZENIE_BLEDU_ODCZYTU" | "ZGLOSZENIE_BLEDU_ODCZYTU" | "KONTROLA_LOSOWA" | "BLAD_PRZETWARZANIA";
+  | "PODEJRZENIE_BLEDU_ODCZYTU" | "ZGLOSZENIE_BLEDU_ODCZYTU" | "POPRAWKI_NIEZGODNE_ZE_ZDJECIEM"
+  | "KONTROLA_LOSOWA" | "BLAD_PRZETWARZANIA";
 type Regula = "R-PRZYPISANIE" | "R-SERIA" | "R-POWTORKA" | "R-WKLADKA" | "R-WKLADKA-DIAG" | "R-NAJSLABSZA"
   | "R-TRUDNOSC_W_GORE" | "R-UTRWALENIE" | "R-JEV-WKLADKA" | "R-JEV-ZADANIE_LATWE"
   | "R-JEV-ZADANIE_MATURALNE" | "R-JEV-POWTORKA";
@@ -3515,9 +4039,18 @@ interface UczenWyjscie {
   id: Uuid; email: string; imie: string; nazwisko: string;
   poziom_matury: PoziomMatury | null; termin_egzaminu: string | null; // YYYY-MM-DD
   wybrany_dzial_id: number | null; zgoda_na_trening: boolean;
-  test_diagnostyczny: "BRAK" | "W_TOKU" | "ZAKONCZONY" | "POMINIETY";  // dla bieżącego poziomu matury
+  test_diagnostyczny: "BRAK" | "W_TOKU" | "ZAKONCZONY" | "POMINIETY" | "NIEDOSTEPNY";  // dla bieżącego poziomu matury;
+                                                    // NIEDOSTEPNY: brak testu i pula < 50% (9.1)
   klasy: { id: Uuid; nazwa: string; nauczyciel: string }[];
   version: number;
+}
+
+interface TestDiagnostycznyWyjscie {
+  id: Uuid; poziom_matury: PoziomMatury; status: "W_TOKU" | "ZAKONCZONY" | "POMINIETY";
+  pozycje: { id: Uuid; kolejnosc: number; zadanie: ZadanieUczniaWyjscie; odpowiedz_zapisana: boolean;
+             rezultat: { czy_poprawna: boolean; punkty: number; punkty_max: number } | null }[];  // rezultat po zakończeniu
+  pominiete_dzialy: { id: number; nazwa: string }[];          // brak Zadań diagnostycznych (9.1)
+  created_at: Czas; zakonczono_at: Czas | null;
 }
 
 interface ProfilUczniaWyjscie {
@@ -3545,13 +4078,29 @@ interface ZadaniePelneWyjscie extends ZadanieUczniaWyjscie {
   status: "WALIDACJA" | "ODRZUCONE_W_WALIDACJI" | "DO_PRZEGLADU" | "OPUBLIKOWANE" | "ODRZUCONE" | "WYCOFANE";
   nr_wersji: number; version: number;
   poziom_trudnosci_nominalny: number; liczba_wynikow_kalibracji: number;
-  odpowiedzi_zamkniete: object | null; rozwiazanie_wzorcowe: object; wynik_koncowy_wzorcowy: object | null;
+  opcje_zamkniete: object | null; rozwiazanie_wzorcowe: object; wynik_koncowy_wzorcowy: object | null;
   kryteria_oceniania: { wariant: number; nr_kryterium: number; opis: string; punkty_max: number;
                         czy_wynik_koncowy: boolean; wymaga_nr_kryterium: number | null }[];
   arkusz_cke: { kod: string; numer_w_arkuszu: string } | null;
   walidacja: { rezultat: "POZYTYWNY" | "NEGATYWNY"; sprawdzenia: object } | null;
   zweryfikowane_przez_nauczyciela: boolean;
-  uprawnienia: { przeglad: boolean; wycofanie: boolean };   // dla wywołującego (ADR-028)
+  wstrzymane_w_doborze: boolean; liczba_otwartych_zgloszen_bledu: number;   // ADR-038
+  uprawnienia: { przeglad: boolean; wycofanie: boolean; zgloszenie_bledu: boolean };   // dla wywołującego (ADR-028, ADR-038)
+}
+
+interface ZgloszenieBleduZadaniaWejscie { opis: string; zadanie_wersja_id: Uuid }   // opis 10–1000 znaków
+interface ZgloszenieBleduZadaniaWyjscie {
+  id: Uuid; zadanie_id: Uuid; zadanie_wersja_id: Uuid; opis: string;
+  status: "OTWARTE" | "UWZGLEDNIONE" | "ODRZUCONE";
+  nauczyciel: { id: Uuid; imie: string; nazwisko: string } | null;   // null po usunięciu konta
+  komentarz_rozpatrzenia: string | null; created_at: Czas; rozpatrzono_at: Czas | null;
+}
+interface RozpatrzenieZgloszeniaWejscie {
+  decyzja: "UWZGLEDNIONE" | "ODRZUCONE";
+  komentarz: string;                                         // wymagany, ≤ 1000
+  przeglad?: PrzegladWejscie;                                // UWZGLEDNIONE: Przegląd POPRAWIONE …
+  wycofanie?: { powod: string };                             // … albo wycofanie Zadania (dokładnie jedno)
+  rozpatrz_wszystkie_otwarte: boolean;                       // true: ta decyzja zamyka wszystkie otwarte zgłoszenia Zadania
 }
 
 interface ElementSciezkiWyjscie {
@@ -3572,13 +4121,15 @@ interface RekomendacjaWyjscie {
 
 interface OdpowiedzWejscie {
   zadanie_wersja_id: Uuid;
-  element_sciezki_id?: Uuid; przypisanie_id?: Uuid;           // dokładnie jedno wymagane (ADR-032)
+  element_sciezki_id?: Uuid; przypisanie_id?: Uuid;           // klient podaje dokładnie jedno (ADR-032); przypisanie_id
+                                                              // elementu R-PRZYPISANIE serwer dziedziczy (trg_kontekst_proby)
   wybor: { opcja: string } | { stwierdzenia: Record<string, boolean> };
 }
 interface OdpowiedzWyjscie {
-  id: Uuid; wynik_ujawniony_od: Czas;
-  wynik: { czy_poprawna: boolean; punkty: number; punkty_max: number;
-           poprawna: { opcja: string } | { stwierdzenia: Record<string, boolean> } } | null;  // null przed terminem Przypisania
+  id: Uuid; element_sciezki_id: Uuid | null; przypisanie_id: Uuid | null;   // przypisanie_id także odziedziczone
+  rezultat_ujawniony_od: Czas;
+  rezultat: { czy_poprawna: boolean; punkty: number; punkty_max: number;
+              poprawna: { opcja: string } | { stwierdzenia: Record<string, boolean> } } | null;  // null przed terminem Przypisania
 }
 
 // multipart/form-data
@@ -3592,15 +4143,21 @@ interface NiepewnyFragment { zdjecie: number; ramka: [number, number, number, nu
 interface KrokTranskrypcji {
   nr: number; tekst: string; latex: string; pewnosc_odczytu: number | null;   // null: krok zmieniony przez Ucznia
   niepewne_fragmenty: NiepewnyFragment[]; zmieniony_przez_ucznia: boolean;
+  nr_kroku_agenta: number | null;       // ADR-036: krok agenta, który ten krok poprawia; null = wstawiony
   wymaga_sprawdzenia: boolean;          // pewnosc_odczytu < 0.80
 }
+interface ZakresPoprawek { zmienione: number; wstawione: number; kroki_agenta: number; odsetek_znakow: number;
+                           limit_miekki_przekroczony: boolean }
 interface TranskrypcjaWyjscie {
   id: Uuid; wersja: number; zrodlo: "AGENT_ROZPOZNAJACY" | "POPRAWKA_UCZNIA"; przeslanie_nr: number;
   zgodnosc_z_zadaniem: number | null; kroki: KrokTranskrypcji[]; created_at: Czas;
+  zakres_poprawek: ZakresPoprawek | null;                 // tylko POPRAWKA_UCZNIA
+  zgodnosc_poprawek: { niezgodne: number[]; sprawdzono_at: Czas } | null;   // tylko dla N/A (10.3.3)
 }
 interface TranskrypcjaWejscie {
-  // pełna lista kroków po edycji; nr = 1..n bez luk, n ≤ 40
-  kroki: { nr: number; tekst: string; latex: string }[];
+  // ADR-036: lista kroków po Poprawkach; każdy krok agenta bieżącego przesłania występuje dokładnie raz,
+  // w kolejności rosnących nr_kroku_agenta; kroki wstawione mają nr_kroku_agenta = null (≤ 2); n ≤ 40
+  kroki: { nr_kroku_agenta: number | null; tekst: string; latex: string }[];
 }
 
 interface OcenaWyjscie {
@@ -3654,6 +4211,7 @@ interface WeryfikacjaNaLiscie {
   created_at: Czas;
 }
 interface WeryfikacjaSzczegoly extends WeryfikacjaNaLiscie {
+  powody_poczatkowe: PowodWeryfikacji[];                  // 11.5.2
   zadanie_pelne: ZadaniePelneWyjscie;
   zdjecia: { id: Uuid; url: string; wygasa_at: Czas; maskowane: boolean }[];   // puste po usunięciu (NFR-09)
   transkrypcje: TranskrypcjaWyjscie[];                    // wszystkie wersje: agent + poprawki Ucznia
@@ -3663,7 +4221,7 @@ interface WeryfikacjaSzczegoly extends WeryfikacjaNaLiscie {
   opinia_pomocnicza: object | null;                       // 10.4.5
   zgloszenie: { kroki: number[]; opis: string | null; zgloszono_at: Czas } | null;
   szkic: Partial<RozstrzygniecieWejscie> | null;          // tylko szkic wywołującego
-  version: number;
+  version: number;                                        // wersja treści (ADR-037) = ETag
 }
 interface RozstrzygniecieWejscie {
   wariant: number;
@@ -3685,7 +4243,7 @@ interface PrzegladWejscie {
   decyzja: "ZATWIERDZONE" | "POPRAWIONE" | "ODRZUCONE";
   komentarz?: string;
   zasieg_po?: "GLOBALNY" | "PRYWATNY";                   // GLOBALNY tylko NR/A (ADR-028)
-  poprawki?: { tresc_md?: string; odpowiedzi_zamkniete?: object; rozwiazanie_wzorcowe?: object;
+  poprawki?: { tresc_md?: string; opcje_zamkniete?: object; rozwiazanie_wzorcowe?: object;
                wynik_koncowy_wzorcowy?: object | null; kryteria_oceniania?: object[];
                poziom_trudnosci_nominalny?: number };
 }
@@ -3694,6 +4252,16 @@ interface ZestawZadanWyjscie { id: Uuid; nazwa: string; zadania: { kolejnosc: nu
                                liczba_przypisan: number; version: number }
 interface PrzypisanieWyjscie { id: Uuid; zestaw: { id: Uuid; nazwa: string }; klasa: { id: Uuid; nazwa: string } | null;
                                termin: Czas; liczba_uczniow: number; liczba_ukonczonych: number; created_at: Czas }
+interface PostepPrzypisaniaWyjscie {
+  przypisanie_id: Uuid; termin: Czas;
+  uczniowie: { uczen_id: Uuid; imie: string; nazwisko: string;
+               pozycje: { zadanie_id: Uuid; kolejnosc: number;
+                          stan: "BRAK_PROBY" | "W_TOKU" | "OCZEKUJE_NA_WERYFIKACJE" | "OCENIONE";
+                          punkty: number | null; punkty_max: number;
+                          droga: "LISTA_PRZYPISAN" | "SCIEZKA_NAUKI" | null }[] }[];
+  // próba liczy się do postępu, gdy ma przypisanie_id tego Przypisania — z listy Przypisań albo odziedziczone
+  // z elementu R-PRZYPISANIE (droga = SCIEZKA_NAUKI); jedna próba na pozycję (ux_*_przypisanie, C1-21)
+}
 
 interface PostepyKlasyWyjscie {
   klasa_id: Uuid;
@@ -3717,7 +4285,9 @@ interface ObciazenieWeryfikacjiWyjscie {
   prognoza_min_dziennie: { klasa: number; globalna: number };         // 17.7
   zaleglosc_min: { klasa: number; globalna: number };
   pojemnosc_globalna_min: number; weryfikatorzy_globalni_aktywni_7d: number;
-  wymagani_weryfikatorzy_globalni: number;                           // G-7
+  wymagani_weryfikatorzy_globalni: number;                           // G-7, model tygodniowy 17.7
+  odsetek_eskalacji_7d: number; naplyw_eskalacji_min_7d: number;     // A-15, 11.4.3
+  klasy_z_kontrola_przyjec: { klasa_id: Uuid; odsetek_eskalacji_7d: number }[];
   kontrola_przyjec_aktywna: boolean;                                 // 11.4.3
   po_sla: { klasa: number; globalna: number };
 }
@@ -3727,17 +4297,17 @@ interface ObciazenieWeryfikacjiWyjscie {
 
 | Endpoint | Reguła | Błąd |
 |---|---|---|
-| `POST /rozwiazania`, `POST /zadania/{id}/odpowiedzi` | **Dokładnie jeden kontekst**: `element_sciezki_id` (należy do Ucznia, `PROPONOWANY` lub `ROZPOCZETY`, dotyczy tego Zadania) albo `przypisanie_id` (obejmuje Ucznia i Zadanie; Odpowiedź tylko przed terminem — po terminie klucz jest ujawniany Klasie; Rozwiązanie zadania otwartego przed terminem lub do 7 dni po nim, bo klucza się nie ujawnia) | `422 WALIDACJA` / `409 ELEMENT_SCIEZKI_NIEAKTYWNY` / `403` |
+| `POST /rozwiazania`, `POST /zadania/{id}/odpowiedzi` | **Klient podaje dokładnie jeden kontekst**: `element_sciezki_id` (należy do Ucznia, `PROPONOWANY` lub `ROZPOCZETY`, dotyczy tego Zadania) albo `przypisanie_id` (obejmuje Ucznia i Zadanie). **Kontekst efektywny** (C1-21): dla elementu `R-PRZYPISANIE` serwer dziedziczy jego `przypisanie_id` (`trg_kontekst_proby`), więc obie drogi podlegają tym samym regułom Przypisania: Odpowiedź tylko przed terminem (po terminie klucz jest ujawniany Klasie); Rozwiązanie zadania otwartego przed terminem lub do 7 dni po nim (klucza się nie ujawnia); jedna próba na (Uczeń, Przypisanie, Zadanie) | `422 WALIDACJA` / `409 ELEMENT_SCIEZKI_NIEAKTYWNY` / `409 PRZYPISANIE_PO_TERMINIE` / `403` |
 | jw. | **Wersja akceptowana**: dla elementu — `zadanie_wersja_id = element.zadanie_wersja_id` (ustalona przy rozpoczęciu; element `PROPONOWANY` jest rozpoczynany w tej samej transakcji z wersją aktualną); dla Przypisania — wersja aktualna albo wersja z `zastapiona_at > now() − 72 h` | `409 WERSJA_ZADANIA_NIEAKTUALNA` |
 | jw. | Zadanie `OPUBLIKOWANE`; Zadanie `WYCOFANE` przyjmowane tylko dla elementu `ROZPOCZETY` | `409 ZADANIE_NIEDOSTEPNE` |
-| `POST /rozwiazania` | Zadanie otwarte; brak innego nieporzuconego Rozwiązania dla tego elementu (`ux_rozwiazanie_element`) lub tej pozycji Przypisania (`ux_rozwiazanie_przypisanie`) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `id` istniejącego w `detail` |
-| `POST /zadania/{id}/odpowiedzi` | Zadanie `ZAMKNIETE`; dla `PRAWDA_FALSZ` wszystkie stwierdzenia ocenione; brak wcześniejszej Odpowiedzi w tym kontekście (`ux_odpowiedz_element`, `ux_odpowiedz_przypisanie`) | `422` / `409 ELEMENT_SCIEZKI_NIEAKTYWNY` |
+| `POST /rozwiazania` | Zadanie otwarte; brak innego nieporzuconego Rozwiązania dla tego elementu (`ux_rozwiazanie_element`) lub tej pozycji Przypisania — z dowolnej drogi (`ux_rozwiazanie_przypisanie` na kontekście efektywnym) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `id` istniejącego w `detail` |
+| `POST /zadania/{id}/odpowiedzi` | Zadanie `ZAMKNIETE`; dla `PRAWDA_FALSZ` wszystkie stwierdzenia ocenione; brak wcześniejszej Odpowiedzi w tym kontekście efektywnym (`ux_odpowiedz_element`, `ux_odpowiedz_przypisanie`) | `422` / `409 ELEMENT_SCIEZKI_NIEAKTYWNY` |
 | `POST /rozwiazania` | ≤ 30 Rozwiązań/h na Ucznia | `429` |
-| `PUT …/transkrypcja` | 1–40 kroków, `nr` ciągłe, `tekst`/`latex` ≤ 2000 znaków, co najmniej jedno z nich niepuste w każdym kroku | `422` |
+| `PUT …/transkrypcja` | 1–40 kroków, `tekst`/`latex` ≤ 2000 znaków, co najmniej jedno z nich niepuste w każdym kroku; każdy krok agenta bieżącego przesłania dokładnie raz, w kolejności (bez usuwania); ≤ 2 kroki wstawione; limity twarde zakresu poprawek z 9.4 (zmienione + wstawione ≤ max(3, ⌈0,5 n⌉), odsetek znaków ≤ 0,50) | `422 WALIDACJA` / `422 POPRAWKI_ZBYT_ROZLEGLE` |
 | `POST …/zatwierdzenie` | Stan `TRANSKRYPCJA_GOTOWA`, If-Match zgodny | `409` / `412` |
 | `POST …/zgloszenie-bledu-odczytu` | warunki 11.6 | 11.6 |
 | `…/rozstrzygniecie`, `…/korekty` | Blokada należy do wywołującego i nie wygasła (rozstrzygnięcie); kryteria kompletne dla `wariant`; `0 ≤ punkty ≤ punkty_max`; `typ_bledu` null ⇔ `pierwszy_bledny_krok` null i `brakujacy_krok = false`; reguły Wskazówki 9.6.2; Ocena weryfikowana nadal aktualna; niepusty `komentarz`, gdy zdjęcia Rozwiązania są usunięte, a powody zawierają `PODEJRZENIE_BLEDU_ODCZYTU` lub `ZGLOSZENIE_BLEDU_ODCZYTU` (11.4.3 p. 3) | `409 WERYFIKACJA_NIE_PODJETA` / `422` / `409 OCENA_ZMIENIONA` |
-| `POST /przypisania` | Dokładnie jedno z `klasa_id` / `uczen_ids`; Uczniowie należą do niezarchiwizowanych Klas Nauczyciela; `termin > now()`; Zadania Zestawu `OPUBLIKOWANE` i (`GLOBALNY` lub `PRYWATNY` autorstwa Nauczyciela) | `422` / `403` |
+| `POST /przypisania` | Dokładnie jedno z `klasa_id` / `uczen_ids`; Uczniowie należą do niezarchiwizowanych Klas Nauczyciela; `termin > now()`; Zadania Zestawu `OPUBLIKOWANE` i (`GLOBALNY` lub `PRYWATNY` autorstwa Nauczyciela); Zadania dodawane do Zestawu (`POST`/`PUT /zestawy-zadan`) mają `wstrzymane_w_doborze = false` (ADR-038) | `422` / `403` |
 | `POST /zadania/{id}/przeglad` | Uprawnienie wg 8.4; `zasieg_po = GLOBALNY` tylko NR/A | `403 BRAK_UPRAWNIEN` |
 
 ### 12.6 Przykład: odpowiedź `GET /rozwiazania/{id}` z Oceną wstępną wstrzymaną (rola U)
@@ -3792,7 +4362,8 @@ prawdopodobieństwami.
 | `POST /rozwiazania` | 30 / h na Ucznia | `count(*)` po `ix_rozwiazanie_uczen` |
 | `POST …/zgloszenie-bledu-odczytu` | 5 / 30 dni na Ucznia, 1 na Rozwiązanie | `count(*)` po `weryfikacja.zgloszenie` |
 | `POST /zadania/generowanie` | 20 / dobę na Nauczyciela | `count(*)` po `zlecenie_generowania` |
-| Generowanie systemowe (`UZUPELNIJ_PULE`) | 200 zleceń / dobę i 150 PLN / dobę (`Σ koszt_pln` zleceń `systemowe`) | sprawdzenie w handlerze `UZUPELNIJ_PULE` (13.3); po przekroczeniu praca przesunięta na 00:00 UTC następnego dnia, alert przy 80% |
+| `POST /zadania/{id}/zgloszenia-bledu` | 10 / dobę na Nauczyciela | `count(*)` po `zgloszenie_bledu_zadania` |
+| Generowanie systemowe (`UZUPELNIJ_PULE` i `GENERUJ_SZKIC_WKLADKI`) | 200 zleceń i szkiców / dobę i 150 PLN / dobę (`Σ koszt_pln` zleceń `systemowe` + `Σ koszt_generowania_pln` Wkładek `wygenerowana_automatycznie`), w tym ≤ 20 szkiców Wkładek | sprawdzenie w handlerze `UZUPELNIJ_PULE` (13.3); po przekroczeniu praca przesunięta na 00:00 UTC następnego dnia, alert przy 80% |
 | `POST /auth/reset-hasla` | 3 / h na e-mail | `count(*)` po `praca_w_tle` typu `WYSLIJ_EMAIL` |
 | Globalnie na IP | 600 żądań / min | Caddy `rate_limit` |
 
@@ -3805,7 +4376,8 @@ prawdopodobieństwami.
 | Weryfikacje | własne (`WeryfikacjaUcznia` w Rozwiązaniu) | `nauczyciel_docelowy_id = ja`, `klasa_id` jego Klasy, lub (`typ_kolejki = GLOBALNA` i `weryfikator_globalny`) | odczyt |
 | Klasy, Przypisania, Zestawy zadań | swoje członkostwa i Przypisania | własne | odczyt |
 | Zadania (pełne) | brak | `GLOBALNY` + własne `PRYWATNY` + `DO_PRZEGLADU` ze swoich zleceń; NR: wszystkie | wszystkie |
-| Przegląd i wycofanie Zadań | brak | wg 8.4 (ADR-028) | wszystkie |
+| Przegląd i wycofanie Zadań | brak | wg 8.4 (ADR-028, ADR-038) | wszystkie |
+| Zgłoszenia błędu w Zadaniu | brak | tworzenie dla Zadań `GLOBALNY`; odczyt własnych; NR: odczyt i rozpatrzenie wszystkich | wszystkie |
 | Wkładki `DO_PRZEGLADU` | brak | NR | wszystkie |
 | Konfiguracja modeli, progi, importy, obciążenie | brak | brak | pełny |
 
@@ -3830,7 +4402,7 @@ Plik ZIP: `arkusz.json` + katalog `rys/` (PNG/SVG/JPEG). `arkusz.json`:
       "latwosc_cke": 0.54,
       "tresc_md": "Funkcja $f$ określona jest wzorem …",
       "rysunki": [ { "plik": "rys/7.png", "tekst_alternatywny": "Wykres paraboli o wierzchołku (2, 5)" } ],
-      "odpowiedzi_zamkniete": { "forma": "WYBOR_JEDNOKROTNY", "opcje": [ … ], "poprawna": "B" },
+      "opcje_zamkniete": { "forma": "WYBOR_JEDNOKROTNY", "opcje": [ … ], "poprawna": "B" },
       "rozwiazanie_wzorcowe": { "warianty": [ { "wariant": 1, "opis": "…", "kroki": [ … ] } ] },
       "wynik_koncowy_wzorcowy": null,
       "punkty_max": 1,
@@ -3900,6 +4472,13 @@ class ModelGeneratywny(Protocol):
 
 class RozpoznawaniePisma(Protocol):
     async def rozpoznaj(self, wejscie: WejscieRozpoznawania, obrazy: Sequence[bytes]) -> RezultatRozpoznawania: ...
+    async def sprawdz_poprawki(self, wejscie: WejscieSprawdzeniaPoprawek,
+                               obrazy: Sequence[bytes]) -> RezultatSprawdzeniaPoprawek: ...   # ADR-036, 10.3.3
+
+class OgranicznikSzybkosci(Protocol):        # ADR-039; implementacja: lokalny token bucket + przydział z limit_szybkosci_modelu
+    async def zarezerwuj(self, konfiguracja_modelu_id: UUID, liczba_zadan: int, *, najpozniej: datetime) -> bool: ...
+                                             # False = brak przydziału przed `najpozniej` (nie jest błędem modelu)
+    def zmniejsz_przydzial(self, konfiguracja_modelu_id: UUID) -> None: ...   # po 429 dostawcy: × 0.5 na 30 s
 
 class Rownowaznosc(StrEnum):
     ROWNOWAZNE = "ROWNOWAZNE"; NIEROWNOWAZNE = "NIEROWNOWAZNE"; NIEROZSTRZYGNIETE = "NIEROZSTRZYGNIETE"
@@ -3942,9 +4521,29 @@ w kodzie domenowym (NFR-06). Agent oceniający zna wyłącznie `PlanPytan` i
 
 **`JevAdapter`** (zgodnie z A-01) wykonuje plan w ≤ 2 rundach: runda 1 —
 pytania bezwarunkowe; runda 2 — pytania warunkowe, których warunek zachodzi
-dla rozkładów z rundy 1. W rundzie maks. 8 wywołań równolegle na Ocenę,
-globalny semafor 64 na proces. Timeout wywołania: `min(2 s, termin −
-teraz)`.
+dla rozkładów z rundy 1. Dwa tryby (parametr konfiguracji
+`parametry.tryb_jev ∈ {WSADOWY, POJEDYNCZY}`, ustalany w G-4):
+
+- **`WSADOWY`** (domyślny, wymaganie A-01): jedno żądanie HTTP na rundę z
+  `questions[]` (≤ 32 pytania), czyli ≤ 2 żądania na Ocenę;
+- **`POJEDYNCZY`**: jedno żądanie na pytanie, ≤ 16 równolegle na Ocenę,
+  plan w ≤ 3 falach (10.4.3).
+
+Timeout żądania: `min(2 s, termin − teraz)`. Każde żądanie przechodzi przez
+**globalny ogranicznik szybkości** (ADR-039, C2-07): proces rejestruje się
+w `limit_szybkosci_modelu` (odnowienie co 10 s) i dostaje przydział `r =
+0,8 × limit_klucza / N`, gdzie `N` = liczba procesów z `odnowiono_at > now()
+− 30 s` (2 workery + 2 `api` → 10 żądań/s na proces przy limicie 50/s);
+lokalny token bucket ma pojemność `r` i uzupełnia się z szybkością `r`.
+Gdy przydziału brakuje, adapter czeka najwyżej do `termin_miekki − 11 s`
+(czas na model zapasowy 9 s + zapas 2 s); po tym czasie rezerwacja zwraca
+`False`, a Ocena jest wykonywana modelem zapasowym z przyczyną
+`OGRANICZENIE_LOKALNE` (metryka `jev_ograniczenie_lokalne_total`) — **bez**
+zliczania do circuit breakera. Odpowiedź `429` od Jev zmniejsza przydział
+procesu o połowę na 30 s (`zmniejsz_przydzial`), jest ponawiana jak inne
+błędy przejściowe, ale również **nie** jest liczona do otwarcia obwodu;
+obwód otwierają wyłącznie timeouty, `5xx`, błędy połączenia i odpowiedzi
+niezgodne ze schematem.
 
 ```http
 POST {JEV_URL}/v1/decisions
@@ -3965,9 +4564,8 @@ Content-Type: application/json
   "model": "jev-…" }
 ```
 
-Jeśli API Jev nie obsługuje wielu pytań w jednym żądaniu, adapter wysyła
-pytania równolegle w ramach semaforów. Mapowanie `yes/no → tak/nie` odbywa
-się w adapterze.
+W trybie `POJEDYNCZY` `questions[]` zawiera jedno pytanie. Mapowanie
+`yes/no → tak/nie` odbywa się w adapterze.
 
 **`ZapasowyLlmAdapter`** (rola `DECYZYJNY_ZAPASOWY`) wykonuje **cały plan
 jednym wywołaniem** LLM (timeout `min(9 s, termin − teraz)`, a gdy pozostało
@@ -3985,18 +4583,21 @@ NFR-01, ale Ocena powstaje). Protokół pytań zależnych (C1-07):
    **wszystkich** wariantów (łącznie ≤ 24 kryteria — limit W-1 i triggera
    `trg_suma_kryteriow`); adapter zwraca decyzje tylko dla wariantu wybranego
    (argmax Q-OC-00 bez `ZADEN`), pozostałe trafiają do `pominiete`.
-3. Schemat odpowiedzi: `{"odpowiedzi":[{"kod": str, "rozklad": {opcja:
-   float}}], "Q-OC-04": {"krok": int, "rozklad": {…}} | null}`. Walidacja:
+3. Schemat odpowiedzi: `{"decyzje_skladowe":[{"kod": str, "rozklad":
+   {opcja: float}}], "Q-OC-04": {"krok": int, "rozklad": {…}} | null}`
+   (klucz `decyzje_skladowe` zgodnie z 3.1 p. 5 — „odpowiedź” oznacza
+   wyłącznie wybór Ucznia). Walidacja:
    komplet kodów bezwarunkowych, klucze rozkładu = dozwolone opcje, wartości
    w [0, 1]; suma normalizowana do 1 (odchylenie > 0.05 →
    `BladModeluTrwaly`).
 
 **`CircuitBreakerModeluDecyzyjnego`**: stan obwodu per proces; otwarcie po
 3 kolejnych błędach albo przy ≥ 50% błędów w oknie 20 s przy ≥ 6
-wywołaniach; stan `OTWARTY` 60 s, potem `POLOTWARTY` (1 próbny plan, reszta
+wywołaniach (błędy = timeout, `5xx`, błąd połączenia, niezgodność ze
+schematem; `429` i brak przydziału ogranicznika nie są błędami obwodu); stan `OTWARTY` 60 s, potem `POLOTWARTY` (1 próbny plan, reszta
 do modelu zapasowego). Ponowienie nieudanych pytań Jev następuje tylko,
-gdy do terminu miękkiego zostało ≥ 13 s (ponowienie 2 s + model zapasowy 9 s
-+ zapas 2 s; 9.9, 17.2).
+gdy do terminu miękkiego (`max(10 s, 28 s − t_R)`) zostało ≥ 13 s
+(ponowienie 2 s + model zapasowy 9 s + zapas 2 s; 9.9, 17.2).
 
 ### 13.3 Katalog prac w tle
 
@@ -4004,29 +4605,38 @@ Pule (13.4): `R` — ROZPOZNAWANIE, `O` — OCENIANIE, `P` — POMOCNICZA, `W` �
 
 | Typ | Pula | Ładunek | Klucz deduplikacji | Prio | Maks. prób | Odstęp ponowień | Warunek wykonania (idempotencja) | Po wyczerpaniu prób |
 |---|---|---|---|---|---|---|---|---|
-| `ROZPOZNAJ_PISMO` | R | `{rozwiazanie_id, przeslanie_nr, ponowienie_nr}` | `rozwiazanie_id:przeslanie_nr:ponowienie_nr` | 1 | 3 | 1 s, 3 s | status ∈ {`PRZESLANE`, `ROZPOZNAWANIE`} i brak Transkrypcji dla `przeslanie_nr` po `przeslano_at` | `BLAD_ROZPOZNAWANIA` (`BLAD_DOSTAWCY`/`PRZEKROCZONY_CZAS`), powiadomienie |
-| `OCEN_ROZWIAZANIE` | O | `{rozwiazanie_id, transkrypcja_id}` | `rozwiazanie_id` | 1 | 4 | 0,5 s, 2 s, 5 s (tylko przed terminem twardym 120 s) | status ∈ {`ZATWIERDZONE`, `OCENIANIE`} i `zatwierdzona_transkrypcja_id = transkrypcja_id` i brak Oceny | T-6: Weryfikacja `BLAD_PRZETWARZANIA` + `PONOW_OCENE` |
+| `ROZPOZNAJ_PISMO` | R | `{rozwiazanie_id, przeslanie_nr, ponowienie_nr}` | `rozwiazanie_id:przeslanie_nr:ponowienie_nr` | 1 | 3 | 1 s, 3 s | konto Ucznia `AKTYWNE`, status ∈ {`PRZESLANE`, `ROZPOZNAWANIE`} i brak Transkrypcji dla `przeslanie_nr` po `przeslano_at`; zapis po Filtrze danych osobowych (ADR-042) | `BLAD_ROZPOZNAWANIA` (`BLAD_DOSTAWCY`/`PRZEKROCZONY_CZAS`), powiadomienie |
+| `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` | R | `{transkrypcja_id}` | `rozwiazanie_id:wersja` | 2 | 2 | 1 s | Transkrypcja `POPRAWKA_UCZNIA` z ≥ 1 krokiem zmienionym, `zgodnosc_poprawek IS NULL`, Rozwiązanie w `TRANSKRYPCJA_GOTOWA`/`ZATWIERDZONE`/`OCENIANIE`; zapis `UPDATE … WHERE id = :transkrypcja_id AND zgodnosc_poprawek IS NULL` (10.3.3, ADR-036) | brak rezultatu → T-7 w Ocenie (Z-3) |
+| `OCEN_ROZWIAZANIE` | O | `{rozwiazanie_id, transkrypcja_id}` | `rozwiazanie_id` | 1 | 4 | 0,5 s, 2 s, 5 s (tylko przed terminem twardym 120 s) | konto Ucznia `AKTYWNE`, status ∈ {`ZATWIERDZONE`, `OCENIANIE`} i `zatwierdzona_transkrypcja_id = transkrypcja_id` i brak Oceny; po przywróceniu konta z minionym terminem twardym — od razu T-6 (16.4) | T-6: Weryfikacja `BLAD_PRZETWARZANIA` + `PONOW_OCENE` |
 | `PONOW_OCENE` | O | `{weryfikacja_id}` | `weryfikacja_id` | 4 | 3 | 15 min, 1 h | Weryfikacja `OCZEKUJE`, `BLAD_PRZETWARZANIA` ∈ powody, `ocena_weryfikowana_id IS NULL` (9.13) | brak akcji (Nauczyciel ocenia od zera) |
 | `NAPISZ_WSKAZOWKE` | P | `{ocena_id}` | `ocena_id` | 1 | 2 | 1 s | `ocena.wskazowka IS NULL`, `typ_bledu IS NOT NULL`, Ocena ≠ `ZASTAPIONA` | zapis szablonu (10.5.3 p. 4) |
-| `AKTUALIZUJ_PROFIL` | P | `{uczen_id}` | `uczen_id` | 2 | 5 | 1 s, 5 s, 30 s, 2 min | przetwarza tylko Wyniki z `zastosowany_w_profilu_at IS NULL` lub nieprzetworzonym unieważnieniem; reguły Serii | alert operacyjny |
+| `AKTUALIZUJ_PROFIL` | P | `{uczen_id}` | `uczen_id` (deduplikacja tylko wśród `OCZEKUJE`, `ux_praca_dedup_oczekujace`, C2-04) | 2 | 5 | 1 s, 5 s, 30 s, 2 min | w jednej transakcji z `SELECT … FROM profil_ucznia FOR UPDATE`: pętla „pobierz Wyniki z `zastosowany_w_profilu_at IS NULL` lub nieprzetworzonym unieważnieniem → zastosuj/odtwórz → oznacz” powtarzana do pustego wyniku (maks. 10 iteracji, potem nowa praca); reguły Serii | alert operacyjny |
 | `OPINIA_POMOCNICZA` | W | `{weryfikacja_id}` | `weryfikacja_id` | 6 | 3 | 1 min, 5 min | Weryfikacja otwarta i `opinia_pomocnicza IS NULL` | brak opinii |
 | `UZUPELNIJ_PULE` | W | `{umiejetnosc_id, poziom_trudnosci, poziom_matury, rodzaj}` | `umiejetnosc_id:poziom_trudnosci:poziom_matury:rodzaj` | 7 | 1 | — | `rodzaj ∈ {ZAMKNIETE, OTWARTE_OBLICZENIOWE}`, liczba `OPUBLIKOWANE`+`GLOBALNY` < 3 dla klucza, brak otwartego zlecenia dla klucza, budżet dzienny (12.7) nieprzekroczony; inaczej `dostepna_od` = 00:00 UTC następnego dnia | — |
 | `GENERUJ_ZADANIE` | W | `{zlecenie_generowania_id}` | id | 7 | 3 | 30 s, 2 min | zlecenie `OCZEKUJE`/`W_TOKU`, `liczba_cykli < 3` (inkrementacja warunkowa 9.7) | zlecenie `NIEUDANE` |
 | `WALIDUJ_ZADANIE` | W | `{zadanie_wersja_id, nr_cyklu}` | `zadanie_wersja_id` | 7 | 3 | 30 s, 2 min | Zadanie `WALIDACJA` | Zadanie `ODRZUCONE_W_WALIDACJI`, nowy cykl lub zlecenie `NIEUDANE` |
-| `GENERUJ_SZKIC_WKLADKI` | W | `{umiejetnosc_id}` | `umiejetnosc_id` | 7 | 3 | 1 min, 10 min | brak Wkładki `SZKIC`/`DO_PRZEGLADU`/`OPUBLIKOWANA` dla Umiejętności | alert dla Administratorów |
+| `GENERUJ_SZKIC_WKLADKI` | W | `{umiejetnosc_id}` | `umiejetnosc_id` | 7 | 3 | 1 min, 10 min | brak Wkładki `SZKIC`/`DO_PRZEGLADU`/`OPUBLIKOWANA` dla Umiejętności; < 2 automatycznych szkiców tej Umiejętności `WYCOFANA` w 30 dniach (`ix_wkladka_automatyczne_odrzucone`); budżet generowania systemowego 12.7 nieprzekroczony (inaczej `dostepna_od` = 00:00 UTC następnego dnia); zapis `wygenerowana_automatycznie = true`, `koszt_generowania_pln` | alert dla Administratorów („Wkładka wymaga autora” po 2 odrzuceniach) |
 | `IMPORTUJ_ARKUSZ` | W | `{import_id}` | id | 5 | 1 | — | import `OCZEKUJE` | import `ODRZUCONY` |
 | `EWALUUJ_ZT1` | W | `{konfiguracja_modelu_id}` | id | 8 | 1 | — | brak `prog_pewnosci` `EWALUACJA_ZT1` dla konfiguracji | alert |
 | `KALIBRUJ` | W | `{data}` | data | 8 | 3 | 10 min | brak kalibratora `KALIBRACJA_AUTOMATYCZNA` z tą datą | alert |
 | `USUN_ZDJECIA` | W | `{}` | `cykl` | 3 | 5 | 1 min | selekcja 9.10 | alert RODO |
-| `ESKALUJ_WERYFIKACJE` | W | `{godzina}` | godzina | 5 | 3 | 5 min | reguły 11.4.3 + kontrola przyjęć + dzienne podsumowanie dla Nauczycieli (05:00 UTC) | alert |
+| `ESKALUJ_WERYFIKACJE` | W | `{godzina}` | godzina | 5 | 3 | 5 min | reguły 11.4.3 (terminy w dniach roboczych) + kontrola przyjęć globalna i per Klasa (`odsetek_eskalacji_7d`) + dzienne podsumowanie dla Nauczycieli (05:00 UTC, tylko w dni robocze) | alert |
+| `ZAMIATAJ_PROFILE` | W | `{}` | `cykl` | 2 | 3 | 1 min | `SELECT DISTINCT uczen_id FROM wynik_zadania` po `ix_wynik_do_profilu` z `created_at` lub `uniewazniony_at` < `now() − 2 min`, konto `AKTYWNE`, `LIMIT 500` → zlecenie `AKTUALIZUJ_PROFIL`; metryka `wynik_najstarszy_niezastosowany_sekundy` (C2-04) | alert |
+| `SPRAWDZ_PULE_DIAGNOSTYCZNA` | W | `{data}` | data | 8 | 3 | 10 min | dla każdej trójki (Dział, poziom matury, nominalny Poziom trudności ∈ {2, 4}) liczba Zadań diagnostycznych `OPUBLIKOWANE` ≥ 3 (9.1, G-5) | `ALERT_PULA_DIAGNOSTYCZNA` |
+| `UZGODNIJ_REJESTR_RODO` | W | `{}` | `cykl` | 3 | 5 | 1 min | obiekty `rejestr-usuniec/zdarzenia/` z ostatnich 24 h starsze niż 5 min bez wiersza `zdarzenie_rodo` o tym `id` (zatwierdzenie transakcji nie powiodło się) → zapis obiektu kompensującego `{typ: "UNIEWAZNIENIE", zdarzenie_id}` (ADR-041) | `ALERT_RODO` |
 | `PORZUC_NIEZATWIERDZONE` | W | `{data}` | data | 5 | 3 | 10 min | Rozwiązania 7 dni w `PRZESLANE`/`TRANSKRYPCJA_GOTOWA`/`BLAD_ROZPOZNAWANIA` → `PORZUCONE`, `usun_po := now()` | alert |
-| `WYGAS_ELEMENTY` | W | `{}` | `cykl` | 5 | 3 | 1 min | `PROPONOWANY` z `wygasa_at < now()` → `WYGASLY`; `ROZPOCZETY` z `wygasa_at < now()` → `UKONCZONY` (Wkładka) / `POMINIETY` (Zadanie bez Rozwiązania nieterminalnego); Seria nieaktywna 7 dni → zakończona | — |
-| `USUN_KONTO` | W | `{uzytkownik_id}` | id | 3 | 5 | 1 h | `usuniecie_zaplanowane_at ≤ now()`; kroki 16.4 | alert RODO |
+| `WYGAS_ELEMENTY` | W | `{}` | `cykl` | 5 | 3 | 1 min | konto `AKTYWNE`; `PROPONOWANY` z `wygasa_at < now()` → `WYGASLY`; `ROZPOCZETY` z `wygasa_at < now()` → `POMINIETY` (Wkładka bez przeczytania, 8.5; Zadanie bez Rozwiązania nieterminalnego); Seria nieaktywna 7 dni → zakończona | — |
+| `USUN_KONTO` | W | `{uzytkownik_id}` | id | 3 | 5 | 1 h | `status = USUWANE` i `usuniecie_zaplanowane_at ≤ now()`; kroki 0–6 z 16.4 (Uczeń) albo 16.4 „Usunięcie konta Nauczyciela lub Administratora” | `ALERT_RODO` |
 | `UTRZYMAJ_PARTYCJE` | W | `{}` | miesiąc | 8 | 3 | 1 h | brak partycji na 3 miesiące naprzód | alert |
 | `WYCZYSC_DANE_TECHNICZNE` | W | `{}` | data | 8 | 3 | 1 h | `decyzja_modelu.stan := NULL` po 180 dniach; klucze idempotencji po `wygasa_at`; `proba_logowania` po 30 dniach; zakończone prace po 7 dniach | alert |
 | `WYSLIJ_EMAIL` | W | `{szablon, adresat, dane}` | — | 4 | 5 | 1, 5, 15, 60 min | — | wpis w logu |
-| `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` | W | `{rozwiazanie_id}` | `rozwiazanie_id` | 8 | 3 | 10 min, 1 h | `uczen.zgoda_na_trening = true`, konto `AKTYWNE`, zdjęcia nieusunięte, brak `kopia_treningowa` dla Rozwiązania; kopia: zdjęcie maskowane (ADR-031; brak maskowanego → brak kopii) + Transkrypcja zatwierdzona + Ocena ostateczna (bez danych identyfikacyjnych) | brak kopii (alert informacyjny) |
+| `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` | W | `{rozwiazanie_id}` | `rozwiazanie_id` | 8 | 3 | 10 min, 1 h | zlecana w każdej transakcji, po której Rozwiązanie jest `OCENIONE` bez otwartej Weryfikacji (zapis Oceny automatycznej bez Kontroli, rozstrzygnięcie, korekta, zamknięcie ostatniej Weryfikacji, `PONOW_OCENE`; C2-16); warunki: `uczen.zgoda_na_trening = true`, konto `AKTYWNE`, zdjęcia nieusunięte, brak otwartej Weryfikacji, brak `kopia_treningowa` dla Rozwiązania **albo** `kopia_treningowa.ocena_id ≠` id Oceny aktualnej (wtedy nadpisanie `.json`); kopia: zdjęcie maskowane (ADR-031; brak maskowanego → brak kopii) + Transkrypcja zatwierdzona po ponownym Filtrze danych osobowych (ADR-042) + Ocena aktualna | brak kopii (alert informacyjny) |
 | `USUN_KOPIE_TRENINGOWE` | W | `{}` | `cykl` | 3 | 5 | 1 min | `kopia_treningowa.usun_po < now() AND usunieto_at IS NULL`: `DELETE` obiektów, `usunieto_at = now()` | alert RODO |
+
+Każdy handler przetwarzający dane Ucznia (oznaczone „konto `AKTYWNE`”, a
+także `NAPISZ_WSKAZOWKE`, `OPINIA_POMOCNICZA`, `PONOW_OCENE`) w okresie
+karencji kończy się bez efektu z rezultatem `KONTO_USUWANE`; przywrócenie
+konta zleca ponownie przerwane prace (16.4, ADR-040).
 
 Ponowienie rozpoznania przez Ucznia (`POST …/ponowienie-rozpoznania`)
 zleca nową pracę `ROZPOZNAJ_PISMO` z `ponowienie_nr + 1` (inny klucz
@@ -4035,7 +4645,7 @@ deduplikacji), ustawia `przeslano_at = now()` i nie zwiększa
 zdjęć; `praca_w_tle.proby` liczy wyłącznie próby techniczne jednej pracy
 (C1-28).
 
-### 13.4 Mechanika kolejki i pule workera
+### 13.4 Mechanika prac w tle i pule workera
 
 ```sql
 -- Pobranie (worker, korutyna danej puli)
@@ -4078,7 +4688,15 @@ RETURNING id, typ, status;
 - Trigger `AFTER INSERT` wykonuje `pg_notify('praca_w_tle', pula)`; worker
   nasłuchuje i dodatkowo odpytuje co 1 s.
 - Zlecanie z deduplikacją: `INSERT … ON CONFLICT (typ, klucz_deduplikacji)
-  WHERE status IN ('OCZEKUJE','W_TOKU') DO NOTHING`.
+  WHERE status IN ('OCZEKUJE','W_TOKU') AND klucz_deduplikacji IS NOT NULL
+  AND typ <> 'AKTUALIZUJ_PROFIL' DO NOTHING`; dla `AKTUALIZUJ_PROFIL`
+  predykat `WHERE status = 'OCZEKUJE' AND klucz_deduplikacji IS NOT NULL AND
+  typ = 'AKTUALIZUJ_PROFIL'` (indeks `ux_praca_dedup_oczekujace`). Funkcja
+  `zlec(typ, …)` wybiera predykat po typie. Skutek (C2-04): Wynik zadania
+  zatwierdzony w trakcie wykonywania `AKTUALIZUJ_PROFIL` zawsze ma
+  oczekującą pracę, która wykona się po zwolnieniu blokady `profil_ucznia`;
+  pętla „do pustego wyniku” ogranicza liczbę takich prac, a `ZAMIATAJ_PROFILE`
+  jest trzecią linią obrony.
 - **Semantyka slotu (C1-25):** proces `worker` to jedna pętla `asyncio`;
   **slot = korutyna** pobierająca prace jednej puli. Wywołania modeli i
   magazynu obiektów są nieblokujące (I/O), więc jedna replika obsługuje
@@ -4100,9 +4718,12 @@ dedykowanym połączeniu; druga instancja czeka w trybie gotowości.
 |---|---|
 | co 30 s | odzyskiwanie dzierżaw (13.4) |
 | co 1 min | `ZWOLNIJ_BLOKADY_WERYFIKACJI` (SQL 11.4.2, wykonywany bezpośrednio przez scheduler), `WYGAS_ELEMENTY` |
+| co 5 min | `ZAMIATAJ_PROFILE` (C2-04) |
+| co 10 min | `UZGODNIJ_REJESTR_RODO` (ADR-041) |
 | co 1 h | `USUN_ZDJECIA`, `USUN_KOPIE_TRENINGOWE`, `ESKALUJ_WERYFIKACJE` |
 | codziennie 02:00 UTC | `PORZUC_NIEZATWIERDZONE`, `USUN_KONTO` (dla zaplanowanych), `WYCZYSC_DANE_TECHNICZNE` |
 | codziennie 03:00 UTC | `KALIBRUJ` |
+| codziennie 04:00 UTC | `SPRAWDZ_PULE_DIAGNOSTYCZNA` |
 | codziennie 05:00 UTC | podsumowanie dla Nauczycieli (w ramach `ESKALUJ_WERYFIKACJE`: liczba oczekujących, najbliższe terminy SLA) |
 | 1. dnia miesiąca | `UTRZYMAJ_PARTYCJE` |
 
@@ -4116,6 +4737,7 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 |---|---|---|
 | `RozwiazaniePrzeslane` | `rozwiazanie_id, przeslanie_nr, ponowienie_nr` | `ROZPOZNAJ_PISMO` |
 | `TranskrypcjaGotowa` | `rozwiazanie_id, transkrypcja_id` | powiadomienie `TRANSKRYPCJA_GOTOWA` |
+| `TranskrypcjaPoprawiona` | `rozwiazanie_id, transkrypcja_id, zakres_poprawek` | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (ADR-036) |
 | `TranskrypcjaZatwierdzona` | `rozwiazanie_id, transkrypcja_id` | `OCEN_ROZWIAZANIE` |
 | `OcenaWystawiona` | `ocena_id, status, powody[], mozliwy_blad_odczytu` | `AKTUALIZUJ_PROFIL` (gdy powstał Wynik zadania), `NAPISZ_WSKAZOWKE` (gdy błąd i brak podejrzenia odczytu), powiadomienie Ucznia, (`WSTEPNA`) powiadomienie `NOWA_WERYFIKACJA` dla Nauczyciela, `OPINIA_POMOCNICZA` |
 | `OcenaSkorygowana` | `ocena_id, poprzednia_ocena_id` | `AKTUALIZUJ_PROFIL`, `NAPISZ_WSKAZOWKE` (tryb `AUTOMATYCZNA`), powiadomienie `OCENA_SKORYGOWANA` (gdy zmiana punktów lub błędnego kroku) |
@@ -4126,6 +4748,9 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | `ZadanieDoPrzegladu` | `zadanie_id` | powiadomienie `ZADANIE_DO_PRZEGLADU` dla zlecającego Nauczyciela, recenzentów treści i Administratorów |
 | `WkladkaDoPrzegladu` | `wkladka_teoretyczna_id` | powiadomienie `WKLADKA_DO_PRZEGLADU` dla recenzentów treści i Administratorów |
 | `PrzypisanieUtworzone` | `przypisanie_id` | powiadomienia `NOWE_PRZYPISANIE` |
+| `ZgloszenieBleduZadaniaUtworzone` | `zgloszenie_id, zadanie_id` | powiadomienie `ZGLOSZENIE_BLEDU_ZADANIA` dla recenzentów i Administratorów; przy 3 otwartych od różnych Nauczycieli `wstrzymane_w_doborze = true` (ADR-038) |
+| `KontoUsuwane` | `uzytkownik_id, rola` | (Nauczyciel) eskalacja jego Weryfikacji `KLASA`, zwolnienie jego blokad, zdjęcie flag; `KLASA_DO_PRZEKAZANIA` dla Administratorów (ADR-044) |
+| `KontoPrzywrocone` | `uzytkownik_id` | wznowienie procesów (16.4, ADR-040): ponowne zlecenie przerwanych prac, nowe `termin_at` otwartych Weryfikacji |
 
 ---
 
@@ -4147,7 +4772,7 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | E-10 | SymPy: błąd parsowania, przekroczenie 2 s CPU / 512 MB | wyjątek / sygnał w procesie potomnym | wynik `NIEROZSTRZYGNIETE`; proces potomny zastępowany | brak |
 | E-11 | Agent wyjaśniający: błąd, timeout 8 s, wyciek rozwiązania | wyjątek / strażnik 10.5.3 | ponowienie pracy `NAPISZ_WSKAZOWKE` (raz), potem szablon | Ocena widoczna od razu; Wskazówka dochodzi (z szablonu) w ≤ 20 s |
 | E-12 | Awaria workera w trakcie pracy | wygaśnięcie dzierżawy (60 s) | odzyskanie pracy; handler idempotentny (warunki 13.3) | opóźnienie ≤ 60 s; dla `OCEN_ROZWIAZANIE` ponowienie do terminu twardego, po nim T-6 |
-| E-13 | Wynik obliczeń przestarzały (stan zmienił się w trakcie) | `UPDATE … WHERE status = :s AND version = :v` zwraca 0 wierszy | wynik odrzucony, log `wynik_przestarzaly` | brak |
+| E-13 | Rezultat obliczeń przestarzały (stan zmienił się w trakcie) | `UPDATE … WHERE status = :s AND version = :v` zwraca 0 wierszy | rezultat odrzucony, log `rezultat_przestarzaly` | brak |
 | E-14 | PostgreSQL niedostępny / przełączenie | błąd połączenia | `api`: `503`; worker: wstrzymanie pobierania, ponawianie połączenia co 2 s (maks. 60 s backoff) | komunikat „Spróbuj za chwilę”; PWA ponawia `GET` automatycznie |
 | E-15 | Konflikt edycji (dwa urządzenia) | `If-Match` | `412 KONFLIKT_WERSJI` + aktualny zasób w ciele | UI pokazuje aktualną wersję i pyta, czy nadpisać |
 | E-16 | Weryfikacja podjęta przez innego Nauczyciela | `UPDATE … RETURNING` = 0 | `409 WERYFIKACJA_ZAJETA` z danymi blokującego | komunikat „Sprawdza: {imię nazwisko} do {godzina}” |
@@ -4161,15 +4786,22 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | E-24 | Nieznany wyjątek w handlerze | catch-all w pętli workera | log z `trace_id`, traktowany jak błąd przejściowy (ponowienia), potem `po_wyczerpaniu` | jak dla danego typu pracy |
 | E-25 | Nieznany wyjątek w `api` | handler globalny FastAPI | `500` z `kod = BLAD_WEWNETRZNY` i `instance` = `trace_id`, bez szczegółów | komunikat ogólny |
 | E-26 | Brak jakiegokolwiek Zadania w zakresie Ucznia | dobór 10.1.2 krok 8 | `200` z `brak_elementu`, `UZUPELNIJ_PULE` dla Poziomów trudności 2–4 | komunikat 10.1.5 i sugerowane Działy |
-| E-27 | Q-RE-01 (rekomendacja): timeout 1,5 s, błąd, obwód otwarty | wyjątek w fasadzie | polityka `POLITYKA_ELO`, `powrot_do_polityki = MODEL_NIEDOSTEPNY` | brak (rekomendacja bez wariantu eksperymentalnego) |
+| E-27 | Q-RE-01 (rekomendacja): timeout 1,5 s, błąd, obwód otwarty | wyjątek w fasadzie | polityka `POLITYKA_ELO`, `powrot_do_polityki = MODEL_NIEDOSTEPNY` | brak (rekomendacja bez strategii eksperymentalnej) |
 | E-28 | Pusta lub niewystarczająca pula weryfikatorów globalnych | `weryfikatorzy_globalni_aktywni_7d < wymagani` (17.7) lub `zaleglosc_globalna_min > 2 × pojemnosc` | alert `ALERT_WERYFIKACJE`; kontrola przyjęć 11.4.3 | Uczniowie bez Klasy dostają więcej zadań zamkniętych; po SLA status „opóźniona” |
 | E-29 | Kontrole losowe niewykonywane | `wykonanie_kontroli_30d < 0.90` | reguły nadzoru 11.5.3 (alert → blokada obniżania progu → bezpiecznik) | więcej Ocen wstępnych |
-| E-30 | Budżet generowania systemowego wyczerpany | licznik 12.7 | `UZUPELNIJ_PULE` przesunięte na następną dobę, alert przy 80% | dobór Zadań spoza strefy rozwoju (E-19) |
+| E-30 | Budżet generowania systemowego wyczerpany | licznik 12.7 | `UZUPELNIJ_PULE` i `GENERUJ_SZKIC_WKLADKI` przesunięte na następną dobę, alert przy 80% | dobór Zadań spoza strefy rozwoju (E-19); Zadanie zamiast Wkładki (E-20) |
+| E-31 | Poprawka Transkrypcji przekracza limit twardy | walidacja `PUT …/transkrypcja` (9.4) | `422 POPRAWKI_ZBYT_ROZLEGLE`, nic nie zapisano | komunikat „Zmieniono zbyt dużą część odczytu — wyślij nowe zdjęcia kartki” + akcja „Wyślij nowe zdjęcia” |
+| E-32 | Sprawdzenie zgodności poprawek: błąd, timeout 8 s lub brak rezultatu przed zapisem Oceny | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` po wyczerpaniu prób / brak `zgodnosc_poprawek` | T-7: Ocena wstępna, Weryfikacja z powodem `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (Z-3); metryka `sprawdzenie_poprawek_brak_total` | Ocena wstępna z komunikatem T-7 |
+| E-33 | Brak przydziału globalnego ogranicznika Jev przed `termin_miekki − 11 s` lub `429` od Jev | `OgranicznikSzybkosci.zarezerwuj` = `False` / HTTP 429 | Ocena modelem zapasowym (`OGRANICZENIE_LOKALNE`), przydział × 0,5 na 30 s po 429; obwód nie jest otwierany | dłuższy czas oceny w granicach budżetu S-4 |
+| E-34 | Pula Zadań diagnostycznych niepełna | `SPRAWDZ_PULE_DIAGNOSTYCZNA`, dobór 9.1 | test częściowy (`pominiete_dzialy`) albo `409 TEST_NIEDOSTEPNY` przy < 50%; `ALERT_PULA_DIAGNOSTYCZNA` | Uczeń zaczyna z Profilem `DOMYSLNA` i może wykonać test później |
+| E-35 | Zdjęcie o nadmiernych wymiarach (bomba dekompresyjna) lub nieprawidłowy plik | odczyt nagłówka w piaskownicy `api`, `MAX_IMAGE_PIXELS`, `RLIMIT_AS` | `422 ZDJECIE_NIEPRAWIDLOWE`; proces piaskownicy zastępowany po przekroczeniu limitu | komunikat „Nie udało się odczytać zdjęcia — zrób je ponownie aparatem w aplikacji” |
+| E-36 | Bucket `rejestr-usuniec` niedostępny przy Zdarzeniu RODO | wyjątek klienta S3 przed transakcją | `503 USLUGA_NIEDOSTEPNA`, nic nie zapisano w bazie (ADR-041) | „Spróbuj za chwilę”; PWA ponawia z tym samym `Idempotency-Key` |
 
 ### 14.2 Terminy oceny i reguła T-6
 
 - **Termin miękki** (NFR-01): `termin_miekki = zatwierdzono_at + max(10 s,
-  30 s − t_R)`, gdzie `t_R = transkrypcja_gotowa_at − przeslano_at`. Handler
+  28 s − t_R)`, gdzie `t_R = transkrypcja_gotowa_at − przeslano_at` (28 s =
+  SLO serwerowe, 17.1; C2-07). Handler
   `OCEN_ROZWIAZANIE` przekazuje go do wszystkich wywołań: timeouty są
   skracane do `min(timeout_roli, termin_miekki − teraz)`, a ponowienie Jev
   następuje tylko przy zapasie czasu (9.9). Przekroczenie terminu miękkiego
@@ -4206,7 +4838,8 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
    Ocena → `ZASTAPIONA`, Weryfikacja → `ANULOWANA`), **potem** wstawienie
    nowego.
 4. **Optymistyczna blokada** (`version` + `If-Match`) dla edycji przez ludzi
-   (zasób wskazany w 12.3); **pesymistyczna** (`FOR UPDATE`) tylko dla
+   (zasób wskazany w 12.3); dla Weryfikacji `version` jest wersją treści,
+   niezmienianą przez operacje na blokadzie (ADR-037); **pesymistyczna** (`FOR UPDATE`) tylko dla
    krótkich sekcji: Profil ucznia, wiersz `rozwiazanie` przy rozstrzygnięciu,
    korekcie i zgłoszeniu, wiersz `kalibracja_trudnosci`.
 5. Statystyki aktualizowane automatycznie (kalibracja Poziomu trudności)
@@ -4217,7 +4850,7 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 
 ### 15.2 Scenariusze wyścigów
 
-| # | Scenariusz | Mechanizm | Wynik |
+| # | Scenariusz | Mechanizm | Rezultat |
 |---|---|---|---|
 | C-01 | Podwójne kliknięcie „Wyślij” przy Rozwiązaniu | `Idempotency-Key` (`klucz_idempotencji`) + `ux_rozwiazanie_element` / `ux_rozwiazanie_przypisanie` | jedno Rozwiązanie; drugie żądanie dostaje tę samą odpowiedź |
 | C-02 | Dwa urządzenia wysyłają Rozwiązanie do tego samego elementu Ścieżki nauki lub tej samej pozycji Przypisania | indeksy jw. | drugie: `409` z `id` istniejącego Rozwiązania |
@@ -4229,7 +4862,7 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | C-08 | Blokada Weryfikacji wygasła, inny Nauczyciel ją przejął, pierwszy wysyła rozstrzygnięcie | rozstrzygnięcie wymaga `podjeta_przez = ja AND zablokowana_do > now()` oraz `If-Match` (Weryfikacja); szkic pierwszego zachowany w `szkic_rozstrzygniecia` | pierwszy: `409 WERYFIKACJA_NIE_PODJETA`, po ponownym podjęciu odzyskuje szkic |
 | C-09 | Rozstrzygnięcie Weryfikacji (Kontrola losowa) równolegle z korektą tego samego Rozwiązania | obie operacje: `SELECT rozwiazanie FOR UPDATE`; rozstrzygnięcie: `If-Match` Weryfikacji + warunek „Ocena weryfikowana ≠ ZASTAPIONA”; korekta: `If-Match` Rozwiązania i zamknięcie otwartej Weryfikacji (9.6.3); `ux_ocena_aktualna` | pierwsza operacja wygrywa; druga dostaje `412 KONFLIKT_WERSJI`, `409 OCENA_ZMIENIONA` albo `409 WERYFIKACJA_ZAJETA`; powstaje dokładnie jedna Próbka kalibracyjna (`ux_probka_ocena_auto`) |
 | C-10 | Opinia pomocnicza dociera po rozstrzygnięciu | zapis `UPDATE weryfikacja SET opinia_pomocnicza = … WHERE id = :id AND opinia_pomocnicza IS NULL` bez warunku na status (pole wyłącznie informacyjne, nie zmienia `version`) | opinia zapisana do metryk, bez wpływu na Ocenę |
-| C-11 | Równoległe aktualizacje Profilu ucznia (Odpowiedź + Ocena + Test diagnostyczny) | deduplikacja `AKTUALIZUJ_PROFIL` per Uczeń + `SELECT … FROM profil_ucznia FOR UPDATE` + znaczniki `zastosowany_w_profilu_at` | każdy Wynik zadania zastosowany dokładnie raz, w kolejności `created_at` |
+| C-11 | Równoległe aktualizacje Profilu ucznia (Odpowiedź + Ocena + Test diagnostyczny) | deduplikacja `AKTUALIZUJ_PROFIL` tylko wśród prac `OCZEKUJE` (`ux_praca_dedup_oczekujace`) + `SELECT … FROM profil_ucznia FOR UPDATE` + pętla do pustego wyniku + znaczniki `zastosowany_w_profilu_at` + `ZAMIATAJ_PROFILE` co 5 min | każdy Wynik zadania zastosowany **co najmniej raz** (zawsze istnieje praca oczekująca albo zamiatacz) i **co najwyżej raz** (znacznik), w kolejności `created_at` (C-32) |
 | C-12 | Dwa równoległe `GET …/rekomendacje/nastepna` | `ux_jeden_proponowany` | oba zwracają ten sam element |
 | C-13 | Rekomendacja czyta Profil w trakcie aktualizacji | `READ COMMITTED` — migawka zatwierdzona | dopuszczalne opóźnienie ≤ 1 Wyniku zadania |
 | C-14 | Zmiana Progu pewności w trakcie Oceny | Ocena używa migawki progu i kalibratora wczytanej na starcie i zapisuje `prog_pewnosci_id`, `kalibrator_pewnosci_id` | spójna decyzja, audytowalna |
@@ -4238,16 +4871,23 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 | C-17 | Uczeń wysyła Rozwiązanie lub Odpowiedź do wersji Zadania, która przestała być aktualna | reguła wersji akceptowanej 12.5 (wersja elementu albo 72 h dla Przypisania) | przyjęte, ocenione według tej wersji; wersja starsza niż reguła → `409 WERSJA_ZADANIA_NIEAKTUALNA` |
 | C-18 | Dwa zlecenia uzupełnienia tej samej puli | `ux_praca_dedup` z kluczem `umiejetnosc:poziom:poziom_matury:rodzaj` + warunek „brak otwartego zlecenia dla klucza” | jedna praca, jedno zlecenie |
 | C-19 | Dwie instancje schedulera | `pg_try_advisory_lock` | jedna aktywna |
-| C-20 | Usunięcie konta w trakcie oceniania | `USUN_KONTO` najpierw ustawia `uzytkownik.status = USUWANE`, anuluje otwarte Weryfikacje (`ANULOWANA`, `USUNIECIE_KONTA`) i Rozwiązania w stanach nieterminalnych (`ANULOWANE`, `usun_po := now()` dla ich zdjęć) warunkowo; handlery sprawdzają status konta przed zapisem | brak zapisu do usuwanych danych; zdjęcia anulowanych Rozwiązań usunięte w ≤ 1 h |
+| C-20 | Żądanie usunięcia konta w trakcie oceniania | żądanie ustawia tylko `uzytkownik.status = USUWANE` (okres karencji, ADR-040); handlery sprawdzają status konta przed zapisem i kończą się z `KONTO_USUWANE`; `USUN_KONTO` po 30 dniach w kroku 0 anuluje otwarte Weryfikacje (`ANULOWANA`, `USUNIECIE_KONTA`) i Rozwiązania nieterminalne (`ANULOWANE`) przed usunięciem obiektów | brak zapisu do danych konta w okresie karencji; stan wstrzymany, odwracalny przywróceniem (C-33) |
 | C-21 | Kalibracja równolegle z zapisem nowych próbek | kalibracja czyta okno do `now() − 5 min` | deterministyczny zbiór próbek |
 | C-22 | Ponowny import tego samego Arkusza CKE | `arkusz_cke.kod UNIQUE` | drugi import `ODRZUCONY` |
-| C-23 | `PONOW_OCENE` kończy się, gdy Nauczyciel właśnie podjął Weryfikację `BLAD_PRZETWARZANIA` | podjęcie podnosi `weryfikacja.version`; zapis `PONOW_OCENE` jest warunkowy `WHERE status = 'OCZEKUJE' AND version = :v`; warunek wykonania pracy wymaga `OCZEKUJE` | wynik `PONOW_OCENE` odrzucony (E-13); Nauczyciel ocenia bez zakłóceń; brak kolizji na `UNIQUE (rozwiazanie_id, wersja)` |
+| C-23 | `PONOW_OCENE` kończy się, gdy Nauczyciel właśnie podjął Weryfikację `BLAD_PRZETWARZANIA` | podjęcie zmienia `status` na `W_TRAKCIE` (bez zmiany `version`, ADR-037); zapis `PONOW_OCENE` jest warunkowy `WHERE status = 'OCZEKUJE' AND version = :v`; warunek wykonania pracy wymaga `OCZEKUJE` | wynik `PONOW_OCENE` odrzucony (E-13); Nauczyciel ocenia bez zakłóceń; brak kolizji na `UNIQUE (rozwiazanie_id, wersja)` |
 | C-24 | Równoległe Wyniki zadania wielu Uczniów dla tego samego Zadania (kalibracja Poziomu trudności) | atomowy `UPDATE kalibracja_trudnosci SET trudnosc_b = trudnosc_b − …` z `FOR UPDATE` w CTE (10.1.3); `zadanie.version` niezmieniane | brak utraconych aktualizacji; Przegląd Nauczyciela (`If-Match` Zadania) nie dostaje `412` z powodu kalibracji |
 | C-25 | Zgłoszenie błędu odczytu równolegle z rozstrzygnięciem Kontroli losowej | `SELECT rozwiazanie FOR UPDATE` w obu; zgłoszenie dopisuje powód do otwartej Weryfikacji albo — po jej zamknięciu — tworzy nową wskazującą aktualną (nową) Ocenę | brak utraty zgłoszenia; zgłoszenie dotyczy Oceny aktualnej w chwili zapisu |
 | C-26 | Korekta, gdy otwarta Kontrola losowa jest `W_TRAKCIE` u innego Nauczyciela | 9.6.3 p. 1 | `409 WERYFIKACJA_ZAJETA`; korekta możliwa po zwolnieniu lub wygaśnięciu blokady |
 | C-27 | Dwa żądania „Dalej” przy aktywnej Serii | `ux_jeden_proponowany` + `UPDATE sciezka_nauki … WHERE version = :v` w tej samej transakcji co INSERT elementu | jeden element, jeden przyrost `seria_liczba_elementow` |
-| C-28 | Zgłoszenie błędu odczytu do Weryfikacji `W_TRAKCIE`, gdy Nauczyciel właśnie wysyła rozstrzygnięcie | oba: `SELECT rozwiazanie FOR UPDATE`; zgłoszenie podnosi `weryfikacja.version`; rozstrzygnięcie wymaga `If-Match` Weryfikacji | gdy pierwsze jest zgłoszenie: rozstrzygnięcie `412` z aktualnym zasobem, blokada i szkic zachowane, Nauczyciel rozstrzyga po przejrzeniu zgłoszenia; gdy pierwsze jest rozstrzygnięcie: zgłoszenie dotyczy nowej Oceny Nauczyciela i tworzy nową Weryfikację (11.6 — limit 1 zgłoszenia na Rozwiązanie nie został jeszcze zużyty) |
+| C-28 | Zgłoszenie błędu odczytu do Weryfikacji `W_TRAKCIE`, gdy Nauczyciel właśnie wysyła rozstrzygnięcie | oba: `SELECT rozwiazanie FOR UPDATE`; zgłoszenie zmienia treść, więc trigger podnosi `weryfikacja.version` (ADR-037); rozstrzygnięcie wymaga `If-Match` Weryfikacji | gdy pierwsze jest zgłoszenie: rozstrzygnięcie `412` z aktualnym zasobem, blokada i szkic zachowane, Nauczyciel rozstrzyga po przejrzeniu zgłoszenia; gdy pierwsze jest rozstrzygnięcie: zgłoszenie dotyczy nowej Oceny Nauczyciela i tworzy nową Weryfikację (11.6 — limit 1 zgłoszenia na Rozwiązanie nie został jeszcze zużyty) |
 | C-29 | Zgłoszenie błędu odczytu równolegle z `AKTUALIZUJ_PROFIL` stosującym ten sam Wynik zadania | zawieszenie ustawia `uniewazniony_at` w transakcji z `FOR UPDATE rozwiazanie`; `AKTUALIZUJ_PROFIL` bierze `FOR UPDATE profil_ucznia` i przetwarza Wyniki z nieprzetworzonym unieważnieniem (`ix_wynik_do_profilu`) | Wynik zastosowany przed zawieszeniem zostaje cofnięty przy kolejnym przebiegu (odtworzenie); żaden Wynik nie zostaje w Profilu po zawieszeniu |
+| C-30 | Ta sama pozycja Przypisania rozwiązywana z elementu `R-PRZYPISANIE` i z listy `GET /uczniowie/ja/przypisania` (dwa urządzenia) | `trg_kontekst_proby` dziedziczy `przypisanie_id` z elementu; `ux_rozwiazanie_przypisanie` / `ux_odpowiedz_przypisanie` na (Uczeń, Przypisanie, Zadanie) | drugie żądanie: `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `id` istniejącego; jedna Weryfikacja u Nauczyciela Przypisania; klucz Zadania zamkniętego ukryty do terminu w obu drogach (C1-21) |
+| C-31 | Rozstrzygnięcie po 40 min pracy i 8 przedłużeniach blokady | przedłużenie i podjęcie nie zmieniają `version` (`trg_weryfikacja_wersja`, ADR-037); rozstrzygnięcie z `If-Match` = ETag z podjęcia | `200`; `412` wyłącznie, gdy w międzyczasie zmieniła się treść (np. zgłoszenie — C-28), z polem `zmiany_tresci` (C2-02) |
+| C-32 | Wynik zadania zatwierdzony, gdy `AKTUALIZUJ_PROFIL` tego Ucznia jest `W_TOKU` i już odczytał Wyniki | zlecenie nowej pracy nie koliduje z pracą `W_TOKU` (deduplikacja tylko `OCZEKUJE`); nowa praca czeka na `FOR UPDATE profil_ucznia`; pętla do pustego wyniku; `ZAMIATAJ_PROFILE` | Wynik zastosowany najpóźniej w kolejnym przebiegu (≤ 5 min także przy awarii); `wynik_najstarszy_niezastosowany_sekundy` > 300 → alert (C2-04) |
+| C-33 | Żądanie usunięcia konta, a następnie przywrócenie w okresie karencji | żądanie nie zmienia stanów (ADR-040); przywrócenie w jednej transakcji: `status = AKTYWNE`, Zdarzenie RODO `ANULOWANIE_USUNIECIA`, `termin_at := dodaj_dni_robocze(now(), 3)` otwartych Weryfikacji, ponowne zlecenie przerwanych prac (16.4) | zawieszone Wyniki i otwarte zgłoszenia są rozstrzygane normalnie; Kontrole losowe wracają do `π_wykonanie`; Rozwiązania z minionym terminem twardym trafiają do T-6 (C2-08) |
+| C-34 | Odtworzenie bazy z PITR do punktu sprzed żądania usunięcia konta lub odwołania zgody | Zdarzenia RODO w buckecie Object Lock zapisane **przed** transakcją; `ponow_zdarzenia_rodo` stosuje zdarzenia późniejsze niż punkt odtworzenia, zanim wystartują `worker` i `scheduler` (16.4, ADR-041) | konto wraca do `USUWANE` z pierwotnym `usuniecie_zaplanowane_at`, zgoda do `false`, kopie treningowe z `usun_po = now()`; żadna kopia nie powstaje wbrew odwołanej zgodzie (C2-09) |
+| C-35 | `PUT …/transkrypcja` (nowa wersja Poprawek) równolegle z zakończeniem `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` dla poprzedniej wersji | rezultat zapisywany `WHERE id = :transkrypcja_id` (wersja, którą sprawdzano); `OCEN_ROZWIAZANIE` czyta `zgodnosc_poprawek` **zatwierdzonej** wersji | rezultat starej wersji nie dotyczy nowej; brak rezultatu dla wersji zatwierdzonej → T-7 (C2-01) |
+| C-36 | Trzech Nauczycieli zgłasza błąd tego samego Zadania `GLOBALNY` równolegle | `ux_zgloszenie_zadania_otwarte`; po każdym `INSERT` w tej samej transakcji `UPDATE zadanie SET wstrzymane_w_doborze = true WHERE id = :id AND (SELECT count(DISTINCT nauczyciel_id) … OTWARTE) ≥ 3` z `SELECT … FROM zadanie FOR UPDATE` | wstrzymanie ustawione dokładnie raz; dobór pomija Zadanie od następnej rekomendacji (C2-03) |
 
 ---
 
@@ -4280,7 +4920,14 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 - Piaskownica SymPy i Pillow: osobne procesy, `RLIMIT_AS = 512 MiB`,
   `RLIMIT_CPU = 2 s` (SymPy) / 5 s (Pillow), brak dostępu do sieci (procesy
   uruchamiane bez zmiennych z sekretami), `parse_latex` zamiast
-  `eval`/`sympify` na danych Ucznia.
+  `eval`/`sympify` na danych Ucznia. Piaskownica istnieje w **obu**
+  procesach przetwarzających obrazy (ADR-045): w `worker` (4 procesy:
+  SymPy, maskowanie) i w `api` (`ProcessPoolExecutor` z 2 procesami na
+  replikę: normalizacja przesłanych zdjęć, limit czasu ściennego 8 s na
+  plik, `Image.MAX_IMAGE_PIXELS = 40 000 000`, odczyt nagłówka przed
+  dekodowaniem, limit 12 000 px na wymiar). Pętla zdarzeń `api` czeka na
+  wynik przez `run_in_executor`, więc dekodowanie nie blokuje obsługi
+  innych żądań; oczekiwanie na wolny proces > 5 s → `503`.
 - Sekrety (klucze API modeli, JWT, S3, `sekret_pseudonimow` dla HMAC
   pseudonimów 11.4.4) w zmiennych środowiskowych z menedżera sekretów
   dostawcy chmury; nigdy w bazie. Rotacja `sekret_pseudonimow` zmienia
@@ -4293,7 +4940,8 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 |---|---|---|---|
 | e-mail, imię, nazwisko | identyfikacyjne | umowa (regulamin, art. 6 ust. 1 lit. b RODO) | SMTP; Nauczyciele Klas Ucznia i Nauczyciel docelowy Weryfikacji |
 | Zdjęcia kartek | treść tworzona przez Ucznia (może zawierać pismo, imię) | umowa | dostawca roli `ROZPOZNAWANIE_PISMA` (A-07, retencja zero); Nauczyciele jak wyżej (oryginał); obcy weryfikator globalny — wyłącznie wersja maskowana |
-| Transkrypcje, Oceny, Profil ucznia | wyniki edukacyjne | umowa | dostawcy ról decyzyjnych i generatywnych (bez danych identyfikacyjnych w stanie); obcy weryfikator globalny — tylko Rozwiązanie objęte Weryfikacją, z pseudonimem |
+| Transkrypcje, Oceny, Profil ucznia | wyniki edukacyjne | umowa | dostawcy ról decyzyjnych i generatywnych (bez danych identyfikacyjnych w stanie — gwarantuje to Filtr danych osobowych przed zapisem Transkrypcji, ADR-042); obcy weryfikator globalny — tylko Rozwiązanie objęte Weryfikacją, z pseudonimem |
+| e-mail, imię, nazwisko Nauczyciela i Administratora | identyfikacyjne | umowa | Uczniowie Klas Nauczyciela (imię i nazwisko), Administratorzy; usuwane wg 16.4 (ADR-044) |
 | Zdjęcia w zbiorze treningowym | jw. | zgoda (`zgoda_na_trening`), odwołalna | brak |
 
 **Kolejka globalna (C1-02):** sprawdzenie Rozwiązania przez Nauczyciela
@@ -4308,7 +4956,15 @@ nazwiska.”. Weryfikatorzy globalni podpisują umowę o zachowaniu poufności
 (warunek nadania flagi, G-6).
 
 Do modeli nigdy nie są wysyłane: e-mail, imię, nazwisko, identyfikatory
-kont. Stan Jev i prompty zawierają wyłącznie treść Zadania i Transkrypcję.
+kont. Stan Jev i prompty zawierają wyłącznie treść Zadania i Transkrypcję,
+a Transkrypcja jest zapisywana dopiero po Filtrze danych osobowych (10.3.1
+p. 3a), więc imię i nazwisko z kartki nie trafiają do stanu Jev, promptów
+LLM, `WeryfikacjaSzczegoly.transkrypcje` obcego weryfikatora ani kopii
+treningowej. Jedynym wyjątkiem jest wejście roli `ROZPOZNAWANIE_PISMA`
+(zdjęcie, na którym dane mogą być widoczne) — dostawca z retencją zero
+(A-07). Skuteczność filtra mierzy G-2/G-6 (≥ 50 kartek ZT-1 z imieniem i
+nazwiskiem: 0 wystąpień danych konta w zapisanych Transkrypcjach; ≥ 98%
+obszarów danych osobowych zamaskowanych na zdjęciach).
 
 ### 16.4 Retencja i usuwanie (NFR-09)
 
@@ -4324,7 +4980,8 @@ kont. Stan Jev i prompty zawierają wyłącznie treść Zadania i Transkrypcję.
 | Szkice rozstrzygnięć | do zamknięcia Weryfikacji | kaskada / usunięcie przy `ZAKONCZONA`/`ANULOWANA` |
 | Logi aplikacyjne | 30 dni; bez treści zdjęć, Transkrypcji i haseł | konfiguracja loggera (maskowanie pól) |
 | `dziennik_audytu` | 2 lata | partycje roczne |
-| Rejestr usunięć kont (bucket `rejestr-usuniec`) | 60 dni (> okno PITR 14 dni + zapas) | S3 Object Lock w trybie COMPLIANCE |
+| Rejestr usunięć (bucket `rejestr-usuniec`): Zdarzenia RODO | 60 dni (≥ okres karencji 30 dni + okno PITR 14 dni + zapas 16 dni) | S3 Object Lock w trybie COMPLIANCE; kopia w tabeli `zdarzenie_rodo` |
+| `zdarzenie_rodo` (baza) | 2 lata (rozliczalność, art. 5 ust. 2 RODO); bez danych osobowych | `WYCZYSC_DANE_TECHNICZNE` |
 | Dane u dostawców modeli | rozpoznawanie: 0 dni; pozostałe role: ≤ 30 dni (monitorowanie nadużyć) | umowy powierzenia (A-07), weryfikowane w G-6 i przy aktywacji konfiguracji (13.1) |
 | Konta nieaktywne | 24 miesiące od `termin_egzaminu` (lub od ostatniego logowania, jeśli brak terminu) → e-mail z ostrzeżeniem → usunięcie po 30 dniach | `USUN_KONTO` |
 
@@ -4334,23 +4991,55 @@ prawdy, C1-10, C1-12):
 | Zdarzenie | `usun_po` |
 |---|---|
 | przesłanie zdjęcia | `created_at + 90 dni` |
-| Rozwiązanie → `OCENIONE` z Oceną ostateczną, bez otwartej Weryfikacji, `uczen.zgoda_na_trening = true` | jak wiersz „→ `OCENIONE`” poniżej; dodatkowo w tej samej transakcji praca `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` (kopia musi powstać przed `usun_po`) |
+| każda transakcja, po której Rozwiązanie jest `OCENIONE` bez otwartej Weryfikacji (Ocena automatyczna bez Kontroli, rozstrzygnięcie, korekta, zamknięcie ostatniej Weryfikacji, `PONOW_OCENE`), gdy `uczen.zgoda_na_trening = true` | jak wiersze „→ `OCENIONE`” i „zamknięcie ostatniej otwartej Weryfikacji” poniżej; dodatkowo w tej samej transakcji praca `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` (kopia musi powstać przed `usun_po`; C2-16) |
 | Rozwiązanie → `PORZUCONE` lub `ANULOWANE` | `now()` |
 | Rozwiązanie → `OCENIONE` bez otwartej Weryfikacji | `least(created_at + 90 dni, now() + 30 dni)` |
 | otwarcie Weryfikacji na Rozwiązaniu `OCENIONE` (Kontrola losowa, zgłoszenie) | `created_at + 90 dni` |
 | zamknięcie ostatniej otwartej Weryfikacji Rozwiązania `OCENIONE` | `least(created_at + 90 dni, now() + 30 dni)` |
 
-**Usunięcie konta** na żądanie (`DELETE /uczniowie/ja`): natychmiast
-`status = USUWANE`, `usuniecie_zaplanowane_at = now() + 30 dni`, brak
-logowania, anulowanie otwartych procesów (C-20, w tym `usun_po := now()`
-zdjęć anulowanych Rozwiązań). W okresie 30 dni Administrator może przywrócić
-konto (`POST /admin/uzytkownicy/{id}/przywrocenie`); Rozwiązania
-`ANULOWANE` pozostają anulowane. Po 30 dniach `USUN_KONTO` wykonuje w
-kolejności:
+**Usunięcie konta** na żądanie (`DELETE /uczniowie/ja`) — okres karencji
+(ADR-040, C2-08):
 
-1. zapis `{uzytkownik_id, zaplanowano_at, usunieto_at}` do bucketu
-   `rejestr-usuniec/usuniecia/{rrrr-mm-dd}/{uzytkownik_id}.json`
-   (Object Lock COMPLIANCE, 60 dni) — **przed** zmianą w bazie;
+1. `api` zapisuje Zdarzenie RODO `ZADANIE_USUNIECIA` do bucketu
+   `rejestr-usuniec/zdarzenia/{rrrr-mm-dd}/{uzytkownik_id}/{id}.json`
+   (Object Lock COMPLIANCE, 60 dni; `{id, uzytkownik_id, typ, created_at,
+   dane: {usuniecie_zaplanowane_at}}`), a **potem** w jednej transakcji:
+   `status = USUWANE`, `usuniecie_zaplanowane_at = now() + 30 dni`, wiersz
+   `zdarzenie_rodo`, unieważnienie refresh tokenów (brak logowania).
+   Niedostępny bucket → `503`, nic nie zapisano (E-36).
+2. Procesy **nie są anulowane**, tylko wstrzymane: Rozwiązania i
+   Weryfikacje zachowują stany, handlery prac w tle kończą się z
+   `KONTO_USUWANE`, Weryfikacje znikają z Kolejki weryfikacji, kopie
+   treningowe nie powstają, zdjęcia zachowują swoje `usun_po` (≤ 90 dni od
+   przesłania; usunięcie wszystkich w kroku 4 `USUN_KONTO`). Kontrole
+   losowe kont `USUWANE` są pomijane w liczniku i mianowniku
+   `wykonanie_kontroli_30d` i `π_wykonanie` (11.5.3).
+
+**Przywrócenie** w okresie karencji (`POST
+/admin/uzytkownicy/{id}/przywrocenie`): zapis Zdarzenia RODO
+`ANULOWANIE_USUNIECIA` do bucketu, potem jedna transakcja:
+
+| Element | Działanie przy przywróceniu |
+|---|---|
+| konto | `status = AKTYWNE`, `usuniecie_zaplanowane_at = NULL`, wiersz `zdarzenie_rodo` |
+| otwarte Weryfikacje (`OCZEKUJE`; `W_TRAKCIE` z wygasłą blokadą) | wracają do Kolejki weryfikacji, `termin_at := dodaj_dni_robocze(now(), 3)` (SLA wstrzymany przez karencję); zgłoszenia błędu odczytu i zawieszone Wyniki zadania pozostają i są rozstrzygane normalnie (limit „1 zgłoszenie na Rozwiązanie” nie jest zwracany, bo zgłoszenie nadal trwa) |
+| Rozwiązania `PRZESLANE`/`ROZPOZNAWANIE` | nowa praca `ROZPOZNAJ_PISMO` (`ponowienie_nr + 1`, `przeslano_at := now()`), o ile zdjęcia istnieją; w przeciwnym razie `PORZUCONE` |
+| Rozwiązania `TRANSKRYPCJA_GOTOWA`/`BLAD_ROZPOZNAWANIA` | `updated_at := now()` (pełne 7 dni do `PORZUC_NIEZATWIERDZONE`) |
+| Rozwiązania `ZATWIERDZONE`/`OCENIANIE` | nowa praca `OCEN_ROZWIAZANIE`; termin twardy (120 s od `zatwierdzono_at`) jest już miniony, więc handler od razu wykonuje T-6 (Weryfikacja `BLAD_PRZETWARZANIA` + `PONOW_OCENE`) |
+| Rozwiązania `OCZEKUJE_NA_WERYFIKACJE` z Oceną wstępną | bez zmian; Wynik zadania z wagą 0,5 pozostaje w Profilu do rozstrzygnięcia |
+| Wyniki zadania | bez zmian; praca `AKTUALIZUJ_PROFIL` dla Ucznia |
+| Kontrole losowe | wracają do `π_wykonanie` z nowym `termin_at` |
+
+Po 30 dniach `USUN_KONTO` wykonuje w kolejności:
+
+0. anulowanie procesów w jednej transakcji: Weryfikacje otwarte →
+   `ANULOWANA` (`USUNIECIE_KONTA`), Rozwiązania nieterminalne →
+   `ANULOWANE` (worker, który pobrał pracę wcześniej, zastaje stan
+   terminalny, C-20);
+1. zapis Zdarzenia RODO `USUNIECIE_WYKONANE` (`{uzytkownik_id,
+   zaplanowano_at, usunieto_at}`) do bucketu
+   `rejestr-usuniec/zdarzenia/{rrrr-mm-dd}/{uzytkownik_id}/{id}.json`
+   (Object Lock COMPLIANCE, 60 dni) — **przed** dalszymi zmianami w bazie;
 2. `UPDATE decyzja_modelu SET stan = NULL, uczen_id = NULL, rozwiazanie_id
    = NULL WHERE uczen_id = :id` (wszystkie partycje; indeks
    `ix_decyzja_uczen`);
@@ -4366,13 +5055,73 @@ kolejności:
 6. wpis `dziennik_audytu` (`KONTO_USUNIETE`, `uzytkownik_id` bez danych
    osobowych).
 
+**Odwołanie i udzielenie zgody na trening** (`PATCH /uczniowie/ja` z
+`zgoda_na_trening`): przed transakcją `api` zapisuje do bucketu Zdarzenie
+RODO `ODWOLANIE_ZGODY` albo `UDZIELENIE_ZGODY`; transakcja zmienia
+`uczen.zgoda_na_trening`, zapisuje `zdarzenie_rodo` i (odwołanie) ustawia
+`kopia_treningowa.usun_po := now()`.
+
 **Kopie zapasowe PostgreSQL** (PITR 14 dni) zawierają usunięte dane do czasu
-rotacji — opisane w polityce prywatności. Po odtworzeniu bazy z kopii skrypt
-`ponow_usuniecia` czyta rejestr usunięć **z bucketu `rejestr-usuniec`**
-(poza odtwarzaną bazą, więc odtworzenie nie kasuje rejestru) i ponownie
-wykonuje `USUN_KONTO` dla wszystkich wpisów z `usunieto_at` późniejszym niż
-punkt odtworzenia. Uruchomienie skryptu jest obowiązkowym krokiem procedury
-odtworzenia (runbook) i jest testowane w G-6.
+rotacji — opisane w polityce prywatności. Rejestr usunięć zawiera **wszystkie
+Zdarzenia RODO** (ADR-041, C2-09), nie tylko wykonane usunięcia. Procedura
+odtworzenia (runbook, testowana w G-6):
+
+1. odtworzenie bazy do punktu `T`; procesy `worker` i `scheduler` **nie są
+   uruchamiane** (żadna praca w tle, w tym `KOPIUJ_DO_ZBIORU_TRENINGOWEGO`,
+   nie może działać na stanie sprzed zdarzeń), `api` działa w trybie
+   konserwacji (`503`);
+2. skrypt `ponow_zdarzenia_rodo` czyta z bucketu `rejestr-usuniec` (poza
+   odtwarzaną bazą) zdarzenia z `created_at > T − 5 min` (zakładka na
+   rozbieżność zegarów), pomija zdarzenia unieważnione obiektem
+   kompensującym `UNIEWAZNIENIE` (`UZGODNIJ_REJESTR_RODO`) oraz zdarzenia,
+   których `id` już jest w `zdarzenie_rodo`, i stosuje pozostałe
+   chronologicznie, idempotentnie: `ZADANIE_USUNIECIA` → `status =
+   USUWANE`, `usuniecie_zaplanowane_at` z danych zdarzenia (pierwotny
+   termin, nie przesunięty); `ANULOWANIE_USUNIECIA` → przywrócenie (tabela
+   wyżej); `USUNIECIE_WYKONANE` → `USUN_KONTO` od kroku 0; `ODWOLANIE_ZGODY`
+   → `zgoda_na_trening = false` i `usun_po := now()` kopii;
+   `UDZIELENIE_ZGODY` → `zgoda_na_trening = true`; każde zastosowanie
+   zapisuje wiersz `zdarzenie_rodo` z tym samym `id`;
+3. dopiero po zakończeniu skryptu startują `worker` i `scheduler`.
+
+Zdarzenie zapisane w buckecie, którego transakcja się nie powiodła (np.
+awaria bazy po zapisie obiektu), jest w ciągu 10 min unieważniane przez
+`UZGODNIJ_REJESTR_RODO` obiektem kompensującym. Gdy odtworzenie nastąpi w
+oknie przed unieważnieniem, takie zdarzenie zostanie zastosowane — w
+kierunku ochrony danych (usunięcie wstrzymane z karencją 30 dni i
+możliwością przywrócenia, odwołanie zgody), co jest akceptowanym skutkiem
+ubocznym (Z-3).
+
+**Usunięcie konta Nauczyciela lub Administratora (ADR-044, C2-14):**
+żądanie `DELETE /nauczyciele/ja` albo `POST
+/admin/uzytkownicy/{id}/usuniecie` (Administrator; ostatniego aktywnego
+Administratora nie można usunąć — `409 OSTATNI_ADMINISTRATOR`) zapisuje
+Zdarzenie RODO i ustawia `USUWANE` z karencją 30 dni. Natychmiast: blokady
+`W_TRAKCIE` tego Nauczyciela są zwalniane (szkice usuwane), flagi
+`weryfikator_globalny` i `recenzent_tresci` zdejmowane, jego Weryfikacje
+`KLASA` eskalowane do `GLOBALNA` (11.4.3 p. 1), a Administratorzy dostają
+`KLASA_DO_PRZEKAZANIA` dla każdej niezarchiwizowanej Klasy. Przekazanie
+Klasy (`POST /admin/klasy/{id}/przekazanie`) przenosi na nowego
+Nauczyciela Klasę, jej otwarte Przypisania i ich Zestawy zadań, Zadania
+`PRYWATNY` użyte w tych Przypisaniach (`autor_id`) oraz otwarte Weryfikacje
+`KLASA` (`nauczyciel_docelowy_id`). Po 30 dniach `USUN_KONTO`:
+(1) Zdarzenie RODO `USUNIECIE_WYKONANE`; (2) Klasy nieprzekazane →
+`zarchiwizowana = true`, a ich Przypisania z `termin > now()` → `termin :=
+now()` (zamknięte); Zadania `PRYWATNY` autora nieprzekazane → `WYCOFANE`;
+(3) pseudonimizacja tekstów z danymi Nauczyciela: `rekomendacja.uzasadnienie`
+i `uzasadnienie_fakty` reguły `R-PRZYPISANIE` — imię i nazwisko zastępowane
+tekstem „nauczyciel (konto usunięte)”; (4) `DELETE FROM uzytkownik` —
+klucze obce `klasa.nauczyciel_id`, `zestaw_zadan.nauczyciel_id`,
+`przypisanie.nauczyciel_id`, `ocena.nauczyciel_id`,
+`weryfikacja.nauczyciel_docelowy_id`/`podjeta_przez`,
+`zgloszenie_bledu_zadania.nauczyciel_id`, `zadanie.autor_id`,
+`import_arkusza.administrator_id`, `przeglad_zadania.autor_przegladu_id`,
+`konfiguracja_modelu.utworzona_przez`, `prog_pewnosci.utworzony_przez`
+przyjmują `NULL` (`ON DELETE SET NULL`), `nauczyciel` i `szkic_rozstrzygniecia`
+— kaskada; Oceny Nauczyciela zachowują `zrodlo = NAUCZYCIEL` bez wskazania
+osoby; (5) `dziennik_audytu` zachowuje `uzytkownik_id` (UUID bez danych
+osobowych, niepowiązany już z kontem — pseudonim) przez 2 lata ze względu na
+rozliczalność.
 
 **Magazyn obiektów:** buckety `zdjecia` i `zdjecia-maskowane` mają
 **wyłączone wersjonowanie**, więc `DELETE` usuwa obiekt trwale; reguła
@@ -4394,15 +5143,15 @@ przenoszenia danych.
 
 | NFR | Mechanizm | Miara / weryfikacja |
 |---|---|---|
-| NFR-01 (≤ 30 s) | Interpretacja A-11 (do akceptacji w G-0): **czas systemowy** `czas_systemowy_ms = (transkrypcja_gotowa_at − przeslano_at) + (ocena_wystawiona_at − zatwierdzono_at)`; budżet 17.2; osobne pule workera; termin miękki skracający timeouty; Wskazówka poza ścieżką krytyczną (ADR-025); termin twardy 120 s | histogram `ocena_czas_systemowy_sekundy{model}`; SLO miesięczne: ≥ 99% Rozwiązań z `czas_systemowy_ms ≤ 28 000` (czas widoczny z odpytywaniem ≤ 30 s), p95 ≤ 20 s (Jev) / ≤ 23 s (model zapasowy); **T-6 i `BLAD_ROZPOZNAWANIA` z kodem `BLAD_DOSTAWCY`/`PRZEKROCZONY_CZAS` liczą się jako naruszenie**; `odsetek_t6 ≤ 0,2%`; metryka informacyjna end-to-end `czas_od_przeslania_do_oceny_widocznej_sekundy` (z czasem Ucznia na sprawdzenie Transkrypcji) |
+| NFR-01 (≤ 30 s) | Interpretacja A-11 (do akceptacji w G-0): **czas systemowy** `czas_systemowy_ms = (transkrypcja_gotowa_at − przeslano_at) + (ocena_wystawiona_at − zatwierdzono_at)`; budżet 17.2; osobne pule workera; termin miękki `max(10 s, 28 s − t_R)` skracający timeouty; globalny ogranicznik szybkości Jev (ADR-039); Wskazówka poza ścieżką krytyczną (ADR-025); termin twardy 120 s | histogram `ocena_czas_systemowy_sekundy{model}`; SLO miesięczne: ≥ 99% Rozwiązań z `czas_systemowy_ms ≤ 28 000` (czas widoczny z odpytywaniem ≤ 30 s), p95 ≤ 20 s (Jev) / ≤ 23 s (model zapasowy); **T-6 i `BLAD_ROZPOZNAWANIA` z kodem `BLAD_DOSTAWCY`/`PRZEKROCZONY_CZAS` liczą się jako naruszenie**; `odsetek_t6 ≤ 0,2%`; metryka informacyjna end-to-end `czas_od_przeslania_do_oceny_widocznej_sekundy` (z czasem Ucznia na sprawdzenie Transkrypcji) |
 | NFR-02 (≥ 90% zgodności) | Zgodność Oceny (ADR-027: punkty + pierwszy błędny krok + brakujący krok); bramka G-1 na Transkrypcjach referencyjnych ZT-1 i G-2 end-to-end; online: Próbki kalibracyjne z produkcji (z definicji end-to-end: zdjęcie → Transkrypcja zatwierdzona → Ocena), ważone IPW dla populacji progu oraz nieważone dla wszystkich źródeł | `zgodnosc_z_nauczycielem_30d{model,rodzaj}`; alert < 0,90; raport `/admin/kalibracja` |
-| NFR-03 (≤ 2% błędnych auto) | Próg z górną granicą Wilsona ≤ 2% przy `n_eff ≥ 189` (11.5.3), kalibracja out-of-fold, Kontrola losowa z terminem 72 h, reguły nadzoru braków danych, bezpiecznik | `blad_automatycznych_30d`, `gorna_granica_bledu_30d`, `wykonanie_kontroli_30d` |
+| NFR-03 (≤ 2% błędnych auto) | Próg z górną granicą Wilsona ≤ 2% przy `n_eff ≥ 189` (11.5.3), kalibracja out-of-fold, Kontrola losowa z terminem 3 dni roboczych, reguły nadzoru braków danych, bezpiecznik | `blad_automatycznych_30d`, `gorna_granica_bledu_30d`, `wykonanie_kontroli_30d` |
 | NFR-04 (kalibracja) | Kalibrator izotoniczny per (model, rodzaj) dopasowany 5-krotną walidacją krzyżową; cel: prawdopodobieństwo Zgodności Oceny; ECE na wartościach out-of-fold; wykres niezawodności | ECE ≤ 0.03 (alert > 0.05) |
 | NFR-05 (wyjaśnialność) | `decyzja_modelu` dla każdego pytania (rozkład), `ocena_kryterium.prawdopodobienstwo`, `ocena.uzasadnienie` (11.7, eksponowane w `OcenaWyjscie`), Wskazówka generowana z decyzji; `rekomendacja.cechy/decyzja/uzasadnienie_fakty` i szablon dla każdej reguły | test: każda Ocena automatyczna ma ≥ 1 rekord `decyzja_modelu` i niepuste `uzasadnienie`; każda Rekomendacja ma niepuste `uzasadnienie`; test pokrycia szablonów wszystkich wartości `regula` |
 | NFR-06 (wymienność modeli) | Porty 13.1 (`PlanPytan` niezależny od modelu), rejestr adapterów, `konfiguracja_modelu`, `import-linter` | zmiana dostawcy = konfiguracja + ewaluacja ZT-1 |
 | NFR-07 (model zapasowy) | Circuit breaker + `ZapasowyLlmAdapter` wykonujący cały plan jednym wywołaniem, z osobnym kalibratorem i progiem; reguła ponowienia Jev zależna od zapasu czasu | G-4 (trzy scenariusze awarii) |
 | NFR-08 (telefon i komputer, aparat) | PWA responsywna (breakpointy 360/768/1280 px), `capture="environment"`, kompresja w kliencie | testy E2E Playwright na profilach iPhone 13, Pixel 7, Desktop Chrome |
-| NFR-09 (RODO, usuwanie zdjęć) | 16.3, 16.4: `usun_po` jako jedyne źródło prawdy, `decyzja_modelu.uczen_id`, rejestr usunięć poza bazą, wyłączone wersjonowanie bucketów, retencja u dostawców | metryka `zdjecia_zalegle = 0`; test `ponow_usuniecia` (G-6) |
+| NFR-09 (RODO, usuwanie zdjęć) | 16.3, 16.4: `usun_po` jako jedyne źródło prawdy, `decyzja_modelu.uczen_id`, rejestr Zdarzeń RODO poza bazą (ADR-041), okres karencji z wstrzymaniem procesów (ADR-040), Filtr danych osobowych w Transkrypcji (ADR-042), usuwanie kont wszystkich ról (ADR-044), wyłączone wersjonowanie bucketów, retencja u dostawców | metryki `zdjecia_zalegle = 0`, `dane_osobowe_w_transkrypcji_total`; test `ponow_zdarzenia_rodo` (G-6, trzy scenariusze) |
 | NFR-10 (język polski) | i18n `pl-PL` jako jedyny język, komunikaty błędów API po polsku, format dat `dd.MM.yyyy`, liczby z przecinkiem | lint: brak literałów UI poza plikami tłumaczeń |
 
 ### 17.2 Budżet czasowy (NFR-01)
@@ -4412,7 +5161,7 @@ widocznej):
 
 | Etap | Limit | Cel p95 |
 |---|---|---|
-| Normalizacja zdjęć, zapis S3, transakcja (`przeslano_at` = przyjęcie żądania) | — | 1.5 s |
+| Normalizacja zdjęć (piaskownica `api`, 2 procesy na replikę; ≈ 80 ms na zdjęcie JPEG z kompresji klienta, ≈ 400 ms na HEIC 12 Mpx), zapis S3, transakcja (`przeslano_at` = przyjęcie żądania) | 8 s na plik | 1.5 s |
 | Oczekiwanie w puli `ROZPOZNAWANIE` (poza szczytem) | — | 0.5 s |
 | Wywołanie modelu rozpoznającego | 14 s | 9 s |
 | Post-processing, maskowanie, zapis | — | 0.5 s |
@@ -4420,43 +5169,52 @@ widocznej):
 | **Razem `t_R`** (serwerowo / widocznie dla Ucznia) | | **≈ 11.5 s / ≈ 12.5 s** |
 
 **Faza O — ocena** (`t_O`, od `zatwierdzono_at` do Oceny widocznej;
-termin miękki = `max(10 s, 30 s − t_R)`):
+termin miękki = `max(10 s, 28 s − t_R)`):
 
 | Etap | Limit | Cel p95 |
 |---|---|---|
 | Zapis zatwierdzenia + oczekiwanie w puli `OCENIANIE` | — | 0.6 s |
 | Wczytanie danych | — | 0.1 s |
 | SymPy (wszystkie pary + wynik) | 3 s łącznie, 2 s CPU na parę | 1.5 s |
-| Model decyzyjny — Jev (2 rundy, ≤ 2 fale po 8 wywołań) | 2 s na wywołanie | 3.2 s |
+| Model decyzyjny — Jev, tryb wsadowy (2 rundy = 2 żądania, A-01) | 2 s na żądanie | 1.6 s |
+| Model decyzyjny — Jev, tryb pojedynczy (2 rundy = ≤ 3 fale po ≤ 16 wywołań, 10.4.3; p95 fali 1.2 s) — **wartość przyjęta w budżecie** | 2 s na wywołanie | 3.6 s |
+| Oczekiwanie na przydział globalnego ogranicznika (szczyt „koniec lekcji”) | do `termin_miekki − 11 s` | 0 s poza szczytem, ≤ 1 s w szczycie |
+| Sprawdzenie zgodności poprawek (tylko Transkrypcje z Poprawkami; startuje przy `PUT …/transkrypcja`, równolegle z SymPy i Jev) | ≤ 6 s oczekiwania po zatwierdzeniu | 0 s (gotowe przed zatwierdzeniem w > 95% przypadków; inaczej mieści się w czasie SymPy + Jev) |
 | Model decyzyjny — zapasowy (1 wywołanie) | 9 s | 6.5 s |
 | Reguły, zapis wyniku | — | 0.2 s |
 | Odpytywanie klienta | interwał 1 s | +1 s |
-| **Razem `t_O` serwerowo (Jev / zapasowy)** | | **≈ 5.6 s / ≈ 8.9 s** |
-| **Razem `t_O` widocznie (Jev / zapasowy)** | | **≈ 6.6 s / ≈ 9.9 s** |
+| **Razem `t_O` serwerowo (Jev pojedynczy / Jev wsadowy / zapasowy)** | | **≈ 6.0 s / ≈ 4.0 s / ≈ 8.9 s** |
+| **Razem `t_O` widocznie (Jev pojedynczy / Jev wsadowy / zapasowy)** | | **≈ 7.0 s / ≈ 5.0 s / ≈ 9.9 s** |
 | Agent wyjaśniający (asynchronicznie, poza `t_O`) | 8 s | 5 s |
 
-**Czas systemowy (serwerowy, `czas_systemowy_ms`) p95 ≈ 17 s (Jev) /
-≈ 20.4 s (model zapasowy); czas widoczny dla Ucznia jest dłuższy o ≤ 2 s
+**Czas systemowy (serwerowy, `czas_systemowy_ms`) p95 ≈ 17.5 s (Jev, tryb
+pojedynczy; 15.5 s w trybie wsadowym) / ≈ 20.4 s (model zapasowy); czas
+widoczny dla Ucznia jest dłuższy o ≤ 2 s
 (odpytywanie co 1 s w każdej fazie).** Suma p95 faz jest oszacowaniem
 górnym. Dlatego SLO dla metryki serwerowej ma 2 s zapasu: ≥ 99% Rozwiązań z
 `czas_systemowy_ms ≤ 28 000` oznacza czas widoczny ≤ 30 s.
 
-**Najgorsze przypadki z przełączeniem w trakcie Oceny (C1-07)** —
-reguła: ponowienie nieudanych pytań Jev tylko, gdy do terminu miękkiego
-zostało ≥ 13 s (ponowienie 2 s + model zapasowy 9 s + zapas 2 s):
+**Najgorsze przypadki z przełączeniem w trakcie Oceny (C1-07, przeliczone
+w wersji 2.2 dla C2-07)** — reguła: ponowienie nieudanych pytań Jev tylko,
+gdy do terminu miękkiego zostało ≥ 13 s (ponowienie 2 s + model zapasowy
+9 s + zapas 2 s); Jev w trybie pojedynczym (3 fale, najgorszy przypadek
+A-01); model zapasowy z timeoutem `min(9 s, termin − teraz)`, a gdy
+pozostało < 6 s — 9 s (13.2).
 
 Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
-`max(10 s, 30 s − t_R)`.
+`max(10 s, 28 s − t_R)`.
 
 | # | Scenariusz | Przebieg fazy O (s) | `t_O` | `t_R` | Czas systemowy | Ocena względem SLO (≤ 28 s) |
 |---|---|---|---|---|---|---|
-| S-1 | Obwód zamknięty, Jev: timeout od pierwszego wywołania | 0.6 + 0.1 + 1.5 + 2 (timeout; do terminu 18.5 − 4.2 = 14.3 s ≥ 13 s) + 2 (ponowienie, timeout) + 9 (zapasowy, pełny timeout) + 0.2 | 15.4 s | 11.5 s | 26.9 s | spełnione |
-| S-2 | Jev: runda 1 OK, timeout w rundzie 2 | 0.6 + 0.1 + 1.5 + 1.6 + 2 (timeout; zostało 12.7 s < 13 s → bez ponowienia) + 9 + 0.2 | 15.0 s | 11.5 s | 26.5 s | spełnione |
-| S-3 | Jak S-1, rozpoznanie trwające pełny timeout 14 s | termin miękki 13.5 s; po timeout Jev zostało 9.3 s → bez ponowienia: 0.6 + 0.1 + 1.5 + 2 + 9 + 0.2 | 13.4 s | 16.5 s | 29.9 s | naruszenie (widocznie ≤ 31.9 s) tylko, gdy model zapasowy trwa pełne 9 s; łączne prawdopodobieństwo < 0,05% — w granicy 1% SLO |
+| S-1 | Obwód zamknięty, Jev: timeout od pierwszej fali (`t_R` = 11.5 s, termin miękki 16.5 s) | 0.6 + 0.1 + 1.5 + 2 (timeout; zostało 16.5 − 4.2 = 12.3 s < 13 s → bez ponowienia) + 9 (zapasowy, pełny timeout) + 0.2 | 13.4 s | 11.5 s | 24.9 s | spełnione |
+| S-1b | Jak S-1, ale szybkie rozpoznanie (`t_R` = 9 s, termin miękki 19 s) | 0.6 + 0.1 + 1.5 + 2 (timeout; zostało 14.8 s ≥ 13 s) + 2 (ponowienie, timeout) + 9 + 0.2 | 15.4 s | 9 s | 24.4 s | spełnione |
+| S-2 | Jev (tryb pojedynczy): runda 1 OK w 2 falach, timeout w rundzie 2 | 0.6 + 0.1 + 1.5 + 2.4 (2 fale) + 2 (timeout; zostało 9.9 s → bez ponowienia) + 9 + 0.2 | 15.8 s | 11.5 s | 27.3 s | spełnione |
+| S-2b | Jev (tryb pojedynczy): timeout w 2. fali rundy 1 | 0.6 + 0.1 + 1.5 + 1.2 + 2 (timeout; zostało 11.1 s → bez ponowienia) + 9 + 0.2 | 14.6 s | 11.5 s | 26.1 s | spełnione |
+| S-3 | Jak S-1, rozpoznanie trwające pełny timeout 14 s (`t_R` = 16.5 s, termin miękki 11.5 s) | po timeoutcie Jev zostało 7.3 s → model zapasowy z timeoutem 7.3 s; przebieg p95: 0.6 + 0.1 + 1.5 + 2 + 6.5 + 0.2 = 10.9 s; gdy model zapasowy przekroczy 7.3 s, praca jest ponawiana (0.5 s): Jev ponownie 2 s (timeout), model zapasowy 9 s (pozostało < 6 s) → t_O ≈ 25 s | 10.9 s (≈ 25 s) | 16.5 s | 27.4 s (≈ 41.5 s) | p95 spełnione; wariant z przekroczeniem — naruszenie, łączne prawdopodobieństwo < 0,05% (w granicy 1% SLO) |
 | S-4 | Obwód otwarty (praca ciągła na modelu zapasowym) | 0.6 + 0.1 + 1.5 + 6.5 + 0.2 | 8.9 s | 11.5 s | 20.4 s | spełnione |
 | S-5 | Oba modele decyzyjne niedostępne | ponowienia do 120 s → T-6 | — | — | — | naruszenie; Ocena później przez `PONOW_OCENE` |
-| S-6 | „Koniec lekcji”: 90 przesłań w 60 s (A-03) | Jev: 0.6 + 0.1 + 1.5 + 3.2 + 0.2; pula R 30 korutyn, średni czas 7 s — przy 45 przesłaniach w 10 s ostatnie czekają ≤ 7 s | 5.6 s | ≤ 18.5 s | ≤ 24.1 s | spełnione |
-| S-7 | Rozpoznanie: 1. próba kończy się timeoutem 14 s, 2. próba udana (p95 9 s) | faza R: 1.5 + 0.5 + 14 + 1 (odstęp) + 9 + 0.5 = 26.5 s; faza O z terminem miękkim `max(10, 30 − 26.5)` = 10 s: 0.6 + 0.1 + 1.5 + 3.2 + 0.2 | 5.6 s | 26.5 s | 32.1 s | **naruszenie** (liczone w SLO); dopuszczalne wyłącznie dzięki wymaganiu A-08 (≤ 0,3% wywołań rozpoznawania z błędem lub timeoutem). Budżet 1% SLO: S-7 ≤ 0,3% + S-3 < 0,05% + T-6 ≤ 0,2% + ogon rozkładu czasu normalnej pracy ≤ 0,45% |
+| S-6 | „Koniec lekcji”: 90 przesłań w 60 s (A-03), Jev w trybie pojedynczym, szczyt 44 żądań/s przy przydziale workerów 36.4/s (ADR-039) | Jev: 0.6 + 0.1 + 1.5 + 1 (oczekiwanie na przydział) + 3.6 + 0.2; pula R 30 korutyn, średni czas 7 s — przy 45 przesłaniach w 10 s ostatnie czekają ≤ 7 s | 7.0 s | ≤ 18.5 s | ≤ 25.5 s | spełnione; Oceny bez przydziału przed `termin_miekki − 11 s` → model zapasowy (S-4, 20.4 s) |
+| S-7 | Rozpoznanie: 1. próba kończy się timeoutem 14 s, 2. próba udana (p95 9 s) | faza R: 1.5 + 0.5 + 14 + 1 (odstęp) + 9 + 0.5 = 26.5 s; faza O z terminem miękkim `max(10, 28 − 26.5)` = 10 s: 0.6 + 0.1 + 1.5 + 3.6 + 0.2 | 6.0 s | 26.5 s | 32.5 s | **naruszenie** (liczone w SLO); dopuszczalne wyłącznie dzięki wymaganiu A-08 (≤ 0,3% wywołań rozpoznawania z błędem lub timeoutem). Budżet 1% SLO: S-7 ≤ 0,3% + S-3 < 0,05% + T-6 ≤ 0,2% + ogon rozkładu czasu normalnej pracy ≤ 0,45% |
 
 ### 17.3 Obserwowalność
 
@@ -4476,14 +5234,28 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
   `pojemnosc_globalna_min`, `zdjecia_zalegle`,
   `wskazowka_szablon_total{powod}`, `wskazowka_opoznienie_sekundy`,
   `generowanie_walidacja_total{rezultat,sprawdzenie}`,
-  `koszt_modeli_pln_total{rola,systemowe}`, `brak_wkladki_total{umiejetnosc}`.
+  `koszt_modeli_pln_total{rola,systemowe}`, `brak_wkladki_total{umiejetnosc}`;
+  od wersji 2.2: `odsetek_rozwiazan_z_poprawkami_30d`,
+  `poprawki_niezgodne_total`, `sprawdzenie_poprawek_brak_total`,
+  `blad_automatycznych_z_poprawkami_30d`, `jev_zadania_http_total{tryb}`,
+  `jev_ograniczenie_lokalne_total`, `jev_429_total`,
+  `przydzial_ogranicznika{proces}`, `wynik_najstarszy_niezastosowany_sekundy`,
+  `odsetek_eskalacji_7d{nauczyciel}`, `naplyw_eskalacji_min_7d`,
+  `zaleglosc_globalna_min{zrodlo}`, `zgloszenia_zadan_otwarte`,
+  `zgloszenia_zadan_po_sla`, `dane_osobowe_w_transkrypcji_total{zrodlo}`,
+  `zdarzenia_rodo_total{typ}`, `zdarzenia_rodo_uniewaznione_total`,
+  `normalizacja_oczekiwanie_sekundy`, `pula_diagnostyczna_braki`.
 - **Alerty**: p95 `ocena_czas_systemowy_sekundy` > 20 s (10 min), odsetek
   > 28 s powyżej 1% (1 h), `odsetek_t6 > 0,2%` (24 h), obwód Jev otwarty
   > 15 min, `praca_w_tle_martwe_total` przyrost > 0 dla `OCEN_ROZWIAZANIE`,
   `zdjecia_zalegle > 0`, `ALERT_KALIBRACJI`, `ALERT_WERYFIKACJE`
   (Weryfikacje po SLA, pusta pula globalna, kontrola przyjęć aktywna),
   `wykonanie_kontroli_30d < 0,90`, `bledy_odczytu_niewykryte_30d > 2%`,
-  koszt generowania systemowego ≥ 80% budżetu dziennego.
+  koszt generowania systemowego ≥ 80% budżetu dziennego,
+  `wynik_najstarszy_niezastosowany_sekundy > 300`, `odsetek_eskalacji_7d >
+  0,10` (globalnie), `jev_ograniczenie_lokalne_total` > 5% Ocen w 15 min,
+  `zdarzenia_rodo_uniewaznione_total` przyrost > 0 (`ALERT_RODO`),
+  `pula_diagnostyczna_braki > 0`.
 - **Logi**: JSON, pola `trace_id`, `uzytkownik_id` (UUID, nie e-mail),
   `rozwiazanie_id`; maskowanie pól `haslo`, `tresc_md`, `latex`, `tekst`.
 
@@ -4491,8 +5263,9 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
 
 | Zasób | Szacunek | Zapas |
 |---|---|---|
-| Wywołania Jev — szczyt wieczorny | 300 Ocen/h × 29 = 8 700/h ≈ 2.4/s | semafor 64 na proces |
-| Wywołania Jev — „koniec lekcji” | 90 Ocen w ~120 s × 29 ≈ 22/s, chwilowo do 44/s | limit A-01 ≥ 50/s; przy niższym limicie część Ocen przez model zapasowy (S-4) |
+| Żądania Jev — szczyt wieczorny | tryb pojedynczy: 300 Ocen/h × 29 = 8 700/h ≈ 2.4/s; tryb wsadowy: 600/h ≈ 0.2/s | globalny ogranicznik: 0,8 × 50 = 40/s (ADR-039) |
+| Żądania Jev — „koniec lekcji” | tryb pojedynczy: 90 Ocen w ~120 s × 29 ≈ 22/s, chwilowo do 44/s; tryb wsadowy: ≤ 3/s | przydział: worker 18.2/s × 2, `api` 1.8/s × 2 (wagi 1.0 / 0.1); nadmiar ponad 36.4/s czeka ≤ `termin_miekki − 11 s`, potem model zapasowy bez otwierania obwodu (E-33) |
+| Piaskownica normalizacji w `api` | szczyt: 90 przesłań × ≤ 3 zdjęcia w 60 s ≈ 4.5 zdjęcia/s × 80 ms ≈ 0.36 s CPU/s | 4 procesy (2 repliki × 2) — wykorzystanie ≈ 9%; HEIC bez kompresji klienta (400 ms) — ≈ 45% |
 | Pula `ROZPOZNAWANIE` | 30 korutyn; 90 przesłań/60 s przy średnim czasie 7 s → średnio 10.5 zajętych | 2.9× w szczycie lekcji; skalowanie: 3. replika workera |
 | Pula `OCENIANIE` | 30 korutyn; ≈ 4 s na Ocenę (Jev) → ≈ 7.5 Ocen/s | ≥ 30 jednoczesnych ocen (A-03) |
 | Dostawca rozpoznawania | 90 żądań/min w szczycie lekcji | limit A-08 ≥ 120/min |
@@ -4542,14 +5315,14 @@ flowchart LR
 
 | Bramka | Warunek |
 |---|---|
-| G-0 | **Akceptacja właściciela produktu i właścicieli słownika:** PZS-1 (3.4); interpretacja NFR-01 (A-11); założenie A-12; rozszerzenia względem wymagań: powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu (ADR-022); kolejka globalna z pseudonimizacją i kontrolą przyjęć (ADR-021, ADR-031); brak wpisu ręcznego (ADR-024); tryb pełnej weryfikacji, jeśli G-1(b) nie jest spełnione; zatwierdzanie kont Nauczycieli przez Administratora; **(2.1)** rekrutacja i finansowanie Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy (A-14, ADR-034); zawieszenie Wyniku zadania na czas Zgłoszenia błędu odczytu (11.6); rozstrzyganie na korzyść Ucznia po usunięciu zdjęć (11.4.3 p. 3); kopie treningowe za zgodą (ADR-035). Akceptacja zapisana jako podpisany wpis w `docs/` (decyzja produktowa z datą). |
-| G-1 | ZT-1 (A-09: ≥ 700 obliczeniowych, ≥ 250 z dowodem), Transkrypcje referencyjne: (a) Zgodność Oceny (ADR-027) ≥ 90% i dolna granica Wilsona 95% ≥ 87,5% — dla Jev **i** modelu zapasowego, osobno dla każdego rodzaju zadania otwartego (NFR-02); (b) próg z 11.5.3 (wartości out-of-fold) z UB błędu auto ≤ 2% i `n_eff ≥ 189` — albo tryb pełnej weryfikacji zaakceptowany w G-0; (c) ECE ≤ 0.05 |
-| G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję) |
+| G-0 | **Akceptacja właściciela produktu i właścicieli słownika:** PZS-1 (3.4); interpretacja NFR-01 (A-11); założenie A-12; rozszerzenia względem wymagań: powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu (ADR-022); kolejka globalna z pseudonimizacją i kontrolą przyjęć (ADR-021, ADR-031); brak wpisu ręcznego (ADR-024); tryb pełnej weryfikacji, jeśli G-1(b) nie jest spełnione; zatwierdzanie kont Nauczycieli przez Administratora; **(2.1)** rekrutacja i finansowanie Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy (A-14, ADR-034); zawieszenie Wyniku zadania na czas Zgłoszenia błędu odczytu (11.6); rozstrzyganie na korzyść Ucznia po usunięciu zdjęć (11.4.3 p. 3); kopie treningowe za zgodą (ADR-035); **(2.2)** limity Poprawek Transkrypcji i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (ADR-036, D-10); Przegląd Zadań wygenerowanych przez zlecającego Nauczyciela i Zgłoszenia błędu w Zadaniu zamiast bezpośredniej poprawki Zadań `GLOBALNY` (ADR-028, ADR-038, D-11); kryterium G-1(a) dla dowodów LB ≥ 85% przy n ≥ 350 (11.5.1, D-12); SLA w dniach roboczych, pula 18 weryfikatorów globalnych i kontrola przyjęć per Klasa (A-15, ADR-043, D-13); pominięcie Testu diagnostycznego (D-14). Akceptacja zapisana jako podpisany wpis w `docs/` (decyzja produktowa z datą). |
+| G-1 | ZT-1 (A-09: ≥ 700 obliczeniowych, ≥ 350 z dowodem), Transkrypcje referencyjne: (a) Zgodność Oceny (ADR-027) ≥ 90% — dla Jev **i** modelu zapasowego, osobno dla każdego rodzaju zadania otwartego (NFR-02) — oraz dolna granica Wilsona 95% ≥ 87,5% dla `OTWARTE_OBLICZENIOWE` i ≥ 85,0% dla `OTWARTE_Z_DOWODEM` (analiza mocy 11.5.1, tabela 2; D-12); (b) próg z 11.5.3 (wartości out-of-fold) z UB błędu auto ≤ 2% i `n_eff ≥ 189` — albo tryb pełnej weryfikacji zaakceptowany w G-0; (c) ECE ≤ 0.05 |
+| G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję); **(2.2)** Sprawdzenie zgodności poprawek (10.3.3): wykrywalność Poprawek „zastępujących” ≥ 95% na 200 syntetycznych przypadkach i odsetek fałszywych alarmów ≤ 10% na 200 rzeczywistych Poprawkach błędów odczytu; Filtr danych osobowych: 0 wystąpień imienia i nazwiska z konta w zapisanych Transkrypcjach ≥ 50 kartek ZT-1 z danymi, ≥ 98% obszarów danych osobowych zamaskowanych |
 | G-3 | Test obciążeniowy: (a) 2× szczyt wieczorny A-03 (600 Rozwiązań/h) przez 30 min; (b) „koniec lekcji”: 90 przesłań w 60 s, następnie 90 zatwierdzeń w 120 s; kryterium w obu: p95 czasu systemowego ≤ 20 s, ≥ 99% ≤ 28 s (czas widoczny ≤ 30 s), 0 przypadków T-6 |
-| G-4 | Test chaosu NFR-07 przy 300 Rozwiązaniach/h, trzy scenariusze: (a) Jev zaczyna zwracać timeout na 100% wywołań przy obwodzie ZAMKNIĘTYM (pomiar 10 min od wstrzyknięcia awarii, obejmuje przejście obwodu); (b) Jev zwraca natychmiast 503; (c) Jev degraduje do p95 2.5 s; kryterium w każdym: ≥ 99% Ocen z czasem systemowym ≤ 28 s (czas widoczny ≤ 30 s) i 0 przypadków T-6 |
-| G-5 | Wszystkie Umiejętności **obu poziomów matury** mają opublikowaną Wkładkę teoretyczną i ≥ 3 Zadania `GLOBALNY` na każdy z Poziomów trudności 2–4 (FR-06, FR-07) |
-| G-6 | Przegląd RODO: umowy powierzenia z dostawcami z retencją zgodną z A-07, polityka prywatności (w tym kolejka globalna i pseudonimizacja), umowy poufności weryfikatorów globalnych, rejestr czynności przetwarzania, test procedury `ponow_usuniecia` (odtworzenie PITR w środowisku testowym z rejestrem w buckecie Object Lock) |
-| G-7 | Pula weryfikatorów globalnych: liczba aktywnych weryfikatorów globalnych ≥ `wymagani_weryfikatorzy_globalni` z modelu 17.7 (na start: **12** = 10 Nauczycieli bez Klas + ≥ 2 współpracujących, A-14) i Σ `deklarowane_minuty_weryfikacji` ≥ 1,5 × prognoza dzienna kolejki `GLOBALNA`; test eskalacji, alertu pustej puli i kontroli przyjęć. Gdy G-7 nie jest spełnione, a pozostałe bramki tak: start produkcyjny z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) — dopuszczalny wyłącznie za akceptacją w G-0 |
+| G-4 | Test chaosu NFR-07 przy 300 Rozwiązaniach/h, trzy scenariusze: (a) Jev zaczyna zwracać timeout na 100% wywołań przy obwodzie ZAMKNIĘTYM (pomiar 10 min od wstrzyknięcia awarii, obejmuje przejście obwodu); (b) Jev zwraca natychmiast 503; (c) Jev degraduje do p95 2.5 s; (d) Jev zwraca `429` dla 30% żądań przez 10 min — obwód nie może się otworzyć, a przydział ogranicznika spada i wraca (ADR-039); kryterium w każdym: ≥ 99% Ocen z czasem systemowym ≤ 28 s (czas widoczny ≤ 30 s) i 0 przypadków T-6. Przed G-4 ustalany jest `parametry.tryb_jev` (test wsadu 32 pytań; brak wsadu → `POJEDYNCZY` i G-3/G-4 w tym trybie) |
+| G-5 | Wszystkie Umiejętności **obu poziomów matury** mają opublikowaną Wkładkę teoretyczną i ≥ 3 Zadania `GLOBALNY` na każdy z Poziomów trudności 2–4 (FR-06, FR-07); **(2.2)** pula Testu diagnostycznego: ≥ 3 Zadania `diagnostyczne = true` (`ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`) na każdą trójkę (Dział poziomu matury, poziom matury, nominalny Poziom trudności ∈ {2, 4}) — 12 × 2 × 3 = 72 dla `PODSTAWOWY` i 13 × 2 × 3 = 78 dla `ROZSZERZONY` (raport `GET /admin/pula-diagnostyczna`, FR-03, C2-13) |
+| G-6 | Przegląd RODO: umowy powierzenia z dostawcami z retencją zgodną z A-07, polityka prywatności (w tym kolejka globalna i pseudonimizacja), umowy poufności weryfikatorów globalnych, rejestr czynności przetwarzania, test procedury `ponow_zdarzenia_rodo` (odtworzenie PITR w środowisku testowym z rejestrem w buckecie Object Lock) w trzech scenariuszach: (a) wykonane usunięcie po punkcie odtworzenia, (b) **żądanie** usunięcia po punkcie odtworzenia (konto wraca do `USUWANE` z pierwotnym terminem), (c) **odwołanie zgody** po punkcie odtworzenia (zgoda `false`, brak nowych kopii, istniejące kopie usunięte) oraz test przywrócenia konta w karencji (C-33) i usunięcia konta Nauczyciela z Przekazaniem Klasy i bez niego (ADR-044) |
+| G-7 | Pula weryfikatorów globalnych: liczba aktywnych weryfikatorów globalnych ≥ `wymagani_weryfikatorzy_globalni` z modelu tygodniowego 17.7 (na start: **18** = 10 Nauczycieli bez Klas + ≥ 8 współpracujących, A-14) i 5 × Σ `deklarowane_minuty_weryfikacji` ≥ 1,3 × tygodniowa prognoza kolejki `GLOBALNA` **łącznie z eskalacjami** (A-15); test eskalacji, alertu pustej puli i kontroli przyjęć. Gdy G-7 nie jest spełnione, a pozostałe bramki tak: start produkcyjny z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) — dopuszczalny wyłącznie za akceptacją w G-0 |
 
 ZT-1 jest przechowywany w buckecie `zbiory-testowe/zt1/` (manifest JSON:
 Zadanie, zdjęcia, Transkrypcja referencyjna, Oceny 2–3 Nauczycieli). Praca
@@ -4557,43 +5330,65 @@ Zadanie, zdjęcia, Transkrypcja referencyjna, Oceny 2–3 Nauczycieli). Praca
 Transkrypcjach referencyjnych — izoluje jakość oceniania, G-1) i `E2E`
 (zdjęcie → Agent rozpoznający → Agent oceniający bez poprawek — G-2).
 
-### 17.7 Model obciążenia Nauczycieli (FR-33, R-02, C1-02, C1-10)
+### 17.7 Model obciążenia Nauczycieli (FR-33, R-02, C1-02, C1-10, C2-12)
 
-Założenia: A-03 (1 500 Rozwiązań zadań otwartych/dobę, 20% z dowodem),
-A-12 (20% Uczniów bez Klasy), A-13 (czasy Weryfikacji), zgłoszenia błędu
-odczytu 1% Rozwiązań, T-6 ≤ 0,2%.
+Założenia: A-03 (1 500 Rozwiązań zadań otwartych/dobę przez 7 dni w
+tygodniu, 20% z dowodem), A-12 (20% Uczniów bez Klasy), A-13 (czasy
+Weryfikacji), A-15 (praca Nauczycieli 5 dni roboczych w tygodniu, 5%
+Weryfikacji `KLASA` eskalowanych), zgłoszenia błędu odczytu 1% Rozwiązań,
+T-6 ≤ 0,2%, powód T-7 dla 3% Rozwiązań obliczeniowych (Poprawki niezgodne
+ze zdjęciem lub ponad limit miękki — oszacowanie do pomiaru w pilotażu,
+`odsetek_rozwiazan_z_poprawkami_30d`; wliczone w kolumnę obliczeniowych).
 
-| Faza | Weryfikacje dowodów | Weryfikacje obliczeniowych | Kontrole losowe | Zgłoszenia + T-6 | Razem / dobę | Minuty / dobę |
+**Napływ dobowy** (średnia z 7 dni kalendarzowych):
+
+| Faza | Weryfikacje dowodów | Weryfikacje obliczeniowych (w tym T-7) | Kontrole losowe | Zgłoszenia + T-6 | Razem / dobę | Minuty / dobę `M` |
 |---|---|---|---|---|---|---|
-| Start (po G-1; auto 50% obliczeniowych, Kontrola 20%) | 300 × 5 min | 600 × 3 min | 120 × 2 min | 18 × 3 min | 1 038 | 3 594 (≈ 60 h) |
-| Ustalona (auto 70%, Kontrola 5%) | 300 × 5 min | 360 × 3 min | 42 × 2 min | 18 × 3 min | 720 | 2 718 (≈ 45 h) |
-| Tryb pełnej weryfikacji (auto 0%, `udzial_zadan_otwartych = 5`, wolumen × 3/5) | 180 × 5 min | 720 × 3 min | 0 | 11 × 3 min | 911 | 3 093 (≈ 52 h) |
+| Start (po G-1; auto 47% obliczeniowych, Kontrola 20%, × 2 dla Poprawek) | 300 × 5 min | 636 × 3 min | 120 × 2 min | 18 × 3 min | 1 074 | 3 702 |
+| Ustalona (auto 67%, Kontrola 5%) | 300 × 5 min | 396 × 3 min | 42 × 2 min | 18 × 3 min | 756 | 2 826 |
+| Tryb pełnej weryfikacji (auto 0%, `udzial_zadan_otwartych = 5`, wolumen × 3/5) | 180 × 5 min | 720 × 3 min | 0 | 11 × 3 min | 911 | 3 093 |
 
-Podział:
+**Podział i rytm tygodniowy.** Kolejka `KLASA` = 80% `M`, kolejka
+`GLOBALNA` = 20% `M` (Uczniowie bez Klasy) + 5% kolejki `KLASA`
+(eskalacje). Nauczyciele pracują 5 dni, więc tygodniowy napływ `7 × M`
+jest obsługiwany w 5 dniach roboczych: **obciążenie dnia roboczego = 7/5 ×
+obciążenie dobowe** (Rozwiązania z piątku i weekendu mają termin SLA w
+dniach roboczych, więc nie eskalują masowo w poniedziałek, A-15).
 
-| Faza | Kolejka `KLASA` (80%) — na Nauczyciela prowadzącego (40 Nauczycieli z Klasami) | Kolejka `GLOBALNA` (20%) | Wymagani weryfikatorzy globalni = ⌈1,5 × minuty_globalne / 90⌉ |
-|---|---|---|---|
-| Start | 2 875 min → 72 min/dobę, ≈ 21 Weryfikacji | 719 min | **12** |
-| Ustalona | 2 174 min → 54 min/dobę, ≈ 14 Weryfikacji | 544 min | 10 |
-| Tryb pełnej weryfikacji | 2 474 min → 62 min/dobę, ≈ 18 Weryfikacji | 619 min | 11 |
-
-Skład puli weryfikatorów globalnych (A-14, ADR-034):
-
-| Faza | Wymagani | Nauczyciele bez Klas (A-03) | Nauczyciele prowadzący Klasy (≤ 180 min/dobę łącznie) | Nauczyciele współpracujący (umowa) |
+| Faza | `KLASA` / dobę (80%, po odjęciu 5% eskalacji) | Na Nauczyciela prowadzącego (40) — dzień roboczy | `GLOBALNA` / dobę (20% + eskalacje) | Wymagani weryfikatorzy globalni = ⌈1,3 × 7 × `GLOBALNA` / (5 × 90)⌉ |
 |---|---|---|---|---|
-| Start | 12 | 10 × 90 min | 0 (prognoza Klasy 72 min + 90 min = 162 min — dozwolone, ale nie planowane) | ≥ 2 × 90 min |
-| Ustalona | 10 | 10 × 90 min | 0 | 0 (umowy mogą wygasnąć po 8 tygodniach fazy ustalonej) |
-| Tryb pełnej weryfikacji | 11 | 10 × 90 min | 0 | ≥ 1 × 90 min |
+| Start | 2 814 min | 2 814 × 7/5 / 40 = **98 min** (≈ 29 Weryfikacji na dzień roboczy, łącznie z Kontrolą losową) | 740 + 148 = 888 min | ⌈1,3 × 6 216 / 450⌉ = **18** |
+| Ustalona | 2 148 min | **75 min** (≈ 20 Weryfikacji) | 565 + 113 = 678 min | ⌈1,3 × 4 746 / 450⌉ = **14** |
+| Tryb pełnej weryfikacji | 2 351 min | **82 min** (≈ 24 Weryfikacje) | 619 + 124 = 742 min (po zaokrągleniu składników: 618,6 + 123,7) | ⌈1,3 × 5 194 / 450⌉ = ⌈15,01⌉ = **16** |
+| Start bez Uczniów bez Klasy (`LEMAT_REJESTRACJA_BEZ_KLASY = false`, A-14) | 3 517 min | **123 min** | 0 + 185 = 185 min | ⌈1,3 × 1 295 / 450⌉ = **4** |
 
-Wnioski: (1) Kontrola losowa stanowi 7% obciążenia na starcie i 3% w fazie
-ustalonej — jest wliczona; (2) obciążenie startowe 72 min/dobę na
-Nauczyciela jest wysokie (R-02) — mitygacje: Opinia pomocnicza, szkice i
-przedłużanie blokad (krótsza praca), automatyczne obniżanie progu
-(11.5.3), parametr `udzial_zadan_otwartych`; (3) model jest przeliczany co
-tydzień z wartości zmierzonych (`weryfikacja_czas_pracy_sekundy`, rzeczywisty
-udział Uczniów bez Klasy) i publikowany w `GET /admin/obciazenie-weryfikacji`;
-spadek `weryfikatorzy_globalni_aktywni_7d` poniżej wymaganej liczby
-uruchamia `ALERT_WERYFIKACJE` (E-28).
+Współczynnik 1,3 (wcześniej 1,5) obejmuje zmienność dzienną; eskalacje są
+teraz modelowane jawnie, więc nie są już ukryte w zapasie.
+
+Skład puli weryfikatorów globalnych (A-14, ADR-034, ADR-043):
+
+| Faza | Wymagani | Nauczyciele bez Klas (A-03) | Nauczyciele prowadzący Klasy (≤ 180 min na dzień roboczy łącznie) | Nauczyciele współpracujący (umowa) |
+|---|---|---|---|---|
+| Start | 18 | 10 × 90 min | 0 (prognoza Klasy 98 min + 90 min = 188 min — niedozwolone, `422 LIMIT_OBCIAZENIA_WERYFIKATORA`) | ≥ 8 × 90 min |
+| Ustalona | 14 | 10 × 90 min | 0 (75 + 90 = 165 min — dozwolone, nieplanowane) | ≥ 4 × 90 min |
+| Tryb pełnej weryfikacji | 16 | 10 × 90 min | 0 | ≥ 6 × 90 min |
+| Start bez Uczniów bez Klasy | 4 | 4 z 10 × 90 min | 0 | 0 |
+
+Wnioski: (1) Kontrola losowa stanowi 6% obciążenia na starcie i 3% w fazie
+ustalonej — jest wliczona; (2) obciążenie startowe 98 min na dzień roboczy
+na Nauczyciela prowadzącego Klasę jest wysokie (R-02) — mitygacje: Opinia
+pomocnicza, szkice i przedłużanie blokad bez utraty ETag (ADR-037),
+automatyczne obniżanie progu (11.5.3), parametr `udzial_zadan_otwartych`,
+kontrola przyjęć per Klasa przy `odsetek_eskalacji_7d ≥ 0,20` (11.4.3);
+(3) eskalacje z Klas zasilają kolejkę `GLOBALNA` i są wliczone w
+`zaleglosc_globalna_min` oraz w G-7; (4) model jest przeliczany co tydzień z
+wartości zmierzonych (`weryfikacja_czas_pracy_sekundy`, rzeczywisty udział
+Uczniów bez Klasy, `odsetek_eskalacji_7d`) i publikowany w `GET
+/admin/obciazenie-weryfikacji`; spadek `weryfikatorzy_globalni_aktywni_7d`
+poniżej wymaganej liczby uruchamia `ALERT_WERYFIKACJE` (E-28); (5) model
+zakłada najgorszy przypadek pracy wyłącznie w dni robocze — weryfikatorzy
+współpracujący pracujący w weekendy zmniejszają liczbę wymaganych osób
+(liczona z deklaracji).
 
 ---
 
@@ -4605,7 +5400,7 @@ uruchamia `ALERT_WERYFIKACJE` (E-28).
 |---|---|---|---|---|
 | FR-01 konto, logowanie | `lemat.konta` | 9.1 | `/auth/*` | `uzytkownik`, `uczen`, `token_odswiezania` |
 | FR-02 poziom matury, termin | `lemat.konta`, `lemat.profil` | 9.1 (w tym zmiana poziomu) | `PATCH /uczniowie/ja` | `uczen.poziom_matury`, `termin_egzaminu` |
-| FR-03 test diagnostyczny | `lemat.profil`, Orkiestrator (`AKTUALIZUJ_PROFIL`) | 9.1, 10.1.3 | `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne/*`, `PUT /admin/zadania/{id}/diagnostyczne` | `test_diagnostyczny` (`ux_test_jeden`), `odpowiedz`, `wynik_zadania.test_diagnostyczny_id`, `opanowanie_umiejetnosci` |
+| FR-03 test diagnostyczny | `lemat.profil`, `lemat.tresci` (pula), Orkiestrator (`AKTUALIZUJ_PROFIL`, `SPRAWDZ_PULE_DIAGNOSTYCZNA`) | 9.1 (pula, `TEST_NIEDOSTEPNY`, pominięcie D-14), 10.1.3, G-5 | `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne/*`, `PUT /admin/zadania/{id}/diagnostyczne`, `GET /admin/pula-diagnostyczna` | `test_diagnostyczny` (`ux_test_jeden`, `pominiete_dzialy`), `odpowiedz`, `wynik_zadania.test_diagnostyczny_id`, `opanowanie_umiejetnosci` |
 | FR-04 widok profilu | `lemat.profil` | 10.1.3 | `GET /uczniowie/{id}/profil` | `opanowanie_umiejetnosci` |
 | FR-05 kolejne zadanie | Agent rekomendujący, `lemat.rekomendacje`, fasada Orkiestratora | 9.2, 10.1.2 kroki 1–8 | `GET …/rekomendacje/nastepna`, `POST /elementy-sciezki/{id}/rozpoczecie` | `element_sciezki`, `rekomendacja` |
 | FR-06 wkładka przed zadaniami | Agent rekomendujący, Agent generujący (szkice), `lemat.tresci` | 10.1.2 krok 6, E-20, G-5 (oba poziomy) | `…/nastepna`, `/wkladki-teoretyczne/*`, `/elementy-sciezki/{id}/przeczytanie` | `wkladka_teoretyczna` |
@@ -4616,11 +5411,11 @@ uruchamia `ALERT_WERYFIKACJE` (E-28).
 | FR-11 generowanie | Agent generujący | 9.7, 13.3 (`UZUPELNIJ_PULE` z budżetem) | `POST /zadania/generowanie` | `zlecenie_generowania`, `zadanie` |
 | FR-12 treść + wzorcowe + kryteria | Agent generujący | 10.2.1 | `GET /zadania/{id}` | `zadanie_wersja`, `kryterium_oceniania` |
 | FR-13 walidacja | Agent generujący, SymPy, model decyzyjny | 9.7, 10.2.2 | `GET /zlecenia-generowania/{id}` | `walidacja_zadania` |
-| FR-14 przegląd przez Nauczyciela | `lemat.tresci` | 8.4 (uprawnienia ADR-028), 9.7 | `POST /zadania/{id}/przeglad`, `POST /zadania/{id}/wycofanie` | `przeglad_zadania`, `zadanie_wersja`, `zadanie.zasieg` |
+| FR-14 przegląd przez Nauczyciela | `lemat.tresci` | 8.4 (uprawnienia ADR-028, ADR-038; Zadania zlecone przez Nauczyciela zawsze `DO_PRZEGLADU`), 9.7, D-11 | `POST /zadania/{id}/przeglad`, `POST /zadania/{id}/wycofanie`, `POST /zadania/{id}/zgloszenia-bledu`, `/zgloszenia-bledu-zadan/*` | `przeglad_zadania`, `zadanie_wersja`, `zadanie.zasieg`, `zgloszenie_bledu_zadania`, `zadanie.wstrzymane_w_doborze` |
 | FR-15 zadanie zamknięte | `lemat.rozwiazania` | 9.3 | `POST /zadania/{id}/odpowiedzi` | `odpowiedz` |
 | FR-16 zdjęcia rozwiązania | `lemat.rozwiazania`, PWA | 9.4, 8.5 (rozpoczęcie) | `POST /rozwiazania`, `…/zdjecia`, `…/porzucenie` | `rozwiazanie`, `zdjecie_rozwiazania` |
 | FR-17 odczyt pisma, kroki | Agent rozpoznający | 9.4, 10.3 | `GET /rozwiazania/{id}`, `…/ponowienie-rozpoznania` | `transkrypcja`, `krok_transkrypcji` |
-| FR-18 poprawa transkrypcji | `lemat.rozwiazania` | 9.4, 8.1 | `PUT …/transkrypcja`, `POST …/zatwierdzenie` | `transkrypcja` (wersje), `zmieniony_przez_ucznia` |
+| FR-18 poprawa transkrypcji | `lemat.rozwiazania`, Agent rozpoznający (Sprawdzenie zgodności poprawek) | 9.4 (limity), 8.1, 10.3.3, 11.3 T-7, ADR-036, D-10 | `PUT …/transkrypcja`, `POST …/zatwierdzenie` | `transkrypcja` (wersje, `zakres_poprawek`, `zgodnosc_poprawek`), `krok_transkrypcji.nr_kroku_agenta`, `zmieniony_przez_ucznia` |
 | FR-19 ocena krokowa, punkty cząstkowe | Agent oceniający | 9.5, 11.1 | `GET …/ocena` | `ocena`, `ocena_kryterium` |
 | FR-20 wynik tylko z rozumowania | Agent oceniający | 11.1 p. 5 | — | `ocena_kryterium`, `ocena.punkty_surowe` |
 | FR-21 wynikanie kroków | SymPy, Q-OC-05, N-3, N-6 | 10.4.3, 11.1 p. 8 | — | `decyzja_modelu` |
@@ -4632,9 +5427,9 @@ uruchamia `ALERT_WERYFIKACJE` (E-28).
 | FR-27 błędny krok, typ, wskazówka | Agent oceniający, Agent wyjaśniający | 9.5, 9.6.2 (reguły Wskazówki), 10.5, 11.1 p. 6 (N-1), 11.7 | `OcenaWyjscie` | `pierwszy_bledny_krok`, `typ_bledu`, `wskazowka`, `uzasadnienie` |
 | FR-28 błędy odczytu nie obniżają oceny | Agent rozpoznający, Agent oceniający, `lemat.weryfikacja` | 8.6, 9.4, 9.12 (zawieszenie Wyniku), 11.1 p. 5–7, 11.3 T-3, 11.4.3 p. 3, 11.6, 11.8, ADR-022 | `…/zgloszenie-bledu-odczytu`, `OcenaWyjscie.widocznosc_dla_ucznia`, `RozstrzygniecieWejscie.kroki_z_bledem_odczytu` | `mozliwy_blad_odczytu`, `krok_podejrzany_odczyt`, `weryfikacja.zgloszenie` |
 | FR-29 ocena aktualizuje profil | `lemat.profil` | 9.3, 9.5, 9.6, 10.1.3 (wagi) | — | `wynik_zadania`, `opanowanie_umiejetnosci` |
-| FR-30 klasy, zaproszenia | `lemat.klasy` | — | `/klasy`, `/klasy/dolaczenie`, `…/archiwizacja`, `DELETE /uczniowie/ja/klasy/{id}` | `klasa`, `czlonkostwo_klasy` |
+| FR-30 klasy, zaproszenia | `lemat.klasy` | 16.4 (Przekazanie Klasy przy usunięciu konta Nauczyciela) | `/klasy`, `/klasy/dolaczenie`, `…/archiwizacja`, `DELETE /uczniowie/ja/klasy/{id}`, `POST /admin/klasy/{id}/przekazanie` | `klasa`, `czlonkostwo_klasy` |
 | FR-31 postępy | `lemat.klasy`, `lemat.profil` | — | `/klasy/{id}/postepy`, `/uczniowie/{id}/profil`, `/przypisania/{id}/postep` | widok agregujący |
-| FR-32 przypisania | `lemat.klasy`, Agent rekomendujący (krok 1) | 10.1.2, ADR-032 | `/zestawy-zadan` (CRUD), `/przypisania` | `zestaw_zadan`, `przypisanie` |
+| FR-32 przypisania | `lemat.klasy`, Agent rekomendujący (krok 1) | 10.1.2, 8.5 (element `R-PRZYPISANIE`), ADR-032, C-30 | `/zestawy-zadan` (CRUD), `/przypisania`, `GET /przypisania/{id}/postep` (`PostepPrzypisaniaWyjscie`) | `zestaw_zadan`, `przypisanie`, `element_sciezki.przypisanie_id`, `trg_kontekst_proby` |
 | FR-33 kolejka z powodem | `lemat.weryfikacja` | 9.6.1, 11.3, 11.4, 17.7 | `GET /weryfikacje`, `…/podjecie`, `…/przedluzenie`, `…/szkic` | `weryfikacja.powody`, `priorytet`, `termin_at` |
 | FR-34 korekty → kalibracja | `lemat.weryfikacja`, `lemat.kalibracja` | 9.6.2, 9.6.3, 9.8, 11.5 | `…/rozstrzygniecie`, `…/korekty` | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci` |
 | FR-35 import CKE | `lemat.tresci` | 9.11 | `/admin/arkusze-cke/importy` | `arkusz_cke`, `import_arkusza` |
@@ -4657,8 +5452,9 @@ Pełne mapowanie w 17.1; budżety w 17.2; bramki weryfikujące w 17.6.
 ## 19. Rejestr decyzji architektonicznych (ADR)
 
 Statusy: **Przyjęta** (iteracja 1, bez zmian), **Zmieniona (it. 2)**,
-**Nowa (it. 2)**, **Nowa (it. 3)**; uzupełnienia wprowadzone w wersji 2.1 do
-istniejących decyzji są oznaczone akapitem „Uzupełnienie (it. 3)”. Decyzje
+**Nowa (it. 2)**, **Nowa (it. 3)**, **Nowa (it. 4)** (wersja 2.2);
+uzupełnienia wprowadzone w wersjach 2.1 i 2.2 do istniejących decyzji są
+oznaczone akapitem „Uzupełnienie (it. 3)” albo „Uzupełnienie (it. 4)”. Decyzje
 wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 
 ### ADR-001 Modularny monolit z osobnymi procesami `api`, `worker`, `scheduler` — Przyjęta
@@ -4667,11 +5463,12 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Alternatywy:** mikroserwisy per agent — odrzucone (koszt operacyjny, transakcje rozproszone).
 - **Konsekwencje:** prostsze wdrożenie i transakcje; ewentualny podział na serwisy wzdłuż modułów jest możliwy bez zmiany kontraktów portów.
 
-### ADR-002 PostgreSQL jako jedyne źródło prawdy i kolejka prac w tle — Zmieniona (it. 2)
+### ADR-002 PostgreSQL jako jedyne źródło prawdy i mechanizm prac w tle — Zmieniona (it. 2)
 - **Kontekst:** każda zmiana stanu Rozwiązania musi atomowo zlecić kolejny krok; szczyt rozpoznawania nie może blokować oceniania (C1-25).
 - **Decyzja:** tabela `praca_w_tle` z kolumną `pula` + `SKIP LOCKED` + `LISTEN/NOTIFY`; rozłączne pule korutyn (13.4).
 - **Alternatywy:** Redis + Celery (problem podwójnego zapisu, wymaga wzorca outbox), Kafka (nadmiarowa).
 - **Konsekwencje:** brak dodatkowego komponentu; przepustowość wystarcza do ~1 000 prac/s, dużo powyżej A-03.
+- **Uzupełnienie (it. 4, wersja 2.2, C2-04):** deduplikacja prac obejmuje dla typów-wybudzeń (`AKTUALIZUJ_PROFIL`) wyłącznie prace `OCZEKUJE` (`ux_praca_dedup_oczekujace`), bo deduplikacja z `W_TOKU` gubiła wybudzenie dla Wyniku zatwierdzonego po odczycie przez handler; handler działa w pętli do pustego wyniku, a `ZAMIATAJ_PROFILE` (co 5 min) jest zabezpieczeniem. Alternatywa „tylko pętla w handlerze” — odrzucona: okno między ostatnim odczytem a `ZAKONCZONA` nadal gubi wybudzenie.
 
 ### ADR-003 Porty i adaptery dla modeli AI, konfiguracja w bazie — Przyjęta
 - **Kontekst:** NFR-06, NFR-07, Jev we wczesnym dostępie.
@@ -4699,9 +5496,10 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 
 ### ADR-007 Próg pewności z górnej granicy Wilsona, Kontroli losowej z wagami IPW i analizy mocy — Zmieniona (it. 2)
 - **Kontekst:** NFR-03 wymaga mierzenia błędów ocen automatycznych, które z definicji nie trafiają do Nauczyciela; ZT-1 w wersji 1 był za mały (C1-09); Kontrola mogła nie być wykonywana (C1-10).
-- **Decyzja:** Kontrola losowa 20% → 5% (próg 400 próbek), termin 72 h; wybór progu 11.5.3 z `n_eff ≥ 189`, kalibracją out-of-fold (5-krotna CV) i wagami IPW skorygowanymi o odsetek wykonania Kontroli; reguły nadzoru (blokada obniżania progu, bezpiecznik braku nadzoru); ZT-1 ≥ 700 obliczeniowych z analizy mocy (11.5.1); tryb pełnej weryfikacji, gdy ZT-1 nie daje progu (G-0).
+- **Decyzja:** Kontrola losowa 20% → 5% (próg 400 próbek), termin 3 dni robocze (wersja 2.1: 72 h); wybór progu 11.5.3 z `n_eff ≥ 189`, kalibracją out-of-fold (5-krotna CV) i wagami IPW skorygowanymi o odsetek wykonania Kontroli; reguły nadzoru (blokada obniżania progu, bezpiecznik braku nadzoru); ZT-1 ≥ 700 obliczeniowych z analizy mocy (11.5.1); tryb pełnej weryfikacji, gdy ZT-1 nie daje progu (G-0).
 - **Alternatywy:** stały próg 0.9 (niemierzalny NFR-03); kalibracja tylko na Weryfikacjach z niskiej pewności (obciążenie selekcją); traktowanie niewykonanych Kontroli jako błędów (zbyt konserwatywne przy 90% wykonania — zawyża błąd o do 10 pp).
-- **Konsekwencje:** obciążenie Kontrolą wliczone w model 17.7 (7% na starcie, 3% później); brak nadzoru zawsze podnosi próg, nigdy go nie obniża.
+- **Konsekwencje:** obciążenie Kontrolą wliczone w model 17.7 (6% na starcie, 3% później); brak nadzoru zawsze podnosi próg, nigdy go nie obniża.
+- **Uzupełnienie (it. 4, wersja 2.2, C2-05, C2-06):** źródło Próbki kalibracyjnej wynika z `weryfikacja.powody_poczatkowe` (powody dopisane później nie wykluczają próbki — usunięcie nielosowych braków); analiza mocy G-1(a) per rodzaj: 700 obliczeniowych z LB ≥ 87,5% i 350 dowodów z LB ≥ 85,0% (D-12); Transkrypcje z Poprawkami mają podwójny odsetek Kontroli losowej i własny bezpiecznik (11.5.2).
 
 ### ADR-008 Opinia pomocnicza LLM nie zmienia trasy Oceny — Przyjęta
 - **Kontekst:** architektura wstępna: „pewność < próg → druga ocena przez mocniejszy LLM”; FR-24: „pewność poniżej progu → Weryfikacja”.
@@ -4764,7 +5562,7 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 ### ADR-019 Retencja zdjęć sterowana przejściami stanów, maks. 90 dni — Zmieniona (it. 2)
 - **Kontekst:** NFR-09 vs. potrzeba porównania zdjęcia przy Weryfikacji, Kontroli losowej i zgłoszeniu (C1-10, C1-12).
 - **Decyzja:** `usun_po` jako jedyne źródło prawdy, ustawiane przez przejścia z 16.4 (30 dni po ocenie bez otwartej Weryfikacji, przedłużenie do 90 dni przy otwartej, natychmiast po porzuceniu/anulowaniu); twardy limit `CHECK`; buckety bez wersjonowania + reguła cyklu życia 91 dni.
-- **Konsekwencje:** Weryfikacja dłuższa niż 90 dni odbywa się bez zdjęcia (SLA 72 h i alert po 80 dniach czynią to wyjątkiem).
+- **Konsekwencje:** Weryfikacja dłuższa niż 90 dni odbywa się bez zdjęcia (SLA 3 dni robocze i alert po 80 dniach czynią to wyjątkiem).
 
 ### ADR-020 JWT krótkotrwały + rotowany refresh token w cookie — Przyjęta
 - **Kontekst:** PWA na telefonach, bezpieczeństwo sesji.
@@ -4774,7 +5572,7 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 
 ### ADR-021 Kolejka weryfikacji globalna dla Uczniów bez Klasy — Zmieniona (it. 2), G-0
 - **Kontekst:** Uczeń może korzystać z platformy bez Nauczyciela (FR-01), a Weryfikacja jest obowiązkowa (FR-24…FR-26); w wersji 1 brakowało gwarancji istnienia weryfikatorów, SLA i ochrony danych (C1-02).
-- **Decyzja:** 11.4; weryfikatorzy globalni z deklarowanym czasem ≥ 90 min/dobę; bramka G-7 z liczbą wyliczoną z modelu 17.7 (start: 12); SLA 72 h; eskalacja KLASA → GLOBALNA → alert Administratora (nie do tej samej kolejki); kontrola przyjęć; pseudonimizacja (ADR-031).
+- **Decyzja:** 11.4; weryfikatorzy globalni z deklarowanym czasem ≥ 90 min na dzień roboczy; bramka G-7 z liczbą wyliczoną z tygodniowego modelu 17.7 (start: 18, wersja 2.2 — ADR-043); SLA 3 dni robocze (w wersji 2.1: 72 h); eskalacja KLASA → GLOBALNA → alert Administratora (nie do tej samej kolejki); kontrola przyjęć; pseudonimizacja (ADR-031).
 - **Alternatywy:** automatyczne nadanie Ocenie wstępnej statusu ostatecznej po SLA — **odrzucone**, bo łamie FR-24 i FR-26 („zawsze”); blokada zadań otwartych dla Uczniów bez Klasy — odrzucona (sprzeczna z wizją „jak na maturze”), zastąpiona ograniczeniem udziału zadań otwartych tylko przy przeciążeniu.
 - **Konsekwencje:** przy przeciążeniu Uczeń bez Klasy dostaje więcej zadań zamkniętych i jawny status opóźnienia, ale nigdy nie traci Weryfikacji.
 
@@ -4795,7 +5593,7 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Kontekst:** wizja i słownik: Rozwiązanie to zdjęcie kartki („jak na prawdziwej maturze”); wpis ręczny w wersji 1 był rozszerzeniem spoza wymagań, omijał T-3 i zmieniał rozkład danych kalibracyjnych (C1-26).
 - **Decyzja:** usunięto `WPIS_RECZNY_UCZNIA`. Po błędzie rozpoznawania Uczeń ma: nowe zdjęcia (≤ 3 przesłania), ponowienie rozpoznania tych samych zdjęć po awarii dostawcy (≤ 5, bez zużycia przesłania), porzucenie i nowe Rozwiązanie dla tego samego elementu do `wygasa_at`.
 - **Alternatywy:** wpis ręczny z obowiązkową Weryfikacją — odrzucony (obciąża Nauczycieli i nadal pozwala ominąć kartkę).
-- **Konsekwencje:** Transkrypcja zawsze pochodzi ze zdjęcia (PZS-1 B-1); dane kalibracyjne jednorodne.
+- **Konsekwencje:** Transkrypcja zawsze pochodzi ze zdjęcia (PZS-1 B-1) — od wersji 2.2 gwarantują to limity i Sprawdzenie zgodności Poprawek Transkrypcji (ADR-036), bo bez nich nieograniczona edycja Transkrypcji była wpisem ręcznym „tylnymi drzwiami” (C2-01); dane kalibracyjne jednorodne.
 
 ### ADR-025 NFR-01 jako czas systemowy; termin miękki i twardy; Wskazówka asynchroniczna — Nowa (it. 2), G-0
 - **Kontekst:** wersja 1 mierzyła NFR-01 od zatwierdzenia i liczyła T-6 jako sukces, przez co NFR-01 było spełnione z definicji (C1-08); Agent wyjaśniający był na ścieżce krytycznej.
@@ -4815,11 +5613,12 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 - **Alternatywy:** tylko punkty — odrzucone (Ocena z dobrą sumą i złym krokiem byłaby „poprawna”); punkty + krok + typ — odrzucone (zaniżałoby zgodność z powodu rozbieżności klasyfikacji, które nie zmieniają Oceny).
 - **Konsekwencje:** NFR-02 i NFR-04 są trudniejsze do spełnienia, ale zgodne ze słownikiem; ZT-1 musi mieć oznaczony pierwszy błędny krok przez Nauczycieli.
 
-### ADR-028 Zasięg Zadań i recenzent treści — Nowa (it. 2)
+### ADR-028 Zasięg Zadań i recenzent treści — Nowa (it. 2), G-0
 - **Kontekst:** w wersji 1 każdy Nauczyciel mógł poprawić lub wycofać dowolne Zadanie (także z Arkusza CKE), a Zadania Nauczycieli trafiały do globalnego doboru bez przeglądu (C1-22).
 - **Decyzja:** `zadanie.zasieg` (`GLOBALNY`/`PRYWATNY`); Zadania `BAZOWE_NAUCZYCIEL` są `PRYWATNY` (tylko Przypisania autora), dopóki recenzent treści lub Administrator nie zatwierdzi ich do `GLOBALNY`; flaga `nauczyciel.recenzent_tresci`; uprawnienia 8.4; endpointy Przeglądu i wycofania dla Administratora.
 - **Alternatywy:** wszystkie Zadania globalne z obowiązkowym przeglądem — odrzucone (blokuje Nauczyciela, który chce użyć własnego zadania w swojej Klasie od razu).
 - **Konsekwencje:** zmiany treści wpływające na wszystkich Uczniów wykonują tylko osoby uprawnione; `POST /zadania` tylko dla roli Nauczyciel (Administrator importuje Arkusze CKE), co zachowuje definicję Zadania bazowego.
+- **Uzupełnienie (it. 4, wersja 2.2, C2-03):** ograniczenie bezpośredniej poprawki Zadań `GLOBALNY` do recenzentów treści zawęża FR-14 („Nauczyciel może przejrzeć, poprawić lub odrzucić”), więc decyzja jest oznaczona G-0 (D-11); FR-14 dla Zadań zleconych przez Nauczyciela jest spełnione w pełni przez ADR-038, a dla Zadań `GLOBALNY` — przez Zgłoszenie błędu w Zadaniu.
 
 ### ADR-029 Kalibracja Poziomu trudności w osobnej tabeli z atomową aktualizacją — Nowa (it. 2)
 - **Kontekst:** równoległe Wyniki zadania gubiły aktualizacje `trudnosc_b` i podnosiły `zadanie.version`, powodując `412` w Przeglądzie (C1-23).
@@ -4835,30 +5634,93 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 ### ADR-031 Pseudonimizacja i maskowanie zdjęć w kolejce globalnej — Nowa (it. 2), G-0
 - **Kontekst:** w wersji 1 Nauczyciel spoza Klasy widział imię, nazwisko i niezamaskowane zdjęcia Ucznia (C1-02).
 - **Decyzja:** 11.4.4: pseudonim HMAC, brak Klasy i innych Rozwiązań, zdjęcia maskowane na podstawie ramek danych osobowych z Agenta rozpoznającego; informacja przy rejestracji; umowy poufności weryfikatorów (16.3).
-- **Alternatywy:** pełna anonimizacja Transkrypcji (usuwanie imion z tekstu) — zbędna, bo Transkrypcja zawiera wyłącznie rozwiązanie; brak kolejki globalnej — odrzucone (FR-24…FR-26 dla Uczniów bez Klasy).
+- **Alternatywy:** brak kolejki globalnej — odrzucone (FR-24…FR-26 dla Uczniów bez Klasy). Twierdzenie wersji 2.1, że anonimizacja Transkrypcji jest zbędna, bo „Transkrypcja zawiera wyłącznie rozwiązanie”, było niczym niezagwarantowane (C2-10) — zastąpione Filtrem danych osobowych (ADR-042).
 - **Konsekwencje:** minimalizacja danych zgodna z NFR-09; koszt: jedno maskowanie zdjęcia (Pillow, ~50 ms) na przesłanie.
 
 ### ADR-032 Jeden kontekst na próbę, wielokrotne próby i ujawnianie klucza po terminie — Nowa (it. 2)
 - **Kontekst:** Odpowiedź bez kontekstu pozwalała powtarzać Zadanie zamknięte i zawyżać Profil; brak unikalności w Przypisaniach; klucz ujawniany od razu w Przypisaniu (C1-21).
-- **Decyzja:** każda Odpowiedź i każde Rozwiązanie ma dokładnie jeden kontekst: element Ścieżki nauki albo pozycję Przypisania (CHECK w DDL, Test diagnostyczny osobno); indeksy unikalne per (Uczeń, Przypisanie, Zadanie); kolejna próba tego samego Zadania w 60 dniach ma wagę × 0,5 (ADR-018); w Przypisaniu wynik i klucz Odpowiedzi są ujawniane od terminu (`wynik_ujawniony_od`). Rozwiązania z listy Przypisań nie tworzą elementów Ścieżki nauki (Ścieżka zawiera wyłącznie propozycje agenta — PZS-1 B-3).
+- **Decyzja:** każda Odpowiedź i każde Rozwiązanie ma dokładnie jeden kontekst: element Ścieżki nauki albo pozycję Przypisania (CHECK w DDL, Test diagnostyczny osobno); indeksy unikalne per (Uczeń, Przypisanie, Zadanie); kolejna próba tego samego Zadania w 60 dniach ma wagę × 0,5 (ADR-018); w Przypisaniu wynik i klucz Odpowiedzi są ujawniane od terminu (`rezultat_ujawniony_od`). Rozwiązania z listy Przypisań nie tworzą elementów Ścieżki nauki (Ścieżka zawiera wyłącznie propozycje agenta — PZS-1 B-3).
 - **Konsekwencje:** brak duplikatów Weryfikacji dla Nauczyciela; Profil odporny na powtarzanie.
+- **Uzupełnienie (it. 4, wersja 2.2, C1-21):** element Ścieżki nauki z reguły `R-PRZYPISANIE` był obejściem niezmiennika (próba miała tylko `element_sciezki_id`). Decyzja: klient podaje jeden kontekst, ale **kontekst efektywny** próby z elementu `R-PRZYPISANIE` zawiera także `przypisanie_id` elementu — dziedziczone w bazie przez `trg_kontekst_proby` (para dozwolona wyłącznie przy `element.przypisanie_id = przypisanie_id`). Skutki: `ux_odpowiedz_przypisanie`/`ux_rozwiazanie_przypisanie` obejmują obie drogi (C-30); `rezultat_ujawniony_od = greatest(now(), termin)` także z elementu; przydział 11.4.1 p. 1 kieruje Weryfikację do Nauczyciela Przypisania; próba liczy się do `PostepPrzypisaniaWyjscie`; CHECK w 7.3 jawnie wylicza kombinacje {E}, {P}, {E, P}, {T}. Alternatywa „rezygnacja z elementu `R-PRZYPISANIE` i kierowanie Ucznia na listę Przypisań” — odrzucona, bo Przypisania przestałyby być częścią Ścieżki nauki proponowanej przez agenta (PZS-1 B-3) i rekomendacja nie mogłaby wybierać, kiedy je zaproponować.
 
 ### ADR-033 Weryfikacja: SLA, zwalnianie wygasłych blokad, przedłużanie i szkice — Nowa (it. 2)
 - **Kontekst:** w wersji 1 wygasła blokada zostawiała Weryfikację na zawsze w `W_TRAKCIE`, nie było przedłużenia ani autozapisu (C1-06); Kontrola losowa nie miała terminu (C1-10).
-- **Decyzja:** reguła odczytu „dostępna” + `ZWOLNIJ_BLOKADY_WERYFIKACJI` co minutę; `POST …/przedluzenie` (łącznie ≤ 2 h) i idempotentne podjęcie przez właściciela; `szkic_rozstrzygniecia` per (Weryfikacja, Nauczyciel); `termin_at` 72 h dla wszystkich powodów; eskalacja co godzinę; poprawiony SQL podjęcia (9.6.1).
+- **Decyzja:** reguła odczytu „dostępna” + `ZWOLNIJ_BLOKADY_WERYFIKACJI` co minutę; `POST …/przedluzenie` (łącznie ≤ 2 h) i idempotentne podjęcie przez właściciela; `szkic_rozstrzygniecia` per (Weryfikacja, Nauczyciel); `termin_at` dla wszystkich powodów (wersja 2.1: 72 h; od 2.2: 3 dni robocze, ADR-043); eskalacja co godzinę; poprawiony SQL podjęcia (9.6.1).
 - **Konsekwencje:** porzucona Weryfikacja wraca do kolejki w ≤ 1 min; Nauczyciel nie traci pracy przy przejęciu; każda Weryfikacja ma mierzalny termin.
+- **Uzupełnienie (it. 4, wersja 2.2, C2-02, C2-16):** przedłużenie i podjęcie nie zmieniają `version` (ADR-037); ponowne podjęcie przez właściciela nie wydłuża blokady poza `podjeta_at + 2 h`.
 
 ### ADR-034 Pula weryfikatorów globalnych: Nauczyciele bez Klas + Nauczyciele współpracujący — Nowa (it. 3), G-0
-- **Kontekst:** G-7 wymaga na starcie 12 weryfikatorów globalnych (17.7), a A-03 przewiduje 50 Nauczycieli, z których 40 prowadzi Klasy — bez Klas jest tylko 10. Wersja 2.0 nie mówiła, skąd pochodzi brakująca pojemność, więc G-7 było niespełnialne przy założeniach A-03 (uzupełnienie C1-02).
-- **Decyzja:** A-14: pula = 10 Nauczycieli bez Klas + ≥ 2 Nauczycieli współpracujących na umowę; Nauczyciel prowadzący Klasę może dołączyć tylko przy łącznym obciążeniu ≤ 180 min/dobę (walidacja `422 LIMIT_OBCIAZENIA_WERYFIKATORA`). Plan awaryjny bez rekrutacji: start z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (rejestracja Ucznia tylko z kodem zaproszenia), wtedy kolejka `GLOBALNA` obsługuje wyłącznie eskalacje z Klas i Uczniów, którzy opuścili Klasę.
+- **Kontekst:** G-7 wymagało w wersji 2.1 na starcie 12 weryfikatorów globalnych (17.7; od wersji 2.2 — 18, ADR-043), a A-03 przewiduje 50 Nauczycieli, z których 40 prowadzi Klasy — bez Klas jest tylko 10. Wersja 2.0 nie mówiła, skąd pochodzi brakująca pojemność, więc G-7 było niespełnialne przy założeniach A-03 (uzupełnienie C1-02).
+- **Decyzja:** A-14: pula = 10 Nauczycieli bez Klas + ≥ 8 Nauczycieli współpracujących na umowę (wersja 2.1: ≥ 2; zmiana wynika z modelu tygodniowego z eskalacjami, ADR-043); Nauczyciel prowadzący Klasę może dołączyć tylko przy łącznym obciążeniu ≤ 180 min na dzień roboczy (walidacja `422 LIMIT_OBCIAZENIA_WERYFIKATORA`). Plan awaryjny bez rekrutacji: start z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (rejestracja Ucznia tylko z kodem zaproszenia), wtedy kolejka `GLOBALNA` obsługuje wyłącznie eskalacje z Klas i Uczniów, którzy opuścili Klasę.
 - **Alternatywy:** obowiązkowy przydział każdego Nauczyciela prowadzącego Klasę do puli globalnej — odrzucony (72 + 90 = 162 min/dobę na start, czyli ponad 2,5 h pracy dziennie dla każdego, R-02); Ocena wstępna jako ostateczna po SLA — odrzucona w ADR-021 (łamie FR-24/FR-26).
-- **Konsekwencje:** koszt operacyjny (umowy z ≥ 2 Nauczycielami na czas fazy startowej) albo ograniczenie zakresu pilotażu do Uczniów z Klas — **decyzja właściciela produktu w G-0**; architektura obsługuje oba warianty bez zmian kodu (flaga konfiguracji).
+- **Konsekwencje:** koszt operacyjny (umowy z ≥ 8 Nauczycielami na czas fazy startowej, ≥ 4 w fazie ustalonej) albo ograniczenie zakresu pilotażu do Uczniów z Klas — **decyzja właściciela produktu w G-0**; architektura obsługuje oba warianty bez zmian kodu (flaga konfiguracji).
 
 ### ADR-035 Kopie treningowe z rejestrem powiązań w bazie — Nowa (it. 3), G-0
 - **Kontekst:** 16.4 (wersja 2.0) przewidywało kopie zdjęć do zbioru treningowego „z pseudonimem zamiast `uczen_id`” i usunięcie po odwołaniu zgody, ale nie było żadnego powiązania kopii z kontem — odwołania zgody ani usunięcia konta nie dało się wykonać (uzupełnienie C1-12).
 - **Decyzja:** tabela `kopia_treningowa` (7.3) jako jedyne powiązanie kopii z Uczniem; kopia zawiera zdjęcie maskowane, Transkrypcję i Ocenę ostateczną; tworzy ją `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` przy przejściu do `OCENIONE` (przed upływem `usun_po` zdjęcia); odwołanie zgody (`PATCH /uczniowie/ja`) i `USUN_KONTO` (krok 4a) ustawiają usunięcie; `ON DELETE RESTRICT` wymusza kolejność kroków.
 - **Alternatywy:** pseudonim bez powiązania (anonimizacja) — odrzucony, bo zgoda jest odwołalna (art. 7 ust. 3 RODO) i musi dać się wykonać; kopie oryginałów zdjęć — odrzucone (minimalizacja: oryginał może zawierać imię i nazwisko).
-- **Konsekwencje:** prawo do odwołania zgody i do usunięcia jest wykonalne w ≤ 1 h; zbiór treningowy nie zawiera danych identyfikacyjnych.
+- **Konsekwencje:** prawo do odwołania zgody i do usunięcia jest wykonalne w ≤ 1 h; zbiór treningowy nie zawiera danych identyfikacyjnych (od wersji 2.2 gwarantuje to Filtr danych osobowych, ADR-042).
+- **Uzupełnienie (it. 4, wersja 2.2, C2-16):** kopia jest zlecana przy każdym przejściu do stanu „`OCENIONE` bez otwartej Weryfikacji” (także po zamknięciu Kontroli losowej lub zgłoszenia) i nadpisywana, gdy Ocena aktualna jest nowsza niż zapisana (`kopia_treningowa.ocena_id`).
+
+### ADR-036 Poprawki Transkrypcji ograniczone i sprawdzane ze zdjęciem — Nowa (it. 4), G-0
+- **Kontekst:** `PUT …/transkrypcja` przyjmował dowolną listę 1–40 kroków, a kroki zmienione były wyłączone z podejrzenia odczytu (11.1 p. 7c); Uczeń mógł sfotografować dowolną kartkę, wpisać gotowe rozwiązanie i przejść trasą automatyczną — sprzeczność z ADR-024 i PZS-1 B-1 (C2-01). FR-18 mówi o poprawie „błędnie odczytanego **fragmentu**”.
+- **Decyzja:** (1) `TranskrypcjaWejscie` wiąże każdy krok z krokiem agenta (`nr_kroku_agenta`): bez usuwania, ≤ 2 kroki wstawione; (2) limity twarde (`422 POPRAWKI_ZBYT_ROZLEGLE`): zmienione + wstawione ≤ max(3, ⌈0,5 n⌉), odsetek zmienionych znaków ≤ 0,50; (3) limity miękkie i **Sprawdzenie zgodności poprawek** (rola `ROZPOZNAWANIE_PISMA`, praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` startująca przy `PUT`) — niezgodność, brak rezultatu albo przekroczenie limitu miękkiego dodaje powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (T-7, priorytet 2), wyłącznie w kierunku bezpiecznym (Z-1); (4) Oceny z T-7 są poza populacją progu (`WERYFIKACJA_INNY_POWOD`), Oceny automatyczne z Poprawkami mają podwójny odsetek Kontroli losowej i własny bezpiecznik (11.5.2); (5) metryki `odsetek_rozwiazan_z_poprawkami_30d`, `blad_automatycznych_z_poprawkami_30d`; G-2 mierzy wykrywalność (≥ 95%) i fałszywe alarmy (≤ 10%).
+- **Alternatywy:** każda Poprawka → Weryfikacja — odrzucona (FR-18 jest codzienną funkcją; podwoiłoby obciążenie Nauczycieli z 17.7); pełne wyłączenie Rozwiązań z Poprawkami z populacji progu — odrzucone, bo NFR-03 dotyczy wszystkich ocen automatycznych, więc te Rozwiązania muszą być mierzone (podwójna Kontrola losowa zamiast wyłączenia); edycja tylko kroków z `pewnosc_odczytu < 0.80` — odrzucona (agent bywa pewny błędnego odczytu, a to właśnie chroni FR-28).
+- **Konsekwencje:** Transkrypcja pochodzi ze zdjęcia także po Poprawkach; ≈ 3% Rozwiązań obliczeniowych więcej w Weryfikacji (17.7); Uczeń z rozległymi zmianami wysyła nowe zdjęcia. Limity zawężają literalne FR-18 — decyzja D-10 (G-0).
+
+### ADR-037 Wersja treści Weryfikacji oddzielona od blokady — Nowa (it. 4)
+- **Kontekst:** podjęcie, ponowne podjęcie, przedłużenie (co 5 min) i `ZWOLNIJ_BLOKADY` podnosiły `weryfikacja.version`, a odpowiedź przedłużenia nie zwracała ETag; rozstrzygnięcie Weryfikacji trwającej > 5 min kończyło się `412`, a sygnał „pojawiło się zgłoszenie” tracił znaczenie (C2-02).
+- **Decyzja:** `weryfikacja.version` = wersja **treści**; zmienia ją wyłącznie trigger `trg_weryfikacja_wersja` przy zmianie powodów, zgłoszenia, Oceny weryfikowanej, `ponowna_ocena_at`, Oceny Nauczyciela, anulowania lub zamknięcia; operacje blokady i trasowania (eskalacja, `termin_at`, priorytet po 80 dniach) oraz `opinia_pomocnicza` jej nie zmieniają. Przedłużenie zwraca `{zablokowana_do, version}` i ETag; `412` przy rozstrzygnięciu zawiera `zmiany_tresci`. Scenariusz C-31.
+- **Alternatywy:** zwracanie nowego ETag po każdym przedłużeniu i aktualizacja w PWA — odrzucona (wyścig między odpowiedzią przedłużenia a wysyłką rozstrzygnięcia z drugiej karty nadal daje fałszywe `412`, a `412` nie odróżnia przyczyny); osobna kolumna `wersja_blokady` z `If-Match` na obie — odrzucona (blokadę i tak chroni warunek `podjeta_przez = ja AND zablokowana_do > now()`).
+- **Konsekwencje:** `412` zawsze oznacza zmianę, którą Nauczyciel musi zobaczyć (C-28); C-23 opiera się na warunku `status = 'OCZEKUJE'`; konwencja 7.2 ma jawny wyjątek.
+
+### ADR-038 Przegląd Zadań zleconych przez Nauczyciela i Zgłoszenia błędu w Zadaniu — Nowa (it. 4), G-0
+- **Kontekst:** Zadania wygenerowane (obliczeniowe i zamknięte), także zlecone przez Nauczyciela, po Walidacji trafiały od razu do `OPUBLIKOWANE`/`GLOBALNY`, a poprawić je mogli tylko recenzent treści i Administrator; FR-14 przyznaje to prawo Nauczycielowi; zawężenie nie było w G-0 (C2-03).
+- **Decyzja:** (1) Zadanie wygenerowane na zlecenie Nauczyciela zawsze przechodzi `WALIDACJA → DO_PRZEGLADU`; zlecający przegląda, poprawia albo odrzuca (FR-14 w pełni), wynik `PRYWATNY`; promocja do `GLOBALNY` — recenzent treści lub Administrator; po 14 dniach Zadanie trafia także do kolejki recenzentów; (2) Zadania `GLOBALNY`: każdy Nauczyciel składa **Zgłoszenie błędu w Zadaniu** (`zgloszenie_bledu_zadania`, `POST /zadania/{id}/zgloszenia-bledu`), rozpatrywane przez recenzentów i Administratorów z SLA 5 dni roboczych; 3 otwarte zgłoszenia od różnych Nauczycieli ustawiają `wstrzymane_w_doborze`; (3) zlecenia Administratora i systemu — bez zmian (ADR-015).
+- **Alternatywy:** bezpośrednia poprawka Zadania `GLOBALNY` przez każdego Nauczyciela — odrzucona jako opcja domyślna (jedna osoba zmienia treść dla wszystkich Uczniów bez przeglądu; nowa wersja Zadania wpływa na kalibrację Poziomu trudności); prywatna kopia Zadania `GLOBALNY` do poprawy — odrzucona (kopia nie jest Zadaniem bazowym ani wygenerowanym w rozumieniu słownika).
+- **Konsekwencje:** Nauczyciel ma pełne FR-14 dla Zadań, które sam zlecił, i ścieżkę zgłoszenia dla pozostałych; pula `GLOBALNY` rośnie z zleceń Nauczycieli wolniej (wymaga promocji). Zawężenie dla Zadań `GLOBALNY` — decyzja D-11 (G-0).
+
+### ADR-039 Tryb wsadowy Jev i globalny ogranicznik szybkości — Nowa (it. 4)
+- **Kontekst:** plan pytań ma do 29 pytań (28 w rundzie 1 przy jednym wariancie), a budżet 17.2 zakładał ≤ 2 fale po 8 wywołań; limit A-01 jest per klucz, a pilnował go semafor per proces; `429` otwierał obwód i przełączał ruch na model zapasowy przy działającym Jev (C2-07).
+- **Decyzja:** (1) wymaganie A-01: żądanie wsadowe (≤ 32 pytania na rundę); bez niego tryb `POJEDYNCZY` z ≤ 16 wywołaniami na Ocenę i 3 falami — budżet i S-1…S-7 liczone dla tego trybu; (2) termin miękki `max(10 s, 28 s − t_R)` zgodny z SLO 28 s; (3) globalny ogranicznik: przydział `0,8 × limit × waga / Σ wag` z rejestru `limit_szybkosci_modelu` (wagi worker 1,0, `api` 0,1), lokalny token bucket, oczekiwanie do `termin_miekki − 11 s`, potem model zapasowy z przyczyną `OGRANICZENIE_LOKALNE`; (4) `429` i brak przydziału nie liczą się do circuit breakera; `429` zmniejsza przydział o połowę na 30 s.
+- **Alternatywy:** token bucket w PostgreSQL (wiersz na klucz, `UPDATE … RETURNING` na każde żądanie) — odrzucony (≈ 44 dodatkowe zapisy/s w szczycie i zależność ścieżki krytycznej od bazy); Redis jako licznik — odrzucony (nowy komponent, ADR-002).
+- **Konsekwencje:** szczyt „koniec lekcji” mieści się w limicie klucza; nadmiar degraduje do modelu zapasowego bez fałszywego otwarcia obwodu; G-4 (d) testuje `429`.
+
+### ADR-040 Okres karencji usunięcia konta: procesy wstrzymane, nie anulowane — Nowa (it. 4)
+- **Kontekst:** żądanie usunięcia natychmiast anulowało Weryfikacje i Rozwiązania, a przywrócenie w 30 dniach zostawiało trwale zawieszone Wyniki, zużyty limit zgłoszeń, Rozwiązania `ANULOWANE` z Wynikami wstępnymi i Kontrole pominięte w `π_wykonanie` (C2-08).
+- **Decyzja:** w okresie karencji stany się nie zmieniają; handlery kończą się z `KONTO_USUWANE`, Kolejka weryfikacji pomija konta `USUWANE`, Kontrole tych kont są poza licznikiem i mianownikiem nadzoru; przywrócenie wznawia procesy (tabela 16.4: nowe `termin_at`, ponowne zlecenie rozpoznania, T-6 dla przerwanych ocen); anulowanie wykonuje `USUN_KONTO` w kroku 0. Scenariusz C-33.
+- **Alternatywy:** anulowanie przy żądaniu i odtwarzanie procesów przy przywróceniu — odrzucone (odtworzenie Weryfikacji wymagałoby zachowania pełnego stanu sprzed anulowania, czyli i tak wstrzymania danych).
+- **Konsekwencje:** przywrócenie jest bezstratne; przez 30 dni dane są przechowywane bez przetwarzania (art. 12 ust. 3 RODO — realizacja żądania w ciągu miesiąca).
+
+### ADR-041 Rejestr wszystkich Zdarzeń RODO w Object Lock przed transakcją — Nowa (it. 4)
+- **Kontekst:** rejestr usunięć zawierał tylko wykonane usunięcia; odtworzenie PITR do punktu sprzed żądania usunięcia lub odwołania zgody przywracało konto `AKTYWNE` i zgodę `true` (C2-09).
+- **Decyzja:** `api` zapisuje każde Zdarzenie RODO (`ZADANIE_USUNIECIA`, `ANULOWANIE_USUNIECIA`, `USUNIECIE_WYKONANE`, `ODWOLANIE_ZGODY`, `UDZIELENIE_ZGODY`) do bucketu `rejestr-usuniec` **przed** transakcją, a kopię do `zdarzenie_rodo`; `UZGODNIJ_REJESTR_RODO` unieważnia obiekty bez zatwierdzonej transakcji; `ponow_zdarzenia_rodo` stosuje zdarzenia po punkcie odtworzenia przed startem workerów. G-6 testuje trzy scenariusze.
+- **Alternatywy:** wzorzec outbox (zapis w bazie, potem praca w tle do bucketu) — odrzucony, bo odtworzenie do chwili między zatwierdzeniem a wysyłką gubi zdarzenie; zapis do bucketu po transakcji — odrzucony z tego samego powodu.
+- **Konsekwencje:** żądania RODO przeżywają odtworzenie bazy; niejednoznaczność (zdarzenie bez transakcji w oknie 10 min) jest rozstrzygana w kierunku ochrony danych.
+
+### ADR-042 Filtr danych osobowych w Transkrypcji — Nowa (it. 4)
+- **Kontekst:** Agent rozpoznający oznaczał ramki danych osobowych tylko do maskowania zdjęcia; nic nie zabraniało przepisania imienia i nazwiska do kroków, skąd trafiały do stanu Jev, promptów, obcego weryfikatora i kopii treningowej (C2-10).
+- **Decyzja:** reguła promptu „nie przepisuj obszarów danych osobowych”; deterministyczny filtr w Lemat przed zapisem każdej Transkrypcji i przed kopią treningową: usunięcie kroków pokrywających się z ramkami w ≥ 50%, zastąpienie imienia, nazwiska i części lokalnej e-maila z konta (porównanie po stronie Lemat, odległość Levenshteina ≤ 1 na rdzeniu ≥ 4 znaków) oraz PESEL i e-maili znacznikiem `[DANE_OSOBOWE]`; metryka i test G-2/G-6 (0 wystąpień na ≥ 50 kartkach z danymi).
+- **Alternatywy:** drugi model wykrywający dane osobowe w tekście — odrzucony (koszt, opóźnienie fazy R, niedeterministyczność); poleganie wyłącznie na prompcie — odrzucone (brak gwarancji).
+- **Konsekwencje:** deklaracja 16.3 jest egzekwowana kodem; ryzyko pozostaje dla danych osób trzecich niewystępujących na koncie (np. imię kolegi) — pokrywa je reguła promptu i ramki maskowania.
+
+### ADR-043 SLA w dniach roboczych i tygodniowy model obciążenia z eskalacjami — Nowa (it. 4), G-0
+- **Kontekst:** model 17.7 liczył obciążenie na 7 dni przy pracy Nauczycieli 5 dni i pomijał napływ eskalacji z Klas do kolejki `GLOBALNA`; kontrola przyjęć nie hamowała eskalacji; G-7 = 12 było spełnialne „na papierze” (C2-12).
+- **Decyzja:** SLA = 3 dni robocze (`dodaj_dni_robocze`, tabela `dzien_wolny`); model tygodniowy (obciążenie dnia roboczego = 7/5 dobowego) z jawnym odsetkiem eskalacji 5% (A-15) i współczynnikiem 1,3; G-7 start = 18 (10 bez Klas + ≥ 8 współpracujących); `zaleglosc_globalna_min` z podziałem na źródło; kontrola przyjęć per Klasa przy `odsetek_eskalacji_7d ≥ 0,20`.
+- **Alternatywy:** SLA 72 h kalendarzowe z akceptacją ryzyka poniedziałkowych eskalacji — odrzucona jako opcja domyślna (pierwszy tydzień pilotażu dałby lawinę `opozniona`); obowiązkowa praca weekendowa weryfikatorów — odrzucona (koszt, brak podstaw w umowach).
+- **Konsekwencje:** termin dla Ucznia może wynosić do 5 dni kalendarzowych (Weryfikacja z piątku → środa); wyższy koszt puli globalnej; decyzja D-13 (G-0).
+
+### ADR-044 Usuwanie kont Nauczycieli i Administratorów — Nowa (it. 4)
+- **Kontekst:** brak przepływu i endpointu usunięcia konta Nauczyciela, a klucze obce `RESTRICT` blokowały `DELETE FROM uzytkownik`; dane Nauczyciela są danymi osobowymi (C2-14).
+- **Decyzja:** `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` (ochrona ostatniego Administratora); okres karencji 30 dni; natychmiastowe zwolnienie blokad, zdjęcie flag, eskalacja Weryfikacji `KLASA`; Przekazanie Klasy przez Administratora; po karencji archiwizacja nieprzekazanych Klas i zamknięcie ich Przypisań, `WYCOFANE` dla nieprzekazanych Zadań `PRYWATNY`, pseudonimizacja uzasadnień `R-PRZYPISANIE`, klucze obce `ON DELETE SET NULL` (DDL 7.3), Oceny Nauczyciela bez wskazania osoby.
+- **Alternatywy:** wyłączenie z zakresu (NFR-09 wymienia Uczniów) — odrzucone (RODO dotyczy wszystkich osób); usuwanie miękkie z zachowaniem danych — odrzucone (brak podstawy przetwarzania po ustaniu umowy).
+- **Konsekwencje:** Uczniowie nie tracą historii Ocen; Klasa bez Nauczyciela istnieje tylko jako zarchiwizowana (CHECK w DDL).
+
+### ADR-045 Normalizacja zdjęć w piaskownicy procesowej `api` — Nowa (it. 4)
+- **Kontekst:** dekodowanie HEIC/PNG/WEBP i zmiana rozmiaru do 5 × 10 MB odbywały się w procesie `api` bez limitów, wbrew deklaracji 16.2 (bomba dekompresyjna, blokowanie pętli zdarzeń w szczycie „koniec lekcji”, C2-15).
+- **Decyzja:** `ProcessPoolExecutor` z 2 procesami na replikę `api`, `RLIMIT_AS` 512 MiB, `RLIMIT_CPU` 5 s, 8 s czasu ściennego na plik; odczyt nagłówka przed dekodowaniem, ≤ 12 000 px na wymiar i ≤ 40 Mpx (`MAX_IMAGE_PIXELS`), `422 ZDJECIE_NIEPRAWIDLOWE`; oczekiwanie na proces > 5 s → `503`; `run_in_executor` w pętli zdarzeń.
+- **Alternatywy:** normalizacja w workerze przed `ROZPOZNAJ_PISMO` — odrzucona (zapis nieznormalizowanego oryginału z EXIF/GPS do S3 przed usunięciem metadanych, +0,4 s w fazie R na ścieżce krytycznej, osobna obsługa błędów formatu po `202`).
+- **Konsekwencje:** wykorzystanie piaskownicy ≈ 9% w szczycie (17.4); błędne pliki odrzucane synchronicznie przed zapisem.
 
 ---
 
@@ -4866,11 +5728,11 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 
 | Pytanie (architecture.md) | Odpowiedź | Gdzie |
 |---|---|---|
-| Jaki próg pewności przyjąć i jak go kalibrować? | Początkowo z ewaluacji ZT-1 (≥ 700 zadań obliczeniowych, analiza mocy 11.5.1); potem automatycznie: minimalny próg, przy którym górna granica Wilsona błędu ocen automatycznych ≤ 2% przy `n_eff ≥ 189`, z kalibracją out-of-fold, Kontrolą losową (termin 72 h, korekta wykonania w wagach IPW), regułami nadzoru i bezpiecznikiem. Gdy ZT-1 nie wystarcza — tryb pełnej weryfikacji. | 11.5, ADR-007 |
+| Jaki próg pewności przyjąć i jak go kalibrować? | Początkowo z ewaluacji ZT-1 (≥ 700 zadań obliczeniowych, analiza mocy 11.5.1); potem automatycznie: minimalny próg, przy którym górna granica Wilsona błędu ocen automatycznych ≤ 2% przy `n_eff ≥ 189`, z kalibracją out-of-fold, Kontrolą losową (termin 3 dni robocze, korekta wykonania w wagach IPW, podwójny odsetek dla Transkrypcji z Poprawkami), regułami nadzoru i bezpiecznikiem. Gdy ZT-1 nie wystarcza — tryb pełnej weryfikacji. | 11.5, ADR-007 |
 | Czy Jev radzi sobie z LaTeX w stanie? | Eksperyment **E-01** na ZT-1: trzy reprezentacje stanu (`LATEX`, `LINIOWA_SYMPY`, `OBA`); wybór reprezentacji z najwyższą Zgodnością Oceny i najniższym ECE; parametr `parametry.reprezentacja_wzorow` w Konfiguracji modelu. Domyślnie `OBA`. | 10.4.2, 13.1 |
 | Całe rozwiązanie naraz czy każdy krok osobno? | Każde kryterium osobno + pierwszy błąd + typ błędu + wynikanie kroków + podejrzenie błędu odczytu, jako `PlanPytan` z zależnościami. | ADR-005, ADR-026 |
 | Jak potraktować błędy odczytu? | Trzy linie obrony: zatwierdzenie i poprawki Transkrypcji przez Ucznia; decyzje Modelu decyzyjnego (Q-OC-04 `BLAD_ODCZYTU`, Q-OC-06) → T-3 z Oceną wstępną wstrzymaną i bez wpływu na Profil; zgłoszenie błędu odczytu przez Ucznia do 14 dni po Ocenie. Nauczyciel oznacza kroki z błędem odczytu; skuteczność mierzy 11.8. | 10.3, 11.1, 11.3, 11.6, 11.8, ADR-017, ADR-022 |
-| Plan B dla Jev? | `ZapasowyLlmAdapter` za circuit breakerem, wykonujący cały plan pytań jednym wywołaniem, z osobną kalibracją; bramki G-1 i G-4 dla obu modeli. | ADR-009, ADR-026, 9.9 |
+| Plan B dla Jev? | `ZapasowyLlmAdapter` za circuit breakerem, wykonujący cały plan pytań jednym wywołaniem, z osobną kalibracją; globalny ogranicznik szybkości kieruje nadmiar ruchu do modelu zapasowego bez otwierania obwodu (ADR-039); bramki G-1 i G-4 dla obu modeli. | ADR-009, ADR-026, 9.9 |
 | Skąd zbiór odręcznych rozwiązań? | ZT-1 (A-09): klasy pilotażowe z pisemną zgodą (opiekunów prawnych dla niepełnoletnich), rozwiązania Arkuszy CKE pisane przez Uczniów, ocenione przez 2–3 Nauczycieli z oznaczeniem pierwszego błędnego kroku; uzupełnienie: rozwiązania z celowo wprowadzonymi błędami (także błędami trudnymi do odczytu — do pomiaru czułości T-3) pisane ręcznie przez wolontariuszy (≤ 30% zbioru). Dalsze dane: zgoda `zgoda_na_trening`. | 2, 11.5.1, 17.6 |
 
 ---
@@ -4880,7 +5742,7 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 | ID | Ryzyko | Prawdopodobieństwo / wpływ | Mitygacja |
 |---|---|---|---|
 | R-01 | Brak dostępu do Jev lub niska trafność na zapisie matematycznym | średnie / wysoki | model zapasowy jako pełnoprawna ścieżka; E-01; G-1 i G-4 dla obu modeli |
-| R-02 | Zbyt duży odsetek Weryfikacji przeciąża Nauczycieli: model 17.7 — start 72 min/dobę na Nauczyciela prowadzącego Klasę (≈ 21 Weryfikacji, w tym Kontrola losowa), faza ustalona 54 min (≈ 14), kolejka globalna 719 min/dobę na starcie | wysokie / średni | model obciążenia przeliczany co tydzień; G-7 (12 weryfikatorów globalnych); priorytety i SLA 72 h; Opinia pomocnicza, szkice i przedłużanie blokad; automatyczne obniżanie progu; `udzial_zadan_otwartych`; kontrola przyjęć kolejki globalnej |
+| R-02 | Zbyt duży odsetek Weryfikacji przeciąża Nauczycieli: model tygodniowy 17.7 — start 98 min na dzień roboczy na Nauczyciela prowadzącego Klasę (≈ 29 Weryfikacji, w tym Kontrola losowa), faza ustalona 75 min (≈ 20), kolejka globalna 888 min/dobę na starcie (z eskalacjami) | wysokie / średni | model obciążenia przeliczany co tydzień; G-7 (18 weryfikatorów globalnych); kontrola przyjęć per Klasa; priorytety i SLA 72 h; Opinia pomocnicza, szkice i przedłużanie blokad; automatyczne obniżanie progu; `udzial_zadan_otwartych`; kontrola przyjęć kolejki globalnej |
 | R-03 | Jakość rozpoznawania pisma | średnie / wysoki | zatwierdzanie Transkrypcji, ponowienia i nowe przesłania, G-2 (w tym czułość T-3 i pomiar end-to-end), zgłoszenie błędu odczytu, alternatywny adapter OCR |
 | R-04 | Pracochłonne przygotowanie Kryteriów oceniania, Umiejętności i Wkładek dla obu poziomów | wysokie / średni | format importu, szkice Wkładek i Zadań generowane przez Agenta generującego (także automatycznie przy E-20), recenzenci treści, G-5 |
 | R-05 | Koszt modeli generatywnych | średnie / średni | limity 12.7 (w tym budżet dzienny generowania systemowego 150 PLN i 200 zleceń), metryka `koszt_modeli_pln_total{rola,systemowe}`, ograniczenie Opinii pomocniczej do `NISKA_PEWNOSC` |
@@ -4890,8 +5752,13 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 | R-09 | Zimny start Profilu ucznia | wysokie / niski | Test diagnostyczny, propagacja w Dziale, ostrożna reguła Wkładki (wymaga dowodów słabości) |
 | R-10 | ZT-1 nie pozwala wyznaczyć progu spełniającego NFR-03 | średnie / wysoki | analiza mocy 11.5.1 (≥ 700 zadań obliczeniowych); tryb pełnej weryfikacji z akceptacją w G-0 i automatycznym obniżaniem progu z danych produkcyjnych |
 | R-11 | Brak akceptacji decyzji G-0 (PZS-1, A-11, ADR-022) przez właściciela produktu | niskie / wysoki | decyzje mają opisane alternatywy w ADR; zmiana dotyczy wyłącznie reguł domenowych (moduły `lemat.ocenianie`, `lemat.weryfikacja`), nie struktury systemu |
-| R-12 | Brak Nauczycieli współpracujących do puli globalnej (A-14) | średnie / wysoki | plan awaryjny `LEMAT_REJESTRACJA_BEZ_KLASY = false` (ADR-034); kontrola przyjęć; cotygodniowe przeliczenie 17.7 — 10 Nauczycieli bez Klas (900 min/dobę) wystarcza w fazie startowej przy udziale Uczniów bez Klasy ≤ 16% (1,5 × 0,16 × 3 594 ≈ 863 min), a w fazie ustalonej już przy 20% (17.7) |
-| R-13 | Nadużywanie Zgłoszeń błędu odczytu do czasowego usuwania słabych Ocen z Profilu | niskie / niski | limity 1 na Rozwiązanie i 5 na 30 dni; raport uznawalności per Uczeń (9.12); zawieszenie trwa najwyżej do rozstrzygnięcia (SLA 72 h) |
+| R-12 | Brak Nauczycieli współpracujących do puli globalnej (A-14) | średnie / wysoki | plan awaryjny `LEMAT_REJESTRACJA_BEZ_KLASY = false` (ADR-034); kontrola przyjęć; cotygodniowe przeliczenie 17.7 — 10 Nauczycieli bez Klas (4 500 min tygodniowo) wystarcza przy udziale Uczniów bez Klasy `s` spełniającym 1,3 × 7 × M × (0,95 s + 0,05) ≤ 4 500: w fazie startowej s ≤ 8,8% (M = 3 702), w fazie ustalonej s ≤ 13,2% (M = 2 826) |
+| R-13 | Nadużywanie Zgłoszeń błędu odczytu do czasowego usuwania słabych Ocen z Profilu | niskie / niski | limity 1 na Rozwiązanie i 5 na 30 dni; raport uznawalności per Uczeń (9.12); zawieszenie trwa najwyżej do rozstrzygnięcia (SLA 3 dni robocze) |
+| R-14 | Uczeń zastępuje Transkrypcję gotowym rozwiązaniem (obejście kartki przez Poprawki) | średnie / wysoki | limity twarde i miękkie Poprawek, Sprawdzenie zgodności poprawek ze zdjęciem, T-7, podwójny odsetek Kontroli losowej i bezpiecznik poprawek (ADR-036); G-2 (wykrywalność ≥ 95%) |
+| R-15 | Rytm tygodniowy i eskalacje przeciążają pulę globalną w poniedziałki | średnie / średni | SLA w dniach roboczych, model tygodniowy z eskalacjami, kontrola przyjęć per Klasa, G-7 = 18 (ADR-043) |
+| R-16 | Odtworzenie bazy cofa Zdarzenia RODO | niskie / wysoki | rejestr wszystkich Zdarzeń RODO w Object Lock zapisywany przed transakcją, `ponow_zdarzenia_rodo` przed startem workerów, uzgadnianie co 10 min (ADR-041); G-6 (3 scenariusze) |
+| R-17 | Dostawca Jev bez trybu wsadowego lub z niższym limitem szybkości | średnie / średni | tryb `POJEDYNCZY` z budżetem 3 fal, globalny ogranicznik bez otwierania obwodu, model zapasowy dla nadmiaru (ADR-039); G-4 (d) |
+| R-18 | Zgłoszenia błędu w Zadaniu nierozpatrywane przez recenzentów | średnie / niski | SLA 5 dni roboczych z metryką, wstrzymanie w doborze po 3 zgłoszeniach, alert dla Administratorów (ADR-038) |
 
 ---
 
@@ -4912,9 +5779,9 @@ konfiguracją modeli (baza danych).
 | τ_odczyt (podejrzenie błędu odczytu) | 0.20 | 11.1 p. 7 |
 | τ_FR25 (reguła T-2) | 0.20 | 11.3 |
 | Maks. par wynikania sprawdzanych pytaniem Q-OC-05 | 12 (więcej → N-6) | 10.4.3 |
-| Termin miękki / twardy oceny | `max(10 s, 30 s − t_R)` / 120 s od zatwierdzenia | 14.2 |
+| Termin miękki / twardy oceny | `max(10 s, 28 s − t_R)` / 120 s od zatwierdzenia | 14.2 |
 | SLO NFR-01 | ≥ 99% `czas_systemowy_ms ≤ 28 000`; p95 ≤ 20 s (Jev) / ≤ 23 s (zapasowy); T-6 ≤ 0,2% | 17.1 |
-| Jev timeout / ponowienie / współbieżność | 2 s / 1 tylko przy ≥ 13 s do terminu miękkiego / 8 na Ocenę, 64 na proces | 13.2 |
+| Jev timeout / ponowienie / współbieżność | 2 s na żądanie / 1 tylko przy ≥ 13 s do terminu miękkiego / tryb wsadowy: 1 żądanie na rundę; tryb pojedynczy: 16 na Ocenę, limit procesu z globalnego ogranicznika (ADR-039) | 13.2 |
 | Circuit breaker | otwarcie: 3 kolejne błędy lub ≥ 50% błędów w 20 s przy ≥ 6 wywołaniach; półotwarty po 60 s | 13.2 |
 | Model zapasowy timeout | 9 s | 13.2 |
 | Q-RE-01 timeout | 1,5 s, bez ponowień | 10.1.6 |
@@ -4943,7 +5810,21 @@ konfiguracją modeli (baza danych).
 | Ważność elementu `PROPONOWANY` / `ROZPOCZETY` | 24 h / Zadanie 7 dni, Wkładka 24 h | 8.5 |
 | Porzucenie niezatwierdzonego Rozwiązania | 7 dni | 8.1 |
 | Blokada Weryfikacji / przedłużenie / maks. łącznie | 15 min / co 5 min przez PWA / 2 h | 11.4.2 |
-| SLA Weryfikacji / eskalacja / alert przed usunięciem zdjęć | 72 h / co 1 h / 80 dni | 11.4.3 |
+| SLA Weryfikacji / eskalacja / alert przed usunięciem zdjęć | 3 dni robocze (`dodaj_dni_robocze`) / co 1 h / 80 dni | 11.4.3, A-15 |
+| Kontrola przyjęć per Klasa (eskalacje) | włączenie: `odsetek_eskalacji_7d ≥ 0,20` przy ≥ 10 Weryfikacjach; wyłączenie: < 0,10; alert globalny > 0,10 | 11.4.3 |
+| Model obciążenia: współczynnik zapasu / dni pracy / odsetek eskalacji | 1,3 / 5 dni roboczych / 5% | 17.7, A-15 |
+| Poprawki Transkrypcji — limity twarde | bez usuwania; ≤ 2 wstawione; zmienione + wstawione ≤ max(3, ⌈0,5 n⌉); odsetek znaków ≤ 0,50 | 9.4, ADR-036 |
+| Poprawki Transkrypcji — limity miękkie (T-7) | zmienione + wstawione ≤ max(2, ⌈0,25 n⌉); odsetek znaków ≤ 0,25; `p_zgodna_z_poprawka ≥ 0,50` | 9.4, 10.3.3 |
+| Sprawdzenie zgodności poprawek | timeout 8 s, 2 próby; oczekiwanie w Ocenie ≤ min(6 s, `termin_miekki` − 9 s) | 10.3.3 |
+| Odsetek Kontroli losowej dla Transkrypcji z Poprawkami | 2 × odsetek bazowy (maks. 1) | 11.3 T-5 |
+| Jev: tryb / wsad / równoległość w trybie pojedynczym | `WSADOWY` (wymaganie A-01) albo `POJEDYNCZY` / ≤ 32 pytania / 16 na Ocenę | 13.2 |
+| Globalny ogranicznik szybkości modelu | 0,8 × limit klucza; wagi procesów: worker 1,0, `api` 0,1; odnowienie 10 s, wygasanie 30 s; po `429` przydział × 0,5 na 30 s | 13.2, ADR-039 |
+| Normalizacja zdjęć w `api` | 2 procesy na replikę; `RLIMIT_AS` 512 MiB, `RLIMIT_CPU` 5 s, 8 s czasu ściennego; ≤ 40 Mpx, ≤ 12 000 px na wymiar; oczekiwanie > 5 s → `503` | 16.2, ADR-045 |
+| Pula Testu diagnostycznego | ≥ 3 Zadania na (Dział, poziom matury, nominalny Poziom trudności 2/4); test niedostępny < 50% pozycji | 9.1, G-5 |
+| Zgłoszenia błędu w Zadaniu | 10 / dobę na Nauczyciela; wstrzymanie w doborze przy 3 otwartych od różnych Nauczycieli; SLA 5 dni roboczych; Przegląd recenzentów po 14 dniach bez Przeglądu zlecającego | 8.4, ADR-038 |
+| Automatyczne szkice Wkładek | ≤ 20 / dobę w budżecie 12.7; wstrzymanie na 30 dni po 2 odrzuceniach | 10.2.1, 13.3 |
+| Okres karencji usunięcia konta | 30 dni, procesy wstrzymane | 16.4, ADR-040 |
+| Zamiatacz Profili | co 5 min, Wyniki starsze niż 2 min, 500 Uczniów na przebieg; alert > 300 s | 13.3 |
 | Kontrola przyjęć kolejki globalnej | włączenie: zaległość > 2× pojemność; wyłączenie: < 1× | 11.4.3 |
 | Weryfikator globalny: minimalny deklarowany czas | 90 min/dobę | A-13 |
 | Priorytet Weryfikacji przy zdjęciach ≥ 80 dni | 1 | 11.4.3 |
@@ -5092,22 +5973,79 @@ C-28, C-29; ryzyka R-12, R-13; ADR-034, ADR-035; uzupełnienie ADR-022.
 
 Poniższych punktów nie da się zamknąć wyłącznie decyzją architektoniczną,
 bo zmieniają albo doprecyzowują wymagania, słownik lub budżet operacyjny.
-Dla każdego dokument wybiera wariant domyślny (obowiązujący do decyzji) i
-opisuje wariant alternatywny, tak aby implementacja nie była blokowana.
+Dla każdego dokument wybiera opcję domyślną (obowiązującą do decyzji) i
+opisuje opcję alternatywną, tak aby implementacja nie była blokowana
+(od wersji 2.2 słowo „wariant” jest zarezerwowane dla Wariantu rozwiązania,
+3.1 p. 5).
 
-| # | Decyzja | Wariant domyślny (w dokumencie) | Alternatywa i jej koszt | Uwagi źródłowe |
+| # | Decyzja | Opcja domyślna (w dokumencie) | Alternatywa i jej koszt | Uwagi źródłowe |
 |---|---|---|---|---|
 | D-1 | Zmiany słownika PZS-1 (61 nowych pojęć, definicje B-1…B-7) | treść 3.3/3.4 | inne brzmienie → zmiana nazw w kodzie przed wdrożeniem produkcyjnym | C1-03, C1-04 |
 | D-2 | Interpretacja NFR-01 (A-11): czas systemowy, zobowiązanie ≥ 99% | A-11, 17.1, 17.2 (S-1…S-7) | 100% ≤ 30 s → model rozpoznawania hostowany we własnej infrastrukturze, poza budżetem pilotażu | C1-08 |
 | D-3 | Ocena wstępna wstrzymana (bez punktów) przy podejrzeniu błędu odczytu; zawieszenie Wyniku przy zgłoszeniu; rozstrzyganie na korzyść Ucznia bez zdjęć | ADR-022 z uzupełnieniem 2.1 | literalne FR-24 (pokazanie punktów modelu) → łamie FR-28 | C1-01 |
-| D-4 | Pula weryfikatorów globalnych: rekrutacja i finansowanie ≥ 2 Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy | A-14, ADR-034 (oba warianty wspierane flagą) | automatyczna finalizacja po SLA — odrzucona, bo łamie FR-24/FR-26 | C1-02 |
+| D-4 | Pula weryfikatorów globalnych: rekrutacja i finansowanie ≥ 8 Nauczycieli współpracujących (wersja 2.1: ≥ 2; model tygodniowy z eskalacjami, ADR-043) albo start bez rejestracji Uczniów bez Klasy (wtedy 4 weryfikatorów spośród 10 Nauczycieli bez Klas) | A-14, ADR-034 (obie opcje wspierane flagą) | automatyczna finalizacja po SLA — odrzucona, bo łamie FR-24/FR-26 | C1-02 |
 | D-5 | Brak automatycznej finalizacji Oceny wstępnej po przekroczeniu SLA | ADR-021 | krytyk dopuścił ją „za zgodą właściciela produktu”; architektura jej nie implementuje, bo FR-26 mówi „zawsze” — zmiana wymagałaby zmiany FR-24/FR-26 | C1-02 |
 | D-6 | Tryb pełnej weryfikacji, gdy ZT-1 nie daje progu | 11.5.1 p. 5 | powiększenie ZT-1 ponad 700 zadań obliczeniowych (koszt przygotowania zbioru) | C1-09 |
 | D-7 | Brak wpisu ręcznego Rozwiązania | ADR-024 | wpis ręczny z obowiązkową Weryfikacją — obciąża Nauczycieli, omija kartkę | C1-26 |
 | D-8 | Kopie treningowe za odwołalną zgodą | ADR-035 | brak zbioru treningowego — wolniejsza poprawa modeli (FR-34) | C1-12 |
-| D-9 | Zatwierdzanie kont Nauczycieli przez Administratora; rozszerzenia powodów Weryfikacji (`PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`) | 16.1, 11.3, PZS-1 B-2 | bez Kontroli losowej NFR-03/NFR-04 są niemierzalne | C1-03, C1-10 |
+| D-9 | Zatwierdzanie kont Nauczycieli przez Administratora; rozszerzenia powodów Weryfikacji (`PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`) | 16.1, 11.3, PZS-1 B-2 | bez Kontroli losowej NFR-03/NFR-04 są niemierzalne | C1-03, C1-10, C2-01 |
+| D-10 | Zakres FR-18: Poprawki Transkrypcji tylko jako zmiana istniejących kroków i wstawienie ≤ 2 kroków, z limitami twardymi (`422`) i miękkimi (T-7) oraz Sprawdzeniem zgodności poprawek ze zdjęciem | ADR-036, 9.4, 10.3.3, 11.3 T-7 | dowolna edycja z obowiązkową Weryfikacją każdego Rozwiązania z Poprawkami — wzrost obciążenia Nauczycieli o szacunkowo 15–25% Rozwiązań obliczeniowych (do pomiaru `odsetek_rozwiazan_z_poprawkami_30d`), bez ochrony kalibracji przed zmienionym rozkładem; dowolna edycja bez kontroli — łamie ADR-024 i NFR-03 | C2-01 |
+| D-11 | Zakres FR-14: Nauczyciel przegląda, poprawia i odrzuca Zadania wygenerowane na swoje zlecenie (zawsze `DO_PRZEGLADU`, wynik `PRYWATNY`); Zadania `GLOBALNY` poprawia recenzent treści lub Administrator, a Nauczyciel składa Zgłoszenie błędu w Zadaniu | ADR-028 (uzupełnienie it. 4), ADR-038, 8.4 | każdy Nauczyciel poprawia Zadania `GLOBALNY` bezpośrednio — nowa wersja dla wszystkich Uczniów bez przeglądu; wymagałoby audytu zmian i mechanizmu cofania wersji (+1 endpoint, +1 stan) | C2-03 |
+| D-12 | Kryterium G-1(a) dla dowodów: zgodność ≥ 90% i LB Wilsona ≥ 85,0% przy n ≥ 350 | 11.5.1 (tabela 2), A-09, G-1 | LB ≥ 87,5% jak dla obliczeniowych — ZT-1 z ≥ 700 dowodami, +350 podwójnie ocenionych dowodów (≈ 58 h pracy Nauczycieli) | C2-06 |
+| D-13 | SLA Weryfikacji 3 dni robocze, tygodniowy model obciążenia z 5% eskalacji, G-7 = 18 weryfikatorów globalnych na start, kontrola przyjęć per Klasa | A-15, ADR-043, 11.4.3, 17.7 | SLA 72 h kalendarzowe — wymaga pracy weekendowej weryfikatorów (≈ +40% pojemności w dniu roboczym) albo akceptacji poniedziałkowych przekroczeń SLA | C2-12 |
+| D-14 | Możliwość pominięcia Testu diagnostycznego (FR-03: „nowy uczeń rozwiązuje…”) | 9.1 (pominięcie dozwolone, Profil `DOMYSLNA`, test możliwy później) | test obowiązkowy przed pierwszą rekomendacją — `GET …/rekomendacje/nastepna` zwraca `409 TEST_WYMAGANY`, gdy brak testu `ZAKONCZONY` dla poziomu matury, a pula pozwala go utworzyć | C2-13 |
 
-Do czasu akceptacji implementacja realizuje warianty domyślne; zmiana
-wariantu dotyczy reguł w modułach `lemat.ocenianie`, `lemat.weryfikacja`,
+Do czasu akceptacji implementacja realizuje opcje domyślne; zmiana
+opcji dotyczy reguł w modułach `lemat.ocenianie`, `lemat.weryfikacja`,
 `lemat.konta` i konfiguracji (22), bez zmiany struktury kontenerów, modułów
 ani portów (R-11).
+
+### 23.5 Iteracja 4 (2026-11-01, wersja 2.2) — zamknięcie uwag C1-21 i C2-01 … C2-16
+
+Zaadresowano wszystkie 17 otwartych uwag z `docs/CRITIQUE_LOG.md`: ponownie
+otwartą C1-21 oraz C2-01 … C2-16 z iteracji 2 (3 wysokie, 10 średnich, 3
+niskie). Decyzje zmieniające lub zawężające wymagania przekazano do G-0
+jako D-10 … D-14 z opcją domyślną opisaną w całości w dokumencie.
+Odstępstwa od proponowanych poprawek: C2-01 — Oceny automatyczne z
+Poprawkami nie są wyłączane z populacji progu, tylko objęte podwójną
+Kontrolą losową i bezpiecznikiem (wyłączenie uczyniłoby NFR-03
+niemierzalnym dla tej grupy; wyłączone są Oceny z T-7); C2-07 — globalny
+ogranicznik jest przydziałem lokalnym z rejestru procesów, a nie token
+bucketem w PostgreSQL (koszt zapisu na żądanie); C2-08 — wybrano wariant
+„odroczenie anulowania do `USUN_KONTO`” zaproponowany przez krytyka.
+
+| ID uwagi | Rozwiązanie | Miejsce rozwiązania |
+|---|---|---|
+| C1-21 (ŚREDNIA) | Kontekst efektywny próby: element `R-PRZYPISANIE` przekazuje `przypisanie_id` każdej próbie (trigger `trg_kontekst_proby`), więc jedna unikalność (Uczeń, Przypisanie, Zadanie) obejmuje obie drogi; klucz Zadania zamkniętego ujawniany od terminu także z elementu; Weryfikacja trafia do Nauczyciela Przypisania; próba liczy się do `PostepPrzypisaniaWyjscie` (nowy DTO, pole `droga`); jednoznaczny CHECK z kombinacjami {E}, {P}, {E, P}, {T}; `wygasa_at` elementu z Zadaniem zamkniętym ≤ termin; błąd `PRZYPISANIE_PO_TERMINIE` | 7.3 (`element_sciezki`, `rozwiazanie`, `odpowiedz`, `trg_kontekst_proby`), 8.5, 9.3, 10.1.1, 10.1.2 krok 1, 11.4.1 p. 1, 12.2, 12.4 (`OdpowiedzWejscie`, `OdpowiedzWyjscie`, `PostepPrzypisaniaWyjscie`), 12.5, 15.2 (C-30), 18.1 (FR-32), ADR-032 (uzupełnienie it. 4) |
+| C2-01 (WYSOKA) | Poprawki Transkrypcji związane z krokami agenta (`nr_kroku_agenta`), bez usuwania, ≤ 2 wstawione; limity twarde (`422 POPRAWKI_ZBYT_ROZLEGLE`) i miękkie; Sprawdzenie zgodności poprawek ze zdjęciem (`SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, rola `ROZPOZNAWANIE_PISMA`, Z-1); reguła T-7 i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`; Oceny z T-7 poza populacją progu; podwójny odsetek Kontroli losowej i bezpiecznik poprawek; metryki; G-2; PZS-1 B-1/B-2 | 1.3, 3.3, 3.4 (B-1, B-2), 7.3 (`powod_weryfikacji`, `transkrypcja`, `krok_transkrypcji`), 8.1, 9.4, 9.5, 10.3.1, 10.3.3, 11.1 p. 7, 11.3 (T-7, T-5, priorytet, komunikat), 11.5.2, 12.2, 12.3, 12.4, 12.5, 13.1, 13.3, 13.6, 14.1 (E-31, E-32), 15.2 (C-35), 17.2, 17.3, 17.6 (G-0, G-2), 17.7, 18.1 (FR-18), 21 (R-14), 22, ADR-024, ADR-036, D-10 |
+| C2-02 (WYSOKA) | `weryfikacja.version` = wersja treści ustawiana triggerem `trg_weryfikacja_wersja`; podjęcie, przedłużenie, zwolnienie, eskalacja bez zmiany `version`; przedłużenie zwraca ETag i `version`; `412` z polem `zmiany_tresci`; scenariusz rozstrzygnięcia po przedłużeniach | 7.2, 7.3 (`weryfikacja`, trigger), 8.3, 9.6.1 (SQL i diagram), 9.12, 9.13, 11.4.2, 11.4.3, 12.3, 12.4, 15.1 p. 4, 15.2 (C-23, C-28, C-31), ADR-033 (uzupełnienie), ADR-037 |
+| C2-03 (WYSOKA) | Zadania wygenerowane na zlecenie Nauczyciela zawsze `DO_PRZEGLADU` z Przeglądem zlecającego (wynik `PRYWATNY`, promocja przez recenzenta); Zgłoszenie błędu w Zadaniu dla Zadań `GLOBALNY` (tabela, endpointy, powiadomienie, SLA 5 dni roboczych), wstrzymanie w doborze po 3 zgłoszeniach; ADR-028 oznaczony G-0; decyzja D-11 | 3.3, 6.2, 7.3 (`zadanie.wstrzymane_w_doborze`, `zgloszenie_bledu_zadania`), 8.4, 9.7, 10.1.2 krok 7, 12.2, 12.3, 12.4, 12.7, 12.8, 13.6, 15.2 (C-36), 17.6 (G-0), 18.1 (FR-14), 21 (R-18), 22, ADR-028, ADR-038, D-11 |
+| C2-04 (ŚREDNIA) | Deduplikacja `AKTUALIZUJ_PROFIL` tylko wśród prac `OCZEKUJE` (`ux_praca_dedup_oczekujace`), pętla handlera do pustego wyniku, zamiatacz `ZAMIATAJ_PROFILE` co 5 min, metryka i alert wieku najstarszego niezastosowanego Wyniku | 7.3 (`praca_w_tle`), 13.3, 13.4, 13.5, 15.2 (C-11, C-32), 17.3, 22, ADR-002 (uzupełnienie) |
+| C2-05 (ŚREDNIA) | Kolumna `weryfikacja.powody_poczatkowe` (niezmienna poza dołączeniem Oceny przez `PONOW_OCENE`, trigger `trg_powody_poczatkowe`); źródło Próbki z powodów początkowych, zgłoszenie dopisane później nie wyklucza próbki; test jednostkowy | 3.3, 7.3, 9.5, 9.6.2, 9.12, 9.13, 11.5.2, 12.4 (`WeryfikacjaSzczegoly`), ADR-007 (uzupełnienie) |
+| C2-06 (ŚREDNIA) | Analiza mocy G-1(a) per rodzaj (tabela 2: LB, minimalna obserwowana zgodność, moc); ZT-1 ≥ 350 dowodów z LB ≥ 85,0% (≥ 700 obliczeniowych z LB ≥ 87,5%); poprawiona półszerokość ±3,1 pp; D-12 | 2 (A-09), 11.5.1, 17.6 (G-0, G-1), ADR-007 (uzupełnienie), D-12 |
+| C2-07 (ŚREDNIA) | Skład rund i fal (27 + 1 albo 16 + 13 pytań); tryby Jev `WSADOWY`/`POJEDYNCZY` (A-01); budżet 17.2 i S-1 … S-7 przeliczone dla 3 fal i terminu miękkiego `max(10 s, 28 s − t_R)`; globalny ogranicznik szybkości (`limit_szybkosci_modelu`, przydział ważony, token bucket); `429` i brak przydziału poza circuit breakerem; G-4 (d) | 2 (A-01), 3.1 p. 6, 6.2, 7.3 (`limit_szybkosci_modelu`), 9.5, 10.4.3, 13.1 (`OgranicznikSzybkosci`), 13.2, 14.1 (E-33), 14.2, 17.1, 17.2, 17.4, 17.6 (G-4), 21 (R-17), 22, ADR-039 |
+| C2-08 (ŚREDNIA) | Okres karencji: żądanie usunięcia wstrzymuje procesy zamiast je anulować; przywrócenie wznawia procesy (tabela 16.4: Weryfikacje z nowym SLA, zgłoszenia i zawieszone Wyniki rozstrzygane normalnie, ponowne rozpoznanie, T-6 dla przerwanych ocen); anulowanie w kroku 0 `USUN_KONTO`; Kontrole kont `USUWANE` poza `π_wykonanie`; scenariusz C-33 | 3.3, 8.1, 8.3, 9.6.1, 9.12, 11.4.2, 11.5.3, 12.3, 13.3, 13.6, 15.2 (C-20, C-33), 16.4, 22, ADR-040 |
+| C2-09 (ŚREDNIA) | Rejestr wszystkich Zdarzeń RODO (żądanie, anulowanie, wykonanie usunięcia, odwołanie i udzielenie zgody) zapisywany w Object Lock **przed** transakcją, kopia w `zdarzenie_rodo`; `UZGODNIJ_REJESTR_RODO`; procedura `ponow_zdarzenia_rodo` przed startem workerów; G-6 z trzema scenariuszami | 3.3, 5.1, 6.2, 7.3 (`zdarzenie_rodo`, `typ_zdarzenia_rodo`), 12.2, 12.3, 13.3, 13.5, 14.1 (E-36), 15.2 (C-34), 16.4, 17.1, 17.6 (G-6), 21 (R-16), ADR-041 |
+| C2-10 (ŚREDNIA) | Reguła promptu i deterministyczny Filtr danych osobowych przed zapisem Transkrypcji, Poprawek i kopii treningowej (ramki kroków, dane z konta, PESEL, e-mail); kolumna `dane_osobowe_usuniete`, metryka; test na ZT-1 (G-2, G-6); poprawione ADR-031 i 16.3 | 2 (A-09), 3.3, 7.3 (`transkrypcja`, `krok_transkrypcji.obszar`), 9.4, 10.3.1 p. 2 i 3a, 10.3.2, 13.3, 16.3, 17.3, 17.6 (G-2), ADR-031, ADR-035, ADR-042 |
+| C2-11 (ŚREDNIA) | Zmiany nazw: `decyzje_skladowe` (schemat adaptera zapasowego), `kod_statusu_http`/`cialo_http`, `opcje_zamkniete`, `?wersja_zdjecia=`, `rezultat_przestarzaly`, `rezultat_ujawniony_od`, `OdpowiedzWyjscie.rezultat`, „prace w tle” zamiast „kolejka”, „Strategia eksperymentalna” zamiast „Wariant eksperymentalny”, „opcja” zamiast „wariant” w 23.4; 3.1 p. 5 rozszerzony; 17 nowych pojęć w 3.3 (w tym Pewność surowa, Punkty surowe, Niespójność, Rozstrzygnięcie, Korekta, Eskalacja); PZS-1 B-8 (Agent), B-9 (Jev); test CI na tabele, tokeny kolumn, typów, OpenAPI, schematów modeli i słowa zarezerwowane | 3.1, 3.3, 3.4 (A, B-8, B-9, C), 5.1, 5.2, 6.3, 7.3, 7.5.1, 9.3, 10.1.6, 10.2.1, 12.3, 12.4, 13.2, 13.4, 14.1 (E-13), 15.2, 23.4 |
+| C2-12 (ŚREDNIA) | SLA 3 dni robocze (`dzien_wolny`, `dodaj_dni_robocze`); model tygodniowy 7/5 z jawnymi eskalacjami 5% (A-15) i współczynnikiem 1,3; G-7 = 18 na start; `zaleglosc_globalna_min` z eskalacjami; kontrola przyjęć per Klasa; D-13 | 2 (A-13, A-14, A-15), 3.3, 7.3, 11.4.1 p. 4, 11.4.3, 11.5.3, 12.4 (`ObciazenieWeryfikacjiWyjscie`), 13.3, 17.3, 17.6 (G-0, G-7), 17.7, 21 (R-02, R-12, R-15), 22, ADR-021, ADR-034, ADR-043, D-4, D-13 |
+| C2-13 (ŚREDNIA) | G-5 wymaga ≥ 3 Zadań diagnostycznych na (Dział, poziom matury, nominalny Poziom trudności 2/4); dobór po poziomie nominalnym; test częściowy (`pominiete_dzialy`) albo `409 TEST_NIEDOSTEPNY` < 50%; `SPRAWDZ_PULE_DIAGNOSTYCZNA`, `409 PULA_DIAGNOSTYCZNA_ZA_MALA`, `GET /admin/pula-diagnostyczna`; DTO `TestDiagnostycznyWyjscie`; pominięcie testu jako D-14 | 7.3 (`ix_zadanie_diagnostyczne`, `pominiete_dzialy`), 9.1, 12.2, 12.3, 12.4, 13.3, 13.5, 14.1 (E-34), 17.6 (G-0, G-5), 18.1 (FR-03), 22, D-14 |
+| C2-14 (NISKA) | Przepływ usunięcia konta Nauczyciela i Administratora (endpointy, karencja, Przekazanie Klasy, archiwizacja nieprzekazanych Klas, pseudonimizacja uzasadnień, ochrona ostatniego Administratora); DDL z `ON DELETE SET NULL` i CHECK „Klasa bez Nauczyciela tylko zarchiwizowana” | 1.3, 3.3, 6.2, 7.3 (`klasa`, `zestaw_zadan`, `przypisanie`, `import_arkusza`), 11.4.1 p. 1, 11.4.3 p. 1, 12.2, 12.3, 13.3, 13.6, 16.3, 16.4, 17.6 (G-6), 18.1 (FR-30), ADR-044 |
+| C2-15 (NISKA) | Piaskownica procesowa Pillow w `api` (2 procesy na replikę, RLIMIT, limit czasu), limit pikseli i wymiarów przed dekodowaniem, `422 ZDJECIE_NIEPRAWIDLOWE`, `503` przy zajętej piaskownicy; budżet i pojemność | 5.1, 5.2, 9.4, 10.3.1 p. 1, 12.2, 14.1 (E-35), 16.2, 17.2, 17.4, 22, ADR-045 |
+| C2-16 (NISKA) | (1) `rezultat_ujawniony_od` NULL dla Odpowiedzi testu do `…/zakonczenie` lub `…/pominiecie`; (2) warunek 2 h przy ponownym podjęciu przez właściciela; (3) `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` przy każdym przejściu do „`OCENIONE` bez otwartej Weryfikacji” i nadpisanie przy nowszej Ocenie; (4) okno zgłoszenia od Oceny aktualnej; (5) limit 2 odrzuceń automatycznych szkiców Wkładek na 30 dni i szkice w budżecie generowania systemowego; (6) Wkładka bez dowodu przeczytania po `wygasa_at` → `POMINIETY` w 8.5 i 13.3 | (1) 7.3, 9.1; (2) 9.6.1, 11.4.2, ADR-033; (3) 7.3 (`kopia_treningowa.ocena_id`), 9.5, 9.6.2, 9.13, 13.3, 16.4, ADR-035; (4) 11.6, 7.3; (5) 7.3 (`wkladka_teoretyczna`), 10.2.1, 12.7, 13.3, 14.1 (E-30), 22; (6) 8.5, 13.3 |
+
+Zmiany przekrojowe wersji 2.2: nowe założenie A-15; nowe tabele
+`zgloszenie_bledu_zadania`, `zdarzenie_rodo`, `dzien_wolny`,
+`limit_szybkosci_modelu`; nowe typy `status_zgloszenia_zadania`,
+`typ_zdarzenia_rodo` i wartość `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`; nowe
+triggery `trg_kontekst_proby`, `trg_weryfikacja_wersja`,
+`trg_powody_poczatkowe`; nowa sekcja 10.3.3; reguła trasowania T-7; nowe
+prace w tle `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, `ZAMIATAJ_PROFILE`,
+`SPRAWDZ_PULE_DIAGNOSTYCZNA`, `UZGODNIJ_REJESTR_RODO`; nowe kody błędów
+`PRZYPISANIE_PO_TERMINIE`, `TEST_NIEDOSTEPNY`, `PULA_DIAGNOSTYCZNA_ZA_MALA`,
+`ZGLOSZENIE_ZADANIA_ISTNIEJE`, `OSTATNI_ADMINISTRATOR`,
+`ZDJECIE_NIEPRAWIDLOWE`, `POPRAWKI_ZBYT_ROZLEGLE`; macierz błędów do E-36;
+scenariusze współbieżności do C-36; scenariusze budżetu S-1b, S-2b; ryzyka
+R-14 … R-18; ADR-036 … ADR-045; decyzje G-0 D-10 … D-14; PZS-1: 78 pojęć w
+części A, B-8 i B-9 w części B.
+
