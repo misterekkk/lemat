@@ -1,4 +1,4 @@
-// @Role: Buduje i zapisuje odpowiedź application/problem+json (type, kod, trace_id, instance, szczegoly, bledy_pol) | @DependsOn: ErrorCatalog, ProblemDetailsLemat, JsonApi | @UsedBy: ObslugaBledowWiazania, ObslugaWyjatkowDomenowych, ApiHost (status code pages) | @Task: TASK-121
+// @Role: Buduje i zapisuje odpowiedź application/problem+json (type, kod, trace_id, instance, szczegoly, bledy_pol) | @DependsOn: ErrorCatalog, ProblemDetailsLemat, JsonApi | @UsedBy: ObslugaBledowWiazania, ObslugaWyjatkowDomenowych, ApiHost (status code pages), WynikAutoryzacjiLemat, EndpointyKont | @Task: TASK-121, TASK-123
 using System.Diagnostics;
 using Lemat.Api.Configuration;
 
@@ -30,13 +30,17 @@ public static class ProblemWriter
             kod == KodBledu.Walidacja ? bledyPol ?? [] : null);
     }
 
-    /// <summary>Zapisuje problem; zwraca <c>false</c>, gdy odpowiedź już się zaczęła (nie można zmienić statusu).</summary>
+    /// <summary>
+    /// Zapisuje problem; zwraca <c>false</c>, gdy odpowiedź już się zaczęła (nie można zmienić statusu).
+    /// <paramref name="przedZapisem"/> dodaje nagłówki (np. <c>Set-Cookie</c>) po wyczyszczeniu odpowiedzi, a przed zapisem ciała.
+    /// </summary>
     public static async Task<bool> ZapiszAsync(
         HttpContext kontekst,
         KodBledu kod,
         string? opis = null,
         IReadOnlyDictionary<string, object?>? szczegoly = null,
         IReadOnlyList<BladPola>? bledyPol = null,
+        Action<HttpResponse>? przedZapisem = null,
         CancellationToken token = default)
     {
         ArgumentNullException.ThrowIfNull(kontekst);
@@ -48,6 +52,7 @@ public static class ProblemWriter
         var problem = Zbuduj(kontekst, kod, opis, szczegoly, bledyPol);
         kontekst.Response.Clear();
         kontekst.Response.StatusCode = problem.Status;
+        przedZapisem?.Invoke(kontekst.Response);
         await kontekst.Response.WriteAsJsonAsync(problem, JsonApi.Opcje, TypMedium, token);
         return true;
     }

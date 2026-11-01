@@ -1,4 +1,4 @@
-// @Role: Repozytorium EF Core Tokenów odświeżania: dodanie, wyszukanie po skrócie, masowe unieważnienie rodziny i konta jednym UPDATE (bez śledzenia zmian) | @DependsOn: LematDbContext, ITokenOdswiezaniaRepozytorium | @UsedBy: DI (PersistenceRegistration), uwierzytelnianie (TASK-072) | @Task: TASK-016
+// @Role: Repozytorium EF Core Tokenów odświeżania: dodanie, wyszukanie po skrócie, masowe unieważnienie rodziny i konta jednym UPDATE (bez śledzenia zmian) | @DependsOn: LematDbContext, ITokenOdswiezaniaRepozytorium | @UsedBy: DI (PersistenceRegistration), uwierzytelnianie (TASK-072) | @Task: TASK-016, TASK-123
 using Lemat.Application.Accounts;
 using Lemat.Domain.Accounts;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +17,16 @@ public sealed class TokenOdswiezaniaRepozytoriumEf(LematDbContext kontekst) : IT
     {
         ArgumentNullException.ThrowIfNull(tokenHash);
         return kontekst.Set<TokenOdswiezania>().AsNoTracking().FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+    }
+
+    public async Task<TokenOdswiezania?> PobierzDoZmianyAsync(byte[] tokenHash, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(tokenHash);
+        var wiersze = await kontekst.Set<TokenOdswiezania>()
+            .FromSqlInterpolated($"SELECT * FROM token_odswiezania WHERE token_hash = {tokenHash} FOR UPDATE")
+            .AsTracking()
+            .ToListAsync(ct);
+        return wiersze.SingleOrDefault();
     }
 
     public Task<int> UniewaznRodzineAsync(Guid rodzinaId, DateTimeOffset teraz, CancellationToken ct) =>

@@ -1,4 +1,4 @@
-// @Role: Parametry systemu MVP (sekcja 22) wiązane z sekcją Lemat; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | @DependsOn: Microsoft.Extensions.Options | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost, LematOpcjeWalidator | @Task: TASK-004
+// @Role: Parametry systemu MVP (sekcja 22) wiązane z sekcją Lemat; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | @DependsOn: Microsoft.Extensions.Options | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost, LematOpcjeWalidator | @Task: TASK-004, TASK-123
 namespace Lemat.Application.Common;
 
 /// <summary>
@@ -147,13 +147,13 @@ public sealed class EmailOpcje
 
 public sealed class JwtOpcje
 {
-    /// <summary><c>LEMAT_JWT_KLUCZ</c>: PEM ES256; pusty w Development = klucz generowany (TASK-072).</summary>
+    /// <summary><c>LEMAT_JWT_KLUCZ</c>: PEM ES256; pusty poza Production = klucz generowany i zapisywany lokalnie (TASK-123).</summary>
     public string Klucz { get; set; } = string.Empty;
 
     public string Wystawca { get; set; } = "lemat";
     public string Odbiorca { get; set; } = "lemat-api";
     public int WaznoscMinut { get; set; } = 15;
-    public int OdswiezenieDni { get; set; } = 30;
+    public int OdswiezenieDni { get; set; } = 14;
 }
 
 public sealed class KursorOpcje

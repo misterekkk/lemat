@@ -1,4 +1,5 @@
-// @Role: Mapuje wyjątki domenowe/aplikacyjne/bazy na ProblemDetails (WyjatekDomenowy, KonfliktWspolbieznosci, BladApi, baza niedostępna) i 500 bez szczegółów technicznych | @DependsOn: ProblemWriter, ErrorCatalog, TlumaczBledowBazy, WyjatekDomenowy | @UsedBy: ApiHost (AddExceptionHandler) | @Task: TASK-121
+// @Role: Mapuje wyjątki domenowe/aplikacyjne/bazy na ProblemDetails (WyjatekDomenowy, KonfliktWspolbieznosci, BladApi, baza niedostępna) i 500 bez szczegółów technicznych | @DependsOn: ProblemWriter, ErrorCatalog, TlumaczBledowBazy, WyjatekDomenowy | @UsedBy: ApiHost (AddExceptionHandler) | @Task: TASK-121, TASK-123
+using Lemat.Application.Accounts;
 using Lemat.Application.Common;
 using Lemat.Domain.Common;
 using Lemat.Infrastructure.Persistence;
@@ -22,13 +23,14 @@ public sealed partial class ObslugaWyjatkowDomenowych(ILogger<ObslugaWyjatkowDom
             LogNieobsluzony(exception, httpContext.Request.Path.Value);
         }
 
-        return await ProblemWriter.ZapiszAsync(httpContext, kod, opis, szczegoly, bledyPol, cancellationToken);
+        return await ProblemWriter.ZapiszAsync(httpContext, kod, opis, szczegoly, bledyPol, token: cancellationToken);
     }
 
     private (KodBledu Kod, string? Opis, IReadOnlyDictionary<string, object?>? Szczegoly, IReadOnlyList<BladPola>? BledyPol) Mapuj(Exception wyjatek) =>
         wyjatek switch
         {
             BladApiException api => (api.Kod, api.Opis, api.Szczegoly, api.BledyPol),
+            UwierzytelnienieNieudaneException uwierzytelnienie when ErrorCatalog.TryParse(uwierzytelnienie.KodBledu, out var kodUwierzytelnienia) => (kodUwierzytelnienia, uwierzytelnienie.Message, null, null),
             WyjatekDomenowy domenowy when ErrorCatalog.TryParse(domenowy.KodBledu, out var kod) => (kod, null, null, null),
             WyjatekDomenowy domenowy => NieznanyKod(domenowy.KodBledu),
             KonfliktWspolbieznosciException => (KodBledu.KonfliktWersji, null, null, null),

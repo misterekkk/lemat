@@ -1,4 +1,4 @@
-// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123
 using System.Reflection;
 using Lemat.Api.Endpoints;
 using Lemat.Api.Errors;
@@ -7,6 +7,13 @@ using Lemat.Api.Pagination;
 using Lemat.Application.Accounts;
 using Lemat.Application.Common;
 using Lemat.Application.Content;
+using Lemat.Application.Profile;
+using Lemat.Application.Recommendations;
+using FluentValidation;
+using Lemat.Api.Contracts.Accounts;
+using Lemat.Api.Security;
+using Lemat.Api.Validation;
+using Lemat.Infrastructure.Security;
 using Lemat.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics;
 
@@ -69,6 +76,14 @@ public static class ApiHost
         builder.Services.DodajPersystencje(opcje, RodzajProcesu.Api);
         builder.Services.DodajModulKonta();
         builder.Services.DodajModulTresci();
+        builder.Services.DodajModulProfil();
+        builder.Services.DodajModulRekomendacje();
+        builder.Services.DodajBezpieczenstwo(opcje);
+        builder.Services.DodajUwierzytelnianie();
+        builder.Services.DodajUwierzytelnianieJwt();
+        builder.Services.AddSingleton<IValidator<RejestracjaWejscie>, RejestracjaWejscieWalidator>();
+        builder.Services.AddSingleton<IValidator<LogowanieWejscie>, LogowanieWejscieWalidator>();
+        builder.Services.AddSingleton<IGrupaEndpointow, EndpointyKont>();
         builder.Services.AddSingleton(sp => new KodekKursora(KluczKursora(sp.GetRequiredService<LematOpcje>())));
         builder.Services.AddScoped<FiltrScenariuszaMock>();
 
@@ -80,6 +95,8 @@ public static class ApiHost
         app.UseMiddleware<NaglowkiOdpowiedziMiddleware>();
         app.UseExceptionHandler();
         app.UseStatusCodePages(ZapiszProblemDlaStatusu);
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapOpenApi("/api/v1/openapi.json");
         app.MapHealthEndpoints();
         foreach (var grupa in app.Services.GetServices<IGrupaEndpointow>())

@@ -1,4 +1,4 @@
-// @Role: Katalog kodów błędów POC (HTTP, tytuł, domyślny opis, type) oraz komunikaty reguł walidacji | @DependsOn: KodBledu, Lemat.Domain.Common.KonwencjaNazw | @UsedBy: ProblemWriter, handlery błędów, mapowanie statusów | @Task: TASK-121
+// @Role: Katalog kodów błędów POC (HTTP, tytuł, domyślny opis, type) oraz komunikaty reguł walidacji | @DependsOn: KodBledu, Lemat.Domain.Common.KonwencjaNazw | @UsedBy: ProblemWriter, handlery błędów, mapowanie statusów | @Task: TASK-121, TASK-123
 using System.Collections.Frozen;
 using Lemat.Domain.Common;
 
@@ -22,7 +22,7 @@ public static class ErrorCatalog
         [KodBledu.KontoNieaktywne] = new(403, "Konto nieaktywne", "To konto nie jest aktywne."),
         [KodBledu.NieZnaleziono] = new(404, "Nie znaleziono", "Nie znaleziono żądanego zasobu."),
         [KodBledu.MetodaNiedozwolona] = new(405, "Metoda niedozwolona", "Ta metoda HTTP nie jest dozwolona dla tego adresu."),
-        [KodBledu.EmailZajety] = new(409, "Nie udało się założyć konta", "Nie udało się założyć konta z podanymi danymi."),
+        [KodBledu.EmailZajety] = new(409, "Nie udało się założyć konta", "Nie udało się założyć konta na ten adres — zaloguj się albo zresetuj hasło."),
         [KodBledu.RozwiazanieNieprawidlowyStan] = new(409, "Nieprawidłowy stan rozwiązania", "Rozwiązanie jest w stanie, który nie pozwala na tę operację."),
         [KodBledu.TranskrypcjaNieaktualna] = new(409, "Transkrypcja jest nieaktualna", "Transkrypcja zmieniła się w międzyczasie. Odśwież widok."),
         [KodBledu.WersjaZadaniaNieaktualna] = new(409, "Treść zadania się zmieniła", "Treść zadania została zmieniona. Otwórz zadanie ponownie."),

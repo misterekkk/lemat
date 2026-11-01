@@ -1,4 +1,4 @@
-// @Role: Haszowanie haseł argon2id (m = 64 MiB, t = 3, p = 4) w formacie PHC; implementacja portu IHasherHasel | @DependsOn: Konscious.Security.Cryptography.Argon2, IHasherHasel | @UsedBy: PocSeeder, uwierzytelnianie (planowane TASK-123) | @Task: TASK-122
+// @Role: Haszowanie haseł argon2id (m = 64 MiB, t = 3, p = 4) w formacie PHC; implementacja portu IHasherHasel | @DependsOn: Konscious.Security.Cryptography.Argon2, IHasherHasel | @UsedBy: PocSeeder, SecurityRegistration (handlery uwierzytelniania) | @Task: TASK-122, TASK-123
 using System.Security.Cryptography;
 using System.Text;
 using Konscious.Security.Cryptography;

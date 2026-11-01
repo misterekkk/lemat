@@ -24,10 +24,267 @@
           }
         }
       }
+    },
+    "/api/v1/auth/rejestracja": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "ZarejestrujUzytkownika",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejestracjaWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RejestracjaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logowanie": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "Zaloguj",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogowanieWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesjaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/odswiezenie": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "OdswiezSesje",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesjaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/wylogowanie": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "Wyloguj",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "FlagiUzytkownika": {
+        "required": [
+          "weryfikator_globalny",
+          "recenzent_tresci"
+        ],
+        "type": "object",
+        "properties": {
+          "weryfikator_globalny": {
+            "type": "boolean"
+          },
+          "recenzent_tresci": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LogowanieWejscie": {
+        "required": [
+          "email",
+          "haslo"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "haslo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RejestracjaWejscie": {
+        "required": [
+          "email",
+          "haslo",
+          "imie",
+          "nazwisko",
+          "rola",
+          "oswiadczenie_wieku_16",
+          "zgoda_regulamin"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "haslo": {
+            "type": "string"
+          },
+          "imie": {
+            "type": "string"
+          },
+          "nazwisko": {
+            "type": "string"
+          },
+          "rola": {
+            "$ref": "#/components/schemas/RolaRejestracji"
+          },
+          "oswiadczenie_wieku_16": {
+            "type": "boolean"
+          },
+          "zgoda_regulamin": {
+            "type": "boolean"
+          },
+          "kod_zaproszenia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RejestracjaWyjscie": {
+        "required": [
+          "status_konta",
+          "sesja"
+        ],
+        "type": "object",
+        "properties": {
+          "status_konta": {
+            "$ref": "#/components/schemas/StatusKonta"
+          },
+          "sesja": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SesjaWyjscie"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RolaRejestracji": {
+        "enum": [
+          "UCZEN",
+          "NAUCZYCIEL"
+        ]
+      },
+      "RolaUzytkownika": {
+        "enum": [
+          "UCZEN",
+          "NAUCZYCIEL",
+          "ADMINISTRATOR"
+        ]
+      },
+      "SesjaWyjscie": {
+        "required": [
+          "access_token",
+          "wygasa_at",
+          "uzytkownik"
+        ],
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "wygasa_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uzytkownik": {
+            "$ref": "#/components/schemas/UzytkownikSesji"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StatusKonta": {
+        "enum": [
+          "AKTYWNE",
+          "OCZEKUJE_NA_ZATWIERDZENIE",
+          "ZABLOKOWANE",
+          "USUWANE"
+        ]
+      },
+      "UzytkownikSesji": {
+        "required": [
+          "id",
+          "rola",
+          "imie",
+          "flagi"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rola": {
+            "$ref": "#/components/schemas/RolaUzytkownika"
+          },
+          "imie": {
+            "type": "string"
+          },
+          "flagi": {
+            "$ref": "#/components/schemas/FlagiUzytkownika"
+          }
+        },
+        "additionalProperties": false
+      },
       "ZdrowieWyjscie": {
         "required": [
           "status"
@@ -45,6 +302,9 @@
   "tags": [
     {
       "name": "Lemat.Api"
+    },
+    {
+      "name": "EndpointyKont"
     }
   ]
 }

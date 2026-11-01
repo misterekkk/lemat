@@ -1,4 +1,4 @@
-// @Role: Agregat Użytkownik (konto każdej roli): e-mail normalizowany (citext), status konta, karencja usunięcia, przejścia 8.x (zatwierdzenie, blokada, wniosek o usunięcie, przywrócenie) | @DependsOn: Lemat.Domain.Common.Agregat, OkresKarencji, StatusKonta, RolaUzytkownika | @UsedBy: repozytoria Kont, IKontaFasada, uwierzytelnianie (TASK-072), RODO (TASK-033) | @Task: TASK-016
+// @Role: Agregat Użytkownik (konto każdej roli): e-mail normalizowany (citext), status konta, karencja usunięcia, przejścia 8.x (zatwierdzenie, blokada, wniosek o usunięcie, przywrócenie) | @DependsOn: Lemat.Domain.Common.Agregat, OkresKarencji, StatusKonta, RolaUzytkownika | @UsedBy: repozytoria Kont, IKontaFasada, uwierzytelnianie (TASK-072), RODO (TASK-033), walidacja rejestracji (TASK-123) | @Task: TASK-016, TASK-123
 using Lemat.Domain.Common;
 
 namespace Lemat.Domain.Accounts;
@@ -61,9 +61,15 @@ public sealed class Uzytkownik : Agregat<UzytkownikId>
     }
 
     /// <summary>Normalizacja zgodna z kolumną citext: obcięcie białych znaków i małe litery (kultura niezmienna).</summary>
-    public static string NormalizujEmail(string? email)
+    public static string NormalizujEmail(string? email) =>
+        TryNormalizujEmail(email, out var znormalizowany)
+            ? znormalizowany
+            : throw new NiezmiennikNaruszonyException("EMAIL_NIEPRAWIDLOWY", "Adres e-mail ma nieprawidłowy format.");
+
+    /// <summary>Wersja bez wyjątku (walidacja wejścia HTTP): <c>false</c>, gdy adres ma nieprawidłowy format.</summary>
+    public static bool TryNormalizujEmail(string? email, out string znormalizowany)
     {
-        var znormalizowany = (email ?? string.Empty).Trim().ToLowerInvariant();
+        znormalizowany = (email ?? string.Empty).Trim().ToLowerInvariant();
         var at = znormalizowany.IndexOf('@', StringComparison.Ordinal);
         var poprawny = znormalizowany.Length is > 0 and <= MaksDlugoscEmail
             && at > 0
@@ -72,9 +78,7 @@ public sealed class Uzytkownik : Agregat<UzytkownikId>
             && znormalizowany.IndexOf('.', at) > at + 1
             && !znormalizowany.EndsWith('.')
             && !znormalizowany.Any(char.IsWhiteSpace);
-        return poprawny
-            ? znormalizowany
-            : throw new NiezmiennikNaruszonyException("EMAIL_NIEPRAWIDLOWY", "Adres e-mail ma nieprawidłowy format.");
+        return poprawny;
     }
 
     public void ZarejestrujLogowanie(DateTimeOffset teraz) => OstatnieLogowanieAt = teraz;
