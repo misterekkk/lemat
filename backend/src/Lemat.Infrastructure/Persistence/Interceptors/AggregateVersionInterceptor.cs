@@ -1,4 +1,4 @@
-// @Role: Interceptor SavingChanges: podnosi version korzenia agregatu (Agregat.PotwierdzZapis) przy zmianie dowolnego wiersza agregatu (ef-core.md 4, ADR-029, 3.6 p. 3) | @DependsOn: Lemat.Domain.Common.IKorzenAgregatu, Lemat.Domain.Common.BezZmianyWersjiAttribute, Microsoft.EntityFrameworkCore | @UsedBy: PersistenceRegistration | @Task: TASK-015
+// @Role: Interceptor SavingChanges: podnosi version korzenia agregatu (Agregat.PotwierdzZapis) przy zmianie dowolnego wiersza agregatu (ef-core.md 4, ADR-029, 3.6 p. 3), także dla encji wewnętrznych z wymaganym kluczem obcym do korzenia | @DependsOn: Lemat.Domain.Common.IKorzenAgregatu, Lemat.Domain.Common.BezZmianyWersjiAttribute, Microsoft.EntityFrameworkCore | @UsedBy: PersistenceRegistration | @Task: TASK-015, TASK-019
 using System.Reflection;
 using Lemat.Domain.Common;
 using Microsoft.EntityFrameworkCore;
@@ -84,7 +84,10 @@ public sealed class WersjaAgregatuInterceptor : SaveChangesInterceptor
                 return biezacy;
             }
 
-            var wlasnosc = biezacy.Metadata.FindOwnership();
+            // Własność (OwnsMany/OwnsOne) albo wymagany klucz obcy 1:N do korzenia agregatu (encja wewnętrzna, np. ElementSciezki).
+            var wlasnosc = biezacy.Metadata.FindOwnership()
+                ?? biezacy.Metadata.GetForeignKeys().FirstOrDefault(
+                    k => k is { IsRequired: true, IsUnique: false } && typeof(IKorzenAgregatu).IsAssignableFrom(k.PrincipalEntityType.ClrType));
             if (wlasnosc is null)
             {
                 return null;
