@@ -83,7 +83,7 @@ Numer zadania nie narzuca kolejności między ścieżkami; w obrębie ścieżki 
 
 ## Ścieżka A — backend `[POC-A]` (TASK-121 … 130)
 
-- [ ] **TASK-121 [POC-A] Infrastruktura HTTP (`/api/v1`) i wpięcie trwałości w hosty Api i Worker**
+- [x] **TASK-121 [POC-A] Infrastruktura HTTP (`/api/v1`) i wpięcie trwałości w hosty Api i Worker**
   - **Opis:** W `Lemat.Api`: `Configuration/JsonApi.cs` (`System.Text.Json`: `snake_case` z separacją cyfr przez `KonwencjaNazw`, enumy `UPPER_SNAKE`, `UnmappedMemberHandling.Disallow`, `null` zawsze wysyłane, `JavaScriptEncoder.UnsafeRelaxedJsonEscaping` dla LaTeX; `api.md` 1),
     `Errors/` (podzbiór `KodBledu` z `docs/POC_CONTRACT.md` 1.2, `ProblemDetailsLemat` z `kod`, `trace_id`, `szczegoly`, `bledy_pol`, `type` = `https://lemat.pl/bledy/<kod-kebab>`; `ObslugaBledowWiazania`, `ObslugaWyjatkowDomenowych` mapujący `WyjatekDomenowy`/`TlumaczBledowBazy`; komunikaty po polsku),
     `Strona<T>` + kursor z podpisem HMAC (`LEMAT_KURSOR_KLUCZ`, w Development klucz domyślny), pomocnik `If-Match`/`version` (428/400/412 z `szczegoly.aktualny`), `FiltrScenariuszaMock` (nagłówek `X-Lemat-Mock-Scenariusz` honorowany tylko w `Development`/`E2E`),
@@ -94,6 +94,12 @@ Numer zadania nie narzuca kolejności między ścieżkami; w obrębie ścieżki 
   - **DoD:** testy `Lemat.Api.Tests` (WebApplicationFactory + PostgreSQL): wyjątek domenowy → ProblemDetails (`type`, `kod`, `status`, `trace_id`, `instance`); nieznane pole JSON → `422 WALIDACJA` z `bledy_pol[0].kod_reguly = POLE_NIEZNANE`; ucięty JSON → `400 ZAPYTANIE_NIEPRAWIDLOWE`;
     podrobiony kursor → `400 KURSOR_NIEPRAWIDLOWY`; `If-Match` brak → `428`, zła forma → `400`, niezgodny → `412` z `szczegoly.aktualny`; rekord testowy serializuje się z `oswiadczenie_wieku_16`, `liczba_wynikow_7d` i enumem `UPPER_SNAKE`; 404/405 z routingu mają `kod`;
     nagłówek Mock ignorowany poza `Development`/`E2E`; `GET /api/v1/zdrowie` nadal `200`; `dotnet run --project backend/src/Lemat.Api` startuje z bazą po `migrate`; build `-warnaserror`, `dotnet test`, `dotnet format --verify-no-changes` zielone.
+
+  - **Pliki (TASK-121):** `backend/src/Lemat.Api/Configuration/{JsonApi,NazwyLemat,ApiHost}.cs`, `backend/src/Lemat.Api/Errors/{ErrorCode,FieldError,ProblemDetailsLemat,ApiException,ErrorCatalog,ProblemWriter,BindingErrorHandling,DomainExceptionHandling}.cs`,
+    `backend/src/Lemat.Api/Pagination/{Page,CursorCodec,PageRequest}.cs`, `backend/src/Lemat.Api/Http/{IfMatchHeader,MockScenarioFilter,ResponseHeadersMiddleware}.cs`, `backend/src/Lemat.Api/Endpoints/IEndpointGroup.cs`,
+    `backend/src/Lemat.Worker/Configuration/WorkerHost.cs`, `backend/src/Lemat.Domain/Common/NamingConvention.cs`, `backend/openapi/lemat-v1.json`,
+    `backend/tests/Lemat.Api.Tests/{HttpInfrastructureTests.cs,Support/ApiFactory.cs,Support/ApiTestDatabaseFixture.cs,Support/TestEndpoints.cs}`.
+  - **Weryfikacja (TASK-121):** build `-warnaserror` 0 warn/0 err; `dotnet test` zielone (Api 35, Infrastructure 167, Architecture 106, Domain 394, Application 52); `dotnet format --verify-no-changes` OK; ręcznie `dotnet run Lemat.Api` po `migrate`: `/zdrowie` 200, 404/405 jako problem+json.
 
 - [ ] **TASK-122 [POC-A] `Lemat.Tools seed-poc`: Działy, Umiejętności, 5 Zadań z Kryteriami, konta demo, konfiguracja modelu i próg**
   - **Opis:** Polecenie `seed-poc` (idempotentne; odmawia przy `LEMAT_SRODOWISKO=Production`; wypisuje konta demo): 13 Działów z 7.4 (jawne `id` 1 … 13), 5 Umiejętności z kontraktu 6.2, 5 Zadań `OTWARTE_OBLICZENIOWE` `GLOBALNY` `OPUBLIKOWANE` ze stałymi identyfikatorami, treścią (Markdown + LaTeX), `rozwiazanie_wzorcowe`,

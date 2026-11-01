@@ -1,7 +1,14 @@
-// @Role: Kompozycja procesu api (logi JSON, ProblemDetails, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Microsoft.AspNetCore.OpenApi | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003, TASK-004
-using Lemat.Api.Endpoints;
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121
 using System.Reflection;
+using Lemat.Api.Endpoints;
+using Lemat.Api.Errors;
+using Lemat.Api.Http;
+using Lemat.Api.Pagination;
+using Lemat.Application.Accounts;
 using Lemat.Application.Common;
+using Lemat.Application.Content;
+using Lemat.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace Lemat.Api.Configuration;
 
@@ -9,6 +16,11 @@ namespace Lemat.Api.Configuration;
 public static class ApiHost
 {
     public const string DomyslnyAdresDev = "http://localhost:5080";
+
+    private const string PolaczenieZastepcze = "Host=localhost;Database=lemat;Username=lemat;Timeout=1;Command Timeout=1";
+
+    private static string KluczKursora(LematOpcje opcje) =>
+        !string.IsNullOrWhiteSpace(opcje.Kursor.Klucz) ? opcje.Kursor.Klucz : KodekKursora.KluczDeweloperski;
 
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
@@ -35,18 +47,60 @@ public static class ApiHost
             opcje.ValidateOnBuild = true;
         });
 
+        builder.Services.ConfigureHttpJsonOptions(opcje => JsonApi.Konfiguruj(opcje.SerializerOptions));
+        builder.Services.Configure<RouteHandlerOptions>(opcje => opcje.ThrowOnBadRequest = true);
+        builder.Services.AddExceptionHandler<ObslugaBledowWiazania>();
+        builder.Services.AddExceptionHandler<ObslugaWyjatkowDomenowych>();
         builder.Services.AddProblemDetails();
         builder.Services.AddOpenApi("v1");
+
+        var opcje = builder.Configuration.GetSection(LematOpcje.NazwaSekcji).Get<LematOpcje>() ?? new LematOpcje();
+        if (string.IsNullOrWhiteSpace(opcje.Srodowisko))
+        {
+            opcje.Srodowisko = builder.Environment.EnvironmentName;
+        }
+
+        if (string.IsNullOrWhiteSpace(opcje.Baza.Polaczenie))
+        {
+            // Brak LEMAT_BAZA (np. generator OpenAPI, test Production z błędem konfiguracji): źródło danych nie łączy się przy budowie.
+            opcje.Baza.Polaczenie = PolaczenieZastepcze;
+        }
+
+        builder.Services.DodajPersystencje(opcje, RodzajProcesu.Api);
+        builder.Services.DodajModulKonta();
+        builder.Services.DodajModulTresci();
+        builder.Services.AddSingleton(sp => new KodekKursora(KluczKursora(sp.GetRequiredService<LematOpcje>())));
+        builder.Services.AddScoped<FiltrScenariuszaMock>();
 
         return builder;
     }
 
     public static WebApplication MapEndpoints(this WebApplication app)
     {
+        app.UseMiddleware<NaglowkiOdpowiedziMiddleware>();
         app.UseExceptionHandler();
-        app.UseStatusCodePages();
+        app.UseStatusCodePages(ZapiszProblemDlaStatusu);
         app.MapOpenApi("/api/v1/openapi.json");
         app.MapHealthEndpoints();
+        foreach (var grupa in app.Services.GetServices<IGrupaEndpointow>())
+        {
+            grupa.Mapuj(app);
+        }
+
         return app;
+    }
+
+    private static readonly HashSet<int> StatusyZKodem = [400, 401, 403, 404, 405, 412, 413, 415, 422, 428, 500, 503];
+
+    /// <summary>404/405/415 z routingu, 401/403 z uwierzytelniania itd. bez ciała dostają ProblemDetails z <c>kod</c> (ADR-067 p. 7).</summary>
+    private static async Task ZapiszProblemDlaStatusu(StatusCodeContext kontekst)
+    {
+        var odpowiedz = kontekst.HttpContext.Response;
+        if (!StatusyZKodem.Contains(odpowiedz.StatusCode) || odpowiedz.ContentLength is > 0 || !string.IsNullOrEmpty(odpowiedz.ContentType))
+        {
+            return;
+        }
+
+        await ProblemWriter.ZapiszAsync(kontekst.HttpContext, ErrorCatalog.DlaStatusu(odpowiedz.StatusCode));
     }
 }

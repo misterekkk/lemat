@@ -292,10 +292,10 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/src/Lemat.Worker/Program.cs` | Punkt kompozycji procesu worker (szkielet, /zdrowie na porcie 8081) | Lemat.Worker.Configuration, Lemat.Application, Lemat.Infrastructure | host ASP.NET Core | TASK-001, TASK-003 |
 | `backend/src/Lemat.Scheduler/Program.cs` | Punkt kompozycji procesu scheduler (szkielet, /zdrowie na porcie 8082) | Lemat.Scheduler.Configuration, Lemat.Application, Lemat.Infrastructure | host ASP.NET Core | TASK-001, TASK-003 |
 | `backend/src/Lemat.Tools/Program.cs` | Narzędzie wiersza poleceń (dispatcher; migrate i seed-dev w kolejnych zadaniach) | Lemat.Tools.Commands, Lemat.Application, Lemat.Infrastructure | operator, scripts | TASK-001, TASK-003 |
-| `backend/src/Lemat.Api/Configuration/ApiHost.cs` | Kompozycja procesu api (logi JSON, ProblemDetails, OpenAPI, adres dev 5080); `CreateBuilder`, `MapEndpoints` | Microsoft.AspNetCore.OpenApi, LematKonfiguracja | Lemat.Api.Program, KontenerDiTests | TASK-003, TASK-004 |
+| `backend/src/Lemat.Api/Configuration/ApiHost.cs` | Kompozycja procesu api (logi JSON, ProblemDetails, OpenAPI, adres dev 5080); `CreateBuilder`, `MapEndpoints` | Microsoft.AspNetCore.OpenApi, LematKonfiguracja | Lemat.Api.Program, KontenerDiTests | TASK-003, TASK-004, TASK-121 |
 | `backend/src/Lemat.Api/Endpoints/HealthEndpoints.cs` | Endpoint `GET /api/v1/zdrowie` (grupa tras; `MapGroup("/api/v1/...")` dla kolejnych) | Lemat.Api.Contracts.Common | ApiHost | TASK-003 |
 | `backend/src/Lemat.Api/Contracts/Common/ZdrowieWyjscie.cs` | DTO odpowiedzi `GET /api/v1/zdrowie` | brak | HealthEndpoints | TASK-003 |
-| `backend/src/Lemat.Worker/Configuration/WorkerHost.cs` | Kompozycja procesu worker (host ogólny, `/zdrowie` na 8081, bez logiki) | Microsoft.AspNetCore.App, LematKonfiguracja | Worker.Program, KontenerDiTests | TASK-003, TASK-004 |
+| `backend/src/Lemat.Worker/Configuration/WorkerHost.cs` | Kompozycja procesu worker (host ogólny, `/zdrowie` na 8081, wpięta trwałość PostgreSQL) | Microsoft.AspNetCore.App, LematKonfiguracja | Worker.Program, KontenerDiTests | TASK-003, TASK-004, TASK-121 |
 | `backend/src/Lemat.Scheduler/Configuration/SchedulerHost.cs` | Kompozycja procesu scheduler (host ogólny, `/zdrowie` na 8082, bez logiki) | Microsoft.AspNetCore.App, LematKonfiguracja | Scheduler.Program, KontenerDiTests | TASK-003, TASK-004 |
 | `backend/src/Lemat.Tools/Commands/CommandDispatcher.cs` | Dispatcher poleceń (`IPolecenie`, `--help`, nieznane polecenie -> kod 2) | brak | Tools.Program, testy | TASK-003 |
 | `backend/tests/Lemat.Api.Tests/HealthEndpointTests.cs` | Test `GET /api/v1/zdrowie` i dokumentu OpenAPI (WebApplicationFactory) | Lemat.Api | dotnet test | TASK-003 |
@@ -334,7 +334,7 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/src/Lemat.Domain/Common/IDomainEvent.cs` | Zdarzenie domenowe zgłaszane przez agregat (katalog zdarzeń 13.6) | — | Lemat.Domain.Common.Agregat, moduły domenowe | TASK-014 |
 | `backend/src/Lemat.Domain/Common/IIdentifier.cs` | Baza identyfikatorów silnie typowanych (readonly record struct <Korzen>Id; każdy typ w TASK modułu) | — | Lemat.Domain.Common.Agregat, konwertery EF (TASK-015) | TASK-014 |
 | `backend/src/Lemat.Domain/Common/MaturaLevel.cs` | Wyliczenie Poziom matury (typ PostgreSQL poziom_matury) | — | moduły Accounts, Content, Profile | TASK-014 |
-| `backend/src/Lemat.Domain/Common/NamingConvention.cs` | Konwencja nazw (ADR-049): konwersje PascalCase, snake_case, UPPER_SNAKE, kebab-case | System.Text.Json.JsonNamingPolicy | konwencje EF Core (TASK-015), test słownika, serializacja | TASK-014 |
+| `backend/src/Lemat.Domain/Common/NamingConvention.cs` | Konwencja nazw (ADR-049): konwersje PascalCase, snake_case, UPPER_SNAKE, kebab-case | System.Text.Json.JsonNamingPolicy | konwencje EF Core (TASK-015), test słownika, serializacja | TASK-014, TASK-121 |
 | `backend/src/Lemat.Domain/Common/UuidGenerator.cs` | Generator identyfikatorów UUIDv7 (uporządkowanych czasowo) z TimeProvider | — | fabryki agregatów wszystkich modułów | TASK-014 |
 | `backend/tests/Lemat.Domain.Tests/Common/AggregateTests.cs` | Testy Agregat<TId>: Version, kolekcja zdarzeń, kontrakt 3.6 | Lemat.Domain.Common.Agregat | dotnet test | TASK-014 |
 | `backend/tests/Lemat.Domain.Tests/Common/CommonTypesTests.cs` | Testy wspólnych typów domeny: PoziomTrudnosci, wyjątki, wyliczenia, generator UUIDv7 | Lemat.Domain.Common | dotnet test | TASK-014 |
@@ -632,6 +632,27 @@ Projekty testowe (TASK-002): `backend/tests/Lemat.{Domain,Application,Agents,Mod
 | `backend/tests/Lemat.Infrastructure.Tests/Persistence/ProfilePersistenceTests.cs` | Testy bazy modułu Profil (PostgreSQL): założenie Profilu, inicjalizacja Opanowania, waga Wyniku (Ocena wstępna 0,5, kolejna próba), AKTUALIZUJ_PROFIL z Elo i atomową kalibracją trudności, odtworzenie po unieważnieniu, Test diagnostyczny (ux_test_jeden, propagacja w Dziale), wersja Profilu | BazaTestowa, ProfilFasada, repozytoria EF Profilu i Treści, KontaFasada, JednostkaPracyEf | dotnet test | TASK-019 |
 | `backend/tests/Lemat.Infrastructure.Tests/Persistence/RecommendationsPersistenceTests.cs` | Testy bazy modułu Rekomendacje (PostgreSQL): założenie Ścieżki nauki, element PROPONOWANY z Rekomendacją w jednej transakcji, ux_jeden_proponowany (ELEMENT_JUZ_PROPONOWANY), przejścia 8.5 zapisane w bazie, wersja Ścieżki podnoszona zmianą elementu, filtrowane ładowanie aktywnych elementów, Seria, jsonb Rekomendacji | BazaTestowa, RekomendacjeFasada, repozytoria EF Rekomendacji, KontaFasada, JednostkaPracyEf | dotnet test | TASK-019 |
 | `backend/tests/Lemat.Infrastructure.Tests/Persistence/Support/ZadaniaTestowe.cs` | Pomocnik testów bazy: tworzy i zapisuje opublikowane Zadanie (otwarte obliczeniowe lub zamknięte WYBOR_JEDNOKROTNY) z Umiejętnością główną i dodatkowymi w Dziale 5 | BazaTestowa, Zadanie, ZadanieRepozytoriumEf, JednostkaPracyEf | ProfilePersistenceTests, RecommendationsPersistenceTests | TASK-019 |
+| `backend/src/Lemat.Api/Configuration/JsonApi.cs` | Jedne opcje System.Text.Json dla żądań, odpowiedzi i OpenAPI (snake_case z separacją cyfr, enumy UPPER_SNAKE, null jawnie, brak nieznanych pól) | KonwencjaNazw | ApiHost, ObslugaBledowWiazania, KodekKursora | TASK-121 |
+| `backend/src/Lemat.Api/Configuration/NazwyLemat.cs` | Polityka nazw JSON (oswiadczenie_wieku_16, liczba_wynikow_7d) | KonwencjaNazw | JsonApi | TASK-121 |
+| `backend/src/Lemat.Api/Endpoints/IEndpointGroup.cs` | Port `IGrupaEndpointow` mapowany przez `ApiHost.MapEndpoints` (grupy dopisują się rejestracją w DI) | Microsoft.AspNetCore.Routing | ApiHost, grupy endpointów TASK-123+, testy | TASK-121 |
+| `backend/src/Lemat.Api/Errors/ErrorCode.cs` | Podzbiór `KodBledu` (12.2) używany w POC | — | ErrorCatalog, ProblemDetailsLemat, handlery błędów | TASK-121 |
+| `backend/src/Lemat.Api/Errors/FieldError.cs` | `BladPola` (pole, kod_reguly, komunikat) w 422 WALIDACJA | — | ProblemDetailsLemat, BladApiException | TASK-121 |
+| `backend/src/Lemat.Api/Errors/ProblemDetailsLemat.cs` | Kształt odpowiedzi RFC 9457 (type, kod, trace_id, szczegoly, bledy_pol) | KodBledu, BladPola | ProblemWriter, testy | TASK-121 |
+| `backend/src/Lemat.Api/Errors/ApiException.cs` | `BladApiException` – wyjątek warstwy HTTP z kodem, szczegółami i błędami pól | KodBledu, BladPola | NaglowekIfMatch, KodekKursora, FiltrScenariuszaMock, ObslugaWyjatkowDomenowych | TASK-121 |
+| `backend/src/Lemat.Api/Errors/ErrorCatalog.cs` | Katalog kodów błędów POC (HTTP, tytuł, opis, type) i komunikaty reguł walidacji | KodBledu, KonwencjaNazw | ProblemWriter, handlery błędów | TASK-121 |
+| `backend/src/Lemat.Api/Errors/ProblemWriter.cs` | Buduje i zapisuje `application/problem+json` | ErrorCatalog, ProblemDetailsLemat, JsonApi | handlery błędów, ApiHost (status code pages) | TASK-121 |
+| `backend/src/Lemat.Api/Errors/BindingErrorHandling.cs` | `ObslugaBledowWiazania`: ucięty JSON -> 400, nieznane pole/zły typ -> 422, 413/415 | ProblemWriter, ErrorCatalog, JsonApi | ApiHost | TASK-121 |
+| `backend/src/Lemat.Api/Errors/DomainExceptionHandling.cs` | `ObslugaWyjatkowDomenowych`: WyjatekDomenowy/konflikt współbieżności/baza niedostępna -> ProblemDetails | ProblemWriter, TlumaczBledowBazy, WyjatekDomenowy | ApiHost | TASK-121 |
+| `backend/src/Lemat.Api/Pagination/Page.cs` | `Strona<T>` { elementy, nastepny_kursor } | — | endpointy list (TASK-125, TASK-127) | TASK-121 |
+| `backend/src/Lemat.Api/Pagination/CursorCodec.cs` | `KodekKursora` – kursor z podpisem HMAC-SHA256 (`LEMAT_KURSOR_KLUCZ`) | JsonApi, BladApiException, LematOpcje | endpointy list | TASK-121 |
+| `backend/src/Lemat.Api/Pagination/PageRequest.cs` | `ZapytanieStrony` (?limit 1..100, ?kursor) | BladApiException | endpointy list | TASK-121 |
+| `backend/src/Lemat.Api/Http/IfMatchHeader.cs` | `NaglowekIfMatch` – If-Match/version: 428/400/412 z szczegoly.aktualny | BladApiException | PATCH/POST z wersją (TASK-124, TASK-128) | TASK-121 |
+| `backend/src/Lemat.Api/Http/MockScenarioFilter.cs` | `FiltrScenariuszaMock` – nagłówek X-Lemat-Mock-Scenariusz tylko w Development/E2E | LematOpcje, BladApiException | POST /rozwiazania (TASK-127) | TASK-121 |
+| `backend/src/Lemat.Api/Http/ResponseHeadersMiddleware.cs` | Nagłówki Cache-Control: no-store, Vary: Authorization, X-Lemat-Wersja-Api | — | ApiHost | TASK-121 |
+| `backend/tests/Lemat.Api.Tests/HttpInfrastructureTests.cs` | Testy infrastruktury HTTP /api/v1 (35 testów razem): ProblemDetails, wiązanie, kursor, If-Match, nagłówki, JSON, Mock | Lemat.Api, ApiFactory | dotnet test | TASK-121 |
+| `backend/tests/Lemat.Api.Tests/Support/ApiFactory.cs` | Fabryka WebApplicationFactory z endpointami testowymi i bazą z LEMAT_BAZA | Lemat.Api.Program | dotnet test | TASK-121 |
+| `backend/tests/Lemat.Api.Tests/Support/ApiTestDatabaseFixture.cs` | Fixture: pusta baza PostgreSQL 16 z migracjami (Testcontainers / LEMAT_TEST_BAZA) | Testcontainers, MigratorBazy | dotnet test | TASK-121 |
+| `backend/tests/Lemat.Api.Tests/Support/TestEndpoints.cs` | Endpointy pomocnicze tylko dla testów infrastruktury HTTP | IGrupaEndpointow, Lemat.Api.Errors | dotnet test | TASK-121 |
 
 ### 6.1 Planowane drzewo (skrót; pełne: 6.7 i 6.8 architektury)
 
@@ -644,7 +665,7 @@ backend/src/Lemat.Agents/        Recommendations/ Recognition/ Grading/ Explanat
 backend/src/Lemat.Models/        Mock/(Data Scenarios) Llm/ Fallback/ Schemas/ AdapterRegistry.cs          [planowane: TASK-039, 042, 051]
 backend/src/Lemat.Infrastructure/ Persistence/(Configurations Migrations/Sql Data) BackgroundJobs/ Storage/ Sandboxes/ Security/ Email/
                                                                                            [planowane: TASK-013, 015, 024, 040, 072]
-backend/src/Lemat.Api/           Program.cs Endpoints/ Contracts/ Validators/ Errors/ Configuration/ Streams/ Infrastructure/   [TASK-003 gotowe: Program, Configuration, Endpoints/Health, Contracts/Common; planowane: 071–080]
+backend/src/Lemat.Api/           Program.cs Endpoints/ Contracts/ Validators/ Errors/ Configuration/ Streams/ Infrastructure/   [TASK-003, TASK-121 gotowe: Program, Configuration (JsonApi), Errors, Pagination, Http, Endpoints/Health+IGrupaEndpointow; planowane: 123–129]
 backend/src/Lemat.Worker/        Program.cs BackgroundJobPoolHostedService.cs                                 [planowane: TASK-003, 048]
 backend/src/Lemat.Scheduler/     Program.cs (szkielet MVP; harmonogram POST-MVP)                             [planowane: TASK-003, 064]
 backend/src/Lemat.Tools/         Program.cs, Commands/ (dispatcher gotowy: TASK-003; migrate, seed-dev planowane: TASK-013, 026)

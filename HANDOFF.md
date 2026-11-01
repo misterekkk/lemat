@@ -445,10 +445,11 @@ rozbieżności rozstrzygaj zmianą kontraktu (procedura w POC_CONTRACT.md 10) i 
 
 | Pole | Wartość |
 |---|---|
-| Stan | TASK-121 … 130: 0 / 10 ukończonych |
-| Jak uruchomić | (po TASK-130) `scripts/dev-up.sh` → API `http://localhost:5080/api/v1`, Worker `:8081`; `scripts/dev-up.sh --stop`; `scripts/poc-smoke.sh` |
-| Zmienne środowiskowe / konfiguracja | (uzupełnia ścieżka A: `LEMAT_BAZA`, `LEMAT_JWT_KLUCZ`, `LEMAT_MAGAZYN_SCIEZKA`, `LEMAT_KURSOR_KLUCZ`, `Lemat:Poc:OpoznienieRozpoznaniaMs`/`OpoznienieOcenyMs`) |
-| Decyzje, odstępstwa, propozycje U-xx/OQ | (brak) |
+| Stan | TASK-121 … 130: 1 / 10 ukończonych (TASK-121 gotowe: infrastruktura HTTP `/api/v1` — JSON snake_case, ProblemDetails z `kod`/`trace_id`/`bledy_pol`, `Strona<T>` + kursor HMAC, `If-Match` 428/400/412, `FiltrScenariuszaMock`, nagłówki; trwałość wpięta w Api i Worker) |
+| Jak uruchomić | Baza: `docker compose up -d` (lub `scripts/db-local-setup.sh`); `dotnet run --project backend/src/Lemat.Tools -- migrate`; `dotnet run --project backend/src/Lemat.Api` (`http://localhost:5080`, `/api/v1/zdrowie`); Worker `dotnet run --project backend/src/Lemat.Worker` (`:8081`). Testy Api: `LEMAT_TEST_BAZA='Host=localhost;Port=5432;Database=postgres;Username=lemat;Password=lemat_dev' dotnet test backend/Lemat.slnx`. (po TASK-130) `scripts/dev-up.sh`, `scripts/poc-smoke.sh` |
+| Zmienne środowiskowe / konfiguracja | `LEMAT_BAZA` (connection string; bez niej hosty używają połączenia zastępczego), `LEMAT_KURSOR_KLUCZ` (HMAC kursora; w Development klucz domyślny, w Production wymagany), `LEMAT_TEST_BAZA` (testy); dalej (TASK-123+): `LEMAT_JWT_KLUCZ`, `LEMAT_MAGAZYN_SCIEZKA`, `Lemat:Poc:OpoznienieRozpoznaniaMs`/`OpoznienieOcenyMs` |
+| Decyzje, odstępstwa, propozycje U-xx/OQ | [A] `KodBledu` to podzbiór POC — kolejne zadania dopisują członka + wpis w `ErrorCatalog` (test pilnuje kompletności). [A] Grupy endpointów przez `IGrupaEndpointow` rejestrowane w DI. [A] `KonfliktWspolbieznosciException` -> 412 `KONFLIKT_WERSJI`, błędy łączności z bazą -> 503 `BAZA_NIEDOSTEPNA`. [A] Nie zaimplementowano `Opcjonalne<T>` (merge-patch), uwierzytelniania ani limitów ciała Kestrel (1 MB / 52 MB) — TASK-123/124/127. Brak nowych pakietów i zmian DDL. |
+| Następne zadanie | **TASK-122** (`Lemat.Tools seed-poc`: Działy, Umiejętności, 5 Zadań z Kryteriami, konta demo, konfiguracja modelu i próg). Wskazówki: hasher haseł tymczasowo `IHasherHasel` w `Lemat.Application.Accounts` (ten sam port, argon2id w TASK-123); odmowa przy `LEMAT_SRODOWISKO=Production`; idempotencja. Dla TASK-123: nowe endpointy jako `IGrupaEndpointow`, błędy przez `BladApiException`, `AddAuthentication/UseAuthentication` przed `MapEndpoints`. Dla 124/128: `NaglowekIfMatch.Wymagaj/SprawdzZgodnosc`; 125/127: `ZapytanieStrony`, `KodekKursora`, `Strona<T>`; 127: `FiltrScenariuszaMock` i własny limit ciała dla zdjęć. |
 
 #### 12.4.B Ścieżka B — frontend (`poc/frontend`)
 
@@ -495,3 +496,4 @@ Zgłoszenia mają prefiks `[A]` lub `[B]` i numer (np. `K-A-01`); rozstrzygnięc
 - **Klucze AI:** niepotrzebne — POC działa wyłącznie na Mockach (`Lemat:Modele:Dostawca = mock`); nie ustawiaj kluczy ani `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY` w POC.
 - **Przegląd merytoryczny 5 Zadań i Kryteriów (U-19):** autorskie dane „w stylu CKE”; przed pokazaniem prawdziwym Uczniom wymagają przeglądu nauczyciela matematyki.
 - **Do decyzji właściciela przed MVP:** kolejność zadań MVP po POC (zadania `[MVP]` z częściową realizacją przez POC pozostają `[ ]`, zob. mapowanie w `TASKS.md`).
+- **[A] (TASK-121):** do uruchomienia testów Api potrzebny Docker albo lokalny PostgreSQL 16 z `LEMAT_TEST_BAZA`; w Production ustaw `LEMAT_KURSOR_KLUCZ` (sekret, nie commituj).
