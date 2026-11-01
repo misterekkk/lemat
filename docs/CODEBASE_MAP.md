@@ -4,8 +4,8 @@
 |---|---|
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
-| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
-| Ostatnia aktualizacja | 2026-11-01 (TASK-002) |
+| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
+| Ostatnia aktualizacja | 2026-11-01 (TASK-003) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -48,7 +48,7 @@ Przypadki użycia to handlery w `Lemat.Application.<Module>` (polecenia `Command
 | 16 | `(teacher)/teacher/classes/[classId]/students/[studentId]`, `features/profile/StudentProfileView` | `GET /uczniowie/{id}/profil` (N: członek Klasy), `GET /klasy/{id}/uczniowie/{uczen_id}/rozwiazania` | `PobierzProfilUczniaDlaNauczycielaHandler` | — | `profil_ucznia`, `opanowanie_umiejetnosci`, `czlonkostwo_klasy` | 075, 088 | MVP | planowane |
 | 17 | `(teacher)/teacher`, `(teacher)/teacher/verifications`, `features/verifications/VerificationList` | `GET /weryfikacje?dostepnosc&powod&klasa_id&typ_kolejki&kursor`, `POST /weryfikacje/{id}/podjecie` | `KolejkaWeryfikacjiHandler` (reguła odczytu 11.4.2), `PodejmijWeryfikacjeHandler` | — | `weryfikacja`, `ocena`, `rozwiazanie`, `klasa` | 023, 080, 089 | MVP | planowane |
 | 18 | `(teacher)/teacher/verifications/[verificationId]`, `features/verifications/VerificationPanel` | `GET /weryfikacje/{id}`, `POST /weryfikacje/{id}/zwolnienie`, `POST /weryfikacje/{id}/rozstrzygniecie` (If-Match), `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `RozstrzygnijWeryfikacjeHandler` (nowa wersja `Ocena`, `OSTATECZNA`), `ZwolnijWeryfikacjeHandler` | praca `AKTUALIZUJ_PROFIL` po rozstrzygnięciu | `weryfikacja`, `ocena`, `ocena_kryterium`, `rozwiazanie`, `wynik_zadania`, `decyzja_modelu` | 023, 080, 089 | MVP | planowane |
-| 19 | (infrastruktura) | `GET /zdrowie`, `GET /openapi.json`, ProblemDetails, `ETag`/`version`, paginacja kursorowa | `KoncentratorZdarzen`, filtry HTTP | — | — | 003, 071 | MVP | planowane |
+| 19 | (infrastruktura) | `GET /zdrowie` (`HealthEndpoints`, DTO `ZdrowieWyjscie`; gotowe), `GET /openapi.json` (runtime `/api/v1/openapi.json`; gotowe), ProblemDetails (gotowe: `AddProblemDetails`), `ETag`/`version`, paginacja kursorowa | `KoncentratorZdarzen`, filtry HTTP | — | — | 003, 071 | MVP | w toku (003 gotowe: zdrowie, OpenAPI, ProblemDetails; reszta 071) |
 | 20 | (narzędzie CLI) `backend/src/Lemat.Tools` | polecenia `migrate`, `seed-dev` | `MigrujBazeCommand`, `SeedDevCommand` | konfiguracje modelu `mock`, próg 0,95, kalibrator tożsamościowy | wszystkie tabele DDL; dane: `dzial`, `umiejetnosc`, `zadanie`, `zadanie_wersja`, `kryterium_oceniania`, `wkladka_teoretyczna`, `konfiguracja_modelu`, `prog_pewnosci`, `kalibrator_pewnosci` | 013, 025–028 | MVP | planowane |
 
 ### 1.2 Po MVP (wiersze zarezerwowane — nie usuwać)
@@ -138,7 +138,7 @@ Moduł = `Lemat.Domain.<Module>` + `Lemat.Application.<Module>` + grupa tras w `
 
 ### 5.1 Projekty backendu (strzałka = „ma referencję do”)
 
-Stan (TASK-001, TASK-002): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj` i pilnowane testami `Lemat.Architecture.Tests`; projekty `Lemat.*.Tests` nie są częścią diagramu — każdy referuje wyłącznie testowany projekt, a Architecture.Tests wszystkie 9); węzły z linią przerywaną są POST-MVP i nie istnieją.
+Stan (TASK-001, TASK-002, TASK-003; w TASK-003 Worker i Scheduler dostały `FrameworkReference Microsoft.AspNetCore.App` — to nie zmienia grafu referencji projektów): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj` i pilnowane testami `Lemat.Architecture.Tests`; projekty `Lemat.*.Tests` nie są częścią diagramu — każdy referuje wyłącznie testowany projekt, a Architecture.Tests wszystkie 9); węzły z linią przerywaną są POST-MVP i nie istnieją.
 
 ```mermaid
 flowchart BT
@@ -271,10 +271,18 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 
 | Ścieżka | Role | DependsOn | UsedBy | Task |
 |---|---|---|---|---|
-| `backend/src/Lemat.Api/Program.cs` | Punkt kompozycji procesu api (szkielet, bez endpointów) | Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | host ASP.NET Core | TASK-001 |
-| `backend/src/Lemat.Worker/Program.cs` | Punkt kompozycji procesu worker (szkielet, bez pul prac w tle) | Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | host Generic Host | TASK-001 |
-| `backend/src/Lemat.Scheduler/Program.cs` | Punkt kompozycji procesu scheduler (szkielet, POST-MVP) | Lemat.Application, Lemat.Infrastructure | host Generic Host | TASK-001 |
-| `backend/src/Lemat.Tools/Program.cs` | Narzędzie wiersza poleceń (szkielet; migrate i seed-dev w kolejnych zadaniach) | Lemat.Application, Lemat.Infrastructure | operator, scripts | TASK-001 |
+| `backend/src/Lemat.Api/Program.cs` | Punkt kompozycji procesu api (Minimal API, zdrowie, OpenAPI) | Lemat.Api.Configuration, Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | host ASP.NET Core, WebApplicationFactory | TASK-001, TASK-003 |
+| `backend/src/Lemat.Worker/Program.cs` | Punkt kompozycji procesu worker (szkielet, /zdrowie na porcie 8081) | Lemat.Worker.Configuration, Lemat.Application, Lemat.Infrastructure | host ASP.NET Core | TASK-001, TASK-003 |
+| `backend/src/Lemat.Scheduler/Program.cs` | Punkt kompozycji procesu scheduler (szkielet, /zdrowie na porcie 8082) | Lemat.Scheduler.Configuration, Lemat.Application, Lemat.Infrastructure | host ASP.NET Core | TASK-001, TASK-003 |
+| `backend/src/Lemat.Tools/Program.cs` | Narzędzie wiersza poleceń (dispatcher; migrate i seed-dev w kolejnych zadaniach) | Lemat.Tools.Commands, Lemat.Application, Lemat.Infrastructure | operator, scripts | TASK-001, TASK-003 |
+| `backend/src/Lemat.Api/Configuration/ApiHost.cs` | Kompozycja procesu api (logi JSON, ProblemDetails, OpenAPI, adres dev 5080); `CreateBuilder`, `MapEndpoints` | Microsoft.AspNetCore.OpenApi | Lemat.Api.Program, KontenerDiTests | TASK-003 |
+| `backend/src/Lemat.Api/Endpoints/HealthEndpoints.cs` | Endpoint `GET /api/v1/zdrowie` (grupa tras; `MapGroup("/api/v1/...")` dla kolejnych) | Lemat.Api.Contracts.Common | ApiHost | TASK-003 |
+| `backend/src/Lemat.Api/Contracts/Common/ZdrowieWyjscie.cs` | DTO odpowiedzi `GET /api/v1/zdrowie` | brak | HealthEndpoints | TASK-003 |
+| `backend/src/Lemat.Worker/Configuration/WorkerHost.cs` | Kompozycja procesu worker (host ogólny, `/zdrowie` na 8081, bez logiki) | Microsoft.AspNetCore.App | Worker.Program, KontenerDiTests | TASK-003 |
+| `backend/src/Lemat.Scheduler/Configuration/SchedulerHost.cs` | Kompozycja procesu scheduler (host ogólny, `/zdrowie` na 8082, bez logiki) | Microsoft.AspNetCore.App | Scheduler.Program, KontenerDiTests | TASK-003 |
+| `backend/src/Lemat.Tools/Commands/CommandDispatcher.cs` | Dispatcher poleceń (`IPolecenie`, `--help`, nieznane polecenie -> kod 2) | brak | Tools.Program, testy | TASK-003 |
+| `backend/tests/Lemat.Api.Tests/HealthEndpointTests.cs` | Test `GET /api/v1/zdrowie` i dokumentu OpenAPI (WebApplicationFactory) | Lemat.Api | dotnet test | TASK-003 |
+| `backend/tests/Lemat.Architecture.Tests/Hosts/KontenerDiTests.cs` | Test kontenerów DI api/worker/scheduler (ValidateOnBuild, ValidateScopes) | Lemat.Api, Lemat.Worker, Lemat.Scheduler | dotnet test | TASK-003 |
 | `backend/tests/Lemat.Domain.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Domain (szkielet do czasu pojawienia się typów) | Lemat.Domain | dotnet test | TASK-002 |
 | `backend/tests/Lemat.Application.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Application (szkielet do czasu pojawienia się typów) | Lemat.Application | dotnet test | TASK-002 |
 | `backend/tests/Lemat.Agents.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Agents (szkielet do czasu pojawienia się typów) | Lemat.Agents | dotnet test | TASK-002 |
@@ -294,6 +302,8 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/tests/Lemat.Architecture.Tests/Support/RepositoryLocator.cs` | Lokalizacja katalogów repozytorium i plików źródłowych dla testów architektury | system plików, git | Layers, Glossary, Conventions | TASK-002 |
 
 Projekty `Lemat.Domain`, `Lemat.Application`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Pliki nie-C# (TASK-003): `backend/openapi/lemat-v1.json` (OpenAPI 3.1.1, generowany przy buildzie `Lemat.Api`, deterministyczny, commitowany; źródło typów TS, ADR-061), `backend/Directory.Packages.props` (pakiet OpenAPI), `.csproj` Api/Worker/Scheduler.
+
 Pliki konfiguracyjne solucji (TASK-001, TASK-002): `backend/{Lemat.slnx,global.json,Directory.Build.props,Directory.Packages.props,BannedSymbols.txt,BannedSymbols.Sdk.txt,.editorconfig}`, `backend/src/Directory.Build.props` (analizator BannedApiAnalyzers tylko dla `src`), `backend/tests/Directory.Build.props` (xUnit v3, Shouldly; poza zakresem BannedApi), `.gitignore`.
 Projekty testowe (TASK-002): `backend/tests/Lemat.{Domain,Application,Agents,Models,Infrastructure,Api,Architecture}.Tests` — referencje do projektu testowanego wg 6.4; testy architektury sprawdzają graf z sekcji 5.1.
 
@@ -308,10 +318,10 @@ backend/src/Lemat.Agents/        Recommendations/ Recognition/ Grading/ Explanat
 backend/src/Lemat.Models/        Mock/(Data Scenarios) Llm/ Fallback/ Schemas/ AdapterRegistry.cs          [planowane: TASK-039, 042, 051]
 backend/src/Lemat.Infrastructure/ Persistence/(Configurations Migrations/Sql Data) BackgroundJobs/ Storage/ Sandboxes/ Security/ Email/
                                                                                            [planowane: TASK-013, 015, 024, 040, 072]
-backend/src/Lemat.Api/           Program.cs Endpoints/ Contracts/ Validators/ Errors/ Configuration/ Streams/ Infrastructure/   [planowane: TASK-003, 071–080]
+backend/src/Lemat.Api/           Program.cs Endpoints/ Contracts/ Validators/ Errors/ Configuration/ Streams/ Infrastructure/   [TASK-003 gotowe: Program, Configuration, Endpoints/Health, Contracts/Common; planowane: 071–080]
 backend/src/Lemat.Worker/        Program.cs BackgroundJobPoolHostedService.cs                                 [planowane: TASK-003, 048]
 backend/src/Lemat.Scheduler/     Program.cs (szkielet MVP; harmonogram POST-MVP)                             [planowane: TASK-003, 064]
-backend/src/Lemat.Tools/         Program.cs (migrate, seed-dev)                                              [planowane: TASK-013, 026]
+backend/src/Lemat.Tools/         Program.cs, Commands/ (dispatcher gotowy: TASK-003; migrate, seed-dev planowane: TASK-013, 026)
 frontend/src/app/                (public) (student) (teacher)/teacher (administrator)/admin layout.tsx proxy.ts   [planowane: TASK-006, 082–089]
 frontend/src/features/           accounts learning solutions profile classes verifications (+POST-MVP assignments content administration notifications)
 frontend/src/lib/                api/ auth/ sse/ photos/ katex/ i18n/                                        [planowane: TASK-006, 081]

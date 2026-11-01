@@ -1,4 +1,7 @@
-// @Role: Punkt kompozycji procesu scheduler (szkielet, POST-MVP) | @DependsOn: Lemat.Application, Lemat.Infrastructure | @UsedBy: host Generic Host | @Task: TASK-001
-var builder = Host.CreateApplicationBuilder(args);
-using var host = builder.Build();
-await host.RunAsync();
+// @Role: Punkt kompozycji procesu scheduler (szkielet, /zdrowie na porcie 8082) | @DependsOn: Lemat.Scheduler.Configuration, Lemat.Application, Lemat.Infrastructure | @UsedBy: host ASP.NET Core | @Task: TASK-001, TASK-003
+using Lemat.Scheduler.Configuration;
+
+var builder = SchedulerHost.CreateBuilder(args);
+var app = builder.Build();
+app.MapHealth();
+await app.RunAsync();

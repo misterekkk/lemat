@@ -1,0 +1,49 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Lemat.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/zdrowie": {
+      "get": {
+        "tags": [
+          "Lemat.Api"
+        ],
+        "operationId": "PobierzZdrowie",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrowieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ZdrowieWyjscie": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Lemat.Api"
+    }
+  ]
+}

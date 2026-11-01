@@ -1,3 +1,5 @@
-// @Role: Narzędzie wiersza poleceń (szkielet; polecenia migrate i seed-dev w kolejnych zadaniach) | @DependsOn: Lemat.Application, Lemat.Infrastructure | @UsedBy: operator, scripts | @Task: TASK-001
-Console.WriteLine("Lemat.Tools: brak poleceń (szkielet).");
-return 0;
+// @Role: Narzędzie wiersza poleceń (dispatcher; polecenia migrate i seed-dev w kolejnych zadaniach) | @DependsOn: Lemat.Tools.Commands, Lemat.Application, Lemat.Infrastructure | @UsedBy: operator, scripts | @Task: TASK-001, TASK-003
+using Lemat.Tools.Commands;
+
+var dispatcher = new CommandDispatcher([]);
+return await dispatcher.WykonajAsync(args, Console.Out, Console.Error);

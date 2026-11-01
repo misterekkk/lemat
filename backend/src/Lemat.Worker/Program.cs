@@ -1,4 +1,7 @@
-// @Role: Punkt kompozycji procesu worker (szkielet, bez pul prac w tle) | @DependsOn: Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | @UsedBy: host Generic Host | @Task: TASK-001
-var builder = Host.CreateApplicationBuilder(args);
-using var host = builder.Build();
-await host.RunAsync();
+// @Role: Punkt kompozycji procesu worker (szkielet, /zdrowie na porcie 8081) | @DependsOn: Lemat.Worker.Configuration, Lemat.Application, Lemat.Infrastructure | @UsedBy: host ASP.NET Core | @Task: TASK-001, TASK-003
+using Lemat.Worker.Configuration;
+
+var builder = WorkerHost.CreateBuilder(args);
+var app = builder.Build();
+app.MapHealth();
+await app.RunAsync();

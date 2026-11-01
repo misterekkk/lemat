@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
     <ProjectReference Include="..\Lemat.Application\Lemat.Application.csproj" />
     <ProjectReference Include="..\Lemat.Infrastructure\Lemat.Infrastructure.csproj" />
     <PackageReference Include="Cronos" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 </Project>

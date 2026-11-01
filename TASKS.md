@@ -85,7 +85,7 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
     Pakiety: xunit.v3 3.2.2, Shouldly 4.3.0, NSubstitute 5.3.0, FsCheck.Xunit.v3 3.3.4, Testcontainers.PostgreSql 4.16.0, WireMock.Net 2.18.0 (`NoWarn NU1608` w Models.Tests), NetArchTest.Rules 1.3.2, Roslyn 5.0.0.
     Reguły dodatkowe poza opisem: `ModeleBezInfrastruktury`, `InfrastrukturaBezWarstwWyzszych`, `HostyNieZalezaOdSiebie`, test referencji projektów = tabela 6.4. CI-skrypt (TASK-007) jeszcze nie istnieje.
 
-- [ ] **TASK-003 [MVP] Hosty Api / Worker / Scheduler / Tools (szkielet), zdrowie, OpenAPI**
+- [x] **TASK-003 [MVP] Hosty Api / Worker / Scheduler / Tools (szkielet), zdrowie, OpenAPI**
   - **Opis:** `Lemat.Api/Program.cs`: Minimal API, `AddProblemDetails`, `GET /api/v1/zdrowie`, OpenAPI przez `Microsoft.AspNetCore.OpenApi` generowane przy budowie do
     `backend/openapi/lemat-v1.json`, `UseUrls` dev `http://localhost:5080`. `Lemat.Worker` i `Lemat.Scheduler`: hosty ogólne z `/zdrowie` na porcie 8081/8082 (bez logiki).
     `Lemat.Tools/Program.cs`: dispatcher poleceń (`--help`, jeszcze bez poleceń). Logowanie JSON do konsoli (`AddJsonConsole`). Test `KontenerDiTests` (`ValidateOnBuild`,
@@ -94,6 +94,14 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **Realizuje:** 5.2 (HTTP API, Obserwowalność — logi), 5.3, 12.1; ADR-048, ADR-061 (źródło OpenAPI).
   - **DoD:** `dotnet run --project backend/src/Lemat.Api` odpowiada `200` na `GET /api/v1/zdrowie`; po `dotnet build` istnieje `backend/openapi/lemat-v1.json` (OpenAPI 3.x, deterministyczny);
     test `Lemat.Api.Tests` (`WebApplicationFactory`) sprawdza zdrowie i Content-Type `application/json`; `KontenerDiTests` zielone dla 3 procesów.
+  - **Pliki (TASK-003):** `backend/Directory.Packages.props`, `backend/src/Lemat.Api/Lemat.Api.csproj`, `backend/src/Lemat.Api/Program.cs`,
+    `backend/src/Lemat.Api/Configuration/ApiHost.cs`, `backend/src/Lemat.Api/Endpoints/HealthEndpoints.cs`, `backend/src/Lemat.Api/Contracts/Common/ZdrowieWyjscie.cs`,
+    `backend/src/Lemat.Worker/Lemat.Worker.csproj`, `backend/src/Lemat.Worker/Program.cs`, `backend/src/Lemat.Worker/Configuration/WorkerHost.cs`,
+    `backend/src/Lemat.Scheduler/Lemat.Scheduler.csproj`, `backend/src/Lemat.Scheduler/Program.cs`, `backend/src/Lemat.Scheduler/Configuration/SchedulerHost.cs`,
+    `backend/src/Lemat.Tools/Program.cs`, `backend/src/Lemat.Tools/Commands/CommandDispatcher.cs`, `backend/openapi/lemat-v1.json`,
+    `backend/tests/Lemat.Api.Tests/HealthEndpointTests.cs`, `backend/tests/Lemat.Architecture.Tests/Hosts/KontenerDiTests.cs`.
+  - **Weryfikacja:** `dotnet build -warnaserror` OK; testy zielone (Architecture.Tests 96, Api.Tests 3); `dotnet format --verify-no-changes` OK; `dotnet run` Api -> `GET /api/v1/zdrowie` 200 `{"status":"OK"}`,
+    logi JSON, `http://localhost:5080` w Development; OpenAPI 3.1.1 generowany przy buildzie (deterministyczny) i w runtime pod `/api/v1/openapi.json`. Worker/Scheduler mają `FrameworkReference Microsoft.AspNetCore.App`.
 
 - [ ] **TASK-004 [MVP] `LematOpcje` i konfiguracja (wybór implementacji Mock/lokalnych)**
   - **Opis:** `Lemat.Application.Common.LematOpcje` (wzorzec Options, sekcja `Lemat`) z parametrami MVP z sekcji 22: limity zdjęć (5 / 10 MB; JPEG, PNG, WEBP), maks. przesłań 3 i ponowień 5, maks. kroków 40,
