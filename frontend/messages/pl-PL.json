@@ -1,0 +1,14 @@
+{
+  "Meta": {
+    "tytul": "Lemat",
+    "opis": "Platforma do nauki do matury z matematyki"
+  },
+  "Strona": {
+    "naglowek": "Lemat",
+    "opis": "Platforma do nauki do matury z matematyki. Rozwiązuj zadania, zrób zdjęcie kartki i otrzymaj ocenę ze wskazówką."
+  },
+  "Ui": {
+    "zamknij": "Zamknij",
+    "pustaLista": "Brak elementów do wyświetlenia."
+  }
+}

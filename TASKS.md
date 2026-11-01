@@ -139,7 +139,7 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
     build `-warnaserror` 0 błędów; testy zielone (Architecture 104, Application 14, Api 3). Decyzje: `init-db.sh` tworzy też `lemat_test` i role `lemat_api/worker/scheduler` z LOGIN (ddl.md 0005); w compose rola `lemat` = superuser
     (`POSTGRES_USER`), lokalnie `CREATEDB`+`CREATEROLE` bez superusera; hasło tylko deweloperskie `lemat_dev`; `LEMAT_BAZA_MIGRACJE` puste (rola `lemat_migracje` dopiero przy migracjach, TASK-013). Nie zmieniono kodu `.cs`.
 
-- [ ] **TASK-006 [MVP] Szkielet Next.js: App Router, TypeScript strict, i18n pl-PL, KaTeX, UI**
+- [x] **TASK-006 [MVP] Szkielet Next.js: App Router, TypeScript strict, i18n pl-PL, KaTeX, UI**
   - **Opis:** `frontend/` (npm): Next.js (App Router), React, TypeScript `strict`, Tailwind CSS 4, Radix UI, ESLint 9 (flat config, `eslint-config-next`), Prettier, Vitest + Testing Library,
     next-intl (jedna lokalizacja `pl-PL`, bez prefiksu w URL, `messages/pl-PL.json`), TanStack Query `QueryClientProvider`, KaTeX (`src/lib/katex/Formula.tsx` — komponent `Wzor`, `MarkdownContent.tsx` —
     `TrescMarkdown` z `react-markdown` + `remark-math` + `rehype-katex`, `throwOnError: false`, `trust: false`), podstawowe komponenty `src/ui` (`Button.tsx`, `Dialog.tsx`, `List.tsx`, `Form.tsx`),
@@ -150,6 +150,17 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **Realizuje:** 5.2 (Frontend, i18n, LaTeX, Dane w kliencie, UI, Testy/Lint frontendu), 6.8, 6.9 (struktura); ADR-054; NFR-08, NFR-10.
   - **DoD:** `npm --prefix frontend run typecheck`, `lint`, `test`, `build` zielone; `npm run dev` pokazuje polską stronę główną; test Vitest renderuje `$x^2+1$` przez `Wzor` bez błędu i z klasą `katex`;
     test, że `TrescMarkdown` nie wykonuje HTML z wejścia; `check-headers.mjs` przechodzi; brak tekstów na sztywno w JSX (reguła ESLint lub test na `messages`).
+  - **Pliki (utworzone, wszystkie nowe, w `frontend/`):** `frontend/package.json`, `frontend/package-lock.json`, `frontend/tsconfig.json`, `frontend/next.config.ts`, `frontend/postcss.config.mjs`, `frontend/eslint.config.mjs`,
+    `frontend/vitest.config.ts`, `frontend/vitest.setup.ts`, `frontend/.prettierrc.json`, `frontend/.prettierignore`, `frontend/.gitignore`, `frontend/messages/pl-PL.json`, `frontend/scripts/check-headers.mjs`,
+    `frontend/src/app/layout.tsx`, `frontend/src/app/globals.css`, `frontend/src/app/(public)/layout.tsx`, `frontend/src/app/(public)/page.tsx`, `frontend/src/app/(student)/layout.tsx`,
+    `frontend/src/app/(teacher)/teacher/layout.tsx`, `frontend/src/app/(administrator)/admin/layout.tsx`, `frontend/src/lib/i18n/request.ts`, `frontend/src/lib/query/QueryProvider.tsx`,
+    `frontend/src/lib/katex/Formula.tsx`, `frontend/src/lib/katex/MarkdownContent.tsx`, `frontend/src/lib/katex/Formula.test.tsx`, `frontend/src/lib/katex/MarkdownContent.test.tsx`,
+    `frontend/src/ui/Button.tsx`, `frontend/src/ui/Dialog.tsx`, `frontend/src/ui/List.tsx`, `frontend/src/ui/Form.tsx`, `frontend/src/ui/ui.test.tsx`, `frontend/src/messages.test.ts`.
+    Dokumenty (handoff-guardian): `TASKS.md`, `HANDOFF.md`, `docs/CODEBASE_MAP.md`. Backend nietknięty.
+  - **Weryfikacja:** `npm --prefix frontend run typecheck`, `lint` (0 błędów/ostrzeżeń), `test` (9 testów Vitest), `build` (`next build --webpack`) zielone; `prettier --check` OK; `check:headers` OK; `npm run dev`: `/` zwraca `<html lang="pl">`
+    i polski nagłówek. Decyzje: Next 16.4, React 19, TS 5.9 (przypięte; npm latest = TS 7), ESLint 9, Vitest 3, Tailwind 4, next-intl 4, `radix-ui` (meta-pakiet); bez `@vitejs/plugin-react` (konflikt typów vite/vitest — JSX przez esbuild
+    + `jsx: react-jsx`); brak tekstów w JSX wymusza reguła ESLint `react/jsx-no-literals` (`noStrings`) dla `src/**/*.tsx` poza testami (Dialog dostaje etykietę zamknięcia jako props); `next.config.ts`: `output: standalone`,
+    `rewrites` `/api/:path*` -> `LEMAT_API_URL` (domyślnie `http://localhost:5080`); `build` używa `--webpack` (OQ-04); `gen:api` i `e2e` to placeholdery (TASK-081 / TASK-110); `katex.min.css` importowany w `globals.css`; `node_modules`/`.next` ignorowane (root `.gitignore` + `frontend/.gitignore`).
 
 - [ ] **TASK-007 [MVP] Skrypty weryfikacji i workflow CI**
   - **Opis:** `scripts/verify-backend.sh` (restore, build `-warnaserror`, test, `dotnet format --verify-no-changes`), `scripts/verify-frontend.sh` (ci, typecheck, lint, test, build, check-headers),

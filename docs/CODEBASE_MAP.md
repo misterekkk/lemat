@@ -4,8 +4,8 @@
 |---|---|
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
-| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `LematOpcje` (TASK-004); środowisko bazy: `docker-compose.yml` + `scripts/db-*.sh` (TASK-005); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
-| Ostatnia aktualizacja | 2026-11-01 (TASK-005) |
+| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `LematOpcje` (TASK-004); środowisko bazy: `docker-compose.yml` + `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js App Router, next-intl pl-PL, KaTeX `Wzor`/`TrescMarkdown`, `src/ui`, QueryProvider, `check-headers.mjs`; bez stron biznesowych i bez wywołań API); pozostałe wiersze `planowane` |
+| Ostatnia aktualizacja | 2026-11-01 (TASK-006) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -247,8 +247,11 @@ flowchart LR
     PRF["features/profile"]
     CLS["features/classes"]
     VER["features/verifications"]
-    LIB["lib: api, auth, sse, katex, i18n"]
+    LIB["lib: api, auth, sse, katex, i18n, query"]
     UI["ui"]
+    APP["app (układy grup tras)"]
+    APP --> LIB
+    APP --> UI
     LRN --> SOL
     CLS --> PRF
     VER --> SOL
@@ -306,7 +309,30 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/tests/Lemat.Architecture.Tests/Conventions/BrakNiestandardowychZnakowWNazwachPlikowTests.cs` | Test ASCII w ścieżkach z git ls-files (ADR-075) | FileNamePolicy, RepositoryLocator | dotnet test | TASK-002 |
 | `backend/tests/Lemat.Architecture.Tests/Support/RepositoryLocator.cs` | Lokalizacja katalogów repozytorium i plików źródłowych dla testów architektury | system plików, git | Layers, Glossary, Conventions | TASK-002 |
 
+| `frontend/src/app/layout.tsx` | Główny układ: `<html lang="pl">`, NextIntlClientProvider, QueryClientProvider, style KaTeX | next-intl, lib/query/QueryProvider, globals.css | Next.js App Router (wszystkie trasy) | TASK-006 |
+| `frontend/src/app/(public)/layout.tsx` | Układ stref publicznych (bez logowania) | react | Next.js App Router | TASK-006 |
+| `frontend/src/app/(public)/page.tsx` | Strona główna `/` z tekstami z komunikatów | next-intl/server, messages/pl-PL.json | Next.js App Router (trasa `/`) | TASK-006 |
+| `frontend/src/app/(student)/layout.tsx` | Układ strefy Ucznia (strażnik roli UCZEN w kolejnych zadaniach) | react | Next.js App Router | TASK-006 |
+| `frontend/src/app/(teacher)/teacher/layout.tsx` | Układ strefy Nauczyciela (strażnik roli NAUCZYCIEL w kolejnych zadaniach) | react | Next.js App Router | TASK-006 |
+| `frontend/src/app/(administrator)/admin/layout.tsx` | Układ strefy Administratora (strażnik roli ADMINISTRATOR w kolejnych zadaniach) | react | Next.js App Router | TASK-006 |
+| `frontend/src/lib/i18n/request.ts` | Konfiguracja next-intl po stronie serwera: jedna lokalizacja pl-PL, strefa Europe/Warsaw | next-intl/server, messages/pl-PL.json | next.config.ts (plugin next-intl) | TASK-006 |
+| `frontend/src/lib/query/QueryProvider.tsx` | Dostawca TanStack Query (`QueryClientProvider`) | @tanstack/react-query | app/layout.tsx | TASK-006 |
+| `frontend/src/lib/katex/Formula.tsx` | Komponent `Wzor`: wzór LaTeX przez KaTeX (`throwOnError=false`, `trust=false`) | katex | TrescMarkdown, ekrany Zadań i Transkrypcji (TASK-082+) | TASK-006 |
+| `frontend/src/lib/katex/MarkdownContent.tsx` | Komponent `TrescMarkdown`: Markdown z `$...$` (react-markdown + remark-math + rehype-katex), bez wykonywania HTML z wejścia | react-markdown, remark-math, rehype-katex | ekrany Zadań, Wkładek i Wskazówek (TASK-082+) | TASK-006 |
+| `frontend/src/lib/katex/Formula.test.tsx` | Testy `Wzor` (klasa `katex`, brak wyjątku dla błędnego LaTeX) | Formula.tsx, Testing Library | vitest | TASK-006 |
+| `frontend/src/lib/katex/MarkdownContent.test.tsx` | Testy `TrescMarkdown` (wzory przez KaTeX, brak wykonywania HTML) | MarkdownContent.tsx, Testing Library | vitest | TASK-006 |
+| `frontend/src/ui/Button.tsx` | Podstawowy przycisk z wariantami Tailwind | react, clsx | ekrany wszystkich ról (planowane) | TASK-006 |
+| `frontend/src/ui/Dialog.tsx` | Okno dialogowe na prymitywie Radix UI | radix-ui, ui/Button | ekrany wszystkich ról (planowane) | TASK-006 |
+| `frontend/src/ui/List.tsx` | Lista dostępna semantycznie; komunikat pustej listy przekazywany z zewnątrz | react, clsx | ekrany wszystkich ról (planowane) | TASK-006 |
+| `frontend/src/ui/Form.tsx` | Prymitywy formularza (`Formularz`, `PoleFormularza`) z etykietą i błędem | react, clsx | ekrany wszystkich ról (planowane) | TASK-006 |
+| `frontend/src/ui/ui.test.tsx` | Testy komponentów `src/ui` | ui/*, Testing Library | vitest | TASK-006 |
+| `frontend/src/messages.test.ts` | Test komunikatów: klucze używane w kodzie istnieją w pl-PL.json, wartości niepuste | messages/pl-PL.json | vitest | TASK-006 |
+| `frontend/next.config.ts` | Konfiguracja Next.js: plugin next-intl, `rewrites` `/api/:path*` -> `LEMAT_API_URL` (dev), `output: standalone` | next-intl/plugin, LEMAT_API_URL | next dev/build | TASK-006 |
+| `frontend/vitest.config.ts` | Konfiguracja Vitest (jsdom, alias `@/`) | vitest | npm run test | TASK-006 |
+| `frontend/vitest.setup.ts` | Setup testów: matchery jest-dom, sprzątanie DOM | @testing-library/jest-dom | vitest.config.ts | TASK-006 |
+| `frontend/scripts/check-headers.mjs` | Sprawdza nagłówki Living Documentation w `.ts/.tsx` frontendu | node:fs, node:path | `npm run check:headers`, `scripts/verify-frontend.sh` (TASK-007) | TASK-006 |
 Projekt `Lemat.Application` ma od TASK-004 `Common/` (LematOpcje); projekty `Lemat.Domain`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Pliki nie-TS frontendu (TASK-006): `frontend/{package.json,package-lock.json,tsconfig.json,postcss.config.mjs,eslint.config.mjs,.prettierrc.json,.prettierignore,.gitignore}`, `frontend/messages/pl-PL.json` (komunikaty UI, NFR-10), `frontend/src/app/globals.css` (Tailwind 4 + `katex.min.css`); brak powiązań strona/endpoint/agent/tabela (szkielet; `rewrites` `/api/*` -> `LEMAT_API_URL` gotowe, klient API od TASK-081). Reguła ESLint `react/jsx-no-literals` wymusza teksty z `messages/pl-PL.json`.
 Pliki nie-C# (TASK-005, środowisko bazy; brak powiązań warstwowych strona/endpoint/agent, dostarcza instancję PostgreSQL 16 dla `Lemat.Infrastructure` od TASK-013): `docker-compose.yml` (usługa `postgres`, port `${LEMAT_PG_PORT:-5433}`), `docker/postgres/init-db.sh` (baza `lemat_test`, role `lemat_api/worker/scheduler`, rozszerzenia `citext`/`pg_trgm`), `.env.example` (wszystkie `LEMAT_*`), `scripts/db-up.sh`, `scripts/db-reset.sh`, `scripts/db-local-setup.sh` (PostgreSQL lokalny na 5432); `appsettings.Development.json` hostów Api/Worker/Scheduler dostały `Lemat:Baza:Polaczenie` (port 5433, `lemat_dev`).
 Pliki nie-C# (TASK-004): `backend/src/Lemat.{Api,Worker,Scheduler}/appsettings.json` i `appsettings.Development.json` (sekcja `Lemat`, domyślnie Mock/lokalne); `Lemat.Application.csproj` ma teraz pakiety Options/Configuration (graf referencji projektów bez zmian).
 Pliki nie-C# (TASK-003): `backend/openapi/lemat-v1.json` (OpenAPI 3.1.1, generowany przy buildzie `Lemat.Api`, deterministyczny, commitowany; źródło typów TS, ADR-061), `backend/Directory.Packages.props` (pakiet OpenAPI), `.csproj` Api/Worker/Scheduler.
@@ -329,8 +355,8 @@ backend/src/Lemat.Api/           Program.cs Endpoints/ Contracts/ Validators/ Er
 backend/src/Lemat.Worker/        Program.cs BackgroundJobPoolHostedService.cs                                 [planowane: TASK-003, 048]
 backend/src/Lemat.Scheduler/     Program.cs (szkielet MVP; harmonogram POST-MVP)                             [planowane: TASK-003, 064]
 backend/src/Lemat.Tools/         Program.cs, Commands/ (dispatcher gotowy: TASK-003; migrate, seed-dev planowane: TASK-013, 026)
-frontend/src/app/                (public) (student) (teacher)/teacher (administrator)/admin layout.tsx proxy.ts   [planowane: TASK-006, 082–089]
+frontend/src/app/                (public) (student) (teacher)/teacher (administrator)/admin layout.tsx proxy.ts   [TASK-006 gotowe: układy grup tras i `/`; proxy.ts i strony: 082–089]
 frontend/src/features/           accounts learning solutions profile classes verifications (+POST-MVP assignments content administration notifications)
-frontend/src/lib/                api/ auth/ sse/ photos/ katex/ i18n/                                        [planowane: TASK-006, 081]
-frontend/messages/pl-PL.json     teksty UI (NFR-10)                                                          [planowane: TASK-006+]
+frontend/src/lib/                api/ auth/ sse/ photos/ katex/ i18n/ query/                                [TASK-006 gotowe: katex, i18n, query; planowane: api/auth/sse/photos TASK-081]
+frontend/messages/pl-PL.json     teksty UI (NFR-10)                                                          [TASK-006 gotowe; rozszerzane w TASK-082+]
 ```
