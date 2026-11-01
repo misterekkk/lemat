@@ -1,5 +1,6 @@
-// @Role: Rejestr typów wyliczeniowych PostgreSQL (43 z ddl.md) i mapowanie na enumy C# dla źródła danych Npgsql oraz modelu EF Core (ef-core.md 3.2) | @DependsOn: TlumaczNazwUpperSnake, Npgsql, Lemat.Domain.Common | @UsedBy: PersistenceRegistration, LematDbContext, testy | @Task: TASK-015
+// @Role: Rejestr typów wyliczeniowych PostgreSQL (43 z ddl.md) i mapowanie na enumy C# dla źródła danych Npgsql oraz modelu EF Core (ef-core.md 3.2) | @DependsOn: TlumaczNazwUpperSnake, Npgsql, Lemat.Domain.Common | @UsedBy: PersistenceRegistration, LematDbContext, testy | @Task: TASK-015, TASK-016
 using System.Collections.Concurrent;
+using Lemat.Domain.Accounts;
 using Lemat.Domain.Common;
 using Npgsql;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
@@ -32,6 +33,8 @@ public static class MapowanieTypowWyliczeniowych
     [
         (typeof(PoziomMatury), "poziom_matury"),
         (typeof(RodzajZadania), "rodzaj_zadania"),
+        (typeof(RolaUzytkownika), "rola_uzytkownika"),
+        (typeof(StatusKonta), "status_konta"),
     ];
 
     private static readonly ConcurrentDictionary<Type, string> Rejestr = new(
