@@ -168,7 +168,7 @@ npm --prefix frontend run check:headers   # nagłówki Living Documentation w .t
 # gen:api i e2e to placeholdery (TASK-081 / TASK-110)
 ```
 
-Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet test`, `dotnet format --verify-no-changes`, `npm run typecheck|lint|test|build`).
+Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--backend-only`/`--frontend-only`) = `scripts/verify-backend.sh` (restore, build `-warnaserror`, `dotnet test`, `dotnet format --verify-no-changes`) + `scripts/verify-frontend.sh` (`npm ci`, typecheck, lint, test, build, `check:headers`). Skrypty są idempotentne; CI: `.github/workflows/ci.yml` (job backend z usługą postgres:16 na 5433 + Testcontainers, job frontend Node 22).
 
 ---
 
@@ -176,6 +176,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Do wykonania przez właściciela / człowieka (agent nie może tego zrobić sam):**
 
+0c. **Po TASK-007:** brak akcji obowiązkowych. Do lokalnego `verify-all.sh` potrzebne: .NET SDK 10.0.100+, Node >= 22, Docker (Testcontainers od TASK-013). Zalecane: po pierwszym pushu sprawdzić, że workflow `.github/workflows/ci.yml` przechodzi na GitHub Actions (lokalnie zweryfikowano tylko składnię — `yamllint`, `actionlint` niedostępny); rozważyć `packages.lock.json` dla cache NuGet. Mocki: nie dotyczy.
 0b. **Po TASK-006:** brak akcji obowiązkowych. Wymagany Node >= 22 (+ npm); port 3000 musi być wolny. Decyzje do potwierdzenia: (a) Next 16.4 / React 19 / TS 5.9 (przypięte, bo `npm latest` to TS 7; 5.2 mówi o TS 5) — akceptacja wersji; (b) OQ-04 (Node 22, `next build --webpack` użyty w skrypcie `build`). Mocki: nie dotyczy (brak wywołań API do TASK-081). `LEMAT_API_URL` jest już czytane przez frontend.
 0a. **Po TASK-005:** brak akcji obowiązkowych. Do uruchomienia bazy potrzebny Docker (`docker compose`) albo lokalny PostgreSQL 16 + `scripts/db-local-setup.sh`; port 5433 (Docker) lub 5432 (lokalnie) musi być wolny. Hasło `lemat_dev` jest wyłącznie deweloperskie (w compose rola `lemat` to superuser) — w środowiskach poza maszyną developerską ustawić własne `LEMAT_PG_HASLO`/`LEMAT_BAZA` i nie commitować `.env`. Zdecydować, czy rola `lemat_migracje` (osobna od ról aplikacji) ma powstać już w TASK-013 (rekomendacja: tak).
 0. **Po TASK-004:** brak akcji obowiązkowych (Development startuje na Mockach bez zmiennych). W Production wymagane: `LEMAT_JWT_KLUCZ`, `LEMAT_KURSOR_KLUCZ`, dostawca ≠ mock wraz z `LEMAT_MODELE_KLUCZ_API`/`LEMAT_MODELE_ENDPOINT` i `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY=true`; mock i autozatwierdzanie nauczycieli są w Production odrzucane. Zatwierdzić rozszerzenia kluczy z OQ-06 (wprowadzone, patrz niżej).
@@ -209,8 +210,8 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
-| 1. Szkielet i środowisko (001 … 012) | 6 / 7 | 0 / 5 | **TASK-007** |
-| 2. Model domenowy i baza (013 … 037) | 0 / 16 | 0 / 9 | po TASK-001 … 007 |
+| 1. Szkielet i środowisko (001 … 012) | 7 / 7 | 0 / 5 | faza MVP ukończona; dalej **TASK-013** (faza 2) |
+| 2. Model domenowy i baza (013 … 037) | 0 / 16 | 0 / 9 | **TASK-013** (zależności 001, 002, 004, 005 gotowe) |
 | 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
 | 5. Testy i dopracowanie (109 … 120) | 0 / 4 | 0 / 8 | po TASK-089 |
@@ -225,9 +226,11 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Co działa (TASK-006):** `frontend/` (npm, Node 22): Next.js 16.4 App Router + React 19 + TypeScript strict 5.9, Tailwind 4, Radix UI (`radix-ui`), ESLint 9 flat config, Prettier, Vitest 3 + Testing Library (9 testów), next-intl 4 (tylko `pl-PL`, bez prefiksu w URL, `messages/pl-PL.json`), TanStack Query (`QueryProvider`), KaTeX (`Wzor`, `TrescMarkdown`; `trust: false`, brak wykonywania HTML), `src/ui` (`Button`, `Dialog`, `List`, `Form`), drzewo grup tras `(public)`, `(student)`, `(teacher)/teacher`, `(administrator)/admin` z pustymi układami, strona `/`, `scripts/check-headers.mjs`. `typecheck`, `lint`, `test`, `build` (`next build --webpack`) zielone; backend nietknięty.
 
-**Ostatnia zmiana: TASK-006** (pliki: `TASKS.md` pod TASK-006). Zrobiono: j.w.; `next.config.ts` (`output: standalone`, `rewrites` `/api/:path*` -> `LEMAT_API_URL`); reguła ESLint `react/jsx-no-literals` (teksty tylko z `messages/pl-PL.json`; komponenty `src/ui` nie znają i18n — etykiety przez props); `gen:api` i `e2e` to placeholdery; brak `proxy.ts`, PWA/Serwist i dependency-cruiser (TASK-012/POST-MVP, U-12); bez `@vitejs/plugin-react` (konflikt typów vite 7/8 w vitest 3 — JSX przez esbuild + `jsx: react-jsx`); fonty KaTeX przez `katex.min.css` w `globals.css`. Nagłówki sprawdzone: wszystkie 25 plików `.ts/.tsx/.mjs` mają poprawne (`check-headers` OK). `node_modules`/`.next` ignorowane przez git (root `.gitignore` + `frontend/.gitignore`).
+**Poprzednia zmiana: TASK-006** (pliki: `TASKS.md` pod TASK-006). Zrobiono: j.w.; `next.config.ts` (`output: standalone`, `rewrites` `/api/:path*` -> `LEMAT_API_URL`); reguła ESLint `react/jsx-no-literals` (teksty tylko z `messages/pl-PL.json`; komponenty `src/ui` nie znają i18n — etykiety przez props); `gen:api` i `e2e` to placeholdery; brak `proxy.ts`, PWA/Serwist i dependency-cruiser (TASK-012/POST-MVP, U-12); bez `@vitejs/plugin-react` (konflikt typów vite 7/8 w vitest 3 — JSX przez esbuild + `jsx: react-jsx`); fonty KaTeX przez `katex.min.css` w `globals.css`. Nagłówki sprawdzone: wszystkie 25 plików `.ts/.tsx/.mjs` mają poprawne (`check-headers` OK). `node_modules`/`.next` ignorowane przez git (root `.gitignore` + `frontend/.gitignore`).
 
-**Wytyczne dla TASK-007 (następne):** (1) `scripts/verify-frontend.sh` = `npm ci`, `typecheck`, `lint`, `test`, `build`, `check:headers` (wszystko w `frontend/`, skrypty npm istnieją); (2) `scripts/verify-backend.sh` = restore, `build -warnaserror`, `test`, `dotnet format --verify-no-changes`; (3) `.github/workflows/ci.yml`: job backend (PostgreSQL 16 / Testcontainers), job frontend (Node 22, cache npm), cache NuGet; (4) `README.md` — sekcja „Szybki start”; (5) skrypty wykonywalne i idempotentne, `verify-all.sh` kończy się kodem 0; (6) nowe komponenty UI używają `Wzor`/`TrescMarkdown` z `src/lib/katex` i `QueryProvider` z `src/lib/query`; teksty UI tylko w `messages/pl-PL.json`.
+**Ostatnia zmiana: TASK-007** (pliki: `TASKS.md` pod TASK-007). Zrobiono: `scripts/verify-backend.sh`, `scripts/verify-frontend.sh`, `scripts/verify-all.sh` (wykonywalne), `.github/workflows/ci.yml` (job backend: postgres:16 na 5433 jako zapas dla `LEMAT_TEST_BAZA` + Testcontainers, cache NuGet przez `actions/cache` po hash csproj/`Directory.Packages.props` — brak `packages.lock.json`, więc `setup-dotnet` bez cache; job frontend: Node 22 + cache npm), `README.md` — sekcja „Szybki start”. Weryfikacja: `scripts/verify-all.sh` -> kod 0, powtórny przebieg frontendu OK; `ci.yml`: `yaml.safe_load` + `yamllint` OK (`actionlint` niedostępny), `bash -n` OK. Zmienne środowiskowe: bez zmian (`LEMAT_TEST_BAZA` w CI nieustawiane — testy używają Testcontainers). Brak mocków i nowych U-xx.
+
+**Wytyczne dla TASK-013 (następne MVP):** (1) wejście do CI/verify: testy integracyjne wymagają Dockera (Testcontainers) albo `LEMAT_TEST_BAZA` (np. baza z `scripts/db-up.sh`, port 5433) — `verify-backend.sh` ma je uruchamiać bez zmian; (2) `backend/tools/extract-ddl.sh` wycina bloki (A)/(B) z `docs/spec/ddl.md` (docs tylko do odczytu), generuje `Persistence/Schema/ddl.sql` i `Persistence/Migrations/Sql/0000_schema.sql … 0007_api.sql` (zasoby osadzone, `ZasobSql.Wczytaj`), skrypt deterministyczny; (3) `LematDbContext` (Npgsql + snake_case), migracja `SchematPoczatkowy` wyłącznie `migrationBuilder.Sql`, bez `ModelSnapshot`; (4) `Lemat.Tools migrate` idempotentne + `utworz_partycje_decyzji` na 12 miesięcy (U-08); (5) `PostgresFixture` w `Lemat.Infrastructure.Tests`; (6) migracje na pustej bazie nie tworzą konfiguracji Mock (0 wierszy w `konfiguracja_modelu`); rola `lemat_migracje` — patrz sekcja 6 pkt 0a; (7) test kontraktu OpenAPI (TASK-071) dopisać potem do `verify-backend.sh`/CI; (8) nagłówki Living Documentation w każdym nowym `.cs`; po zadaniu `scripts/verify-all.sh` musi dać kod 0.
 
 **Poprzednia zmiana: TASK-005** (pliki: `TASKS.md` pod TASK-005). Zrobiono: `docker-compose.yml` (postgres:16, wolumen, healthcheck, port `${LEMAT_PG_PORT:-5433}`, zmienne `LEMAT_PG_UZYTKOWNIK`/`LEMAT_PG_HASLO`), `docker/postgres/init-db.sh` (baza `lemat_test`, role `lemat_api/worker/scheduler` z LOGIN wg ddl.md 0005, rozszerzenia `citext`/`pg_trgm`), `.env.example` (wszystkie 14 nazw z `MapowanieZmiennych` + `LEMAT_PG_*`, `LEMAT_TEST_BAZA`, `LEMAT_API_URL`; bez sekretów), `scripts/db-up.sh`, `db-reset.sh`, `db-local-setup.sh` (idempotentny), `Lemat:Baza:Polaczenie` w `appsettings.Development.json` trzech hostów. Weryfikacja: kontener `healthy`, `psql` na 5433 do `lemat_dev`, rozszerzenia obecne, `db-reset.sh` -> 0 tabel, `db-local-setup.sh` OK; build `-warnaserror` i testy zielone (Architecture 104, Application 14, Api 3). Brak mocków, kod `.cs` bez zmian (nagłówki: nie dotyczy).
 
@@ -269,21 +272,24 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ## 10. Gotowy prompt dla kolejnego dewelopera
 
-### 10.1 Następne TASK: TASK-007 (kopiuj do agenta `developer`)
+### 10.1 Następne TASK: TASK-013 (kopiuj do agenta `developer`)
 
 ```text
 Jesteś Senior Developerem .NET i Next.js w projekcie Lemat (repozytorium: /home/user/lemat).
-Zrealizuj dokładnie jedno zadanie planu: TASK-007 z TASKS.md ("Skrypty weryfikacji i workflow CI").
+Zrealizuj dokładnie jedno zadanie planu: TASK-013 z TASKS.md ("Schemat bazy: wycięcie DDL, migracje SQL, `Lemat.Tools migrate`, fixture testowy").
 
-Najpierw przeczytaj: CLAUDE.md (reguły, komendy weryfikacji), HANDOFF.md (sekcje 5 i 7: jak uruchomić backend i frontend, wytyczne dla TASK-007),
-docs/CODEBASE_MAP.md oraz opis TASK-007 w TASKS.md. Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (5.2 — CI); docs/ARCHITECTURE_DETAILED.md jest bardzo długi.
+Najpierw przeczytaj: CLAUDE.md (reguły, komendy weryfikacji), HANDOFF.md (sekcje 5, 6, 7: baza w Dockerze na porcie 5433, wytyczne dla TASK-013, otwarta kwestia roli `lemat_migracje`),
+docs/CODEBASE_MAP.md oraz opis TASK-013 w TASKS.md. Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/spec/ddl.md A i B, docs/spec/ef-core.md 8 i 7.7, ADR-063, ADR-065 p. 6, 18.5 (i)); dokumenty w docs/ są tylko do odczytu.
 
 Wymagania:
-- scripts/verify-backend.sh (restore, build -warnaserror, test, dotnet format --verify-no-changes), scripts/verify-frontend.sh (npm ci, typecheck, lint, test, build, check:headers w frontend/),
-  scripts/verify-all.sh, .github/workflows/ci.yml (job backend z PostgreSQL 16 / Testcontainers, job frontend Node 22, cache NuGet/npm), README.md — sekcja "Szybki start" (placeholder do TASK-112).
-- Skrypty wykonywalne (chmod +x) i idempotentne; brak sekretów; DoD: scripts/verify-all.sh kończy się kodem 0 na szkielecie, workflow przechodzi actionlint lub yamllint.
-- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-007. Nagłówki Living Documentation w każdym nowym .cs/.ts/.tsx.
-Zwróć raport: lista plików, wyniki weryfikacji, decyzje i odstępstwa, wskazówki dla kolejnego TASK (następny MVP: TASK-013).
+- backend/tools/extract-ddl.sh (deterministyczny) wycina bloki (A) i (B) z docs/spec/ddl.md do Persistence/Schema/ddl.sql i Persistence/Migrations/Sql/0000_schema.sql … 0007_api.sql (zasoby osadzone, ZasobSql.Wczytaj).
+- Minimalny LematDbContext (Npgsql, snake_case), migracja SchematPoczatkowy wykonująca wyłącznie migrationBuilder.Sql, bez ModelSnapshot.
+- `Lemat.Tools migrate` idempotentne; po migracji wywołuje utworz_partycje_decyzji na 12 miesięcy (U-08).
+- PostgresFixture w Lemat.Infrastructure.Tests (Testcontainers PostgreSQL 16; LEMAT_TEST_BAZA jako alternatywa).
+- DoD z TASKS.md: test na pustej bazie (liczby obiektów z nagłówka ddl.md), MigracjeNaPustejBazieNieTworzaKonfiguracjiMock, podwójne migrate bez zmian, extract-ddl deterministyczny.
+- Zachowaj reguły warstw i słownika (nazwy ASCII ze słownika); nagłówki Living Documentation @Role/@DependsOn/@UsedBy/@Task w każdym nowym .cs; uruchom scripts/verify-all.sh (kod 0).
+- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-013.
+Zwróć raport: lista plików, wyniki weryfikacji (w tym rzeczywiste liczby obiektów bazy), decyzje i odstępstwa, wskazówki dla kolejnego TASK.
 ```
 
 ### 10.2 Szablon pętli dla orkiestratora (jedno TASK = jedna iteracja)

@@ -18,6 +18,20 @@ Na początek:
 - [Wymagania](docs/requirements.md)
 - [Architektura (wstępna)](docs/architecture.md)
 
+## Szybki start
+
+Wymagania: .NET 10 SDK, Node 22 + npm, Docker (PostgreSQL 16 i testy z Testcontainers).
+
+```bash
+cp .env.example .env            # lokalna konfiguracja bez sekretów (tryb Mock)
+scripts/db-up.sh                # PostgreSQL 16 z docker-compose (port 5433)
+scripts/verify-all.sh           # pełna weryfikacja: backend + frontend
+scripts/verify-backend.sh       # restore, build -warnaserror, test, format
+scripts/verify-frontend.sh      # ci, typecheck, lint, test, build, check:headers
+```
+
+Pełna instrukcja uruchomienia aplikacji pojawi się w dalszych etapach prac.
+
 ## Struktura
 
 ```

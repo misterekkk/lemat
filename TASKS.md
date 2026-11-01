@@ -162,13 +162,17 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
     + `jsx: react-jsx`); brak tekstów w JSX wymusza reguła ESLint `react/jsx-no-literals` (`noStrings`) dla `src/**/*.tsx` poza testami (Dialog dostaje etykietę zamknięcia jako props); `next.config.ts`: `output: standalone`,
     `rewrites` `/api/:path*` -> `LEMAT_API_URL` (domyślnie `http://localhost:5080`); `build` używa `--webpack` (OQ-04); `gen:api` i `e2e` to placeholdery (TASK-081 / TASK-110); `katex.min.css` importowany w `globals.css`; `node_modules`/`.next` ignorowane (root `.gitignore` + `frontend/.gitignore`).
 
-- [ ] **TASK-007 [MVP] Skrypty weryfikacji i workflow CI**
+- [x] **TASK-007 [MVP] Skrypty weryfikacji i workflow CI**
   - **Opis:** `scripts/verify-backend.sh` (restore, build `-warnaserror`, test, `dotnet format --verify-no-changes`), `scripts/verify-frontend.sh` (ci, typecheck, lint, test, build, check-headers),
     `scripts/verify-all.sh`, `.github/workflows/ci.yml` (job backend z usługą PostgreSQL 16 / Testcontainers, job frontend, cache NuGet/npm; test kontraktu OpenAPI dojdzie w TASK-071), `README.md` — sekcja „Szybki start”
     (placeholder rozbudowywany w TASK-112).
   - **Zależności:** TASK-002, TASK-006.
   - **Realizuje:** 5.2 (CI); CLAUDE.md pkt 10.
   - **DoD:** `scripts/verify-all.sh` kończy się kodem 0 na szkielecie; workflow przechodzi walidację składni (`actionlint` lub `yamllint`); skrypty są wykonywalne i idempotentne.
+  - **Pliki (utworzone/zmodyfikowane):** `scripts/verify-backend.sh`, `scripts/verify-frontend.sh`, `scripts/verify-all.sh` (opcje `--backend-only`/`--frontend-only`; wykonywalne), `.github/workflows/ci.yml`
+    (job backend: usługa postgres:16 na 5433 + Testcontainers + `actions/cache` NuGet po hash csproj/`Directory.Packages.props`; job frontend: Node 22 + cache npm), `README.md` (sekcja „Szybki start”, zmodyfikowany).
+    Dokumenty (handoff-guardian): `TASKS.md`, `HANDOFF.md`, `docs/CODEBASE_MAP.md`. Brak plików `.cs/.ts/.tsx` (nagłówki nie dotyczą).
+  - **Weryfikacja:** `scripts/verify-all.sh` -> kod 0 (build `-warnaserror`, testy, `dotnet format`, `npm ci`/typecheck/lint/test/build/`check:headers`); `ci.yml`: `yaml.safe_load` + `yamllint` OK (`actionlint` niedostępny); `bash -n` OK.
 
 - [ ] **TASK-008 [POST-MVP] Manifest nazw plików i testy `TestNazwPlikow`**
   - **Opis:** `Lemat.Architecture.Tests/Glossary/file-names.yaml` ze wpisami dla wszystkich plików `.cs` (6.11.2 p. 4), `FileNamesTest` (reguły a–g), `NazwyPlikowPojecUnikalne`, `DrzewaDokumentuSpelniajaRegulyNazw`; uzupełnij wpisy dla plików utworzonych w MVP.
