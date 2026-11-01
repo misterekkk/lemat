@@ -3,29 +3,41 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/ARCHITECTURE_DETAILED.md` |
-| Wersja | 2.4 (iteracja 6 pętli architekt → krytyk: zamknięcie uwag C4-01 … C4-06) |
+| Wersja | 3.0 (iteracja 1 z 4 pętli „stos .NET 10 + Next.js”: podział na moduły i mapowanie słownika; zamknięcie uwag C5-01 … C5-09) |
 | Data | 2026-11-01 |
 | Dokumenty źródłowe | `docs/vision.md`, `docs/glossary.md`, `docs/requirements.md`, `docs/architecture.md` |
-| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: 23.3 (C1), 23.5 (C1-21, C2), 23.6 (C3) i 23.7 (C4) |
+| Stos technologiczny | .NET 10 (ASP.NET Core, EF Core + Npgsql, PostgreSQL 16) w `backend/`; warstwa agentów AI w .NET (Microsoft.Extensions.AI + Semantic Kernel); Next.js (App Router, TypeScript) w `frontend/`; REST + SSE — ADR-048 … ADR-055. Wersja 2.4 (Python/FastAPI, React + Vite) jest zastąpiona w zakresie realizacji technicznej; reguły domenowe, liczby i decyzje biznesowe wersji 2.4 obowiązują bez zmian |
+| Plan pętli 3.x | iteracja 1 (ta wersja): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2: agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13); iteracja 3: kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15); iteracja 4: audyt i macierz RTM (18) |
+| Rejestr ADR | [`docs/adr/`](adr/) — jeden plik na ADR, indeks w sekcji 19 |
+| Historia zmian | [`docs/ARCHITECTURE_CHANGELOG.md`](ARCHITECTURE_CHANGELOG.md) |
+| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.4); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C5) |
 | Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-17 w 23.4 |
 | Status | Do przeglądu przez krytyka (`docs/CRITIQUE_LOG.md`) |
 
 Dokument rozwija `docs/architecture.md` (wstępną) do poziomu, na którym można
 rozpocząć implementację. Tam, gdzie wstępna architektura jest sprzeczna z
 wymaganiami, **pierwszeństwo mają wymagania** (np. ADR-008). Każda decyzja ma
-numer ADR (sekcja 19), a każde założenie — numer A-xx (sekcja 2). Decyzje,
+numer ADR (indeks w sekcji 19, treść w `docs/adr/`), a każde założenie — numer A-xx (sekcja 2). Decyzje,
 które zmieniają lub doprecyzowują wymagania albo słownik pojęć, są zebrane w
 bramce **G-0** (sekcja 17.6) i wymagają akceptacji właściciela produktu przed
 startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
+
+**Konwencja odczytu wersji 3.0.** Stos techniczny opisują sekcje 5 i 6
+(.NET 10 + Next.js, ADR-048 … ADR-055), a mapowanie pojęć na identyfikatory
+— 3.5. Sekcje 7–18 zachowują treść domenową wersji 2.4; tam, gdzie
+odwołują się do modułów `lemat.*`, plików `*.py`, Pydantic, `asyncio`,
+Pillow lub odpytywania, obowiązują odpowiedniki z 5.5 (zależności) i 6.10
+(moduły). Sekcje 7, 10, 12–15 z kodem w Pythonie mają na początku notkę o
+iteracji, w której zostaną przepisane.
 
 ## Spis treści
 
 1. Cel, zakres i zasady nadrzędne
 2. Założenia
-3. Język wszechobecny (mapowanie słownika pojęć na kod, propozycja zmian słownika PZS-1)
+3. Język wszechobecny (reguły nazewnictwa, PZS-1, 3.5 mapowanie słownika na model domenowy C#/PostgreSQL/TypeScript/JSON, 3.6 szkielety agregatów)
 4. Widok kontekstu systemu
-5. Widok kontenerów i stos technologiczny
-6. Moduły, agenci i porty
+5. Widok kontenerów i stos technologiczny (.NET 10 + Next.js)
+6. Moduły, agenci i porty (solucja .NET, reguły warstw, warstwa AI, katalogi `backend/` i `frontend/`)
 7. Model danych (ERD + pełne DDL)
 8. Maszyny stanów
 9. Przepływy (diagramy sekwencji)
@@ -37,12 +49,12 @@ startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
 15. Współbieżność i spójność
 16. Bezpieczeństwo i RODO
 17. Wymagania niefunkcjonalne — realizacja, budżety, obciążenie, obserwowalność, wdrożenie
-18. Mapowanie wymagań na komponenty, przepływy i API
-19. Rejestr decyzji architektonicznych (ADR)
+18. Mapowanie wymagań na komponenty, przepływy i API (18.4: wymagania dla planu `TASKS.md`)
+19. Rejestr decyzji architektonicznych (indeks; treść w `docs/adr/`)
 20. Odpowiedzi na otwarte pytania z architektury wstępnej
 21. Ryzyka
 22. Parametry systemu (wartości domyślne)
-23. Changelog iteracji (23.3, 23.5, 23.6 i 23.7: mapowanie uwag krytyki → miejsca rozwiązania; 23.4: decyzje właściciela produktu)
+23. Decyzje właściciela produktu (23.4); historia iteracji w `docs/ARCHITECTURE_CHANGELOG.md`
 
 ---
 
@@ -124,10 +136,15 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 ### 3.1 Reguły nazewnictwa
 
 1. Nazwy domenowe w kodzie, bazie i API to **pojęcia ze słownika** zapisane
-   ASCII bez polskich znaków: `snake_case` w bazie/JSON/Pythonie,
-   `PascalCase` dla klas, `kebab-case` w ścieżkach URL, `UPPER_SNAKE` dla
-   wartości wyliczeniowych. Reguła obejmuje także klucze JSON schematów
-   odpowiedzi modeli, parametry zapytań i nazwy prac w tle.
+   ASCII bez polskich znaków. Od wersji 3.0 formy określa ADR-049: forma
+   bazowa `snake_case` (baza, JSON API, klucze schematów odpowiedzi modeli,
+   parametry zapytań i ścieżek), `PascalCase` dla typów, właściwości i metod
+   C# oraz typów TypeScript, `camelCase` dla zmiennych i parametrów C#/TS,
+   `kebab-case` w ścieżkach URL i segmentach tras Next.js, `UPPER_SNAKE` dla
+   wartości wyliczeniowych w bazie, JSON i nazw prac w tle (w C# członek
+   enumu w `PascalCase`, np. `StatusOceny.Wstepna` ↔ `'WSTEPNA'`). Każda
+   forma powstaje mechanicznie z formy bazowej, więc mapowanie jest
+   odwracalne (3.5).
 2. Kolumny czysto techniczne mają nazwy angielskie, ujednolicone w całym
    schemacie: `id`, `created_at`, `updated_at`, `version` (licznik
    optymistycznej blokady). Nie są pojęciami domenowymi.
@@ -179,6 +196,21 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
    Weryfikacji, ADR-022), procesy konta wstrzymane w okresie karencji
    (ADR-040; tylko proza, bez identyfikatora). Zatrzymanie innego rodzaju
    (np. blokada obniżania progu) nie jest nazywane wstrzymaniem.
+   **Blokada** (wersja 3.0, C5-04) ma dokładnie dwa znaczenia domenowe,
+   zawsze z kwalifikatorem w prozie i w identyfikatorze: **Blokada
+   weryfikacji** (wyłączne prawo Nauczyciela do rozstrzygnięcia:
+   `zablokowana_do`, `BlokadaWeryfikacji`, `BLOKADA_MAKS_CZAS`,
+   `ix_weryfikacja_blokady`) i **Blokada obniżania progu** (skutek stanu
+   aktywnego bezpiecznika trafności: `BlokadaObnizaniaProgu`,
+   `blokada_obnizania_progu`). Prawo workera do wykonania pracy w tle to
+   **dzierżawa** (`praca_w_tle.dzierzawa_do`, do wersji 2.4
+   `zablokowana_do`), a mechanizm PostgreSQL `pg_advisory_xact_lock` /
+   `pg_try_advisory_lock` to w prozie „blokada doradcza PostgreSQL” i nie
+   występuje w identyfikatorach Lemat. `stan_bezpiecznika.aktywny` oznacza
+   wyłącznie „bezpiecznik w stanie aktywnym”; skutek zależy od typu
+   (`TRAFNOSC` → Blokada obniżania progu, `POPRAWKI` → T-7) i jest
+   wyprowadzany właściwościami `BlokadaObnizaniaProgu` i
+   `KazdaPoprawkaDoWeryfikacji` (3.6).
 6. **Dopuszczone terminy techniczne** (jedyne wyjątki od reguły 1 poza
    kolumnami z reguły 2): `theta` (θ — parametr umiejętności w modelu Elo),
    `trudnosc_b` (b — parametr trudności Zadania w modelu Elo), `ipw`
@@ -188,6 +220,17 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
    `jwt`, `url`, `mime`, `trace_id`, `hmac`, `fnv1a`, `http`, `rodo`; prefiksy obiektów bazy
    `ux_` (indeks unikalny), `ix_` (indeks), `fk_` (klucz obcy), `trg_`
    (trigger). Każdy z nich ma definicję w PZS-1 (3.4, część C).
+7. **Słowa techniczne stosu .NET/Next.js** (wersja 3.0, ADR-049): nazwy
+   warstw w nazwach projektów (`Domain`, `Application`, `Infrastructure`,
+   `Api`, `Worker`, `Scheduler`, `ImageSandbox`, `Tests`, `Architecture`),
+   katalogi `Persistence`, `Migrations`, przedrostek interfejsu `I` oraz
+   przyrostki narzucone przez platformę: `Exception`, `Async`, `Attribute`,
+   `Handler`, `HostedService`, `DbContext`, `EntityTypeConfiguration`,
+   `Interceptor`, `Converter`, `Adapter`, `Plugin`, `Mock`, `Fake`,
+   `Fixture`, `Tests`. Nie oznaczają pojęć domenowych i nie mogą zastąpić
+   pojęcia słownika (np. `GradeHandler` jest zakazany, `OcenRozwiazanieHandler`
+   — dozwolony). Słowo `strumien` (strumień SSE, ADR-051) jest słowem
+   ogólnym listy `slownik_tokeny.yaml`.
 
 ### 3.2 Pojęcia słownika → identyfikatory
 
@@ -211,15 +254,17 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 | Pewność oceny | `ocena.pewnosc_oceny` (prawdopodobieństwo zgodności Oceny w rozumieniu ADR-027) | `PewnoscOceny` | pole `pewnosc_oceny` |
 | Próg pewności | `prog_pewnosci` (wyłącznie wartość progu, jego źródło i uzasadnienie) | `ProgPewnosci` | `/admin/progi-pewnosci` |
 | Weryfikacja | `weryfikacja` (PZS-1 B-2) | `Weryfikacja` | `/weryfikacje` |
-| Agent | moduł `lemat.agenci.*` | `Agent*` | — |
-| Orkiestrator | moduł `lemat.orkiestrator` (fasada wywoływana w procesach `worker` i `api`, ADR-023) | `Orkiestrator` | — |
-| Model System One | adapter `JevAdapter`, rola `DECYZYJNY_GLOWNY` (Jev jest jedynym Modelem System One w systemie) | `JevAdapter` | — |
+| Agent | projekt `Lemat.Agenci` (6.6) | `IAgent*` / `Agent*` | — |
+| Orkiestrator | `Lemat.Application.Orkiestracja` (fasada wywoływana w procesach `worker` i `api`, ADR-023) | `Orkiestrator` | — |
+| Model System One | adapter `JevAdapter` (`Lemat.Modele.Jev`), rola `DECYZYJNY_GLOWNY` (Jev jest jedynym Modelem System One w systemie) | `JevAdapter` | — |
 | Jev | adapter `JevAdapter`, `konfiguracja_modelu.dostawca = 'typesafe-jev'` | `JevAdapter` | — |
-| Kalibracja | moduł `lemat.kalibracja`; tabele `kalibrator_pewnosci` (funkcja kalibrująca Pewność oceny), `kalibracja_trudnosci` (kalibracja Poziomu trudności), `probka_kalibracyjna` | `KalibratorPewnosci`, `KalibracjaTrudnosci` | `/admin/kalibracja` |
-| Model generatywny (LLM) | port `ModelGeneratywny` | `ModelGeneratywny` | — |
+| Kalibracja | moduł Kalibracja (`Lemat.Domain.Kalibracja`); tabele `kalibrator_pewnosci` (funkcja kalibrująca Pewność oceny), `kalibracja_trudnosci` (kalibracja Poziomu trudności), `probka_kalibracyjna` | `KalibratorPewnosci`, `KalibracjaTrudnosci` | `/admin/kalibracja` |
+| Model generatywny (LLM) | port `IModelGeneratywny` (`Lemat.Application.Modele`) nad `IChatClient` | `IModelGeneratywny` | — |
 | Arkusz CKE | `arkusz_cke` | `ArkuszCke` | `/admin/arkusze-cke` |
 
-Port `ModelDecyzyjny` odpowiada pojęciu uzupełniającemu **Model decyzyjny**
+Pełne mapowanie wszystkich pojęć na typy C#, kolumny, typy TypeScript i
+nazwy JSON jest w 3.5; tabela 3.2 zachowuje formę wersji 2.4 jako indeks.
+Port `IModelDecyzyjny` (w 2.4 `ModelDecyzyjny`) odpowiada pojęciu uzupełniającemu **Model decyzyjny**
 (3.3) — roli, którą pełni Model System One albo model zapasowy. Pojęcie
 słownikowe „Model System One” nie jest mapowane na port, bo model zapasowy
 (LLM) nim nie jest.
@@ -312,7 +357,7 @@ dopisania do słownika (PZS-1, część A).
 | Przekazanie Klasy | FR-30, ADR-044 | Zmiana Nauczyciela prowadzącego Klasę przez Administratora, wymagana przed usunięciem konta Nauczyciela. | `POST /admin/klasy/{id}/przekazanie` |
 | Bezpiecznik | NFR-03, ADR-046 | Automatyczna reakcja nadzoru na **dowód** przekroczenia 2% błędu ocen automatycznych w Kontroli losowej (dolna granica Wilsona 95% > 2% przy `n_eff ≥ 50`): bezpiecznik trafności podnosi Próg pewności, bezpiecznik poprawek kieruje każdą Transkrypcję z Poprawkami do Weryfikacji (T-7). | `stan_bezpiecznika`, `typ_bezpiecznika` |
 | Wniosek o usunięcie konta | NFR-09, ADR-040 | Zdarzenie RODO rozpoczynające okres karencji usunięcia konta (`DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie`). | `WNIOSEK_O_USUNIECIE` |
-| Słownik terminów matematycznych | ADR-042 | Zamknięta lista form wyrazowych terminów matematycznych (z odmianą), których Filtr danych osobowych nie zastępuje, także gdy są równe imieniu lub nazwisku z konta — z dwoma wyjątkami (wersja 2.4, C4-03): token sąsiaduje z drugim członem imienia i nazwiska (lub inicjałem) albo leży w kroku agenta z podejrzeniem danych osobowych. | `lemat/rozpoznawanie/slownik_matematyczny.txt` |
+| Słownik terminów matematycznych | ADR-042 | Zamknięta lista form wyrazowych terminów matematycznych (z odmianą), których Filtr danych osobowych nie zastępuje, także gdy są równe imieniu lub nazwisku z konta — z wyjątkami (wersja 2.4, C4-03; wersja 3.0, C5-01): token sąsiaduje z pełnym drugim członem imienia i nazwiska, z inicjałem z kropką w kroku bez treści matematycznej, albo leży w kroku agenta z podejrzeniem danych osobowych. | `backend/src/Lemat.Domain/Rozwiazania/FiltrDanychOsobowych/slownik_matematyczny.txt` (w 2.4 `lemat/rozpoznawanie/slownik_matematyczny.txt`) |
 | Obszar kroku | 10.3.2 | Ramka linii kroku Transkrypcji na znormalizowanym zdjęciu, używana przez Filtr danych osobowych i Sprawdzenie zgodności poprawek. | `krok_transkrypcji.obszar`, `ObszarKroku` |
 | Przyjęcie planu | ADR-039 | Decyzja globalnego ogranicznika szybkości przed pierwszą falą Oceny: plan pytań Jev zostanie wykonany przed terminem miękkim albo Ocena od razu przechodzi do modelu zapasowego. | `PrzyjeciePlanu` |
 | Dezaktywacja bezpiecznika | ADR-046, C4-04 | Decyzja Administratora z uzasadnieniem kończąca stan aktywny bezpiecznika (poprawek: koniec T-7 dla każdej Poprawki; trafności: koniec blokady obniżania progu) i ustawiająca nowy początek okna oceny `okno_od`. | `POST /admin/bezpieczniki/dezaktywacja`, `dezaktywowano_at` |
@@ -336,8 +381,16 @@ usunięć”) —, 17 dopisanych w wersji 2.2 — od „Pewność surowa” do
 „Przyjęcie planu” — i 3 dopisane w wersji 2.4 — „Dezaktywacja
 bezpiecznika”, „Blokada obniżania progu”, „Wstrzymanie”; razem 86 pojęć).
 
-**Test w CI `tests/test_slownik.py`** (wersja 2.2, C2-11) ma cztery części,
-każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
+**Test w CI** (wersja 2.2, C2-11; od wersji 3.0
+`backend/tests/Lemat.Architecture.Tests/Slownik/TestSlownika.cs`, w 2.4
+`tests/test_slownik.py`) ma cztery części, każda z zamkniętą listą wyjątków
+w `backend/tests/Lemat.Architecture.Tests/Slownik/slownik_wyjatki.yaml`
+(w 2.4 `tests/slownik_wyjatki.yaml`). Od wersji 3.0 źródłami identyfikatorów
+są dodatkowo: nazwy typów, właściwości i członków enumów C# z zestawów
+`Lemat.Domain`, `Lemat.Application` i `Lemat.Api` (refleksja, nazwy
+przekształcone do formy bazowej według ADR-049 i porównywane z kolumną C#
+tabeli 3.5) oraz nazwy segmentów tras `frontend/src/app/**` (bez nawiasów
+grup tras); przyrostki z 3.1 p. 7 są pomijane przed podziałem na tokeny:
 
 1. **Tabele:** nazwy tabel z DDL 7.3 (odczyt `information_schema.tables` w
    bazie testowej po migracjach) muszą mieć wpis w 3.2/3.3. Lista
@@ -352,31 +405,42 @@ każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
 2. **Tokeny identyfikatorów:** kolumny (`information_schema.columns`), typy
    wyliczeniowe i ich wartości (`pg_enum`), ścieżki, parametry i właściwości
    schematów OpenAPI (`/api/v1/openapi.json`), klucze schematów JSON
-   odpowiedzi modeli (`lemat/modele/schematy/*.json`) i typy prac w tle
+   odpowiedzi modeli (`backend/src/Lemat.Modele/Schematy/*.json`, w 2.4 `lemat/modele/schematy/*.json`) i typy prac w tle
    (13.3) są dzielone na tokeny (`_`, `-`, granice `PascalCase`); każdy token
-   musi należeć do słownika tokenów `tests/slownik_tokeny.yaml`, generowanego
+   musi należeć do słownika tokenów `slownik_tokeny.yaml` (ten sam katalog), generowanego
    z identyfikatorów 3.2/3.3, terminów technicznych 3.1 p. 2 i p. 6 oraz
    zamkniętej listy słów ogólnych (np. `nr`, `opis`, `status`, `liczba`,
    `termin`, `tresc`, `koszt`; od wersji 2.4: `dezaktywacja`,
-   `dezaktywowany`, `dezaktywowano`, `dezaktywacji`, `blokada`,
-   `obnizania`, `przydzial`, `laczna`, `wykonane`, `podpisu`).
+   `dezaktywowany`, `dezaktywowano`, `dezaktywacji`, `obnizania`,
+   `przydzial`, `laczna`, `wykonane`, `podpisu`; od wersji 3.0: `strumien`,
+   `dzierzawa`, `fasada`; token `blokada` przeniesiony do słów
+   zarezerwowanych, część 3, C5-04).
 3. **Słowa zarezerwowane (3.1 p. 3 i p. 5):** identyfikator zawierający token
    `odpowiedz*`, `wariant*`, `krok*`, `wynik*`, `kolejk*`, (od wersji 2.3,
-   C3-07) `zadan*` albo (od wersji 2.4, C4-04) `zdjec*`, `zdjet*`, `zdje*`
-   (formy „zdjęcie”, „zdjęto”, „zdjęty”) i `wstrzym*` musi być na liście
+   C3-07) `zadan*`, (od wersji 2.4, C4-04) `zdjec*`, `zdjet*`, `zdje*`
+   (formy „zdjęcie”, „zdjęto”, „zdjęty”) i `wstrzym*` albo (od wersji 3.0,
+   C5-04) `blokad*`, `zablokow*` musi być na liście
    dozwolonych użyć tego słowa (dla `zdje*` — wyłącznie znaczenie
    „fotografia kartki”: `zdjecie_rozwiazania`, `zdjecie_rozwiazania_id`,
    `zdjecia` w ścieżkach `/rozwiazania/{id}/zdjecia` i polach DTO,
-   `zdjecie` w `ObszarNaZdjeciu`/`NiepewnyFragment`/`obszar`,
-   `wersja_zdjecia`, `ZdjecieRef`, `ObszarNaZdjeciu`, `widoczny_na_zdjeciu`,
+   parametr ścieżki `{zdjecie_rozwiazania_id}`, klucz JSON `zdjecie`
+   (numer zdjęcia w obiektach `ObszarNaZdjeciu`, `NiepewnyFragment` i
+   `krok_transkrypcji.obszar`, schemat 10.3.2), `nr_zdjecia` (właściwość C#
+   `ObszarNaZdjeciu.NrZdjecia`),
+   `wersja_zdjecia`, `WersjaZdjecia`, `ZdjecieRef`, `ObszarNaZdjeciu`, `widoczny_na_zdjeciu`,
    `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`, `ZDJECIE_NIEPRAWIDLOWE`, `USUN_ZDJECIA`,
    `zdjecia_zalegle`, prefiksy `ux_zdjecie_*`, `ix_zdjecie_*`; tokeny
    `zdjeto`, `zdjety`, `zdjecia` w znaczeniu dezaktywacji nie mają
    dozwolonych użyć; dla `wstrzym*`: `wstrzymanie_w_doborze`,
    `WSTRZYMANA_BLAD_ODCZYTU`, pole DTO `wstrzymane_w_doborze` (wyliczane z
-   tabeli `wstrzymanie_w_doborze`); dla
-   `zadan*`
-   `zadan*`: identyfikatory odnoszące się do pojęcia Zadanie — `zadanie`,
+   tabeli `wstrzymanie_w_doborze`), `WidocznoscOcenyDlaUcznia.WstrzymanaBladOdczytu`,
+   `WstrzymanieWDoborze`, `CzyProcesyWstrzymane`; dla `blokad*` i
+   `zablokow*` (C5-04): `zablokowana_do`, `ix_weryfikacja_blokady`,
+   `BlokadaWeryfikacji`, `BLOKADA_MAKS_CZAS`,
+   `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`,
+   `ZABLOKOWANE` (wartość `status_konta`), `BlokadaObnizaniaProgu`,
+   `blokada_obnizania_progu`, `wyjscie_z_blokady_at` (kolumna
+   `stan_bezpiecznika`, wyłącznie typ `TRAFNOSC`); dla `zadan*`: identyfikatory odnoszące się do pojęcia Zadanie — `zadanie`,
    `zadanie_id`, `zadanie_ids`, `zadanie_wersja`, `zadanie_wersja_id`,
    `zadanie_umiejetnosc`, `zadania` w ścieżkach `/zadania`, `rodzaj_zadania`,
    `status_zadania`, `pochodzenie_zadania`, `zasieg_zadania`, `wynik_zadania`,
@@ -385,9 +449,12 @@ każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
    `zgodnosc_z_zadaniem`, wartości `ZADANIE`, `ZADANIE_LATWE`,
    `ZADANIE_MATURALNE`, `ZADANIE_Z_DOWODEM`, `ZADANIE_DO_PRZEGLADU`, klasy
    `Zadanie*`, `*Zadania*` i prefiksy `ux_zadanie_*`, `ix_zadanie_*`; pełna lista
-   w `tests/slownik_wyjatki.yaml`). Przypadek kontrolny testu (wersja 2.4):
+   w `slownik_wyjatki.yaml`). Przypadki kontrolne testu (wersja 2.4):
    migracja testowa z kolumną `stan_bezpiecznika.zdjeto_at` i ścieżka
-   `/admin/bezpieczniki/zdjecie` muszą kończyć test błędem. Przykłady list
+   `/admin/bezpieczniki/zdjecie` muszą kończyć test błędem; (wersja 3.0,
+   C5-04) migracja testowa z kolumną `praca_w_tle.zablokowana_do` i
+   właściwość C# `StanBezpiecznika.BlokadaAktywna` muszą kończyć test
+   błędem. Przykłady list
    dozwolonych użyć (np. dla `wynik*`: `wynik_zadania`,
    `wynik_zadania_id`, `wynik_koncowy`, `wynik_koncowy_wzorcowy`,
    `ix_wynik_*`, `ux_wynik_*`, `WynikZadaniaSkrot`; dla `odpowiedz*`:
@@ -395,7 +462,7 @@ każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
    `OdpowiedzZapisana`, `ux_odpowiedz_*`); każde inne użycie kończy test
    błędem.
 4. **Zakazane synonimy (3.1 p. 4)** w identyfikatorach i w plikach
-   tłumaczeń UI.
+   tłumaczeń UI (od wersji 3.0: `frontend/messages/pl-PL.json`).
 
 **Część B — zmiany definicji istniejących pojęć.**
 
@@ -416,6 +483,963 @@ każda z zamkniętą listą wyjątków w `tests/slownik_wyjatki.yaml`:
 `sympy`, `jwt`, `url`, `mime`, `trace_id`, `hmac`, `fnv1a`, `http` (protokół
 odpowiedzi API), `rodo` (RODO — rozporządzenie 2016/679), prefiksy `ux_`,
 `ix_`, `fk_`, `trg_` — z definicjami jak w 3.1 p. 6.
+
+
+### 3.5 Mapowanie słownika pojęć na model domenowy (C#, PostgreSQL, TypeScript, JSON)
+
+Tabela obejmuje **wszystkie 25 pojęć** `docs/glossary.md` (część I) i
+**wszystkie 86 pojęć** PZS-1 część A, czyli tabeli 3.3 (część II) — razem
+**111 pojęć**. Formy identyfikatorów wynikają mechanicznie z formy bazowej
+`snake_case` według ADR-049 (transliteracja, PascalCase w C#/TS, `snake_case`
+w bazie i JSON, `UPPER_SNAKE` dla wartości wyliczeniowych, `kebab-case` w
+URL). Test słownika (3.4) sprawdza każdą kolumnę: typy C# (refleksja po
+`Lemat.Domain`, `Lemat.Application`, `Lemat.Api.Kontrakty`), schemat bazy po
+migracjach, dokument OpenAPI (z niego powstają typy TS) i schematy JSON
+odpowiedzi modeli.
+
+Skróty: `D.` = `Lemat.Domain.`, `A.` = `Lemat.Application.`, `M.` =
+`Lemat.Modele.`, `I.` = `Lemat.Infrastructure.`, `K.` =
+`Lemat.Api.Kontrakty.`. Typy TS są aliasami schematów OpenAPI eksportowanymi
+z `frontend/src/lib/api/typy.ts` (np. `export type OcenaWyjscie =
+components["schemas"]["OcenaWyjscie"]`); wyliczenia w TS to unie literałów
+(`type StatusOceny = "WSTEPNA" | "OSTATECZNA" | "ZASTAPIONA"`). Rodzaj DDD:
+**AG** — korzeń agregatu, **EN** — encja wewnątrz agregatu, **VO** — value
+object, **EW** — wyliczenie (`enum`), **WA** — wartość wyliczenia, **PO** —
+port (interfejs), **AD** — adapter, **SD** — usługa domenowa (czysta
+funkcja/klasa bez stanu), **SA** — usługa aplikacyjna, **RM** — model
+odczytu (zapytanie), **ZA** — zasób zewnętrzny, **ME** — metoda/właściwość
+agregatu. „—” oznacza świadomy brak reprezentacji w danej warstwie (z
+podanym powodem w kolumnie JSON albo w uwadze pod tabelą).
+
+**Część I — pojęcia `docs/glossary.md` (25)**
+
+| # | Pojęcie | Rodzaj | C# (przestrzeń nazw → typ) | PostgreSQL | TypeScript | JSON API |
+|---|---|---|---|---|---|---|
+| 1 | Uczeń | AG | `D.Konta.Uczen` (klucz `UczenId` = `UzytkownikId`) | `uczen` (PK `uzytkownik_id`); `uzytkownik.rola = 'UCZEN'` | `UczenWyjscie`; `RolaUzytkownika` | `uczen_id`; `"rola": "UCZEN"`; zasób `/uczniowie` |
+| 2 | Nauczyciel | AG | `D.Konta.Nauczyciel` (klucz `NauczycielId`) | `nauczyciel` (PK `uzytkownik_id`); `uzytkownik.rola = 'NAUCZYCIEL'` | `NauczycielWyjscie` | `nauczyciel_id`; `"rola": "NAUCZYCIEL"`; zasób `/nauczyciele` |
+| 3 | Zadanie | AG + EN | `D.Tresci.Zadanie` (`ZadanieId`) z encją `D.Tresci.ZadanieWersja` (`ZadanieWersjaId`) | `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `zalacznik_zadania` | `ZadaniePelneWyjscie`, `ZadanieUczniaWyjscie` | `zadanie_id`, `zadanie_wersja_id`; zasób `/zadania` |
+| 4 | Zadanie bazowe | WA + ME | `D.Tresci.PochodzenieZadania.BazoweArkuszCke`, `.BazoweNauczyciel`; `Zadanie.CzyBazowe` | `zadanie.pochodzenie IN ('BAZOWE_ARKUSZ_CKE','BAZOWE_NAUCZYCIEL')` | `PochodzenieZadania` | `"pochodzenie": "BAZOWE_ARKUSZ_CKE"`; filtr `?pochodzenie=` |
+| 5 | Zadanie wygenerowane | WA + ME | `PochodzenieZadania.Wygenerowane`; `Zadanie.CzyWygenerowane`, `Zadanie.ZlecenieGenerowaniaId` | `zadanie.pochodzenie = 'WYGENEROWANE'`, `zadanie.zlecenie_generowania_id` | `PochodzenieZadania` | `"pochodzenie": "WYGENEROWANE"`, `zlecenie_generowania_id` |
+| 6 | Dział | AG (referencyjny) | `D.Tresci.Dzial` (`DzialId` = `int`) | `dzial` | `DzialWyjscie` | `dzial_id`; zasób `/dzialy` |
+| 7 | Umiejętność | AG (referencyjny) | `D.Tresci.Umiejetnosc` (`UmiejetnoscId` = `int`), kolekcja `WymaganeUmiejetnosci` | `umiejetnosc`, `umiejetnosc_wymagana` | `UmiejetnoscWyjscie` | `umiejetnosc_id`; zasób `/umiejetnosci` |
+| 8 | Profil ucznia | AG + EN | `D.Profil.ProfilUcznia` (klucz `UczenId`) z encją `D.Profil.OpanowanieUmiejetnosci` | `profil_ucznia`, `opanowanie_umiejetnosci` | `ProfilUczniaWyjscie` | `profil`; zasób `/uczniowie/{id}/profil` |
+| 9 | Poziom trudności | VO | `D.Wspolne.PoziomTrudnosci` (`readonly record struct`, 1–5) | `kalibracja_trudnosci.poziom_trudnosci` (skalibrowany), `zadanie.poziom_trudnosci_nominalny` (PZS-1 B-4) | `PoziomTrudnosci = 1 \| 2 \| 3 \| 4 \| 5` | `poziom_trudnosci`, `poziom_trudnosci_nominalny` |
+| 10 | Ścieżka nauki | AG | `D.Rekomendacje.SciezkaNauki` (`SciezkaNaukiId`) z encjami `ElementSciezki` i VO `Seria` | `sciezka_nauki`, `element_sciezki` | `ElementSciezkiWyjscie` (strona) | zasób `/uczniowie/ja/sciezka-nauki` |
+| 11 | Wkładka teoretyczna | AG | `D.Tresci.WkladkaTeoretyczna` (`WkladkaTeoretycznaId`), `StatusWkladki` | `wkladka_teoretyczna`, typ `status_wkladki` | `WkladkaTeoretycznaWyjscie` | `wkladka_teoretyczna_id`; zasób `/wkladki-teoretyczne` |
+| 12 | Rozwiązanie | AG + EN | `D.Rozwiazania.Rozwiazanie` (`RozwiazanieId`) z encją `ZdjecieRozwiazania`; `StatusRozwiazania` | `rozwiazanie`, `zdjecie_rozwiazania`, typ `status_rozwiazania` | `RozwiazanieWejscie`, `RozwiazanieWyjscie`, `StatusRozwiazania` | `rozwiazanie_id`; zasób `/rozwiazania` |
+| 13 | Transkrypcja | AG (niezmienny) + EN | `D.Rozwiazania.Transkrypcja` (`TranskrypcjaId`) z encją `KrokTranskrypcji`; `ZrodloTranskrypcji` | `transkrypcja`, `krok_transkrypcji`, typ `zrodlo_transkrypcji` | `TranskrypcjaWyjscie`, `TranskrypcjaWejscie`, `KrokTranskrypcji` | `transkrypcja`; zasób `/rozwiazania/{id}/transkrypcja` |
+| 14 | Kryteria oceniania | EN (kolekcja) | `ZadanieWersja.KryteriaOceniania : IReadOnlyList<D.Tresci.KryteriumOceniania>` | `kryterium_oceniania` | `KryteriumOcenianiaWyjscie[]` | `kryteria_oceniania` |
+| 15 | Ocena | AG (niezmienny) + EN | `D.Ocenianie.Ocena` (`OcenaId`) z encją `OcenaKryterium`; `StatusOceny`, `ZrodloOceny` | `ocena`, `ocena_kryterium`, typy `status_oceny`, `zrodlo_oceny` | `OcenaWyjscie`, `StatusOceny` | `ocena`; zasób `/rozwiazania/{id}/ocena` |
+| 16 | Pewność oceny | VO | `D.Ocenianie.PewnoscOceny` (`readonly record struct`, `decimal` 0–1, 4 miejsca) | `ocena.pewnosc_oceny numeric(5,4)` | `number` w `OcenaWyjscie` | `pewnosc_oceny` |
+| 17 | Próg pewności | AG | `D.Kalibracja.ProgPewnosci` (`ProgPewnosciId`), `ZrodloProgu` | `prog_pewnosci`, typ `zrodlo_progu` | `ProgPewnosciWyjscie` | zasób `/admin/progi-pewnosci` |
+| 18 | Weryfikacja | AG | `D.Weryfikacje.Weryfikacja` (`WeryfikacjaId`), `StatusWeryfikacji` | `weryfikacja`, typ `status_weryfikacji` | `WeryfikacjaNaLiscie`, `WeryfikacjaSzczegoly`, `WeryfikacjaUcznia` | `weryfikacja_id`; zasób `/weryfikacje` |
+| 19 | Agent | PO + SA | `A.Agenci.IAgentRekomendujacy`, `IAgentGenerujacy`, `IAgentRozpoznajacy`, `IAgentOceniajacy`, `IAgentWyjasniajacy`; implementacje `Lemat.Agenci.*.Agent*` (6.6) | brak tabeli; ślad decyzji w `decyzja_modelu` | — | agent nie jest zasobem API; ujawniane wyłącznie wartości `"AGENT_ROZPOZNAJACY"` (`zrodlo` Transkrypcji) i `"AGENT_WYJASNIAJACY"` (`zrodlo_wskazowki`) |
+| 20 | Orkiestrator | SA | `A.Orkiestracja.Orkiestrator : IOrkiestrator` | `praca_w_tle` (stan przepływów w tabelach agregatów) | — | wewnętrzny; podgląd prac: `/admin/praca-w-tle` |
+| 21 | Model System One | AD | `M.Jev.JevAdapter : A.Modele.IModelDecyzyjny` | `konfiguracja_modelu.rola = 'DECYZYJNY_GLOWNY'` | `RolaModelu` | `"rola": "DECYZYJNY_GLOWNY"` |
+| 22 | Jev | AD | `M.Jev.JevAdapter`; stała `M.RejestrAdapterow.TypesafeJev = "typesafe-jev"` | `konfiguracja_modelu.dostawca = 'typesafe-jev'` | `KonfiguracjaModeluWyjscie` | `"dostawca": "typesafe-jev"` |
+| 23 | Kalibracja | AG ×2 + SA | `D.Kalibracja.KalibratorPewnosci` (Pewność oceny), `D.Tresci.KalibracjaTrudnosci` (Poziom trudności), `A.Kalibracja.KalibrujHandler` (praca `KALIBRUJ`) | `kalibrator_pewnosci`, `kalibracja_trudnosci`, `probka_kalibracyjna` | `MetrykiKalibracjiWyjscie` | zasób `/admin/kalibracja` |
+| 24 | Model generatywny (LLM) | PO + AD | `A.Modele.IModelGeneratywny`; `M.Llm.LlmAdapter` nad `Microsoft.Extensions.AI.IChatClient` | `konfiguracja_modelu.rola` ∈ `GENERATYWNY_*`, `ROZPOZNAWANIE_PISMA` | `RolaModelu` | `"rola": "GENERATYWNY_ZADANIA"` |
+| 25 | Arkusz CKE | AG | `D.Tresci.ArkuszCke` (`ArkuszCkeId`), `D.Tresci.ImportArkusza` (`StatusImportu`) | `arkusz_cke`, `import_arkusza` | `ArkuszCkeWyjscie`, `ImportArkuszaWyjscie` | `arkusz_cke_id`; zasób `/admin/arkusze-cke` |
+
+**Część II — pojęcia PZS-1, część A (86)**
+
+| # | Pojęcie | Rodzaj | C# (przestrzeń nazw → typ) | PostgreSQL | TypeScript | JSON API |
+|---|---|---|---|---|---|---|
+| 26 | Administrator | WA + AG | `D.Konta.RolaUzytkownika.Administrator`; konto: `D.Konta.Uzytkownik` | `uzytkownik.rola = 'ADMINISTRATOR'` (bez osobnej tabeli) | `RolaUzytkownika` | `"rola": "ADMINISTRATOR"`; zasoby `/admin/*` |
+| 27 | Klasa | AG + EN | `D.Klasy.Klasa` (`KlasaId`) z encją `CzlonkostwoKlasy` | `klasa`, `czlonkostwo_klasy` | `KlasaWyjscie` | `klasa_id`; zasób `/klasy` |
+| 28 | Rodzaj zadania | EW | `D.Wspolne.RodzajZadania { Zamkniete, OtwarteObliczeniowe, OtwarteZDowodem }` | typ `rodzaj_zadania` | `RodzajZadania` | `rodzaj`, `rodzaj_zadania` |
+| 29 | Odpowiedź | AG | `D.Rozwiazania.Odpowiedz` (`OdpowiedzId`), VO `WyborOdpowiedzi` | `odpowiedz` | `OdpowiedzWejscie`, `OdpowiedzWyjscie` | `odpowiedz_id`; zasób `/zadania/{id}/odpowiedzi` |
+| 30 | Decyzja składowa | VO + AG | `D.Modele.DecyzjaSkladowa` (rekord); utrwalenie `D.Modele.DecyzjaModelu` | `decyzja_modelu` (partycjonowana) | `DecyzjaSkladowaWyjscie` (wyłącznie widoki Administratora) | `decyzje` |
+| 31 | Poziom matury | EW | `D.Wspolne.PoziomMatury { Podstawowy, Rozszerzony }` | typ `poziom_matury` | `PoziomMatury` | `poziom_matury` |
+| 32 | Termin egzaminu | ME | `Uczen.TerminEgzaminu : DateOnly?` | `uczen.termin_egzaminu date` | `string` (ISO `YYYY-MM-DD`) w `UczenWyjscie` | `termin_egzaminu` |
+| 33 | Test diagnostyczny | AG + EN | `D.Profil.TestDiagnostyczny` (`TestDiagnostycznyId`) z encją `PozycjaTestuDiagnostycznego`; `StatusTestu` | `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `TestDiagnostycznyWyjscie` | zasoby `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne` |
+| 34 | Zestaw zadań | AG + EN | `D.Klasy.ZestawZadan` (`ZestawZadanId`) z encją `PozycjaZestawu` | `zestaw_zadan`, `pozycja_zestawu` | `ZestawZadanWyjscie` | `zestaw_zadan_id`; zasób `/zestawy-zadan` |
+| 35 | Przypisanie | AG + EN | `D.Klasy.Przypisanie` (`PrzypisanieId`) z encją `PrzypisanieUczen` | `przypisanie`, `przypisanie_uczen` | `PrzypisanieWyjscie`, `PostepPrzypisaniaWyjscie` | `przypisanie_id`; zasób `/przypisania` |
+| 36 | Rozwiązanie wzorcowe | VO | `D.Tresci.RozwiazanieWzorcowe` (rekord z listą wariantów kroków, schemat 7.5.2) | `zadanie_wersja.rozwiazanie_wzorcowe jsonb` | `RozwiazanieWzorcowe` | `rozwiazanie_wzorcowe` |
+| 37 | Wariant rozwiązania | VO | `D.Tresci.WariantRozwiazania` (`readonly record struct`, 1–4) | `kryterium_oceniania.wariant`, `ocena.wariant` | `number` | `wariant` |
+| 38 | Krok rozwiązania | EN | `D.Rozwiazania.KrokTranskrypcji` (numer `Nr`, 1–40) | `krok_transkrypcji` (`nr`) | `KrokTranskrypcji` | `kroki[].nr`, `pierwszy_bledny_krok` |
+| 39 | Kryterium | EN | `D.Tresci.KryteriumOceniania` (`NrKryterium` 1–12) | `kryterium_oceniania` (`nr_kryterium`) | `KryteriumOcenianiaWyjscie` | `nr_kryterium` |
+| 40 | Wynik końcowy | VO | `A.Ocenianie.StanDlaModelu.WynikKoncowy : string` (część stanu 10.4.2) | brak kolumny — wyłącznie w `decyzja_modelu.stan` | — | `wynik_koncowy` (wyłącznie w stanie i schemacie odpowiedzi modelu) |
+| 41 | Wynik końcowy wzorcowy | VO | `D.Tresci.WynikKoncowyWzorcowy` (rekord: `Latex`, `PostacSympy`, schemat 7.5.3) | `zadanie_wersja.wynik_koncowy_wzorcowy jsonb` | `WynikKoncowyWzorcowy` | `wynik_koncowy_wzorcowy` |
+| 42 | Typ błędu | EW | `D.Ocenianie.TypBledu { Rachunkowy, Merytoryczny, NiepelneRozwiazanie }` | typ `typ_bledu` | `TypBledu` | `typ_bledu` |
+| 43 | Wskazówka | VO | `D.Ocenianie.Wskazowka` (rekord: `Tresc` ≤ 400 znaków, `Zrodlo : ZrodloWskazowki`); `Ocena.Wskazowka` zapisywana jednokrotnie | `ocena.wskazowka`, `ocena.zrodlo_wskazowki`, typ `zrodlo_wskazowki` | pola `OcenaWyjscie` | `wskazowka`, `zrodlo_wskazowki`, `wskazowka_w_przygotowaniu` |
+| 44 | Ocena wstępna | WA | `D.Ocenianie.StatusOceny.Wstepna` | `status_oceny 'WSTEPNA'` | `StatusOceny` | `"status": "WSTEPNA"` |
+| 45 | Ocena ostateczna | WA | `D.Ocenianie.StatusOceny.Ostateczna` | `status_oceny 'OSTATECZNA'` | `StatusOceny` | `"status": "OSTATECZNA"` |
+| 46 | Kolejka weryfikacji | RM + EW | `A.Weryfikacje.Zapytania.KolejkaWeryfikacji` (zapytanie z regułą odczytu 11.4.2); `D.Weryfikacje.TypKolejkiWeryfikacji { Klasa, Globalna }` | `weryfikacja.typ_kolejki` (typ `typ_kolejki_weryfikacji`), indeks `ix_weryfikacja_kolejka` | `WeryfikacjaNaLiscie`, `TypKolejkiWeryfikacji` | zasób `GET /weryfikacje`, `typ_kolejki` |
+| 47 | Powód weryfikacji | EW | `D.Weryfikacje.PowodWeryfikacji` (8 wartości) | typ `powod_weryfikacji`, kolumna `weryfikacja.powody powod_weryfikacji[]` | `PowodWeryfikacji` | `powody` |
+| 48 | Kontrola losowa | WA | `PowodWeryfikacji.KontrolaLosowa`, `D.Kalibracja.ZrodloProbki.KontrolaLosowa` | `'KONTROLA_LOSOWA'` w `powod_weryfikacji`, `zrodlo_probki` | `PowodWeryfikacji` | `"KONTROLA_LOSOWA"` |
+| 49 | Zgłoszenie błędu odczytu | VO + WA | `D.Weryfikacje.ZgloszenieBleduOdczytu` (rekord, schemat 7.5.4); `PowodWeryfikacji.ZgloszenieBleduOdczytu` | `weryfikacja.zgloszenie jsonb` | `ZgloszenieBleduOdczytuWejscie` | `zgloszenie`; zasób `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu` |
+| 50 | Próbka kalibracyjna | AG | `D.Kalibracja.ProbkaKalibracyjna` (`ProbkaKalibracyjnaId`) | `probka_kalibracyjna` | — (wyłącznie agregaty w `MetrykiKalibracjiWyjscie`) | — (dane do Kalibracji, nieeksponowane pojedynczo) |
+| 51 | Zgodność Oceny | ME | `ProbkaKalibracyjna.Zgodna` (= `PunktyAutomatyczne == PunktyNauczyciela && ZgodnyPierwszyBlednyKrok && ZgodnyBrakujacyKrok`, ADR-027) | `probka_kalibracyjna.zgodna` (kolumna generowana) | pola `MetrykiKalibracjiWyjscie` | `zgodna` |
+| 52 | Kalibrator pewności | AG | `D.Kalibracja.KalibratorPewnosci` (`KalibratorPewnosciId`), `MetodaKalibratora { Tozsamosciowy, IzotonicznyCv5 }`, `ZrodloKalibratora` | `kalibrator_pewnosci`, typ `zrodlo_kalibratora` | `KalibratorPewnosciWyjscie` | `kalibrator_pewnosci_id` |
+| 53 | Opinia pomocnicza | VO | `D.Weryfikacje.OpiniaPomocnicza` (rekord, schemat 10.4.5) | `weryfikacja.opinia_pomocnicza jsonb` | `OpiniaPomocnicza` (w `WeryfikacjaSzczegoly`) | `opinia_pomocnicza` |
+| 54 | Model decyzyjny | PO | `A.Modele.IModelDecyzyjny` | `konfiguracja_modelu.rola IN ('DECYZYJNY_GLOWNY','DECYZYJNY_ZAPASOWY')` | — | — (port wewnętrzny) |
+| 55 | Model zapasowy | AD + WA | `M.Zapasowy.ZapasowyLlmAdapter : IModelDecyzyjny`; `D.Modele.RolaModelu.DecyzyjnyZapasowy` | `rola_modelu 'DECYZYJNY_ZAPASOWY'` | `RolaModelu` | `"rola": "DECYZYJNY_ZAPASOWY"` |
+| 56 | Plan pytań | VO | `D.Modele.PlanPytan`, `PytanieWPlanie`, `WarunekPytania`, `Pytanie` (abstrakcyjny rekord: `PytanieNoul`, `PytanieScore`, `PytanieChoice`), `TypPytania` | `decyzja_modelu.kod_pytania`, typ `typ_pytania` | — | — (kontrakt portu, ADR-026) |
+| 57 | Rekomendacja | AG (niezmienny) | `D.Rekomendacje.Rekomendacja` (`RekomendacjaId`), `StrategiaRekomendacji`, `RegulaRekomendacji` | `rekomendacja`, typ `strategia_rekomendacji` | `RekomendacjaWyjscie`, `Regula` | zasób `/uczniowie/ja/rekomendacje/nastepna`; `regula` (`"R-SERIA"`) |
+| 58 | Powtórka | WA | `D.Rekomendacje.CelElementu.Powtorka` | `cel_elementu 'POWTORKA'` | `CelElementu` | `"cel": "POWTORKA"` |
+| 59 | Seria | VO | `D.Rekomendacje.Seria` (rekord własny `SciezkaNauki`: `UmiejetnoscId`, `RozpoczetaAt`, `LiczbaElementow`, `PoziomTrudnosci`, `KolejnePorazki`) | `sciezka_nauki.seria_*` | `SeriaWyjscie` | `seria`, `w_serii` |
+| 60 | Poziom opanowania | VO | `D.Profil.PoziomOpanowania` (`readonly record struct`, `decimal` 0–1) | `opanowanie_umiejetnosci.poziom_opanowania` | `number` w `ProfilUczniaWyjscie` | `poziom_opanowania` |
+| 61 | Wynik zadania | AG | `D.Profil.WynikZadania` (`WynikZadaniaId`), `ZrodloWyniku`, `PowodUniewaznieniaWyniku` | `wynik_zadania`, typy `zrodlo_wyniku`, `powod_uniewaznienia_wyniku` | `WynikZadaniaSkrot` | `wynik_zadania` |
+| 62 | Walidacja zadania | AG (niezmienny) | `D.Tresci.WalidacjaZadania` (`WalidacjaZadaniaId`), `RezultatWalidacji` | `walidacja_zadania`, typ `rezultat_walidacji` | `WalidacjaZadaniaWyjscie` | `walidacje`, `rezultat` |
+| 63 | Przegląd zadania | AG (niezmienny) | `D.Tresci.PrzegladZadania` (`PrzegladZadaniaId`), `DecyzjaPrzegladu` | `przeglad_zadania`, typ `decyzja_przegladu` | `PrzegladWejscie` | zasób `POST /zadania/{id}/przeglad` |
+| 64 | Recenzent treści | ME | `Nauczyciel.RecenzentTresci : bool` | `nauczyciel.recenzent_tresci` | `boolean` w `UzytkownikAdminWyjscie` | `recenzent_tresci` |
+| 65 | Zasięg zadania | EW | `D.Tresci.ZasiegZadania { Globalny, Prywatny }` | typ `zasieg_zadania` | `ZasiegZadania` | `zasieg` |
+| 66 | Konfiguracja modelu | AG | `D.Modele.KonfiguracjaModelu` (`KonfiguracjaModeluId`), `RolaModelu`, VO `ParametryModelu` | `konfiguracja_modelu`, typ `rola_modelu` | `KonfiguracjaModeluWyjscie` | zasób `/admin/konfiguracje-modeli` |
+| 67 | Praca w tle | EN (techniczna) | `A.Orkiestracja.PracaWTle`, `TypPracy`, `PulaPracy`, `StatusPracy`, `IHandlerPracy` | `praca_w_tle`, typ `status_pracy` | `PracaWTleWyjscie` | zasób `/admin/praca-w-tle`; `typ` (`"ROZPOZNAJ_PISMO"`) |
+| 68 | Element Ścieżki nauki | EN | `D.Rekomendacje.ElementSciezki` (`ElementSciezkiId`), `TypElementuSciezki`, `StatusElementuSciezki` | `element_sciezki` | `ElementSciezkiWyjscie` | `element_sciezki_id`; zasób `/elementy-sciezki` |
+| 69 | Cel elementu | EW | `D.Rekomendacje.CelElementu { Nauka, Powtorka }` | typ `cel_elementu` | `CelElementu` | `cel` |
+| 70 | Przesłanie | VO | `D.Rozwiazania.Przeslanie` (rekord: `Nr` 1–3, zdjęcia 1–5); `Rozwiazanie.LiczbaPrzeslan` | `zdjecie_rozwiazania.przeslanie_nr`, `rozwiazanie.liczba_przeslan` | pola `RozwiazanieWyjscie` | `przeslanie_nr`, `liczba_przeslan` |
+| 71 | Zdjęcie maskowane | ME | `ZdjecieRozwiazania.KluczObiektuMaskowany : string?`; `D.Rozwiazania.WersjaZdjecia { Oryginalna, Maskowana }` | `zdjecie_rozwiazania.klucz_obiektu_maskowany` | `ZdjecieRef`, `WersjaZdjecia` | `?wersja_zdjecia=MASKOWANA` |
+| 72 | Kopia treningowa | AG | `D.Rozwiazania.KopiaTreningowa` (`KopiaTreningowaId`) | `kopia_treningowa` | — | — (brak zasobu API; sterowana zgodą `zgoda_na_trening`) |
+| 73 | Weryfikator globalny | ME | `Nauczyciel.WeryfikatorGlobalny : bool`, `Nauczyciel.DeklarowaneMinutyWeryfikacji` | `nauczyciel.weryfikator_globalny`, `deklarowane_minuty_weryfikacji` | `boolean` w `UzytkownikAdminWyjscie` | `weryfikator_globalny` |
+| 74 | Nauczyciel docelowy | ME | `Weryfikacja.NauczycielDocelowyId : NauczycielId?` | `weryfikacja.nauczyciel_docelowy_id` | pole `WeryfikacjaSzczegoly` | `nauczyciel_docelowy_id` |
+| 75 | Blokada weryfikacji | VO | `D.Weryfikacje.BlokadaWeryfikacji` (rekord: `PodjetaPrzez`, `PodjetaAt`, `ZablokowanaDo`; 15 min, łącznie ≤ 2 h) | `weryfikacja.podjeta_przez`, `podjeta_at`, `zablokowana_do` | pola `WeryfikacjaSzczegoly` | `zablokowana_do`; zasoby `…/podjecie`, `…/przedluzenie`, `…/zwolnienie` |
+| 76 | Szkic rozstrzygnięcia | AG | `D.Weryfikacje.SzkicRozstrzygniecia` (klucz `(WeryfikacjaId, NauczycielId)`) | `szkic_rozstrzygniecia` | `SzkicRozstrzygnieciaWejscie` | zasób `PUT /weryfikacje/{id}/szkic` |
+| 77 | Pseudonim Ucznia | VO + SD | `D.Weryfikacje.PseudonimUcznia` (`readonly record struct`, format `U-XXXXXX`); `A.Weryfikacje.IGeneratorPseudonimow` (HMAC-SHA256, sekret z konfiguracji) | brak kolumny (wyliczany przy odczycie) | `string` w `WeryfikacjaSzczegoly` | `uczen_pseudonim` |
+| 78 | Kontrola przyjęć | RM | `A.Weryfikacje.Zapytania.StanKontroliPrzyjec` (`KontrolaPrzyjecAktywna`, `KlasyZKontrolaPrzyjec`) | brak tabeli (wyliczany z `weryfikacja` i parametrów 22) | pola `ObciazenieWeryfikacjiWyjscie` | `kontrola_przyjec_aktywna`, `klasy_z_kontrola_przyjec` |
+| 79 | Tryb pełnej weryfikacji | ME | `ProgPewnosci.TrybPelnejWeryfikacji => Wartosc == 1.000m` | `prog_pewnosci.wartosc = 1.000` | `boolean` w `ProgPewnosciWyjscie` | `tryb_pelnej_weryfikacji` |
+| 80 | Zawieszenie Wyniku zadania | ME + WA | `WynikZadania.Zawies(DateTimeOffset teraz)`; `PowodUniewaznieniaWyniku.ZgloszenieBleduOdczytu` | `wynik_zadania.uniewazniony_at`, `powod_uniewaznienia = 'ZGLOSZENIE_BLEDU_ODCZYTU'` | — | `powod_uniewaznienia` (widoki Nauczyciela) |
+| 81 | Czas systemowy | ME | `Rozwiazanie.CzasSystemowy : TimeSpan?` (utrwalany w ms) | `rozwiazanie.czas_systemowy_ms` | `number` | `czas_systemowy_ms` |
+| 82 | Termin miękki / termin twardy | VO | `D.Ocenianie.TerminyOceny` (rekord: `TerminMiekki`, `TerminTwardy`; wyliczane z `ZatwierdzonoAt` i `t_R`, 14.2) | brak kolumn (wyliczane z `rozwiazanie.zatwierdzono_at`) | — | — (wewnętrzne; metryki 17.3) |
+| 83 | Zlecenie generowania | AG | `D.Tresci.ZlecenieGenerowania` (`ZlecenieGenerowaniaId`), `StatusZlecenia` | `zlecenie_generowania`, typ `status_zlecenia` | `ZlecenieGenerowaniaWyjscie` | zasoby `POST /zadania/generowanie`, `/zlecenia-generowania/{id}` |
+| 84 | Grupa eksperymentu | VO | `D.Konta.GrupaEksperymentu` (`ProcentGrupyEksperymentu` 0–99, metoda `Strategia(int procentJevChoice)`) | `uczen.procent_grupy_eksperymentu` | — | `procent_grupy_eksperymentu` (widoki Administratora) |
+| 85 | Zbiór testowy ZT-1 | ZA | `A.Kalibracja.ZbiorTestowyZt1` (odczyt manifestu przez `IMagazynObiektow`) | bucket `zbiory-testowe/zt1/` (poza bazą) | — | — (praca `EWALUUJ_ZT1`) |
+| 86 | Rejestr Zdarzeń RODO | PO + AD | `A.Konta.Rodo.IRejestrZdarzenRodo`; `I.Rodo.RejestrZdarzenRodoS3` | bucket `rejestr-zdarzen-rodo` (Object Lock) | — | — |
+| 87 | Pewność surowa | VO | `D.Ocenianie.PewnoscSurowa` (`readonly record struct`, `decimal` 0–1) | `ocena.pewnosc_surowa`, `probka_kalibracyjna.pewnosc_surowa` | `number` (widoki Administratora) | `pewnosc_surowa` |
+| 88 | Punkty surowe | ME | `Ocena.PunktySurowe : int?` | `ocena.punkty_surowe` | — | — (nieeksponowane Uczniowi; w danych kalibracji) |
+| 89 | Niespójność | EW | `D.Ocenianie.KodNiespojnosci { N1 … N6 }` z `[JsonStringEnumMemberName("N-1")]` … (ADR-049 p. 4) | brak kolumny: kody w `ocena.uzasadnienie` (szablon 11.7) i metryce `niespojnosci_total{kod}` | `KodNiespojnosci = "N-1" \| … \| "N-6"` | `niespojnosci` (widoki Nauczyciela) |
+| 90 | Rozstrzygnięcie | VO + ME | `D.Weryfikacje.Rozstrzygniecie` (rekord), `Weryfikacja.Rozstrzygnij(...)` | `ocena` (`zrodlo = 'NAUCZYCIEL'`), `weryfikacja.ocena_nauczyciela_id` | `RozstrzygniecieWejscie` | zasób `POST /weryfikacje/{id}/rozstrzygniecie` |
+| 91 | Korekta | SA + WA | `A.Weryfikacje.Komendy.KorygujOcene` (+ `KorygujOceneHandler`); `ZrodloProbki.KorektaNauczyciela` | nowa wersja `ocena`, `zrodlo_probki 'KOREKTA_NAUCZYCIELA'` | `RozstrzygniecieWejscie` | zasób `POST /rozwiazania/{id}/korekty` |
+| 92 | Eskalacja | ME + EW | `Weryfikacja.Eskaluj(PowodEskalacji powod, DateTimeOffset teraz, KalendarzDniRoboczych kalendarz)`; `D.Weryfikacje.PowodEskalacji` | `weryfikacja.eskalowano_at`, `powod_eskalacji` | `PowodEskalacji` | `eskalowano_at`, `odsetek_eskalacji_7d` |
+| 93 | Poprawka Transkrypcji | VO + SD + WA | `D.Rozwiazania.PoprawkaTranskrypcji` (rekord kroku z `NrKrokuAgenta`), `D.Rozwiazania.ZasadyPoprawekTranskrypcji` (limity ADR-036); `ZrodloTranskrypcji.PoprawkaUcznia` | `krok_transkrypcji.nr_kroku_agenta`, `zmieniony_przez_ucznia`; `zrodlo_transkrypcji 'POPRAWKA_UCZNIA'` | `TranskrypcjaWejscie` | zasób `PUT /rozwiazania/{id}/transkrypcja`; `nr_kroku_agenta` |
+| 94 | Zakres poprawek | VO | `D.Rozwiazania.ZakresPoprawek` (rekord: `Zmienione`, `Wstawione`, `KrokiAgenta`, `OdsetekZnakow`) | `transkrypcja.zakres_poprawek jsonb` | `ZakresPoprawek` | `zakres_poprawek` |
+| 95 | Sprawdzenie zgodności poprawek | VO + WA | `D.Rozwiazania.ZgodnoscPoprawek` (rezultat 10.3.3); `A.Orkiestracja.TypPracy.SprawdzPoprawkiTranskrypcji` | `transkrypcja.zgodnosc_poprawek jsonb` | — | `zgodnosc_poprawek` (widoki Nauczyciela); typ pracy `"SPRAWDZ_POPRAWKI_TRANSKRYPCJI"` |
+| 96 | Powody początkowe | ME | `Weryfikacja.PowodyPoczatkowe : IReadOnlySet<PowodWeryfikacji>` | `weryfikacja.powody_poczatkowe powod_weryfikacji[]` | pole `WeryfikacjaSzczegoly` | `powody_poczatkowe` |
+| 97 | Zgłoszenie błędu w Zadaniu | AG | `D.Tresci.ZgloszenieBleduZadania` (`ZgloszenieBleduZadaniaId`), `StatusZgloszeniaZadania` | `zgloszenie_bledu_zadania`, typ `status_zgloszenia_zadania` | `ZgloszenieBleduZadaniaWejscie`, `ZgloszenieBleduZadaniaWyjscie` | zasoby `/zadania/{id}/zgloszenia-bledu`, `/zgloszenia-bledu-zadan` |
+| 98 | Wstrzymanie w doborze | AG | `D.Tresci.WstrzymanieWDoborze` (klucz `ZadanieId`; istnienie = wstrzymanie) | `wstrzymanie_w_doborze` | `boolean` w `ZadaniePelneWyjscie` | `wstrzymane_w_doborze` |
+| 99 | Dzień roboczy | SD + EN | `D.Wspolne.KalendarzDniRoboczych.DodajDniRobocze(DateTimeOffset od, int n)`; encja `D.Wspolne.DzienWolny` | `dzien_wolny`, funkcja `dodaj_dni_robocze` | — | — (wpływa na `termin_at`) |
+| 100 | Zdarzenie RODO | AG | `D.Konta.Rodo.ZdarzenieRodo` (`ZdarzenieRodoId`), `TypZdarzeniaRodo`, `ZrodloZdarzeniaRodo` | `zdarzenie_rodo`, typy `typ_zdarzenia_rodo`, `zrodlo_zdarzenia_rodo` | — | — (brak zasobu API) |
+| 101 | Okres karencji | VO | `D.Konta.OkresKarencji` (rekord: `UsuniecieZaplanowaneAt`; 30 dni) w `Uzytkownik` | `uzytkownik.usuniecie_zaplanowane_at`, `status_konta 'USUWANE'` | pole `SesjaWyjscie`, `UczenWyjscie` | `usuniecie_zaplanowane_at` |
+| 102 | Filtr danych osobowych | SD | `D.Rozwiazania.FiltrDanychOsobowych` (metody `FiltrujOdczytAgenta`, `FiltrujPoprawki`, `FiltrujKopieTreningowa`) | `krok_transkrypcji.zastapienia_danych_osobowych`, `podejrzenie_danych_osobowych`, `tylko_dane_osobowe`; `transkrypcja.dane_osobowe_usuniete`, `konflikt_filtra` | — | znacznik `"[DANE_OSOBOWE]"` w `tekst` kroku |
+| 103 | Przekazanie Klasy | ME | `Klasa.Przekaz(NauczycielId nowy, DateTimeOffset teraz)` | `klasa.nauczyciel_id` (+ `dziennik_audytu`) | `PrzekazanieKlasyWejscie` | zasób `POST /admin/klasy/{id}/przekazanie` |
+| 104 | Bezpiecznik | AG | `D.Kalibracja.StanBezpiecznika` (klucz `(KonfiguracjaModeluId, RodzajZadania, TypBezpiecznika)`), `TypBezpiecznika { Trafnosc, Poprawki }` | `stan_bezpiecznika`, typ `typ_bezpiecznika` | `StanBezpiecznikaWyjscie` | zasób `/admin/bezpieczniki` |
+| 105 | Wniosek o usunięcie konta | WA + ME | `TypZdarzeniaRodo.WniosekOUsuniecie`; `Uzytkownik.ZlozWniosekOUsuniecie(DateTimeOffset teraz)` | `zdarzenie_rodo.typ = 'WNIOSEK_O_USUNIECIE'` | — | zasoby `DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` |
+| 106 | Słownik terminów matematycznych | ZA + SD | `D.Rozwiazania.SlownikTerminowMatematycznych` (zasób osadzony `Rozwiazania/FiltrDanychOsobowych/slownik_matematyczny.txt`, ≈ 4 000 form) | — | — | — |
+| 107 | Obszar kroku | VO | `D.Rozwiazania.ObszarKroku` (dziedziczy `ObszarNaZdjeciu`: `NrZdjecia`, `Ramka`) | `krok_transkrypcji.obszar jsonb` | `ObszarNaZdjeciu` | `obszar` |
+| 108 | Przyjęcie planu | VO | `A.Modele.PrzyjeciePlanu` (rekord: `KonfiguracjaModeluId`, `LiczbyWywolanFal`, `TerminyFal`, `PrzewidywanyKoniec`) | brak kolumn (pamięć procesu; przydział z `limit_szybkosci_modelu`) | — | — |
+| 109 | Dezaktywacja bezpiecznika | ME | `StanBezpiecznika.Dezaktywuj(UzytkownikId administrator, string uzasadnienie, DateTimeOffset teraz)` | `stan_bezpiecznika.dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`, `okno_od` | `DezaktywacjaBezpiecznikaWejscie` | zasób `POST /admin/bezpieczniki/dezaktywacja` |
+| 110 | Blokada obniżania progu | ME | `StanBezpiecznika.BlokadaObnizaniaProgu => Typ == TypBezpiecznika.Trafnosc && Aktywny` | `stan_bezpiecznika.aktywny` przy `typ = 'TRAFNOSC'` | `boolean` w `StanBezpiecznikaWyjscie` | `blokada_obnizania_progu` |
+| 111 | Wstrzymanie | — (pojęcie zbiorcze) | `D.Tresci.WstrzymanieWDoborze`, `D.Ocenianie.WidocznoscOcenyDlaUcznia.WstrzymanaBladOdczytu`, `Uzytkownik.CzyProcesyWstrzymane` (karencja) | `wstrzymanie_w_doborze`; status konta `'USUWANE'` | `WidocznoscOcenyDlaUcznia` | `"widocznosc_dla_ucznia": "WSTRZYMANA_BLAD_ODCZYTU"`, `wstrzymane_w_doborze` |
+
+Uwagi do braków reprezentacji: pojęcia bez typu TS (Agent, Orkiestrator,
+Model decyzyjny, Plan pytań, Kopia treningowa, Zdarzenie RODO, Przyjęcie
+planu, Termin miękki / twardy, Zbiór testowy ZT-1, Rejestr Zdarzeń RODO,
+Słownik terminów matematycznych, Dzień roboczy) są mechanizmami wewnętrznymi
+— frontend widzi wyłącznie ich skutki w polach innych DTO. Pojęcia bez
+kolumny (Wynik końcowy, Pseudonim Ucznia, Kontrola przyjęć, Termin miękki /
+twardy, Przyjęcie planu, Niespójność) są wyliczane albo istnieją wyłącznie
+w stanie dla modelu, co odpowiada wersji 2.4. Nowe nazwy typów TS, których
+nie było w 12.4 wersji 2.4 (`NauczycielWyjscie`, `DzialWyjscie`,
+`UmiejetnoscWyjscie`, `WkladkaTeoretycznaWyjscie`, `KlasaWyjscie`,
+`ProgPewnosciWyjscie`, `KalibratorPewnosciWyjscie`, `ArkuszCkeWyjscie`,
+`ImportArkuszaWyjscie`, `KryteriumOcenianiaWyjscie`, `RozwiazanieWzorcowe`,
+`WynikKoncowyWzorcowy`, `OpiniaPomocnicza`, `SeriaWyjscie`,
+`WalidacjaZadaniaWyjscie`, `KonfiguracjaModeluWyjscie`,
+`UzytkownikAdminWyjscie`, `PracaWTleWyjscie`, `ZlecenieGenerowaniaWyjscie`,
+`PrzekazanieKlasyWejscie`, `DecyzjaSkladowaWyjscie`,
+`WidocznoscOcenyDlaUcznia`, `KodNiespojnosci`, `WersjaZdjecia`,
+`PochodzenieZadania`, `RolaUzytkownika`, `RolaModelu`, `TypKolejkiWeryfikacji`,
+`ZasiegZadania`, `CelElementu`, `PowodEskalacji`) są tu ustalone; ich pola
+definiuje iteracja 3 (12.4), wyłącznie z nazw kolumn i pól tej tabeli.
+
+### 3.6 Szkielety głównych agregatów (C#)
+
+Szkielety ustalają nazwy, kluczowe właściwości i niezmienniki; pełne
+mapowanie EF Core (konfiguracje encji, konwertery, typy złożone `ToJson()`)
+powstaje w iteracji 2. Zasady wspólne:
+
+1. Agregat dziedziczy `Agregat<TId>`; zmienia stan wyłącznie przez metody,
+   które sprawdzają niezmienniki i rzucają `NiezmiennikNaruszonyException`
+   z kodem błędu z 12.2 (mapowanym przez `Lemat.Api` na ProblemDetails, np.
+   `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`). Kody użyte w szkieletach, których
+   nie ma w katalogu 12.3 wersji 2.4 (np. `LIMIT_PRZESLAN`,
+   `ELEMENT_JUZ_PROPONOWANY`), są mapowane przez `Lemat.Api` na `409` z
+   tym kodem w polu `kod` ProblemDetails, a niezmienniki odpowiadające
+   regułom walidacji wejścia 12.5 — na `422`; iteracja 3 wpisuje każdy kod
+   do katalogu 12.2/12.3 z kodem HTTP i komunikatem po polsku.
+2. Czas jest parametrem `DateTimeOffset teraz` (z `TimeProvider` w warstwie
+   aplikacji), nigdy `DateTimeOffset.UtcNow` w domenie (6.5).
+3. `Version` jest tokenem współbieżności EF Core (kolumna `version`, ETag);
+   zwiększa go `LematDbContext` przy zapisie agregatu zmienionego przez
+   człowieka albo przejście maszyny stanów (7.2), z wyjątkami ADR-029 i
+   ADR-037 zachowanymi w konfiguracji encji.
+4. Agregat wskazuje inne agregaty wyłącznie identyfikatorami silnie
+   typowanymi (6.2 reguła 1); kolekcje encji wewnętrznych są
+   `IReadOnlyList<T>` nad prywatną listą.
+5. CHECK-i DDL 7.3 są powtórzone jako niezmienniki (podwójna ochrona: błąd
+   domenowy z czytelnym kodem przed zapisem, CHECK jako ostatnia linia).
+
+```csharp
+// ===== Lemat.Domain.Wspolne =====
+namespace Lemat.Domain.Wspolne;
+
+public abstract class Agregat<TId> where TId : struct
+{
+    private readonly List<IZdarzenieDomenowe> _zdarzenia = [];
+    public TId Id { get; protected init; }
+    public int Version { get; private set; } = 1;
+    public IReadOnlyList<IZdarzenieDomenowe> Zdarzenia => _zdarzenia;
+    protected void Zglos(IZdarzenieDomenowe zdarzenie) => _zdarzenia.Add(zdarzenie);
+    public void WyczyscZdarzenia() => _zdarzenia.Clear();
+}
+
+public interface IZdarzenieDomenowe { DateTimeOffset Wystapilo { get; } }   // katalog zdarzeń 13.6
+
+public sealed class NiezmiennikNaruszonyException(string kodBledu, string opis) : Exception(opis)
+{
+    public string KodBledu { get; } = kodBledu;                              // np. "ROZWIAZANIE_NIEPRAWIDLOWY_STAN"
+}
+
+public readonly record struct UzytkownikId(Guid Wartosc);
+public readonly record struct UczenId(Guid Wartosc);                         // = UzytkownikId Ucznia
+public readonly record struct NauczycielId(Guid Wartosc);                    // = UzytkownikId Nauczyciela
+public readonly record struct ZadanieId(Guid Wartosc);
+public readonly record struct ZadanieWersjaId(Guid Wartosc);
+public readonly record struct RozwiazanieId(Guid Wartosc);
+public readonly record struct TranskrypcjaId(Guid Wartosc);
+public readonly record struct OcenaId(Guid Wartosc);
+public readonly record struct WeryfikacjaId(Guid Wartosc);
+public readonly record struct KlasaId(Guid Wartosc);
+public readonly record struct PrzypisanieId(Guid Wartosc);
+public readonly record struct ElementSciezkiId(Guid Wartosc);
+public readonly record struct KonfiguracjaModeluId(Guid Wartosc);
+public readonly record struct DzialId(int Wartosc);
+public readonly record struct UmiejetnoscId(int Wartosc);
+// … identyfikator na każdy korzeń agregatu z 3.5 (ten sam wzorzec)
+
+public enum PoziomMatury { Podstawowy, Rozszerzony }
+public enum RodzajZadania { Zamkniete, OtwarteObliczeniowe, OtwarteZDowodem }
+
+public readonly record struct PoziomTrudnosci
+{
+    public int Wartosc { get; }
+    public PoziomTrudnosci(int wartosc)
+    {
+        if (wartosc is < 1 or > 5)
+            throw new NiezmiennikNaruszonyException("POZIOM_TRUDNOSCI_POZA_ZAKRESEM", "Poziom trudności 1–5.");
+        Wartosc = wartosc;
+    }
+    public static readonly PoziomTrudnosci Maturalny = new(4);              // 3.3 „Poziom opanowania”
+}
+```
+
+```csharp
+// ===== Lemat.Domain.Konta =====
+namespace Lemat.Domain.Konta;
+
+public enum RolaUzytkownika { Uczen, Nauczyciel, Administrator }
+public enum StatusKonta { Aktywne, OczekujeNaZatwierdzenie, Zablokowane, Usuwane }
+
+public sealed class Uzytkownik : Agregat<UzytkownikId>
+{
+    public string Email { get; private set; } = "";                         // citext, unikalny
+    public RolaUzytkownika Rola { get; private init; }
+    public StatusKonta Status { get; private set; }
+    public string Imie { get; private set; } = "";                          // 1–60 znaków
+    public string Nazwisko { get; private set; } = "";                      // 1–80 znaków
+    public OkresKarencji? OkresKarencji { get; private set; }               // niezmiennik: != null ⇔ Status == Usuwane
+    public bool CzyProcesyWstrzymane => Status == StatusKonta.Usuwane;      // ADR-040
+
+    public void ZlozWniosekOUsuniecie(DateTimeOffset teraz)
+    {
+        if (Status == StatusKonta.Usuwane)
+            throw new NiezmiennikNaruszonyException("KONTO_JUZ_USUWANE", "Wniosek o usunięcie konta już złożony.");
+        Status = StatusKonta.Usuwane;
+        OkresKarencji = new OkresKarencji(teraz.AddDays(30));
+        Zglos(new KontoUsuwane(Id, Rola, teraz));
+    }
+
+    public void Przywroc(DateTimeOffset teraz)
+    {
+        if (OkresKarencji is null || teraz >= OkresKarencji.UsuniecieZaplanowaneAt)
+            throw new NiezmiennikNaruszonyException("PRZYWROCENIE_NIEMOZLIWE", "Okres karencji minął lub nie trwa.");
+        Status = StatusKonta.Aktywne;
+        OkresKarencji = null;
+        Zglos(new KontoPrzywrocone(Id, Rola, teraz));
+    }
+}
+
+public sealed record OkresKarencji(DateTimeOffset UsuniecieZaplanowaneAt);
+public sealed record KontoUsuwane(UzytkownikId UzytkownikId, RolaUzytkownika Rola, DateTimeOffset Wystapilo) : IZdarzenieDomenowe;
+public sealed record KontoPrzywrocone(UzytkownikId UzytkownikId, RolaUzytkownika Rola, DateTimeOffset Wystapilo) : IZdarzenieDomenowe;
+
+public readonly record struct GrupaEksperymentu(int ProcentGrupyEksperymentu)   // fnv1a(uzytkownik_id) mod 100
+{
+    public StrategiaRekomendacji Strategia(int procentJevChoice) =>
+        ProcentGrupyEksperymentu < procentJevChoice ? StrategiaRekomendacji.JevChoice : StrategiaRekomendacji.PolitykaElo;
+}
+
+public sealed class Uczen : Agregat<UczenId>
+{
+    public PoziomMatury? PoziomMatury { get; private set; }                 // NULL do FR-02
+    public DateOnly? TerminEgzaminu { get; private set; }
+    public DzialId? WybranyDzialId { get; private set; }                    // FR-09; null = wszystkie Działy
+    public bool OswiadczenieWieku16 { get; private init; }                  // niezmiennik: zawsze true (A-06)
+    public bool ZgodaNaTrening { get; private set; }
+    public GrupaEksperymentu GrupaEksperymentu { get; private init; }
+
+    public void UstawPoziomITermin(PoziomMatury poziom, DateOnly termin, DateOnly dzis)
+    {
+        if (termin < dzis)
+            throw new NiezmiennikNaruszonyException("TERMIN_EGZAMINU_W_PRZESZLOSCI", "Termin egzaminu nie może być w przeszłości.");
+        PoziomMatury = poziom;
+        TerminEgzaminu = termin;
+    }
+}
+
+public sealed class Nauczyciel : Agregat<NauczycielId>
+{
+    public bool WeryfikatorGlobalny { get; private set; }
+    public bool RecenzentTresci { get; private set; }
+    public int DeklarowaneMinutyWeryfikacji { get; private set; }           // 0–480
+
+    public void NadajWeryfikatoraGlobalnego(int deklarowaneMinuty, int prognozaKolejkiKlasyMinuty)
+    {
+        if (deklarowaneMinuty < 90)                                         // A-13, CHECK 7.3
+            throw new NiezmiennikNaruszonyException("DEKLAROWANY_CZAS_ZA_KROTKI", "Weryfikator globalny deklaruje ≥ 90 min.");
+        if (prognozaKolejkiKlasyMinuty + deklarowaneMinuty > 180)           // A-14
+            throw new NiezmiennikNaruszonyException("LIMIT_OBCIAZENIA_WERYFIKATORA", "Łączne obciążenie > 180 min.");
+        WeryfikatorGlobalny = true;
+        DeklarowaneMinutyWeryfikacji = deklarowaneMinuty;
+    }
+}
+```
+
+```csharp
+// ===== Lemat.Domain.Klasy =====
+namespace Lemat.Domain.Klasy;
+
+public sealed class Klasa : Agregat<KlasaId>
+{
+    private readonly List<CzlonkostwoKlasy> _czlonkowie = [];
+    public NauczycielId? NauczycielId { get; private set; }                 // null tylko po usunięciu konta bez Przekazania (ADR-044)
+    public string Nazwa { get; private set; } = "";                         // 1–80 znaków
+    public PoziomMatury PoziomMatury { get; private init; }
+    public KodZaproszenia KodZaproszenia { get; private set; }              // 8 znaków [A-HJ-NP-Z2-9], ważny 14 dni
+    public DateTimeOffset? ZarchiwizowanoAt { get; private set; }
+    public bool Zarchiwizowana => ZarchiwizowanoAt is not null;
+    public IReadOnlyList<CzlonkostwoKlasy> Czlonkowie => _czlonkowie;
+
+    public void Dolacz(UczenId uczen, string kod, DateTimeOffset teraz)
+    {
+        if (Zarchiwizowana) throw new NiezmiennikNaruszonyException("KLASA_ZARCHIWIZOWANA", "Klasa zarchiwizowana.");
+        if (!KodZaproszenia.CzyWazny(kod, teraz)) throw new NiezmiennikNaruszonyException("KOD_ZAPROSZENIA_NIEWAZNY", "Kod nieważny.");
+        if (_czlonkowie.Any(c => c.UczenId == uczen)) return;               // idempotentne
+        _czlonkowie.Add(new CzlonkostwoKlasy(uczen, teraz));
+    }
+
+    public void Przekaz(NauczycielId nowy, DateTimeOffset teraz)           // Przekazanie Klasy (ADR-044)
+    {
+        if (Zarchiwizowana) throw new NiezmiennikNaruszonyException("KLASA_ZARCHIWIZOWANA", "Klasa zarchiwizowana.");
+        var poprzedni = NauczycielId;
+        NauczycielId = nowy;
+        Zglos(new KlasaPrzekazana(Id, poprzedni, nowy, teraz));
+    }
+
+    public void ArchiwizujPoUsunieciuNauczyciela(DateTimeOffset teraz)     // niezmiennik: NauczycielId != null ∨ Zarchiwizowana
+    {
+        NauczycielId = null;
+        ZarchiwizowanoAt ??= teraz;
+    }
+}
+
+public sealed record CzlonkostwoKlasy(UczenId UczenId, DateTimeOffset DolaczonoAt);
+public readonly record struct KodZaproszenia(string Wartosc, DateTimeOffset WaznyDo)
+{
+    public bool CzyWazny(string kod, DateTimeOffset teraz) => kod == Wartosc && teraz < WaznyDo;
+}
+public sealed record KlasaPrzekazana(KlasaId KlasaId, NauczycielId? Poprzedni, NauczycielId Nowy, DateTimeOffset Wystapilo) : IZdarzenieDomenowe;
+```
+
+```csharp
+// ===== Lemat.Domain.Tresci =====
+namespace Lemat.Domain.Tresci;
+
+public enum PochodzenieZadania { BazoweArkuszCke, BazoweNauczyciel, Wygenerowane }
+public enum ZasiegZadania { Globalny, Prywatny }
+public enum StatusZadania { Walidacja, OdrzuconeWWalidacji, DoPrzegladu, Opublikowane, Odrzucone, Wycofane }
+public enum FormaZamknieta { WyborJednokrotny, PrawdaFalsz }
+
+public sealed class Zadanie : Agregat<ZadanieId>
+{
+    private readonly List<ZadanieWersja> _wersje = [];
+    public PochodzenieZadania Pochodzenie { get; private init; }
+    public ZasiegZadania Zasieg { get; private set; }
+    public RodzajZadania Rodzaj { get; private init; }
+    public FormaZamknieta? FormaZamknieta { get; private init; }            // != null ⇔ Rodzaj == Zamkniete
+    public DzialId DzialId { get; private init; }
+    public PoziomMatury PoziomMatury { get; private init; }
+    public ArkuszCkeId? ArkuszCkeId { get; private init; }                  // != null ⇔ BazoweArkuszCke
+    public ZlecenieGenerowaniaId? ZlecenieGenerowaniaId { get; private init; } // != null ⇔ Wygenerowane
+    public UzytkownikId? AutorId { get; private set; }
+    public StatusZadania Status { get; private set; }
+    public PoziomTrudnosci PoziomTrudnosciNominalny { get; private set; }  // zmienia tylko człowiek (ADR-029)
+    public bool Diagnostyczne { get; private set; }                         // ⇒ Zamkniete ∧ Globalny
+    public IReadOnlyList<ZadanieWersja> Wersje => _wersje;
+    public ZadanieWersja AktualnaWersja => _wersje.Single(w => w.ZastapionaAt is null);
+    public bool CzyBazowe => Pochodzenie is PochodzenieZadania.BazoweArkuszCke or PochodzenieZadania.BazoweNauczyciel;
+    public bool CzyWygenerowane => Pochodzenie == PochodzenieZadania.Wygenerowane;
+
+    public ZadanieWersja Popraw(TrescWersji tresc, UzytkownikId autor, DateTimeOffset teraz)   // ADR-012: nowa wersja, stara niezmienna
+    {
+        if (Status is StatusZadania.Wycofane or StatusZadania.Odrzucone)
+            throw new NiezmiennikNaruszonyException("ZADANIE_NIEPRAWIDLOWY_STAN", "Zadanie wycofane lub odrzucone.");
+        AktualnaWersja.Zastap(teraz);
+        var nowa = ZadanieWersja.Utworz(Id, _wersje.Count + 1, Rodzaj, tresc, autor, teraz);
+        _wersje.Add(nowa);
+        return nowa;
+    }
+
+    public void Promuj(ZasiegZadania zasiegPo)                              // Przegląd: PRYWATNY → GLOBALNY (ADR-028, ADR-038)
+    {
+        if (Pochodzenie == PochodzenieZadania.BazoweArkuszCke && zasiegPo != ZasiegZadania.Globalny)
+            throw new NiezmiennikNaruszonyException("ZASIEG_NIEDOZWOLONY", "Zadanie z Arkusza CKE jest zawsze GLOBALNY.");
+        Zasieg = zasiegPo;
+    }
+}
+
+public sealed class ZadanieWersja                                           // niezmienna po utworzeniu (ADR-012)
+{
+    private readonly List<KryteriumOceniania> _kryteria = [];
+    public ZadanieWersjaId Id { get; private init; }
+    public int NrWersji { get; private init; }                              // ≥ 1, unikalny w Zadaniu
+    public string TrescMd { get; private init; } = "";                      // ≤ 8000 znaków
+    public OpcjeZamkniete? OpcjeZamkniete { get; private init; }            // != null dla Zamkniete (7.5.1)
+    public RozwiazanieWzorcowe RozwiazanieWzorcowe { get; private init; } = null!;   // 7.5.2
+    public WynikKoncowyWzorcowy? WynikKoncowyWzorcowy { get; private init; }         // null wyłącznie dla dowodu i Zamkniete
+    public int PunktyMax { get; private init; }                             // 1–6
+    public DateTimeOffset? ZastapionaAt { get; private set; }
+    public IReadOnlyList<KryteriumOceniania> KryteriaOceniania => _kryteria;
+
+    internal static ZadanieWersja Utworz(ZadanieId zadanie, int nr, RodzajZadania rodzaj, TrescWersji tresc,
+                                         UzytkownikId autor, DateTimeOffset teraz)
+    {
+        // niezmienniki trg_suma_kryteriow: dla każdego wariantu Σ PunktyMax kryteriów = PunktyMax wersji,
+        // ≤ 1 kryterium CzyWynikKoncowy na wariant, łącznie ≤ 24 kryteria, brak kryteriów dla Zamkniete
+        ZasadyKryteriow.Sprawdz(rodzaj, tresc.PunktyMax, tresc.Kryteria);
+        var wersja = new ZadanieWersja { Id = new(Guid.CreateVersion7()), NrWersji = nr, TrescMd = tresc.TrescMd,
+            OpcjeZamkniete = tresc.OpcjeZamkniete, RozwiazanieWzorcowe = tresc.RozwiazanieWzorcowe,
+            WynikKoncowyWzorcowy = tresc.WynikKoncowyWzorcowy, PunktyMax = tresc.PunktyMax };
+        wersja._kryteria.AddRange(tresc.Kryteria);
+        return wersja;
+    }
+    internal void Zastap(DateTimeOffset teraz) => ZastapionaAt ??= teraz;
+}
+
+public sealed record KryteriumOceniania(WariantRozwiazania Wariant, int NrKryterium, string Opis, int PunktyMax,
+                                        bool CzyWynikKoncowy, int? WymagaNrKryterium);   // NrKryterium 1–12, PunktyMax 1–3
+public readonly record struct WariantRozwiazania(int Wartosc);              // 1–4
+```
+
+```csharp
+// ===== Lemat.Domain.Rozwiazania =====
+namespace Lemat.Domain.Rozwiazania;
+
+public enum StatusRozwiazania { Przeslane, Rozpoznawanie, BladRozpoznawania, TranskrypcjaGotowa, Zatwierdzone,
+                                Ocenianie, OczekujeNaWeryfikacje, Ocenione, Porzucone, Anulowane }
+public enum KodBleduRozpoznawania { Nieczytelne, PrzekroczonyCzas, BladDostawcy, ZbytWieleKrokow }
+
+public sealed class Rozwiazanie : Agregat<RozwiazanieId>
+{
+    private readonly List<ZdjecieRozwiazania> _zdjecia = [];
+    public UczenId UczenId { get; private init; }
+    public ZadanieId ZadanieId { get; private init; }
+    public ZadanieWersjaId ZadanieWersjaId { get; private init; }
+    public ElementSciezkiId? ElementSciezkiId { get; private init; }        // kontekst próby (ADR-032):
+    public PrzypisanieId? PrzypisanieId { get; private init; }              // ≥ 1 z dwóch; para tylko dla R-PRZYPISANIE
+    public StatusRozwiazania Status { get; private set; }
+    public int LiczbaPrzeslan { get; private set; } = 1;                    // 1–3
+    public int LiczbaPonowienRozpoznania { get; private set; }              // 0–5
+    public KodBleduRozpoznawania? KodBleduRozpoznawania { get; private set; }
+    public TranskrypcjaId? ZatwierdzonaTranskrypcjaId { get; private set; }
+    public DateTimeOffset PrzeslanoAt { get; private set; }
+    public DateTimeOffset? TranskrypcjaGotowaAt { get; private set; }
+    public DateTimeOffset? ZatwierdzonoAt { get; private set; }
+    public DateTimeOffset? OcenaWystawionaAt { get; private set; }
+    public TimeSpan? CzasSystemowy { get; private set; }                    // NFR-01, A-11
+    public IReadOnlyList<ZdjecieRozwiazania> Zdjecia => _zdjecia;
+
+    public static Rozwiazanie Przeslij(UczenId uczen, ZadanieId zadanie, ZadanieWersjaId wersja, RodzajZadania rodzaj,
+                                       ElementSciezkiId? element, PrzypisanieId? przypisanie,
+                                       IReadOnlyList<ZdjecieRozwiazania> zdjecia, DateTimeOffset teraz)
+    {
+        if (rodzaj == RodzajZadania.Zamkniete)                              // PZS-1 B-6: Zadanie zamknięte → Odpowiedź
+            throw new NiezmiennikNaruszonyException("ZADANIE_ZAMKNIETE_BEZ_ROZWIAZANIA", "Zadanie zamknięte rozwiązuje się Odpowiedzią.");
+        if (element is null && przypisanie is null)
+            throw new NiezmiennikNaruszonyException("KONTEKST_PROBY_WYMAGANY", "Wymagany element Ścieżki nauki albo Przypisanie.");
+        Przeslanie.Sprawdz(nr: 1, zdjecia);                                 // 1–5 zdjęć, jedno Przesłanie
+        var r = new Rozwiazanie { Id = new(Guid.CreateVersion7()), UczenId = uczen, ZadanieId = zadanie, ZadanieWersjaId = wersja,
+                                  ElementSciezkiId = element, PrzypisanieId = przypisanie,
+                                  Status = StatusRozwiazania.Przeslane, PrzeslanoAt = teraz };
+        r._zdjecia.AddRange(zdjecia);
+        r.Zglos(new RozwiazaniePrzeslane(r.Id, 1, teraz));                  // handler zleca ROZPOZNAJ_PISMO w tej transakcji
+        return r;
+    }
+
+    public void PrzeslijPonownie(IReadOnlyList<ZdjecieRozwiazania> zdjecia, DateTimeOffset teraz)
+    {
+        WymagajStanu(StatusRozwiazania.BladRozpoznawania);
+        if (LiczbaPrzeslan >= 3) throw new NiezmiennikNaruszonyException("LIMIT_PRZESLAN", "Rozwiązanie ma ≤ 3 przesłania.");
+        LiczbaPrzeslan++;
+        Przeslanie.Sprawdz(LiczbaPrzeslan, zdjecia);
+        _zdjecia.AddRange(zdjecia);
+        Status = StatusRozwiazania.Przeslane; PrzeslanoAt = teraz; KodBleduRozpoznawania = null;
+        Zglos(new RozwiazaniePrzeslane(Id, LiczbaPrzeslan, teraz));
+    }
+
+    public void PonowRozpoznanie(DateTimeOffset teraz)                      // bez zużycia przesłania (C1-28)
+    {
+        WymagajStanu(StatusRozwiazania.BladRozpoznawania);
+        if (KodBleduRozpoznawania is not (Rozwiazania.KodBleduRozpoznawania.BladDostawcy or Rozwiazania.KodBleduRozpoznawania.PrzekroczonyCzas))
+            throw new NiezmiennikNaruszonyException("PONOWIENIE_NIEDOZWOLONE", "Ponowienie tylko po błędzie dostawcy.");
+        if (LiczbaPonowienRozpoznania >= 5) throw new NiezmiennikNaruszonyException("LIMIT_PONOWIEN", "≤ 5 ponowień rozpoznania.");
+        LiczbaPonowienRozpoznania++;
+        Status = StatusRozwiazania.Przeslane; PrzeslanoAt = teraz;
+    }
+
+    public void Zatwierdz(TranskrypcjaId transkrypcja, DateTimeOffset teraz)   // FR-18, ADR-017
+    {
+        WymagajStanu(StatusRozwiazania.TranskrypcjaGotowa);
+        ZatwierdzonaTranskrypcjaId = transkrypcja; ZatwierdzonoAt = teraz;
+        Status = StatusRozwiazania.Zatwierdzone;
+        Zglos(new RozwiazanieZatwierdzone(Id, transkrypcja, teraz));      // handler zleca OCEN_ROZWIAZANIE
+    }
+
+    public void ZarejestrujPierwszaOcene(bool trasaAutomatyczna, DateTimeOffset teraz)
+    {
+        WymagajStanu(StatusRozwiazania.Ocenianie);
+        OcenaWystawionaAt ??= teraz;
+        CzasSystemowy ??= (TranskrypcjaGotowaAt!.Value - PrzeslanoAt) + (teraz - ZatwierdzonoAt!.Value);   // A-11
+        Status = trasaAutomatyczna ? StatusRozwiazania.Ocenione : StatusRozwiazania.OczekujeNaWeryfikacje;
+    }
+
+    private void WymagajStanu(params StatusRozwiazania[] dozwolone)
+    {
+        if (!dozwolone.Contains(Status))
+            throw new NiezmiennikNaruszonyException("ROZWIAZANIE_NIEPRAWIDLOWY_STAN", $"Operacja niedozwolona w stanie {Status}.");
+    }
+}
+
+public sealed record ZdjecieRozwiazania(Guid Id, int PrzeslanieNr, int Kolejnosc, string KluczObiektu, string? KluczObiektuMaskowany,
+                                        long RozmiarBajty, byte[] Sha256, int Szerokosc, int Wysokosc, DateTimeOffset UsunPo);
+                                        // RozmiarBajty ≤ 10 485 760; UsunPo ≤ CreatedAt + 90 dni (ADR-019)
+
+public static class Przeslanie
+{
+    public static void Sprawdz(int nr, IReadOnlyList<ZdjecieRozwiazania> zdjecia)
+    {
+        if (nr is < 1 or > 3 || zdjecia.Count is < 1 or > 5 || zdjecia.Any(z => z.PrzeslanieNr != nr))
+            throw new NiezmiennikNaruszonyException("PRZESLANIE_NIEPRAWIDLOWE", "Przesłanie: 1–5 zdjęć, numer 1–3.");
+    }
+}
+
+public enum ZrodloTranskrypcji { AgentRozpoznajacy, PoprawkaUcznia }
+
+public sealed class Transkrypcja : Agregat<TranskrypcjaId>                 // niezmienna: Poprawka tworzy nową wersję
+{
+    private readonly List<KrokTranskrypcji> _kroki = [];
+    public RozwiazanieId RozwiazanieId { get; private init; }
+    public int Wersja { get; private init; }                                // ≥ 1, unikalna w Rozwiązaniu
+    public ZrodloTranskrypcji Zrodlo { get; private init; }
+    public int PrzeslanieNr { get; private init; }
+    public KonfiguracjaModeluId? KonfiguracjaModeluId { get; private init; } // != null ⇔ AgentRozpoznajacy
+    public ZakresPoprawek? ZakresPoprawek { get; private init; }            // != null ⇔ PoprawkaUcznia
+    public ZgodnoscPoprawek? ZgodnoscPoprawek { get; private set; }         // tylko PoprawkaUcznia; zapis jednokrotny
+    public int DaneOsoboweUsuniete { get; private init; }
+    public bool KonfliktFiltra { get; private init; }                       // → T-3 (11.1 p. 7d)
+    public IReadOnlyList<KrokTranskrypcji> Kroki => _kroki;                 // 1–40, numeracja ciągła
+
+    public static Transkrypcja ZPoprawek(Transkrypcja agenta, int wersja, IReadOnlyList<PoprawkaTranskrypcji> poprawki,
+                                         FiltrDanychOsobowych filtr, DaneKonta daneKonta)
+    {
+        var zakres = ZasadyPoprawekTranskrypcji.SprawdzLimityTwarde(agenta.Kroki, poprawki);   // 422 POPRAWKI_ZBYT_ROZLEGLE
+        var kroki = filtr.FiltrujPoprawki(agenta.Kroki, poprawki, daneKonta);   // tabela „Działanie filtra na Poprawkach” (10.3.1)
+        var t = new Transkrypcja { Id = new(Guid.CreateVersion7()), RozwiazanieId = agenta.RozwiazanieId, Wersja = wersja,
+                                   Zrodlo = ZrodloTranskrypcji.PoprawkaUcznia, PrzeslanieNr = agenta.PrzeslanieNr,
+                                   ZakresPoprawek = zakres, KonfliktFiltra = kroki.KonfliktFiltra,
+                                   DaneOsoboweUsuniete = kroki.LiczbaZastapien };
+        t._kroki.AddRange(kroki.Kroki);
+        return t;
+    }
+
+    public void ZapiszZgodnoscPoprawek(ZgodnoscPoprawek rezultat)
+    {
+        if (Zrodlo != ZrodloTranskrypcji.PoprawkaUcznia || ZgodnoscPoprawek is not null)
+            throw new NiezmiennikNaruszonyException("ZGODNOSC_POPRAWEK_NIEDOZWOLONA", "Rezultat tylko raz i tylko dla Poprawek.");
+        ZgodnoscPoprawek = rezultat;
+    }
+}
+
+public sealed record KrokTranskrypcji(int Nr, string Tekst, string Latex, decimal? PewnoscOdczytu, ObszarKroku? Obszar,
+                                      bool ZmienionyPrzezUcznia, int? NrKrokuAgenta, decimal? OdlegloscEdycyjna,
+                                      bool PodejrzenieDanychOsobowych, bool TylkoDaneOsobowe,
+                                      IReadOnlyList<ZastapienieDanychOsobowych> ZastapieniaDanychOsobowych);
+    // niezmienniki (CHECK 7.3): ZmienionyPrzezUcznia ⇔ PewnoscOdczytu == null; NrKrokuAgenta == null ⇒ ZmienionyPrzezUcznia;
+    // TylkoDaneOsobowe ⇒ PodejrzenieDanychOsobowych; Tekst i Latex ≤ 2000 znaków
+```
+
+```csharp
+// ===== Lemat.Domain.Ocenianie =====
+namespace Lemat.Domain.Ocenianie;
+
+public enum StatusOceny { Wstepna, Ostateczna, Zastapiona }
+public enum ZrodloOceny { Automatyczna, Nauczyciel }
+public enum TypBledu { Rachunkowy, Merytoryczny, NiepelneRozwiazanie }
+public enum ZrodloWskazowki { AgentWyjasniajacy, Szablon, Nauczyciel }
+public enum WidocznoscOcenyDlaUcznia { Pelna, WstrzymanaBladOdczytu }
+
+public sealed class Ocena : Agregat<OcenaId>                               // niezmienna poza dwoma przejściami (Z-5)
+{
+    private readonly List<OcenaKryterium> _kryteria = [];
+    public RozwiazanieId RozwiazanieId { get; private init; }
+    public int Wersja { get; private init; }
+    public StatusOceny Status { get; private set; }
+    public ZrodloOceny Zrodlo { get; private init; }
+    public TranskrypcjaId TranskrypcjaId { get; private init; }
+    public WariantRozwiazania Wariant { get; private init; }
+    public int? PunktySurowe { get; private init; }                         // != null ⇔ Automatyczna
+    public int Punkty { get; private init; }                                // 0 … PunktyMax
+    public int PunktyMax { get; private init; }
+    public int? PierwszyBlednyKrok { get; private init; }
+    public bool BrakujacyKrok { get; private init; }
+    public TypBledu? TypBledu { get; private init; }                        // == null ⇔ PierwszyBlednyKrok == null ∧ ¬BrakujacyKrok
+    public bool MozliwyBladOdczytu { get; private init; }                   // tylko Automatyczna
+    public int? KrokPodejrzanyOdczyt { get; private init; }                 // ⇒ MozliwyBladOdczytu
+    public PewnoscOceny? PewnoscOceny { get; private init; }                // != null ⇔ Automatyczna
+    public PewnoscSurowa? PewnoscSurowa { get; private init; }
+    public ProgPewnosciId? ProgPewnosciId { get; private init; }
+    public KalibratorPewnosciId? KalibratorPewnosciId { get; private init; }
+    public KonfiguracjaModeluId? KonfiguracjaModeluId { get; private init; }
+    public NauczycielId? NauczycielId { get; private init; }                // tylko Nauczyciel
+    public string Uzasadnienie { get; private init; } = "";                 // szablon 11.7
+    public Wskazowka? Wskazowka { get; private set; }                       // zapis jednokrotny (ADR-025)
+    public IReadOnlyList<OcenaKryterium> Kryteria => _kryteria;
+    public WidocznoscOcenyDlaUcznia Widocznosc =>
+        Status == StatusOceny.Wstepna && MozliwyBladOdczytu ? WidocznoscOcenyDlaUcznia.WstrzymanaBladOdczytu : WidocznoscOcenyDlaUcznia.Pelna;
+
+    public void UzupelnijWskazowke(Wskazowka wskazowka)
+    {
+        if (Wskazowka is not null) throw new NiezmiennikNaruszonyException("OCENA_NIEZMIENNA", "Wskazówka zapisywana jednokrotnie.");
+        if (TypBledu is null) throw new NiezmiennikNaruszonyException("WSKAZOWKA_BEZ_BLEDU", "Wskazówka wymaga typu błędu.");
+        if (Status == StatusOceny.Zastapiona) throw new NiezmiennikNaruszonyException("OCENA_ZASTAPIONA", "Ocena zastąpiona.");
+        Wskazowka = wskazowka;
+    }
+
+    public void Zastap()                                                    // WSTEPNA|OSTATECZNA → ZASTAPIONA; potem INSERT nowej
+    {
+        if (Status == StatusOceny.Zastapiona) throw new NiezmiennikNaruszonyException("OCENA_NIEZMIENNA", "Ocena już zastąpiona.");
+        Status = StatusOceny.Zastapiona;
+    }
+    // Fabryki: Ocena.Automatyczna(RezultatOceny r, Trasa t) — Status = t.Automatyczna ? Ostateczna : Wstepna;
+    //          Ocena.Nauczyciela(Rozstrzygniecie r, NauczycielId n) — Status = Ostateczna, Zrodlo = Nauczyciel.
+    // Obie sprawdzają CHECK 7.3 (punkty w zakresie, spójność TypBledu, pola Automatycznej).
+}
+
+public sealed record OcenaKryterium(Guid KryteriumOcenianiaId, int Punkty, decimal? Prawdopodobienstwo);
+public sealed record Wskazowka(string Tresc, ZrodloWskazowki Zrodlo)       // Tresc ≤ 400 znaków, bez gotowego rozwiązania (FR-27)
+{
+    public string Tresc { get; } = Tresc.Length <= 400 ? Tresc
+        : throw new NiezmiennikNaruszonyException("WSKAZOWKA_ZA_DLUGA", "Wskazówka ≤ 400 znaków.");
+}
+public readonly record struct PewnoscOceny(decimal Wartosc);               // 0–1, 4 miejsca
+public readonly record struct PewnoscSurowa(decimal Wartosc);              // min(p) z ograniczeniem 0,50 przy niespójności (11.2.1)
+public sealed record TerminyOceny(DateTimeOffset TerminMiekki, DateTimeOffset TerminTwardy)
+{
+    public static TerminyOceny Wyznacz(DateTimeOffset zatwierdzonoAt, TimeSpan tR) =>          // 14.2
+        new(zatwierdzonoAt + TimeSpan.FromSeconds(Math.Max(10, 28 - tR.TotalSeconds)), zatwierdzonoAt + TimeSpan.FromSeconds(120));
+}
+```
+
+```csharp
+// ===== Lemat.Domain.Weryfikacje =====
+namespace Lemat.Domain.Weryfikacje;
+
+public enum StatusWeryfikacji { Oczekuje, WTrakcie, Zakonczona, Anulowana }
+public enum TypKolejkiWeryfikacji { Klasa, Globalna }
+public enum PowodWeryfikacji { NiskaPewnosc, PoprawnyWynikBledneKroki, ZadanieZDowodem, PodejrzenieBleduOdczytu,
+                               ZgloszenieBleduOdczytu, PoprawkiNiezgodneZeZdjeciem, KontrolaLosowa, BladPrzetwarzania }
+public enum PowodEskalacji { PrzekroczenieSla, NauczycielDocelowyZablokowany, KarencjaKontaNauczyciela }
+public enum PowodAnulowania { UsuniecieKonta, PonownaOcenaAutomatyczna }
+
+public sealed class Weryfikacja : Agregat<WeryfikacjaId>                   // Version = wersja TREŚCI (ADR-037)
+{
+    private readonly HashSet<PowodWeryfikacji> _powody = [];
+    public RozwiazanieId RozwiazanieId { get; private init; }
+    public OcenaId? OcenaWeryfikowanaId { get; private set; }               // null wyłącznie przy BladPrzetwarzania przed PONOW_OCENE
+    public IReadOnlySet<PowodWeryfikacji> Powody => _powody;
+    public IReadOnlySet<PowodWeryfikacji> PowodyPoczatkowe { get; private set; } = new HashSet<PowodWeryfikacji>();
+    public int Priorytet { get; private set; }                              // 1–3
+    public TypKolejkiWeryfikacji TypKolejki { get; private set; }
+    public NauczycielId? NauczycielDocelowyId { get; private set; }
+    public StatusWeryfikacji Status { get; private set; }
+    public DateTimeOffset TerminAt { get; private set; }                    // dodaj_dni_robocze(created_at, 3)
+    public DateTimeOffset? EskalowanoAt { get; private set; }
+    public PowodEskalacji? PowodEskalacji { get; private set; }             // != null ⇔ EskalowanoAt != null
+    public BlokadaWeryfikacji? Blokada { get; private set; }                // != null ⇔ Status == WTrakcie
+    public OcenaId? OcenaNauczycielaId { get; private set; }                // != null ⇔ Zakonczona
+    public ZgloszenieBleduOdczytu? Zgloszenie { get; private set; }         // != null ⇔ ZgloszenieBleduOdczytu ∈ Powody
+    public OpiniaPomocnicza? OpiniaPomocnicza { get; private set; }
+
+    public bool CzyDostepna(DateTimeOffset teraz) =>                        // reguła odczytu 11.4.2
+        Status == StatusWeryfikacji.Oczekuje || (Status == StatusWeryfikacji.WTrakcie && Blokada!.ZablokowanaDo < teraz);
+
+    public void Podejmij(NauczycielId nauczyciel, DateTimeOffset teraz)     // nie zmienia Version
+    {
+        if (Status == StatusWeryfikacji.WTrakcie && Blokada!.PodjetaPrzez == nauczyciel && Blokada.ZablokowanaDo >= teraz)
+        { Blokada = Blokada.Odnow(teraz); return; }                         // idempotentne ponowne podjęcie, ≤ PodjetaAt + 2 h
+        if (!CzyDostepna(teraz)) throw new NiezmiennikNaruszonyException("WERYFIKACJA_ZAJETA", "Weryfikację podjął inny Nauczyciel.");
+        Blokada = BlokadaWeryfikacji.Nowa(nauczyciel, teraz);
+        Status = StatusWeryfikacji.WTrakcie;
+    }
+
+    public void Przedluz(NauczycielId nauczyciel, DateTimeOffset teraz)
+    {
+        if (Status != StatusWeryfikacji.WTrakcie || Blokada!.PodjetaPrzez != nauczyciel || Blokada.ZablokowanaDo < teraz)
+            throw new NiezmiennikNaruszonyException("WERYFIKACJA_NIE_PODJETA", "Blokada wygasła lub należy do innego Nauczyciela.");
+        if (teraz >= Blokada.PodjetaAt + BlokadaWeryfikacji.MaksymalnieLacznie)
+            throw new NiezmiennikNaruszonyException("BLOKADA_MAKS_CZAS", "Blokada weryfikacji trwa łącznie ≤ 2 h.");
+        Blokada = Blokada.Odnow(teraz);
+    }
+
+    public void DopiszZgloszenie(ZgloszenieBleduOdczytu zgloszenie)         // zmienia Version (treść)
+    {
+        _powody.Add(PowodWeryfikacji.ZgloszenieBleduOdczytu);
+        Zgloszenie = zgloszenie;
+        Priorytet = Math.Min(Priorytet, 2);
+    }
+
+    public void Rozstrzygnij(NauczycielId nauczyciel, OcenaId ocenaNauczyciela, DateTimeOffset teraz)
+    {
+        if (Status != StatusWeryfikacji.WTrakcie || Blokada!.PodjetaPrzez != nauczyciel || Blokada.ZablokowanaDo < teraz)
+            throw new NiezmiennikNaruszonyException("WERYFIKACJA_NIE_PODJETA", "Rozstrzyga wyłącznie właściciel ważnej blokady.");
+        OcenaNauczycielaId = ocenaNauczyciela; Status = StatusWeryfikacji.Zakonczona; Blokada = null;
+        Zglos(new WeryfikacjaZakonczona(Id, RozwiazanieId, ocenaNauczyciela, teraz));
+    }
+
+    public void Eskaluj(PowodEskalacji powod, DateTimeOffset teraz, KalendarzDniRoboczych kalendarz)   // nie zmienia Version
+    {
+        if (TypKolejki == TypKolejkiWeryfikacji.Globalna) return;           // GLOBALNA → alert, nie ta sama kolejka (ADR-021)
+        TypKolejki = TypKolejkiWeryfikacji.Globalna; NauczycielDocelowyId = null;
+        EskalowanoAt = teraz; PowodEskalacji = powod; TerminAt = kalendarz.DodajDniRobocze(teraz, 3);
+    }
+}
+
+public sealed record BlokadaWeryfikacji(NauczycielId PodjetaPrzez, DateTimeOffset PodjetaAt, DateTimeOffset ZablokowanaDo)
+{
+    public static readonly TimeSpan Okres = TimeSpan.FromMinutes(15);
+    public static readonly TimeSpan MaksymalnieLacznie = TimeSpan.FromHours(2);
+    public static BlokadaWeryfikacji Nowa(NauczycielId n, DateTimeOffset teraz) => new(n, teraz, teraz + Okres);
+    public BlokadaWeryfikacji Odnow(DateTimeOffset teraz) =>
+        this with { ZablokowanaDo = Min(teraz + Okres, PodjetaAt + MaksymalnieLacznie) };
+    private static DateTimeOffset Min(DateTimeOffset a, DateTimeOffset b) => a < b ? a : b;
+}
+public sealed record WeryfikacjaZakonczona(WeryfikacjaId WeryfikacjaId, RozwiazanieId RozwiazanieId, OcenaId OcenaNauczycielaId,
+                                           DateTimeOffset Wystapilo) : IZdarzenieDomenowe;
+```
+
+```csharp
+// ===== Lemat.Domain.Profil i Lemat.Domain.Rekomendacje =====
+namespace Lemat.Domain.Profil;
+
+public enum InicjalizacjaOpanowania { Domyslna, TestDiagnostyczny, PropagacjaZDzialu }
+public enum ZrodloWyniku { Odpowiedz, Ocena }
+public enum PowodUniewaznieniaWyniku { OcenaZastapiona, ZgloszenieBleduOdczytu }
+
+public sealed class ProfilUcznia : Agregat<UczenId>
+{
+    private readonly Dictionary<UmiejetnoscId, OpanowanieUmiejetnosci> _opanowanie = [];
+    public IReadOnlyDictionary<UmiejetnoscId, OpanowanieUmiejetnosci> Opanowanie => _opanowanie;
+
+    public void Zastosuj(WynikZadania wynik, IReadOnlyList<UmiejetnoscId> umiejetnosci, ModelElo elo, DateTimeOffset teraz)
+    {
+        if (wynik.ZastosowanyWProfiluAt is not null) return;                // idempotencja AKTUALIZUJ_PROFIL
+        foreach (var u in umiejetnosci)
+            _opanowanie[u] = (_opanowanie.GetValueOrDefault(u) ?? OpanowanieUmiejetnosci.Domyslne(u)).Aktualizuj(wynik, elo, teraz);
+        wynik.OznaczZastosowany(teraz);
+    }
+    // Odtworz(IEnumerable<WynikZadania> wazne, ModelElo elo): zawsze od stanu DOMYSLNEGO (theta = 0), ADR-010
+}
+
+public sealed record OpanowanieUmiejetnosci(UmiejetnoscId UmiejetnoscId, decimal Theta, PoziomOpanowania PoziomOpanowania,
+                                            int LiczbaWynikow, DateTimeOffset? OstatniWynikAt, int LicznikPowtorek,
+                                            DateTimeOffset? NastepnaPowtorkaAt, InicjalizacjaOpanowania Inicjalizacja)
+{
+    public static OpanowanieUmiejetnosci Domyslne(UmiejetnoscId u) =>
+        new(u, 0m, new PoziomOpanowania(0.5m), 0, null, 0, null, InicjalizacjaOpanowania.Domyslna);
+    public OpanowanieUmiejetnosci Aktualizuj(WynikZadania w, ModelElo elo, DateTimeOffset teraz) => elo.Aktualizuj(this, w, teraz);   // 10.1.3
+}
+public readonly record struct PoziomOpanowania(decimal Wartosc);           // P(sukces na Poziomie trudności 4), 0–1
+
+public sealed class WynikZadania : Agregat<WynikZadaniaId>
+{
+    public UczenId UczenId { get; private init; }
+    public ZadanieId ZadanieId { get; private init; }
+    public ZrodloWyniku Zrodlo { get; private init; }
+    public OdpowiedzId? OdpowiedzId { get; private init; }                  // != null ⇔ Zrodlo == Odpowiedz
+    public OcenaId? OcenaId { get; private init; }                          // != null ⇔ Zrodlo == Ocena
+    public decimal Ulamek { get; private init; }                            // punkty / punkty_max, 0–1
+    public decimal Waga { get; private init; }                              // ∈ {0,25; 0,50; 1,00} (ADR-018)
+    public bool LiczyDoTrudnosci { get; private init; }
+    public DateTimeOffset? UniewaznionyAt { get; private set; }
+    public PowodUniewaznieniaWyniku? PowodUniewaznienia { get; private set; }
+    public DateTimeOffset? ZastosowanyWProfiluAt { get; private set; }
+
+    public void Zawies(DateTimeOffset teraz)                                // Zawieszenie Wyniku zadania (FR-28, ADR-022)
+    {
+        if (Zrodlo != ZrodloWyniku.Ocena) throw new NiezmiennikNaruszonyException("ZAWIESZENIE_NIEDOZWOLONE", "Tylko Wynik z Oceny.");
+        UniewaznionyAt ??= teraz; PowodUniewaznienia ??= PowodUniewaznieniaWyniku.ZgloszenieBleduOdczytu;
+    }
+    internal void OznaczZastosowany(DateTimeOffset teraz) => ZastosowanyWProfiluAt = teraz;
+}
+```
+
+```csharp
+namespace Lemat.Domain.Rekomendacje;
+
+public enum TypElementuSciezki { WkladkaTeoretyczna, Zadanie }
+public enum CelElementu { Nauka, Powtorka }
+public enum StatusElementuSciezki { Proponowany, Rozpoczety, Ukonczony, Pominiety, Wygasly }
+public enum StrategiaRekomendacji { PolitykaElo, JevChoice }
+
+public sealed class SciezkaNauki : Agregat<SciezkaNaukiId>
+{
+    private readonly List<ElementSciezki> _elementy = [];
+    public UczenId UczenId { get; private init; }                           // unikalny: jedna Ścieżka nauki na Ucznia
+    public Seria? Seria { get; private set; }                               // aktywna Seria (ADR-030)
+    public IReadOnlyList<ElementSciezki> Elementy => _elementy;
+
+    public ElementSciezki Zaproponuj(PropozycjaElementu p, DateTimeOffset teraz)
+    {
+        if (_elementy.Any(e => e.Status == StatusElementuSciezki.Proponowany))   // ux_jeden_proponowany
+            throw new NiezmiennikNaruszonyException("ELEMENT_JUZ_PROPONOWANY", "Ścieżka nauki ma już element PROPONOWANY.");
+        if (p.Typ == TypElementuSciezki.WkladkaTeoretyczna && p.Cel == CelElementu.Powtorka)
+            throw new NiezmiennikNaruszonyException("CEL_NIEDOZWOLONY", "Powtórka dotyczy wyłącznie Zadania.");
+        var e = ElementSciezki.Nowy(_elementy.Count + 1, p, wygasaAt: teraz.AddHours(24), wSerii: Seria is not null);
+        _elementy.Add(e);
+        if (Seria is not null) Seria = Seria with { LiczbaElementow = Seria.LiczbaElementow + 1 };   // ≤ 8 (ADR-030)
+        return e;
+    }
+
+    public void ZakonczSerie() => Seria = null;
+}
+
+public sealed record Seria(UmiejetnoscId UmiejetnoscId, DateTimeOffset RozpoczetaAt, int LiczbaElementow,
+                           PoziomTrudnosci PoziomTrudnosci, int KolejnePorazki)
+{
+    public bool CzyZakonczonaPorazka(DateTimeOffset teraz) =>
+        KolejnePorazki >= 3 || LiczbaElementow >= 8 || teraz - RozpoczetaAt >= TimeSpan.FromDays(7);
+}
+
+public sealed class ElementSciezki
+{
+    public ElementSciezkiId Id { get; private init; }
+    public int Kolejnosc { get; private init; }
+    public TypElementuSciezki Typ { get; private init; }
+    public CelElementu Cel { get; private init; }
+    public UmiejetnoscId UmiejetnoscId { get; private init; }
+    public ZadanieId? ZadanieId { get; private init; }                      // != null ⇔ Typ == Zadanie
+    public ZadanieWersjaId? ZadanieWersjaId { get; private set; }           // ustawiana przy rozpoczęciu (C1-20)
+    public WkladkaTeoretycznaId? WkladkaTeoretycznaId { get; private init; } // != null ⇔ Typ == WkladkaTeoretyczna
+    public PrzypisanieId? PrzypisanieId { get; private init; }              // tylko R-PRZYPISANIE (ADR-032)
+    public bool WSerii { get; private init; }
+    public StatusElementuSciezki Status { get; private set; }
+    public DateTimeOffset WygasaAt { get; private set; }
+
+    public void Rozpocznij(ZadanieWersjaId? wersja, DateTimeOffset teraz)  // 8.5
+    {
+        if (Status != StatusElementuSciezki.Proponowany || teraz >= WygasaAt)
+            throw new NiezmiennikNaruszonyException("ELEMENT_NIEPRAWIDLOWY_STAN", "Element nie jest PROPONOWANY albo wygasł.");
+        if (Typ == TypElementuSciezki.Zadanie && wersja is null)
+            throw new NiezmiennikNaruszonyException("WERSJA_ZADANIA_WYMAGANA", "Rozpoczęcie Zadania wskazuje wersję.");
+        ZadanieWersjaId = wersja; Status = StatusElementuSciezki.Rozpoczety;
+        WygasaAt = Typ == TypElementuSciezki.Zadanie ? teraz.AddDays(7) : teraz.AddHours(24);
+    }
+    internal static ElementSciezki Nowy(int kolejnosc, PropozycjaElementu p, DateTimeOffset wygasaAt, bool wSerii) =>
+        new() { Id = new(Guid.CreateVersion7()), Kolejnosc = kolejnosc, Typ = p.Typ, Cel = p.Cel, UmiejetnoscId = p.UmiejetnoscId,
+                ZadanieId = p.ZadanieId, WkladkaTeoretycznaId = p.WkladkaTeoretycznaId, PrzypisanieId = p.PrzypisanieId,
+                WSerii = wSerii, Status = StatusElementuSciezki.Proponowany, WygasaAt = wygasaAt };
+}
+```
+
+```csharp
+// ===== Lemat.Domain.Kalibracja =====
+namespace Lemat.Domain.Kalibracja;
+
+public enum ZrodloProgu { EwaluacjaZt1, KalibracjaAutomatyczna, Administrator, Bezpiecznik }
+public enum TypBezpiecznika { Trafnosc, Poprawki }
+
+public sealed class ProgPewnosci : Agregat<ProgPewnosciId>                 // niezmienny; zmiana progu = nowy rekord (11.5.3 krok 6)
+{
+    public KonfiguracjaModeluId KonfiguracjaModeluId { get; private init; }
+    public RodzajZadania RodzajZadania { get; private init; }               // ≠ Zamkniete
+    public KalibratorPewnosciId KalibratorPewnosciId { get; private init; }
+    public decimal Wartosc { get; private init; }                           // 0,800–1,000; dowód: zawsze 1,000
+    public decimal? GornaGranicaBleduAuto { get; private init; }
+    public decimal? NEff { get; private init; }
+    public ZrodloProgu Zrodlo { get; private init; }
+    public string Uzasadnienie { get; private init; } = "";
+    public bool Aktywny { get; private set; }                               // ≤ 1 aktywny na (konfiguracja, rodzaj)
+    public bool TrybPelnejWeryfikacji => Wartosc == 1.000m;
+
+    public static ProgPewnosci Utworz(KonfiguracjaModeluId k, RodzajZadania r, KalibratorPewnosciId kal, decimal wartosc,
+                                      ZrodloProgu zrodlo, string uzasadnienie, decimal? ub, decimal? nEff)
+    {
+        if (r == RodzajZadania.Zamkniete) throw new NiezmiennikNaruszonyException("PROG_DLA_ZAMKNIETYCH", "Zadania zamknięte nie mają progu.");
+        if (wartosc is < 0.800m or > 1.000m) throw new NiezmiennikNaruszonyException("PROG_POZA_ZAKRESEM", "Próg 0,800–1,000.");
+        if (r == RodzajZadania.OtwarteZDowodem && wartosc != 1.000m)
+            throw new NiezmiennikNaruszonyException("PROG_DOWODU", "Dla dowodu próg = 1,000 (FR-26).");
+        return new ProgPewnosci { Id = new(Guid.CreateVersion7()), KonfiguracjaModeluId = k, RodzajZadania = r, KalibratorPewnosciId = kal,
+                                  Wartosc = wartosc, Zrodlo = zrodlo, Uzasadnienie = uzasadnienie, GornaGranicaBleduAuto = ub, NEff = nEff };
+    }
+    public void Aktywuj() => Aktywny = true;
+    public void Dezaktywuj() => Aktywny = false;
+}
+
+public sealed class StanBezpiecznika                                        // klucz (KonfiguracjaModeluId, RodzajZadania, Typ)
+{
+    public KonfiguracjaModeluId KonfiguracjaModeluId { get; private init; }
+    public RodzajZadania RodzajZadania { get; private init; }               // wyłącznie OtwarteObliczeniowe
+    public TypBezpiecznika Typ { get; private init; }
+    public bool Aktywny { get; private set; }                               // stan aktywny bezpiecznika (jedno znaczenie, C5-04)
+    public bool BlokadaObnizaniaProgu => Typ == TypBezpiecznika.Trafnosc && Aktywny;   // skutek dla TRAFNOSC
+    public bool KazdaPoprawkaDoWeryfikacji => Typ == TypBezpiecznika.Poprawki && Aktywny; // skutek dla POPRAWKI (T-7)
+    public DateTimeOffset OknoOd { get; private set; }
+    public UzytkownikId? DezaktywowanyPrzez { get; private set; }
+    public DateTimeOffset? DezaktywowanoAt { get; private set; }
+    public string? UzasadnienieDezaktywacji { get; private set; }           // != null ⇔ DezaktywowanoAt != null; ≤ 1000 znaków
+
+    public void Wyzwol(DateTimeOffset teraz) => Aktywny = true;            // reguła 2 klasyfikacji (11.5.3)
+
+    public void Dezaktywuj(UzytkownikId administrator, string uzasadnienie, DateTimeOffset teraz)   // ADR-046, C4-04
+    {
+        if (string.IsNullOrWhiteSpace(uzasadnienie) || uzasadnienie.Length > 1000)
+            throw new NiezmiennikNaruszonyException("UZASADNIENIE_WYMAGANE", "Uzasadnienie 1–1000 znaków.");
+        Aktywny = false; DezaktywowanyPrzez = administrator; DezaktywowanoAt = teraz;
+        UzasadnienieDezaktywacji = uzasadnienie; OknoOd = teraz;            // nowy początek okna oceny
+    }
+}
+```
+
+Pozostałe agregaty z 3.5 (np. `WkladkaTeoretyczna`, `ArkuszCke`,
+`ZlecenieGenerowania`, `ZgloszenieBleduZadania`, `Odpowiedz`,
+`KopiaTreningowa`, `TestDiagnostyczny`, `Rekomendacja`,
+`KalibratorPewnosci`, `ProbkaKalibracyjna`, `KonfiguracjaModelu`,
+`DecyzjaModelu`, `ZdarzenieRodo`, `ZestawZadan`, `Przypisanie`,
+`SzkicRozstrzygniecia`) stosują ten sam wzorzec: właściwości z kolumn 7.3
+w PascalCase (ADR-049), niezmienniki z CHECK-ów 7.3 i maszyn stanów 8.x w
+metodach. Ich szkielety powstają w iteracji 2 razem z konfiguracjami EF
+Core.
 
 ---
 
@@ -445,67 +1469,177 @@ flowchart LR
 
 ## 5. Widok kontenerów i stos technologiczny
 
+Od wersji 3.0 obowiązuje stos .NET 10 + Next.js (ADR-048). Reguły
+domenowe, liczby i decyzje biznesowe wersji 2.4 nie zmieniają się;
+zmienia się wyłącznie realizacja techniczna. Mapowanie zależności
+pythonowych i React/Vite na odpowiedniki .NET/Next.js jest w 5.5, a
+mapowanie modułów `lemat.*` na projekty i przestrzenie nazw .NET — w 6.10.
+
 ### 5.1 Diagram kontenerów
 
 ```mermaid
 flowchart TB
-    subgraph Klient
-        PWA["Aplikacja PWA<br/>React 18 + TypeScript + Vite<br/>KaTeX, i18n pl-PL"]
+    subgraph Klient["Przeglądarka (telefon / komputer)"]
+        PWA["Aplikacja PWA<br/>Next.js 16 App Router + React 19 + TypeScript<br/>service worker Serwist, KaTeX, next-intl pl-PL"]
     end
-    subgraph Lemat["Lemat (jedno repozytorium, jeden obraz kontenera)"]
-        RP["Reverse proxy<br/>Caddy 2 (TLS, statyki PWA)"]
-        API["api<br/>Python 3.12, FastAPI, Uvicorn<br/>2 repliki"]
-        WRK["worker<br/>Python 3.12, asyncio<br/>2 repliki × 4 pule korutyn (R15/O15/P6/W4)"]
-        SCH["scheduler<br/>1 aktywna instancja<br/>(blokada doradcza PG)"]
-        SBX["piaskownica SymPy + Pillow<br/>pula 4 procesów na replikę workera<br/>RLIMIT CPU/RAM"]
-        SBXA["piaskownica Pillow api<br/>pula 2 procesów na replikę api<br/>RLIMIT CPU/RAM (ADR-045)"]
+    subgraph Lemat["Lemat — 2 maszyny wirtualne w UE, Docker Compose"]
+        RP["Reverse proxy Caddy 2<br/>TLS; /api/* → api; pozostałe → web;<br/>SSE bez buforowania (flush_interval -1)"]
+        WEB["web — obraz lemat-frontend<br/>Next.js standalone, Node.js 24 LTS<br/>2 repliki; bez dostępu do bazy i tokenów"]
+        API["api — obraz lemat-backend: Lemat.Api<br/>ASP.NET Core 10 Minimal APIs, REST + SSE<br/>2 repliki"]
+        IMGA["obrazy-api — lemat-backend: Lemat.ImageSandbox<br/>Magick.NET, sidecar 1:1 z api<br/>2 równoległe normalizacje (ADR-052)"]
+        WRK["worker — lemat-backend: Lemat.Worker<br/>BackgroundService na pulę: R 15 / S 4 / O 15 / P 6 / W 4<br/>2 repliki (ADR-053)"]
+        IMGW["obrazy-worker — lemat-backend: Lemat.ImageSandbox<br/>sidecar 1:1 z worker<br/>4 równoległe (maskowanie, wycinki)"]
+        SYM["sympy — obraz lemat-sympy<br/>Python 3.12 + SymPy 1.13<br/>sidecar 1:1 z worker, 4 procesy z limitami (ADR-050)"]
+        SCH["scheduler — lemat-backend: Lemat.Scheduler<br/>2 repliki, 1 aktywna (pg_try_advisory_lock)"]
+        MIG["migracje — efbundle (EF Core Migrations)<br/>zadanie jednorazowe przed wdrożeniem"]
     end
-    PG[("PostgreSQL 16<br/>dane + prace w tle (praca_w_tle)")]
-    OBJ[("Magazyn obiektów S3 (UE)<br/>zdjęcia, zdjęcia maskowane, importy")]
+    PG[("PostgreSQL 16 (zarządzany, PITR)<br/>dane + praca_w_tle + LISTEN/NOTIFY")]
+    OBJ[("Magazyn obiektów S3 (UE)<br/>zdjęcia, zdjęcia maskowane, importy, zbiór treningowy")]
     REJ[("Bucket rejestr-zdarzen-rodo<br/>Object Lock COMPLIANCE 60 dni")]
-    JEV["Jev API"]
-    LLM["Dostawca(y) LLM"]
+    JEV["Jev API (TypeSafe)"]
+    LLM["Dostawca(y) LLM<br/>za IChatClient"]
     SMTP["SMTP"]
-    PWA -->|HTTPS JSON| RP --> API
+    OTEL["OpenTelemetry Collector<br/>→ Prometheus, Grafana, Tempo"]
+    PWA -->|"HTTPS: strony, JSON, SSE"| RP
+    RP --> WEB
+    RP --> API
     API --> PG
     API --> OBJ
-    API --> SBXA
     API --> REJ
+    API -->|"HTTP/1.1 na gnieździe Unix"| IMGA
     API -->|"Q-RE-01, timeout 1,5 s (ADR-023)"| JEV
     WRK --> PG
     WRK --> OBJ
     WRK --> REJ
-    WRK --> SBX
+    WRK -->|"gniazdo Unix"| IMGW
+    WRK -->|"gniazdo Unix"| SYM
     WRK --> JEV
     WRK --> LLM
     WRK --> SMTP
     SCH --> PG
-    PG -. "LISTEN/NOTIFY praca_w_tle" .-> WRK
+    MIG --> PG
+    PG -. "NOTIFY praca_w_tle" .-> WRK
+    PG -. "NOTIFY lemat_zdarzenia (SSE, ADR-051)" .-> API
+    API -. "OTLP" .-> OTEL
+    WRK -. "OTLP" .-> OTEL
+    SCH -. "OTLP" .-> OTEL
+    WEB -. "OTLP" .-> OTEL
 ```
 
 Wysyłka e-mail odbywa się wyłącznie przez pracę w tle `WYSLIJ_EMAIL`
 (worker), więc proces `api` nie łączy się z SMTP. Proces `api` zapisuje do
-bucketu `rejestr-zdarzen-rodo` Zdarzenia RODO z inicjatywy użytkownika (wniosek o
-usunięcie, przywrócenie, odwołanie i udzielenie zgody) **przed** zatwierdzeniem
-transakcji; proces `worker` zapisuje tam zdarzenie `USUNIECIE_WYKONANE`
-(`zrodlo = WORKER`) przed pierwszą zmianą w bazie wykonywaną przez
-`USUN_KONTO` (ADR-041, C3-03).
+bucketu `rejestr-zdarzen-rodo` Zdarzenia RODO z inicjatywy użytkownika
+(wniosek o usunięcie, przywrócenie, odwołanie i udzielenie zgody) **przed**
+zatwierdzeniem transakcji; proces `worker` zapisuje tam zdarzenie
+`USUNIECIE_WYKONANE` (`zrodlo = WORKER`) przed pierwszą zmianą w bazie
+wykonywaną przez `USUN_KONTO` (ADR-041, C3-03). Serwer Next.js (`web`)
+renderuje wyłącznie powłokę aplikacji i strony publiczne; nie wywołuje API
+w imieniu użytkownika i nie przechowuje tokenów (ADR-054), więc między `web`
+a `api` nie ma połączenia. Sidecary (`obrazy-api`, `obrazy-worker`,
+`sympy`) nie mają dostępu do sieci zewnętrznej, bazy ani magazynu obiektów —
+dostają bajty lub tekst przez gniazdo Unix i zwracają rezultat.
 
 ### 5.2 Stos technologiczny
 
-| Obszar | Wybór | Uzasadnienie |
+Tabela podaje wersję główną; dokładne wersje (łatki) są przypięte w
+`backend/global.json`, `backend/Directory.Packages.props` (Central Package
+Management), `frontend/package-lock.json` i `backend/sandbox/sympy/uv.lock`.
+Zmiana wersji głównej wymaga nowego ADR.
+
+| Obszar | Wybór | Uzasadnienie | ADR |
+|---|---|---|---|
+| Runtime backendu | .NET 10 (LTS, wsparcie do listopada 2028), C# 14; SDK `10.0.100` w `global.json` z `rollForward: latestPatch` | Decyzja właściciela; LTS na cały pilotaż i 2 lata produkcji. | ADR-048 |
+| HTTP API | ASP.NET Core 10 Minimal APIs: grupa tras `MapGroup` na moduł (6.2), `TypedResults`, ProblemDetails RFC 9457 przez `AddProblemDetails` i własny `IExceptionHandler` (mapowanie wyjątków domenowych na kody 12.2); OpenAPI 3.1 z `Microsoft.AspNetCore.OpenApi`, generowane przy budowie do `backend/openapi/lemat-v1.json` i publikowane pod `/api/v1/openapi.json` | Minimal APIs mają mniejszy narzut niż kontrolery MVC, a grupy tras odpowiadają modułom; plik OpenAPI w repozytorium jest źródłem typów TypeScript (6.8) i testu kontraktowego. | ADR-048 |
+| Postęp operacji | SSE (`text/event-stream`) przez `TypedResults.ServerSentEvents`, zasilane `LISTEN lemat_zdarzenia`; odpytywanie `GET /rozwiazania/{id}` jako ścieżka zapasowa | NFR-01 (bez opóźnienia odpytywania), NFR-08 (jedno połączenie HTTP/2 zamiast żądań co 1 s). | ADR-051 |
+| Walidacja wejścia | FluentValidation 12 dla DTO (reguły 12.5) w `Lemat.Api`; niezmienniki w agregatach `Lemat.Domain` (3.6) | Reguły wejścia oddzielone od niezmienników domeny; komunikaty po polsku (NFR-10). | ADR-048 |
+| Dostęp do danych | EF Core 10 + `Npgsql.EntityFrameworkCore.PostgreSQL` 10: typy wyliczeniowe PostgreSQL przez `MapEnum`, kolumny `jsonb` o schemacie 7.5 jako typy złożone `ToJson()`, kolumny `jsonb` bez schematu (`dane`, `ladunek`) jako `JsonDocument`; Npgsql 10 bezpośrednio (`NpgsqlDataSource`) dla `FOR UPDATE SKIP LOCKED`, `LISTEN/NOTIFY` i blokad doradczych | EF Core dla agregatów i optymistycznej współbieżności (`version` jako token współbieżności); surowy SQL tam, gdzie semantyka PostgreSQL jest istotą mechanizmu (13.4). | ADR-048, ADR-053 |
+| Migracje | EF Core Migrations w `Lemat.Infrastructure/Persistence/Migrations`, wydawane jako `efbundle` uruchamiany przez kontener `migracje` przed wdrożeniem (nigdy przy starcie aplikacji); obiekty spoza modelu EF (triggery `trg_*`, funkcja `dodaj_dni_robocze`, partycje `decyzja_modelu`, tabela `UNLOGGED`) przez `migrationBuilder.Sql` z plików `Persistence/Migrations/Sql/*.sql`; test `SchematZgodnyZDdlTest` porównuje schemat po migracjach (`pg_dump --schema-only`, znormalizowany) z DDL 7.3 | DDL 7.3 pozostaje schematem docelowym; migracje są jedyną drogą zmian schematu (zastępują Alembic). | ADR-048 |
+| Baza danych | PostgreSQL 16 (rozszerzenia `citext`, `pg_trgm`) | Jedno źródło prawdy + prace w tle (ADR-002). | ADR-002 |
+| Prace w tle | Tabela `praca_w_tle` (kolumny `pula`, `dzierzawa_do`) + `SELECT … FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY`; `BackgroundService` na pulę w `Lemat.Worker`; bez Hangfire, Quartz.NET i brokerów | Transakcyjne zlecanie prac razem ze zmianą stanu (ADR-002); rozłączne pule (13.4). | ADR-053 |
+| Harmonogram | `Lemat.Scheduler`: `BackgroundService` z wyrażeniami cron (biblioteka Cronos 0.11), jedna aktywna instancja przez `pg_try_advisory_lock` | Harmonogram 13.5 bez zmian; Cronos jest wyłącznie parserem wyrażeń, bez własnego magazynu. | ADR-053 |
+| Warstwa AI | Microsoft.Extensions.AI 10 (`IChatClient`, ustrukturyzowane wyjście, `UseOpenTelemetry`), Semantic Kernel 1 (`Microsoft.SemanticKernel.Core`: szablony promptów YAML, pluginy `KernelFunction`); Jev przez typowany `HttpClient` (Jev nie jest LLM); Mock każdego dostawcy | NFR-06: jedna abstrakcja dla modeli generatywnych; praca offline i testy bez dostawców. | ADR-055 |
+| Obliczenia symboliczne | Sidecar `lemat-sympy`: Python 3.12, SymPy 1.13 (`parse_latex`, backend `lark`), serwer HTTP Starlette + Uvicorn na gnieździe Unix, 4 procesy z `RLIMIT_AS` 512 MiB i `RLIMIT_CPU`; port `ISprawdzanieSymboliczne` | Brak biblioteki .NET o porównywalnym parserze LaTeX i upraszczaniu (FR-21, FR-13). | ADR-050 |
+| Obróbka obrazu | Magick.NET-Q8-AnyCPU 14 (ImageMagick 7 z libheif/libde265, libjpeg-turbo, libwebp, libpng) w procesie `Lemat.ImageSandbox`; usuwanie EXIF, normalizacja do JPEG, maskowanie, wycinki | HEIC z iPhone'ów (NFR-08); izolacja dekoderów natywnych od procesów `api`/`worker` (ADR-045). | ADR-052 |
+| Magazyn obiektów | S3-kompatybilny w regionie UE (lokalnie MinIO), klient `AWSSDK.S3` 4; szyfrowanie SSE, wersjonowanie wyłączone na bucketach ze zdjęciami (16.4); Object Lock `COMPLIANCE` dla `rejestr-zdarzen-rodo` | Zdjęcia poza bazą; NFR-09. | ADR-048 |
+| E-mail | MailKit 4 (SMTP z STARTTLS) w handlerze `WYSLIJ_EMAIL` | Jedyna rola e-maila: reset hasła (1.3). | ADR-048 |
+| Uwierzytelnianie | `Microsoft.AspNetCore.Authentication.JwtBearer`; access token JWT ES256 (ECDSA P-256) 15 min w pamięci klienta; refresh token w cookie `lemat_rt`; argon2id przez `Konscious.Security.Cryptography.Argon2` (m = 64 MiB, t = 3, p = 4) | ADR-020 bez zmian merytorycznych; ES256 jest obsługiwany natywnie przez `Microsoft.IdentityModel.*` (EdDSA nie). | ADR-020, ADR-048 |
+| Obserwowalność | OpenTelemetry .NET (instrumentacje ASP.NET Core, HttpClient, Npgsql, EF Core, Microsoft.Extensions.AI) → OTLP → OpenTelemetry Collector → Prometheus, Grafana, Tempo; logi JSON (`AddJsonConsole`); nazwy metryk z 17.3 bez zmian; Next.js — `@vercel/otel` → ten sam Collector | NFR-01, NFR-03, NFR-04; eksporter Prometheus w Collectorze zamiast pakietu w procesie. | ADR-048 |
+| Testy backendu | xUnit v3 (`xunit.v3`), Shouldly, NSubstitute, FsCheck 3 (testy właściwości, zastępuje `hypothesis`), Testcontainers 4 (PostgreSQL 16, MinIO, `lemat-sympy`), `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`), WireMock.Net (kontrakty adapterów Jev i LLM), coverlet | Testy domeny bez infrastruktury; testy integracyjne na prawdziwym PostgreSQL 16 (semantyka `SKIP LOCKED`, triggerów, CHECK). | ADR-048 |
+| Kontrola architektury | Referencje projektów (6.4) + NetArchTest.Rules (reguły 6.5) + `Microsoft.CodeAnalysis.BannedApiAnalyzers` (`BannedSymbols.txt`: SDK dostawców poza `Lemat.Modele`, `DateTime.Now`/`DateTimeOffset.Now` poza `TimeProvider`) + test słownika (3.4, ADR-049) | NFR-06; zastępuje `import-linter`. | ADR-048 |
+| Jakość kodu | `Directory.Build.props`: `Nullable=enable`, `TreatWarningsAsErrors=true`, `AnalysisLevel=latest-recommended`, `ImplicitUsings=enable`; `.editorconfig`; `dotnet format --verify-no-changes` w CI | Jednolite reguły dla wszystkich projektów. | ADR-048 |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript 5.9 (`strict`), Node.js 24 LTS, `output: "standalone"` | NFR-08, NFR-10; jedna baza kodu dla telefonu i komputera. | ADR-054 |
+| PWA | Serwist 9 (`@serwist/next`): precache zasobów statycznych i fontów KaTeX, `NetworkOnly` dla `/api/*` (dane osobowe nie trafiają do cache, NFR-09); manifest `app/manifest.ts`; strona `/offline` | Instalacja na ekranie telefonu, szybki start; zastępuje ręczny service worker Vite. | ADR-054 |
+| i18n | next-intl 4, jedna lokalizacja `pl-PL`, bez prefiksu języka w URL; komunikaty `frontend/messages/pl-PL.json` (ICU, polskie formy liczby mnogiej `one`/`few`/`many`); daty i liczby `Intl` `pl-PL`, strefa wyświetlania `Europe/Warsaw` | NFR-10; działa w komponentach serwerowych i klienckich. | ADR-054 |
+| LaTeX | KaTeX 0.16 (`katex`); Markdown z wzorami `$…$`: `react-markdown` 10 + `remark-math` 6 + `rehype-katex` 7; `throwOnError: false`, `trust: false`, `maxExpand: 1000` | Szybkie renderowanie bez MathJax; bezpieczne wobec treści z kartki (R-06). | ADR-054 |
+| Dane w kliencie | TanStack Query 5; klient `openapi-fetch` z typami `openapi-typescript` 7 generowanymi z `backend/openapi/lemat-v1.json` do `frontend/src/lib/api/schema.d.ts` (CI: brak różnic); formularze react-hook-form 7 + zod 4 | Jeden kontrakt typów od C# do TypeScript; brak ręcznie pisanych DTO. | ADR-054 |
+| SSE w kliencie | `fetch` z nagłówkiem `Authorization` + parser `eventsource-parser` 3, ponowne łączenie z `Last-Event-ID` | `EventSource` nie wysyła nagłówków, a access token nie może trafić do URL ani cookie (ADR-020). | ADR-051 |
+| Zdjęcia w kliencie | `<input type="file" accept="image/*" capture="environment" multiple>`; kompresja w Web Workerze (`createImageBitmap` + `OffscreenCanvas.convertToBlob`, JPEG q = 0,85, dłuższy bok ≤ 2560 px; zapasowo `<canvas>` w wątku głównym); ekran aparatu z instrukcją „nie podpisuj kartki imieniem i nazwiskiem” | NFR-08; zmniejsza transfer, koszt rozpoznawania i ilość danych osobowych na zdjęciu (ADR-031); HEIC zamieniany na JPEG już w przeglądarce, gdy ją dekoduje. | ADR-054 |
+| UI | Tailwind CSS 4 + prymitywy Radix UI (dialogi, menu, listy dostępne z klawiatury i czytnika ekranu) | Spójny wygląd telefon/komputer bez ciężkiej biblioteki komponentów. | ADR-054 |
+| Testy frontendu | Vitest 3 + Testing Library (komponenty, hooki, kompresja zdjęć); Playwright (E2E: Chromium i WebKit z emulacją iPhone) w `frontend/e2e/` przeciw Docker Compose z modelami Mock (`dostawca = 'mock'`) | Scenariusze FR end-to-end bez dostawców modeli. | ADR-054 |
+| Lint frontendu | ESLint 9 (flat config, `eslint-config-next`), dependency-cruiser 16 (granice 6.9), Prettier 3 | Granice modułów frontendu sprawdzane w CI. | ADR-054 |
+| Wdrożenie | Docker Compose na 2 maszynach wirtualnych w UE + zarządzany PostgreSQL z PITR (17.5); obrazy bazowe: `mcr.microsoft.com/dotnet/aspnet:10.0-noble` (Magick.NET wymaga glibc), `node:24-bookworm-slim`, `python:3.12-slim-bookworm`, `caddy:2` | Skala A-03; brak Kubernetes w pilotażu. | ADR-048 |
+| CI | GitHub Actions: `dotnet build` + `dotnet test` (z Testcontainers), `npm ci && npm run lint && npm test && npm run build`, Playwright, `pytest` sidecara, test kontraktu OpenAPI, test słownika, budowa obrazów | Wszystkie bramki jakości w jednym przebiegu. | ADR-048 |
+
+### 5.3 Obrazy, procesy i repliki
+
+| Kontener | Obraz | Punkt wejścia | Repliki (pilotaż) | Limit cgroup (CPU / RAM) | Nasłuch |
+|---|---|---|---|---|---|
+| `caddy` | `caddy:2` | `caddy run` | 1 na maszynę | 0,5 / 256 MiB | 443 |
+| `web` | `lemat-frontend` | `node server.js` (Next.js standalone) | 2 | 1 / 1 GiB | 3000 (sieć wewnętrzna) |
+| `api` | `lemat-backend` | `dotnet Lemat.Api.dll` | 2 | 2 / 2 GiB | 8080 (sieć wewnętrzna) |
+| `obrazy-api` | `lemat-backend` | `dotnet Lemat.ImageSandbox.dll --rownoleglosc 2` | 1 na replikę `api` | 1 / 1 GiB | `/run/lemat/obrazy.sock` (wolumen współdzielony z `api`) |
+| `worker` | `lemat-backend` | `dotnet Lemat.Worker.dll` | 2 | 2 / 2 GiB | brak (tylko `/zdrowie` na 8081) |
+| `obrazy-worker` | `lemat-backend` | `dotnet Lemat.ImageSandbox.dll --rownoleglosc 4` | 1 na replikę `worker` | 2 / 2 GiB | `/run/lemat/obrazy.sock` (wolumen współdzielony z `worker`) |
+| `sympy` | `lemat-sympy` | `uvicorn lemat_sympy.serwer:aplikacja --uds /run/lemat/sympy.sock` | 1 na replikę `worker` | 2 / 2,5 GiB | `/run/lemat/sympy.sock` |
+| `scheduler` | `lemat-backend` | `dotnet Lemat.Scheduler.dll` | 2 (1 aktywna) | 0,5 / 512 MiB | brak (tylko `/zdrowie` na 8081) |
+| `migracje` | `lemat-backend` | `./efbundle --connection $LEMAT_BAZA_MIGRACJE` | 1 (jednorazowo) | 0,5 / 512 MiB | brak |
+
+Sidecary działają z `read_only: true`, `network_mode: none`, użytkownikiem
+bez uprawnień (`uid 10001`), domyślnym profilem seccomp i `pids_limit: 64`;
+gniazdo Unix jest jedynym kanałem komunikacji. Obraz `lemat-backend`
+zawiera wszystkie projekty wykonywalne .NET (jeden build, jeden skan
+podatności), a proces wybiera punkt wejścia.
+
+### 5.4 Komunikacja między kontenerami
+
+| Od → do | Protokół | Uwierzytelnienie | Timeout / limit | Uwagi |
+|---|---|---|---|---|
+| przeglądarka → `caddy` | HTTPS (HTTP/2, HTTP/3) | — | — | HSTS, TLS 1.2+ |
+| `caddy` → `web` | HTTP/1.1 | sieć wewnętrzna | 30 s | ścieżki inne niż `/api/*` |
+| `caddy` → `api` | HTTP/1.1 | sieć wewnętrzna | 60 s dla REST; bez limitu odczytu dla `*/strumien` | `flush_interval -1` dla SSE |
+| `api` → PostgreSQL | Npgsql (TLS) | użytkownik `lemat_api` | `CommandTimeout` 5 s (żądania), pula 50 połączeń na replikę + 1 połączenie `LISTEN` | |
+| `worker` → PostgreSQL | Npgsql (TLS) | użytkownik `lemat_worker` | `CommandTimeout` 30 s, pula 60 połączeń na replikę + 1 `LISTEN` | |
+| `scheduler` → PostgreSQL | Npgsql (TLS) | użytkownik `lemat_scheduler` | 30 s, pula 5 | blokada doradcza na sesji dedykowanej |
+| `migracje` → PostgreSQL | Npgsql (TLS) | użytkownik `lemat_migracje` (właściciel schematu) | 10 min | jedyny użytkownik z DDL |
+| `api`/`worker` → `obrazy-*` | HTTP/1.1 JSON + `application/octet-stream` na gnieździe Unix | uprawnienia pliku gniazda (0660, grupa `lemat`) | 8 s czasu ściennego na plik (ADR-045) | oczekiwanie na wolny slot > 5 s → `503` w `api` |
+| `worker` → `sympy` | HTTP/1.1 JSON na gnieździe Unix | uprawnienia pliku gniazda | 2 s na parę, 3 s na Rozwiązanie (22) | przekroczenie → `NIEROZSTRZYGNIETE` |
+| `api`/`worker` → S3 | HTTPS | klucz dostępu per proces (IAM: `api` bez `DeleteObject` na `zbior-treningowy/`) | 10 s | |
+| `worker` → Jev | HTTPS JSON | klucz API w nagłówku | 2 s na żądanie (13.2) | globalny ogranicznik (ADR-039) |
+| `api` → Jev | HTTPS JSON | klucz API | 1,5 s, bez ponowień (ADR-023) | tylko Q-RE-01 |
+| `worker` → LLM | HTTPS (SDK za `IChatClient`) | klucz API / tożsamość zarządzana | wg `konfiguracja_modelu.parametry.timeout_s` | |
+| `worker` → SMTP | SMTP + STARTTLS | login SMTP | 30 s | tylko `WYSLIJ_EMAIL` |
+| wszystkie → Collector | OTLP/gRPC | sieć wewnętrzna | — | bez treści promptów i danych osobowych w atrybutach |
+
+### 5.5 Odpowiedniki zależności wersji 2.4
+
+Tabela pozwala czytać sekcje 7–18, które w wersji 3.0 zachowują treść
+domenową, a w przykładach kodu nadal używają nazw pythonowych (notka na
+początku sekcji 7, 10, 12–15).
+
+| Wersja 2.4 | Wersja 3.0 | Uwagi |
 |---|---|---|
-| Frontend | React 18 + TypeScript 5, Vite, PWA (manifest + service worker do cache statyk), KaTeX do renderowania LaTeX, `react-i18next` z jednym językiem `pl-PL` | NFR-08, NFR-10; jedna baza kodu dla telefonu i komputera. |
-| Zdjęcia w kliencie | `<input type="file" accept="image/*" capture="environment" multiple>`; kompresja w kliencie (canvas → JPEG q=0.85, dłuższy bok ≤ 2560 px); ekran aparatu z instrukcją „nie podpisuj kartki imieniem i nazwiskiem” | NFR-08; zmniejsza transfer, koszt rozpoznawania i ilość danych osobowych na zdjęciu (ADR-031). |
-| Backend | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2 (Core + ORM), Alembic | Ekosystem SymPy i SDK modeli AI w Pythonie. |
-| Baza danych | PostgreSQL 16 (rozszerzenia `citext`, `pg_trgm`) | Jedno źródło prawdy + prace w tle (ADR-002). |
-| Prace w tle | Tabela `praca_w_tle` z kolumną `pula` + `SELECT … FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY` | Transakcyjne zlecanie prac razem ze zmianą stanu (ADR-002); osobne pule dla rozpoznawania i oceniania (13.4). |
-| Magazyn obiektów | S3-kompatybilny w regionie UE (lokalnie MinIO), szyfrowanie SSE, **wersjonowanie wyłączone** na bucketach ze zdjęciami (16.4) | Zdjęcia poza bazą; NFR-09. |
-| Obróbka obrazu | Pillow ≥ 10 + `pillow-heif`; normalizacja w piaskownicy procesowej `api` (2 procesy na replikę, ADR-045), maskowanie w piaskownicy `worker` | Usuwanie EXIF, maskowanie danych osobowych (ADR-031); dekodowanie obrazów nigdy w procesie obsługującym pętlę zdarzeń. |
-| Obliczenia symboliczne | SymPy ≥ 1.13 (`parse_latex` z backendem `lark`) w puli procesów z limitami | FR-21, walidacja FR-13 (ADR-013). |
-| Obserwowalność | OpenTelemetry (ślady), Prometheus (metryki), Grafana, logi JSON | NFR-01, NFR-03, NFR-04. |
-| Wdrożenie | Docker Compose na 2 maszynach wirtualnych w UE + zarządzany PostgreSQL z PITR | Skala A-03 (ADR-001). |
-| Kontrola architektury | `import-linter` w CI: SDK dostawców modeli importowane wyłącznie w `lemat.modele.adaptery.*` | NFR-06. |
+| Python 3.12, FastAPI, Uvicorn | .NET 10, ASP.NET Core Minimal APIs, Kestrel | |
+| Pydantic v2 (DTO, walidacja, schematy JSON) | rekordy C# + System.Text.Json (konteksty źródłowe) + FluentValidation; schematy JSON odpowiedzi modeli z `AIJsonUtilities.CreateJsonSchema` | nazwy pól bez zmian (snake_case, ADR-049) |
+| SQLAlchemy 2, Alembic | EF Core 10 + Npgsql, EF Core Migrations (`efbundle`) | DDL 7.3 obowiązuje |
+| `asyncio`, korutyny pul workera | `BackgroundService`, pętle asynchroniczne (`Task`) w liczbie z 13.4 | |
+| `ProcessPoolExecutor` + Pillow + `pillow-heif` | `Lemat.ImageSandbox` + Magick.NET | ADR-052 |
+| SymPy w puli procesów workera | sidecar `lemat-sympy` | ADR-050 |
+| `import-linter` | referencje projektów + NetArchTest + BannedApiAnalyzers | |
+| `pytest`, `hypothesis` | xUnit v3, FsCheck, Testcontainers | testy `tests/…/*.py` z sekcji 11–17 mają odpowiedniki w 6.7 |
+| `lemat/konfiguracja.py` + zmienne `LEMAT_*` | `LematOpcje` (wzorzec Options) + `appsettings.json` + te same zmienne `LEMAT_*` | 22, ADR-049 |
+| React 18 + Vite, `react-i18next` | Next.js 16 App Router, next-intl | ADR-054 |
+| odpytywanie co 1 s / 60 s | SSE + odpytywanie zapasowe | ADR-051 |
+| JWT EdDSA | JWT ES256 | ADR-020 (realizacja) |
 
 ---
 
@@ -515,113 +1649,494 @@ transakcji; proces `worker` zapisuje tam zdarzenie `USUNIECIE_WYKONANE`
 
 ```mermaid
 flowchart LR
-    subgraph api["Proces api"]
-        HTTP["lemat.http<br/>(routery FastAPI, auth, DTO,<br/>idempotencja)"]
+    subgraph api["Lemat.Api (proces api)"]
+        HTTP["Endpointy Minimal API per moduł<br/>uwierzytelnianie, DTO + FluentValidation,<br/>ProblemDetails, idempotencja, SSE"]
     end
-    subgraph domena["Moduły domenowe (wspólne dla api i worker)"]
-        KON["lemat.konta"]
-        KLA["lemat.klasy"]
-        TRE["lemat.tresci<br/>Zadania, Kryteria oceniania,<br/>Wkładki, Działy, Umiejętności,<br/>Arkusze CKE, Przeglądy"]
-        PRO["lemat.profil<br/>Profil ucznia, Wynik zadania,<br/>Test diagnostyczny"]
-        REKM["lemat.rekomendacje<br/>Ścieżka nauki, Seria"]
-        ROZ["lemat.rozwiazania<br/>Rozwiązanie, zdjęcia, Transkrypcja,<br/>Odpowiedzi"]
-        OCE["lemat.ocenianie<br/>Ocena, reguły trasowania"]
-        WER["lemat.weryfikacja<br/>Kolejka, blokady, szkice,<br/>zgłoszenia"]
-        KAL["lemat.kalibracja<br/>Kalibrator pewności, Próg pewności,<br/>Kalibracja trudności"]
-        POW["lemat.powiadomienia"]
-        AUD["lemat.audyt"]
-        ORK["lemat.orkiestrator<br/>maszyny stanów + praca_w_tle<br/>+ fasada synchroniczna"]
+    subgraph aplikacja["Lemat.Application (przypadki użycia, fasady, porty)"]
+        KON["Konta"]
+        KLA["Klasy"]
+        TRE["Tresci"]
+        PRO["Profil"]
+        REKM["Rekomendacje"]
+        ROZ["Rozwiazania"]
+        OCE["Ocenianie"]
+        WER["Weryfikacje"]
+        KAL["Kalibracja"]
+        POW["Powiadomienia"]
+        AUD["Audyt"]
+        ORK["Orkiestracja<br/>Orkiestrator, handlery prac w tle,<br/>fasada synchroniczna"]
+        PORTY["Modele (porty)<br/>IModelDecyzyjny, IModelGeneratywny,<br/>IRozpoznawaniePisma, ISprawdzanieSymboliczne,<br/>IPredyktorSukcesu, IOgranicznikSzybkosci"]
     end
-    subgraph agenci["lemat.agenci"]
-        AREK["Agent rekomendujący"]
-        AGEN["Agent generujący"]
-        AROZ["Agent rozpoznający"]
-        AOCE["Agent oceniający"]
-        AWYJ["Agent wyjaśniający"]
+    DOM["Lemat.Domain<br/>agregaty, value objects, enumy,<br/>reguły 11 (FR-19…FR-28), Filtr danych osobowych"]
+    subgraph agenci["Lemat.Agenci"]
+        AREK["AgentRekomendujacy"]
+        AGEN["AgentGenerujacy"]
+        AROZ["AgentRozpoznajacy"]
+        AOCE["AgentOceniajacy"]
+        AWYJ["AgentWyjasniajacy"]
     end
-    subgraph porty["lemat.modele (porty + adaptery)"]
-        PMD["ModelDecyzyjny"]
-        PMG["ModelGeneratywny"]
-        PRP["RozpoznawaniePisma"]
-        PSY["SprawdzanieSymboliczne"]
-        PPS["PredyktorSukcesu"]
+    subgraph modele["Lemat.Modele (adaptery)"]
+        ACB["CircuitBreakerModeluDecyzyjnego"]
         AJEV["JevAdapter"]
         AZAP["ZapasowyLlmAdapter"]
-        ALLM["LlmAdapter (per dostawca)"]
-        ACB["CircuitBreakerModeluDecyzyjnego"]
+        ALLM["LlmAdapter / LlmRozpoznawaniePismaAdapter<br/>(IChatClient)"]
+        AMOCK["Mock*"]
+    end
+    subgraph infra["Lemat.Infrastructure"]
+        EF["LematDbContext (EF Core)<br/>repozytoria, zapytania"]
+        PRACE["SklepPracWTle (Npgsql, SKIP LOCKED)"]
+        OGR["OgranicznikSzybkosci (limit_szybkosci_modelu)"]
+        SBX["Klienci sidecarów:<br/>SympySidecarKlient, ImageSandboxKlient"]
+        S3["MagazynObiektowS3, RejestrZdarzenRodoS3"]
     end
     HTTP --> KON & KLA & TRE & PRO & REKM & ROZ & OCE & WER & KAL & POW & AUD & ORK
     ORK --> AREK & AGEN & AROZ & AOCE & AWYJ
     REKM --> ORK
-    AOCE --> PMD & PSY
-    AREK --> PPS & PMD
-    AGEN --> PMG & PMD & PSY
-    AROZ --> PRP
-    AWYJ --> PMG
-    PMD --> ACB --> AJEV & AZAP
-    PMG --> ALLM
-    PRP --> ALLM
+    aplikacja --> DOM
+    AOCE --> PORTY
+    AREK --> PORTY
+    AGEN --> PORTY
+    AROZ --> PORTY
+    AWYJ --> PORTY
+    PORTY -. "implementacja" .-> ACB
+    PORTY -. "implementacja" .-> ALLM
+    PORTY -. "implementacja" .-> OGR
+    PORTY -. "implementacja" .-> SBX
+    ACB --> AJEV & AZAP
     AZAP --> ALLM
+    aplikacja -. "repozytoria" .-> EF
+    aplikacja -. "prace w tle" .-> PRACE
+    aplikacja -. "magazyn" .-> S3
 ```
+
+Strzałki ciągłe to wywołania; przerywane — implementacje interfejsów
+zdefiniowanych w `Lemat.Application` (odwrócenie zależności: `Lemat.Modele` i
+`Lemat.Infrastructure` zależą od `Lemat.Application`, nie odwrotnie).
 
 ### 6.2 Odpowiedzialności modułów
 
-| Moduł | Odpowiedzialność | Właściciel danych (tabele) |
-|---|---|---|
-| `lemat.http` | Routery, uwierzytelnianie, DTO, mapowanie błędów RFC 9457, idempotencja żądań, globalny ogranicznik szybkości modeli dla procesu `api` (13.2) | `klucz_idempotencji`, `limit_szybkosci_modelu` (wspólnie z `lemat.modele`) |
-| `lemat.konta` | Rejestracja, logowanie, tokeny, role, flagi Nauczyciela (`weryfikator_globalny`, `recenzent_tresci`), statusy kont, usuwanie i przywracanie kont wszystkich ról (RODO, ADR-040, ADR-044), Zdarzenia RODO i ich rejestr poza bazą (ADR-041), kalendarz dni roboczych | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania`, `zdarzenie_rodo`, `dzien_wolny` |
-| `lemat.klasy` | Klasy, kody zaproszeń, członkostwo, archiwizacja, Zestawy zadań, Przypisania | `klasa`, `czlonkostwo_klasy`, `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` |
-| `lemat.tresci` | Zadania i ich wersje, zasięg, Kryteria oceniania, Wkładki teoretyczne, Działy, Umiejętności, import Arkuszy CKE, Walidacja i Przegląd zadań, Zgłoszenia błędu w Zadaniu i wstrzymanie w doborze, pula Zadań diagnostycznych, zlecenia generowania i budżet generowania systemowego | `dzial`, `umiejetnosc`, `umiejetnosc_wymagana`, `arkusz_cke`, `import_arkusza`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `zalacznik_zadania`, `wkladka_teoretyczna`, `walidacja_zadania`, `przeglad_zadania`, `zlecenie_generowania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze` |
-| `lemat.profil` | Profil ucznia, Wynik zadania, Test diagnostyczny, powtórki, odtwarzanie Profilu | `profil_ucznia`, `opanowanie_umiejetnosci`, `wynik_zadania`, `test_diagnostyczny`, `pozycja_testu_diagnostycznego` |
-| `lemat.rekomendacje` | Ścieżka nauki, Seria, Rekomendacje (korzysta z Agenta rekomendującego przez fasadę Orkiestratora) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` |
-| `lemat.rozwiazania` | Przyjęcie i normalizacja zdjęć (piaskownica `api`), maskowanie, Transkrypcja, Poprawki Transkrypcji z limitami i Sprawdzeniem zgodności poprawek (ADR-036), Filtr danych osobowych (ADR-042), Odpowiedzi i kontekst próby (ADR-032), zgłoszenia błędu odczytu (przyjęcie wniosku), kopie treningowe (za zgodą) | `rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `odpowiedz`, `kopia_treningowa` |
-| `lemat.ocenianie` | Ocena, reguły FR-20/21/25/26/28, trasowanie do Weryfikacji, Wskazówki | `ocena`, `ocena_kryterium` |
-| `lemat.weryfikacja` | Kolejka weryfikacji, blokady i ich zwalnianie, szkice rozstrzygnięć, rozstrzygnięcia, korekty, eskalacja, kontrola przyjęć | `weryfikacja`, `szkic_rozstrzygniecia` |
-| `lemat.kalibracja` | Próbki kalibracyjne, kalibratory pewności, Próg pewności, bezpieczniki trafności i poprawek (ADR-046), kalibracja Poziomu trudności, metryki NFR-02/03/04 | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `stan_bezpiecznika`, `kalibracja_trudnosci` |
-| `lemat.modele` | Porty, adaptery, Konfiguracja modeli, dziennik decyzji, circuit breaker, globalny ogranicznik szybkości (ADR-039) | `konfiguracja_modelu`, `decyzja_modelu`, `limit_szybkosci_modelu` |
-| `lemat.orkiestrator` | Maszyny stanów, zlecanie i wykonywanie prac w tle, pule workera, harmonogram, fasada synchroniczna dla rekomendacji (ADR-023) | `praca_w_tle` |
-| `lemat.powiadomienia` | Powiadomienia w aplikacji | `powiadomienie` |
-| `lemat.audyt` | Dziennik działań Nauczycieli, Administratorów i zmian systemowych (np. zmiana skalibrowanego Poziomu trudności) | `dziennik_audytu` |
+Moduł to para przestrzeni nazw `Lemat.Domain.<Modul>` (agregaty, reguły) i
+`Lemat.Application.<Modul>` (przypadki użycia, fasada, porty repozytoriów)
+oraz grupa endpointów `Lemat.Api/Endpointy/<Modul>Endpointy.cs`. Nazwy
+modułów są pojęciami słownika w liczbie mnogiej albo nazwą czynności, aby
+przestrzeń nazw nie kolidowała z nazwą klasy agregatu (ADR-049 p. 6).
 
-Reguła zależności: moduły domenowe nie importują siebie nawzajem poza
-publicznymi fasadami `lemat.<modul>.api` (kontrakt `import-linter`
-„layers + independence”). Agenci nie znają FastAPI ani SQLAlchemy — dostają i
-zwracają obiekty Pydantic (sekcja 10).
+| Moduł | Przestrzenie nazw | Odpowiedzialność | Właściciel danych (tabele) | Fasada (jedyne wejście z innych modułów) | Grupa tras API |
+|---|---|---|---|---|---|
+| Konta | `Lemat.Domain.Konta`, `Lemat.Domain.Konta.Rodo`, `Lemat.Application.Konta` | Rejestracja, logowanie, tokeny, role, flagi Nauczyciela (`weryfikator_globalny`, `recenzent_tresci`), statusy kont, usuwanie i przywracanie kont wszystkich ról (ADR-040, ADR-044), Zdarzenia RODO i ich rejestr poza bazą (ADR-041) | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania`, `zdarzenie_rodo` | `IKontaFasada` | `/auth`, `/uczniowie/ja`, `/nauczyciele/ja`, `/admin/uzytkownicy` |
+| Klasy | `Lemat.Domain.Klasy`, `Lemat.Application.Klasy` | Klasy, kody zaproszeń, członkostwo, archiwizacja, Przekazanie Klasy, Zestawy zadań, Przypisania | `klasa`, `czlonkostwo_klasy`, `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` | `IKlasyFasada` | `/klasy`, `/zestawy-zadan`, `/przypisania`, `/admin/klasy` |
+| Tresci | `Lemat.Domain.Tresci`, `Lemat.Application.Tresci` | Zadania i ich wersje, zasięg, Kryteria oceniania, Wkładki teoretyczne, Działy, Umiejętności, import Arkuszy CKE, Walidacja i Przegląd zadań, Zgłoszenia błędu w Zadaniu i wstrzymanie w doborze, pula Zadań diagnostycznych, zlecenia generowania i budżet generowania systemowego, kalibracja Poziomu trudności | `dzial`, `umiejetnosc`, `umiejetnosc_wymagana`, `arkusz_cke`, `import_arkusza`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `zalacznik_zadania`, `wkladka_teoretyczna`, `walidacja_zadania`, `przeglad_zadania`, `zlecenie_generowania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze`, `kalibracja_trudnosci` | `ITresciFasada` | `/dzialy`, `/umiejetnosci`, `/zadania`, `/zlecenia-generowania`, `/zgloszenia-bledu-zadan`, `/wkladki-teoretyczne`, `/admin/arkusze-cke`, `/admin/zadania`, `/admin/pula-diagnostyczna`, `/admin/wkladki-teoretyczne` |
+| Profil | `Lemat.Domain.Profil`, `Lemat.Application.Profil` | Profil ucznia, Wynik zadania, Test diagnostyczny, powtórki, odtwarzanie Profilu | `profil_ucznia`, `opanowanie_umiejetnosci`, `wynik_zadania`, `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `IProfilFasada` | `/uczniowie/{id}/profil`, `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne` |
+| Rekomendacje | `Lemat.Domain.Rekomendacje`, `Lemat.Application.Rekomendacje` | Ścieżka nauki, Seria, Rekomendacje (Agent rekomendujący przez fasadę Orkiestratora, ADR-023) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` | `IRekomendacjeFasada` | `/uczniowie/ja/rekomendacje`, `/uczniowie/ja/sciezka-nauki`, `/elementy-sciezki` |
+| Rozwiazania | `Lemat.Domain.Rozwiazania`, `Lemat.Application.Rozwiazania` | Przyjęcie i normalizacja zdjęć (sidecar `obrazy-api`), maskowanie, Transkrypcja, Poprawki Transkrypcji z limitami i Sprawdzeniem zgodności poprawek (ADR-036), Filtr danych osobowych (ADR-042), Odpowiedzi i kontekst próby (ADR-032), przyjęcie zgłoszenia błędu odczytu, kopie treningowe | `rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `odpowiedz`, `kopia_treningowa` | `IRozwiazaniaFasada` | `/rozwiazania`, `/zadania/{id}/odpowiedzi` |
+| Ocenianie | `Lemat.Domain.Ocenianie`, `Lemat.Application.Ocenianie` | Ocena, reguły FR-20/21/25/26/28, pewność, trasowanie do Weryfikacji (T-1 … T-7), Wskazówki | `ocena`, `ocena_kryterium` | `IOcenianieFasada` | `/rozwiazania/{id}/ocena` |
+| Weryfikacje | `Lemat.Domain.Weryfikacje`, `Lemat.Application.Weryfikacje` | Kolejka weryfikacji, Blokady weryfikacji i ich zwalnianie, szkice rozstrzygnięć, rozstrzygnięcia, korekty, eskalacja, kontrola przyjęć | `weryfikacja`, `szkic_rozstrzygniecia` | `IWeryfikacjeFasada` | `/weryfikacje`, `/rozwiazania/{id}/korekty`, `/rozwiazania/{id}/zgloszenie-bledu-odczytu`, `/admin/obciazenie-weryfikacji` |
+| Kalibracja | `Lemat.Domain.Kalibracja`, `Lemat.Application.Kalibracja` | Próbki kalibracyjne, Kalibratory pewności, Próg pewności, bezpieczniki trafności i poprawek (ADR-046), metryki NFR-02/03/04, ewaluacja ZT-1 | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `stan_bezpiecznika` | `IKalibracjaFasada` | `/admin/progi-pewnosci`, `/admin/kalibracja`, `/admin/bezpieczniki` |
+| Modele | `Lemat.Domain.Modele`, `Lemat.Application.Modele` (porty) | Konfiguracja modeli, plan pytań i decyzje składowe, dziennik decyzji, porty modeli i ogranicznika (implementacje: `Lemat.Modele`, `Lemat.Infrastructure`) | `konfiguracja_modelu`, `decyzja_modelu`, `limit_szybkosci_modelu` | `IModeleFasada` | `/admin/konfiguracje-modeli` |
+| Orkiestracja | `Lemat.Application.Orkiestracja` (bez części domenowej) | Maszyny stanów przepływów wieloagentowych, zlecanie i wykonywanie prac w tle, fasada synchroniczna rekomendacji (6.3) | `praca_w_tle` | `IOrkiestrator`, `IZlecaniePrac` | `/admin/praca-w-tle` |
+| Powiadomienia | `Lemat.Domain.Powiadomienia`, `Lemat.Application.Powiadomienia` | Powiadomienia w aplikacji i ich strumień SSE (ADR-051) | `powiadomienie` | `IPowiadomieniaFasada` | `/powiadomienia` |
+| Audyt | `Lemat.Domain.Audyt`, `Lemat.Application.Audyt` | Dziennik działań Nauczycieli, Administratorów i zmian systemowych | `dziennik_audytu` | `IAudytFasada` | — |
+| Wspolne | `Lemat.Domain.Wspolne`, `Lemat.Application.Wspolne` | Jądro współdzielone: identyfikatory silnie typowane, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci`, kalendarz dni roboczych (`KalendarzDniRoboczych`, ADR-043), `TimeProvider`, jednostka pracy | `dzien_wolny` | — (typy publiczne) | — |
+
+Tabele techniczne `klucz_idempotencji` (filtr endpointów `Lemat.Api`,
+repozytorium w `Lemat.Infrastructure`) i `limit_szybkosci_modelu`
+(`OgranicznikSzybkosci` w `Lemat.Infrastructure.Modele`) nie należą do modułu
+domenowego. `dzien_wolny` przechodzi z modułu kont (2.4) do jądra
+współdzielonego, bo korzystają z niego Weryfikacje, Tresci (SLA Zgłoszeń) i
+Kalibracja (termin Kontroli).
+
+Reguły zależności między modułami (egzekwowane w 6.5):
+
+1. Agregat jednego modułu wskazuje agregat innego modułu wyłącznie przez
+   identyfikator silnie typowany (`ZadanieWersjaId`, `UczenId`); typy
+   wyliczeniowe innego modułu są dozwolone.
+2. Przypadek użycia modułu X korzysta z modułu Y wyłącznie przez interfejs
+   fasady `Lemat.Application.Y.I<Y>Fasada` (np. Ocenianie pobiera Kryteria
+   oceniania przez `ITresciFasada.PobierzZadanieDoOcenyAsync`).
+3. Orkiestracja może korzystać z fasad wszystkich modułów; żaden moduł nie
+   korzysta z Orkiestracji poza `IZlecaniePrac` (zlecenie pracy w bieżącej
+   transakcji) i `IOrkiestrator.RekomendujSynchronicznieAsync` (wyłącznie
+   Rekomendacje, ADR-023).
+4. Transakcja obejmuje zmiany agregatów jednego przypadku użycia; zmiany w
+   innych modułach następują przez prace w tle albo zdarzenia domenowe w
+   tej samej transakcji (13.6) — jak w wersji 2.4.
 
 ### 6.3 Orkiestrator
 
-Orkiestrator nie jest osobnym serwisem, lecz modułem (biblioteką)
-wykonywanym w dwóch trybach:
+Orkiestrator nie jest osobnym serwisem, lecz klasą
+`Lemat.Application.Orkiestracja.Orkiestrator` (z handlerami prac w tle w
+`Lemat.Application.Orkiestracja.Handlery`) wykonywaną w dwóch trybach:
 
-- **Tryb asynchroniczny (proces `worker`)** — wszystkie przepływy
+- **Tryb asynchroniczny (proces `Lemat.Worker`)** — wszystkie przepływy
   wieloagentowe: rozpoznanie → ocena → wskazówka → aktualizacja Profilu,
   generowanie → walidacja, kalibracja. Realizuje wzorzec **maszyna stanów w
-  bazie + prace w tle**:
-  1. Każda zmiana stanu encji (np. `rozwiazanie.status`) i zlecenie kolejnej
-     pracy w tle odbywają się **w jednej transakcji** PostgreSQL.
-  2. Worker pobiera pracę ze swojej puli (`FOR UPDATE SKIP LOCKED`), ustawia
-     dzierżawę (`zablokowana_do = now() + 60 s`), odnawia ją co 15 s.
-  3. Wywołania modeli odbywają się **poza transakcją**; wynik zapisywany jest
-     warunkowo (`UPDATE … WHERE status = :oczekiwany AND version = :v`). Jeśli
-     warunek nie jest spełniony, wynik jest odrzucany i logowany jako
-     `rezultat_przestarzaly` (sekcja 15).
-  4. Każdy handler jest idempotentny (sekcja 13.3).
-- **Tryb synchroniczny (proces `api`)** — jeden przepływ:
-  `Orkiestrator.rekomenduj_synchronicznie(uczen_id)` wywoływany przez
-  `lemat.rekomendacje` przy `GET /uczniowie/ja/rekomendacje/nastepna`. Jest to
-  wywołanie jednego agenta (rekomendującego) bez przekazywania danych do
-  innych agentów, więc nie wymaga maszyny stanów. Uzasadnienie wyjątku:
-  Uczeń czeka na następny element po kliknięciu „Dalej” (cel p95 ≤ 500 ms),
-  a praca w tle z odpytywaniem dodałaby ≥ 1 s. Ograniczenia: jedyne
-  wywołanie modelu to `Q-RE-01` (tylko grupa eksperymentu `JEV_CHOICE`) z
-  timeoutem 1,5 s, bez ponowień i bez modelu zapasowego; przy błędzie albo
-  otwartym obwodzie polityka `POLITYKA_ELO` (10.1.6). Zapotrzebowanie na
-  uzupełnienie puli Zadań jest zlecane jako praca w tle w tej samej
-  transakcji co zapis elementu (ADR-023).
+  bazie + prace w tle** (ADR-002, ADR-053):
+  1. Każda zmiana stanu agregatu (np. `Rozwiazanie.Status`) i zlecenie
+     kolejnej pracy w tle (`IZlecaniePrac.Zlec(...)`, wiersz `praca_w_tle`
+     dodany do tego samego `LematDbContext`) odbywają się **w jednej
+     transakcji** PostgreSQL; `NOTIFY praca_w_tle, '<pula>'` jest wysyłane
+     w tej samej transakcji przez `ZlecaniePracInterceptor`
+     (`SaveChangesInterceptor`), więc dociera do workerów dopiero po
+     zatwierdzeniu.
+  2. Pętla puli pobiera pracę ze swojej puli (`FOR UPDATE SKIP LOCKED`),
+     ustawia dzierżawę (`dzierzawa_do = now() + 60 s`) i odnawia ją co 15 s
+     (`PeriodicTimer`); utrata dzierżawy anuluje `CancellationToken`
+     handlera.
+  3. Wywołania modeli odbywają się **poza transakcją**; wynik jest
+     zapisywany warunkowo (`UPDATE … WHERE status = @oczekiwany AND version
+     = @v`, w EF Core: `version` jako token współbieżności i
+     `DbUpdateConcurrencyException`). Jeśli warunek nie jest spełniony,
+     wynik jest odrzucany i logowany jako `rezultat_przestarzaly` (sekcja 15).
+  4. Każdy handler jest idempotentny (sekcja 13.3) i implementuje
+     `IHandlerPracy` (`TypPracy Typ`, `PulaPracy Pula`,
+     `Task<RezultatPracy> WykonajAsync(PracaWTle praca, CancellationToken ct)`).
+- **Tryb synchroniczny (proces `Lemat.Api`)** — jeden przepływ:
+  `IOrkiestrator.RekomendujSynchronicznieAsync(UczenId uczenId,
+  CancellationToken ct)` wywoływany przez moduł Rekomendacje przy `GET
+  /uczniowie/ja/rekomendacje/nastepna`. Jest to wywołanie jednego agenta
+  (rekomendującego) bez przekazywania danych do innych agentów, więc nie
+  wymaga maszyny stanów. Uzasadnienie wyjątku: Uczeń czeka na następny
+  element po kliknięciu „Dalej” (cel p95 ≤ 500 ms), a praca w tle z
+  oczekiwaniem na wynik dodałaby ≥ 1 s. Ograniczenia: jedyne wywołanie
+  modelu to `Q-RE-01` (tylko grupa eksperymentu `JEV_CHOICE`) z timeoutem
+  1,5 s (`CancellationTokenSource.CancelAfter`), bez ponowień i bez modelu
+  zapasowego; przy błędzie albo otwartym obwodzie polityka `POLITYKA_ELO`
+  (10.1.6). Zapotrzebowanie na uzupełnienie puli Zadań jest zlecane jako
+  praca w tle w tej samej transakcji co zapis elementu (ADR-023).
+
+Orkiestrator nie korzysta z mechanizmów orkiestracji agentów Semantic
+Kernel (Agent Framework, Process Framework): przepływ jest zapisany w bazie,
+a nie w pamięci procesu, bo musi przetrwać restart workera, być
+idempotentny i audytowalny (NFR-05) — ADR-055.
+
+### 6.4 Solucja .NET — projekty i zależności
+
+Solucja `backend/Lemat.slnx` (format XML solucji, domyślny w .NET 10):
+
+| Projekt | Typ (SDK) | Rola | Referencje projektów | Kluczowe pakiety |
+|---|---|---|---|---|
+| `Lemat.Domain` | biblioteka (`Microsoft.NET.Sdk`) | Agregaty, encje, value objects, enumy, zdarzenia domenowe, reguły czyste (11.1–11.3, Filtr danych osobowych, limity Poprawek, Zgodność Oceny) | — | brak (tylko BCL) |
+| `Lemat.Application` | biblioteka | Przypadki użycia (komendy i zapytania z handlerami), fasady modułów, porty repozytoriów i modeli, Orkiestrator i handlery prac w tle, `LematOpcje` | `Lemat.Domain` | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Microsoft.Extensions.Logging.Abstractions`, `Microsoft.Extensions.Options` |
+| `Lemat.Agenci` | biblioteka | Pięciu Agentów (10.1–10.5), szablony promptów, pluginy Semantic Kernel, predyktor Elo | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core` |
+| `Lemat.Modele` | biblioteka | Adaptery portów modeli: `JevAdapter`, `ZapasowyLlmAdapter`, `LlmAdapter`, `LlmRozpoznawaniePismaAdapter`, `CircuitBreakerModeluDecyzyjnego`, rejestr adapterów, implementacje Mock | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`, `Microsoft.Extensions.Http` |
+| `Lemat.Infrastructure` | biblioteka | `LematDbContext`, konfiguracje encji, migracje, repozytoria i zapytania, sklep prac w tle (Npgsql), ogranicznik szybkości, magazyn S3, rejestr Zdarzeń RODO, klienci sidecarów, e-mail, tokeny JWT, haszowanie haseł | `Lemat.Application`, `Lemat.Domain` | `Microsoft.EntityFrameworkCore`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `AWSSDK.S3`, `MailKit`, `Konscious.Security.Cryptography.Argon2`, `Microsoft.IdentityModel.JsonWebTokens` |
+| `Lemat.Api` | aplikacja web (`Microsoft.NET.Sdk.Web`) | Punkt kompozycji procesu `api`: endpointy, DTO, walidatory, uwierzytelnianie, idempotencja, SSE, OpenAPI | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | `Microsoft.AspNetCore.OpenApi`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `FluentValidation`, `OpenTelemetry.Extensions.Hosting` |
+| `Lemat.Worker` | usługa robocza (`Microsoft.NET.Sdk.Worker`) | Punkt kompozycji procesu `worker`: hosty pul prac w tle | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | `OpenTelemetry.Extensions.Hosting` |
+| `Lemat.Scheduler` | usługa robocza | Punkt kompozycji procesu `scheduler`: harmonogram 13.5 | `Lemat.Application`, `Lemat.Infrastructure` | `Cronos` |
+| `Lemat.ImageSandbox` | aplikacja web (Kestrel na gnieździe Unix) | Normalizacja, maskowanie, wycinki zdjęć (ADR-052) | — (celowo bez referencji do kodu Lemat) | `Magick.NET-Q8-AnyCPU` |
+| `Lemat.Domain.Tests` | testy | Testy jednostkowe reguł i niezmienników | `Lemat.Domain` | `xunit.v3`, `Shouldly`, `FsCheck.Xunit.v3` |
+| `Lemat.Application.Tests` | testy | Przypadki użycia na fałszywych repozytoriach i modelach Mock | `Lemat.Application`, `Lemat.Modele` | `xunit.v3`, `NSubstitute`, `Shouldly` |
+| `Lemat.Agenci.Tests` | testy | Agenci z modelami Mock, zgodność szablonów promptów | `Lemat.Agenci`, `Lemat.Modele` | `xunit.v3`, `Shouldly` |
+| `Lemat.Modele.Tests` | testy | Kontrakty adapterów (WireMock.Net), circuit breaker, Mock | `Lemat.Modele` | `WireMock.Net`, `xunit.v3` |
+| `Lemat.Infrastructure.Tests` | testy integracyjne | PostgreSQL 16, MinIO i `lemat-sympy` w Testcontainers: migracje, triggery, CHECK, `SKIP LOCKED`, ogranicznik, schemat zgodny z DDL | `Lemat.Infrastructure` | `Testcontainers.PostgreSql`, `Testcontainers.Minio` |
+| `Lemat.Api.Tests` | testy integracyjne | Endpointy przez `WebApplicationFactory`, ProblemDetails, ETag/If-Match, idempotencja, SSE, kontrakt OpenAPI | `Lemat.Api` | `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` |
+| `Lemat.Architecture.Tests` | testy | Reguły warstw i modułów (6.5), test słownika (3.4) | wszystkie projekty `src/` | `NetArchTest.Rules`, `YamlDotNet` |
+| `Lemat.Symulacje` | testy (długie, uruchamiane nocą i przed wydaniem) | Symulacje bezpiecznika (11.5.3), ogranicznika (13.2), obciążenia (17.7) z ustalonym ziarnem | `Lemat.Domain`, `Lemat.Application` | `xunit.v3` |
+
+```mermaid
+flowchart BT
+    DOM["Lemat.Domain"]
+    APP["Lemat.Application"]
+    AGE["Lemat.Agenci"]
+    MOD["Lemat.Modele"]
+    INF["Lemat.Infrastructure"]
+    API["Lemat.Api"]
+    WRK["Lemat.Worker"]
+    SCH["Lemat.Scheduler"]
+    IMG["Lemat.ImageSandbox"]
+    APP --> DOM
+    AGE --> APP
+    MOD --> APP
+    INF --> APP
+    API --> AGE & MOD & INF
+    WRK --> AGE & MOD & INF
+    SCH --> INF
+    IMG ~~~ DOM
+```
+
+Strzałka `A --> B` oznacza „A ma referencję do B”. `Lemat.ImageSandbox` nie
+ma referencji do żadnego projektu Lemat — kontrakt z klientem
+`ImageSandboxKlient` (`Lemat.Infrastructure`) jest sprawdzany testem
+kontraktowym w `Lemat.Infrastructure.Tests`, który uruchamia sandbox w
+procesie testu.
+
+### 6.5 Reguły warstw i ich egzekwowanie
+
+| Projekt | Może zależeć od | Nie może zależeć od | Egzekwowanie |
+|---|---|---|---|
+| `Lemat.Domain` | BCL | dowolny pakiet NuGet, `System.Net.Http`, `Microsoft.EntityFrameworkCore*`, `Microsoft.AspNetCore*`, `Microsoft.Extensions.AI*`, `Microsoft.SemanticKernel*`, `Npgsql*`; `DateTime.Now`, `DateTimeOffset.UtcNow` (czas przekazywany jako parametr `DateTimeOffset teraz`) | brak `PackageReference` (test `ProjektDomenyBezPakietow`), NetArchTest `DomenaNiezaleznaOdInfrastruktury`, BannedApiAnalyzers |
+| `Lemat.Application` | `Lemat.Domain`, abstrakcje `Microsoft.Extensions.*` | EF Core, Npgsql, ASP.NET Core, Semantic Kernel, SDK dostawców modeli, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | referencje projektów, NetArchTest `AplikacjaBezInfrastruktury` |
+| `Lemat.Agenci` | `Lemat.Application`, `Lemat.Domain`, `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core` | EF Core, Npgsql, ASP.NET Core, SDK dostawców (`OpenAI.*`, `Azure.AI.*`), `Lemat.Infrastructure`, `Lemat.Modele` | referencje projektów, BannedApiAnalyzers (`BannedSymbols.txt`), NetArchTest `AgenciTylkoPrzezPorty` |
+| `Lemat.Modele` | `Lemat.Application`, `Lemat.Domain`, Microsoft.Extensions.AI z pakietami dostawców | EF Core, Npgsql, ASP.NET Core, `Lemat.Infrastructure`, `Lemat.Agenci` | referencje projektów, NetArchTest `SdkDostawcowTylkoWModelach` (typy z `OpenAI.*`, `Azure.AI.*` występują wyłącznie w `Lemat.Modele`) |
+| `Lemat.Infrastructure` | `Lemat.Application`, `Lemat.Domain`, pakiety infrastruktury | ASP.NET Core, `Lemat.Agenci`, `Lemat.Modele`, SDK dostawców modeli | referencje projektów, NetArchTest |
+| `Lemat.Api`, `Lemat.Worker`, `Lemat.Scheduler` | wszystkie biblioteki `src/` (punkty kompozycji) | siebie nawzajem; w `Lemat.Api` endpointy nie używają `LematDbContext` ani repozytoriów — wyłącznie handlerów przypadków użycia i fasad | referencje projektów, NetArchTest `EndpointyTylkoPrzezAplikacje` |
+| `Lemat.ImageSandbox` | `Magick.NET-Q8-AnyCPU`, ASP.NET Core | jakikolwiek projekt Lemat, sieć wychodząca | referencje projektów; `network_mode: none` (5.3) |
+| Moduły w `Lemat.Domain` / `Lemat.Application` | 6.2 reguły 1–3 | typy innych modułów poza identyfikatorami, enumami i fasadami | NetArchTest z regułą własną `ZaleznoscMiedzyModulamiTylkoPrzezFasade` (`ICustomRule`: typ z `Lemat.Application.X` może używać z `Lemat.Application.Y` wyłącznie typów z przestrzeni `Lemat.Application.Y` oznaczonych atrybutem `[Fasada]` i ich DTO; typ z `Lemat.Domain.X` może używać z `Lemat.Domain.Y` wyłącznie typów `*Id` i enumów) |
+
+Testy architektury są w `backend/tests/Lemat.Architecture.Tests` i działają
+w każdym przebiegu CI; naruszenie kończy budowę błędem (jak `import-linter`
+w wersji 2.4).
+
+### 6.6 Warstwa agentów AI w .NET
+
+| Agent (słownik) | Interfejs (`Lemat.Application.Agenci`) | Implementacja (`Lemat.Agenci`) | Porty modeli | Role `konfiguracja_modelu` | Semantic Kernel | Wywołuje |
+|---|---|---|---|---|---|---|
+| Agent rekomendujący | `IAgentRekomendujacy` | `Rekomendacje.AgentRekomendujacy` (+ `PredyktorSukcesuElo : IPredyktorSukcesu`) | `IPredyktorSukcesu`, `IModelDecyzyjny` (wyłącznie Q-RE-01) | `DECYZYJNY_GLOWNY` | brak — uzasadnienie z szablonów (ADR-011) | `Orkiestrator` (tryb synchroniczny) |
+| Agent generujący | `IAgentGenerujacy` | `Generowanie.AgentGenerujacy` | `IModelGeneratywny`, `IModelDecyzyjny` (Q-WA-*), `ISprawdzanieSymboliczne` | `GENERATYWNY_ZADANIA`, `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE`, `GENERATYWNY_WKLADKI`, `DECYZYJNY_GLOWNY` | szablony promptów; plugin `SprawdzanieSymbolicznePlugin` (`sprawdz_rownowaznosc`, `postac_liniowa`) z `FunctionChoiceBehavior.Auto` ograniczonym do tych funkcji, ≤ 8 wywołań na generowanie | handlery `GENERUJ_ZADANIE`, `WALIDUJ_ZADANIE`, `GENERUJ_SZKIC_WKLADKI` |
+| Agent rozpoznający | `IAgentRozpoznajacy` | `Rozpoznawanie.AgentRozpoznajacy` | `IRozpoznawaniePisma`, `ISprawdzanieSymboliczne` (poprawność LaTeX) | `ROZPOZNAWANIE_PISMA` | szablony promptów; bez pluginów (ustrukturyzowane wyjście) | handlery `ROZPOZNAJ_PISMO`, `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`; Filtr danych osobowych stosuje handler po powrocie agenta (`Lemat.Domain.Rozwiazania.FiltrDanychOsobowych`) |
+| Agent oceniający | `IAgentOceniajacy` | `Ocenianie.AgentOceniajacy` | `IModelDecyzyjny` (`PlanPytan`), `ISprawdzanieSymboliczne`, `IModelGeneratywny` (Opinia pomocnicza, 10.4.5) | `DECYZYJNY_GLOWNY`, `DECYZYJNY_ZAPASOWY`, `GENERATYWNY_OPINIA_POMOCNICZA` | szablon stanu dla modelu decyzyjnego (10.4.2) jako szablon Semantic Kernel bez wywołania LLM; reguły 11 w `Lemat.Domain.Ocenianie` | handlery `OCEN_ROZWIAZANIE`, `PONOW_OCENE`, `OPINIA_POMOCNICZA` |
+| Agent wyjaśniający | `IAgentWyjasniajacy` | `Wyjasnianie.AgentWyjasniajacy` | `IModelGeneratywny` | `GENERATYWNY_WSKAZOWKI` | szablon promptu; bez pluginów | handler `NAPISZ_WSKAZOWKE` |
+
+Adaptery portów (`Lemat.Modele`, przestrzeń nazw w nawiasie):
+
+| Port (`Lemat.Application.Modele`) | Adapter | Klucz `konfiguracja_modelu.dostawca` | Uwagi |
+|---|---|---|---|
+| `IModelDecyzyjny` | `CircuitBreakerModeluDecyzyjnego` (`Lemat.Modele.Decyzyjne`) — dekorator wybierający model główny albo zapasowy dla całej Oceny (ADR-009) | — | reguły obwodu 13.2: 3 kolejne błędy lub ≥ 50% w 20 s przy ≥ 6 wywołaniach; półotwarty po 60 s; `429` i brak przydziału nie liczą się (ADR-039); implementacja własna (Polly nie ma reguły „3 kolejne błędy”) |
+| `IModelDecyzyjny` | `JevAdapter` (`Lemat.Modele.Jev`) | `typesafe-jev` | typowany `HttpClient`, tryby `WSADOWY` / `POJEDYNCZY` (13.2) |
+| `IModelDecyzyjny` | `ZapasowyLlmAdapter` (`Lemat.Modele.Zapasowy`) | `zapasowy-llm` (z parametrem `dostawca_llm`) | cały `PlanPytan` jednym wywołaniem `IChatClient.GetResponseAsync<T>` ze schematem JSON (13.2) |
+| `IModelGeneratywny` | `LlmAdapter` (`Lemat.Modele.Llm`) | `azure-openai`, `openai-zgodny` | `IChatClient` z `Microsoft.Extensions.AI.OpenAI`; `azure-openai` — wdrożenie Azure OpenAI w strefie danych UE, `openai-zgodny` — dowolny punkt końcowy zgodny z API OpenAI w UE (np. model hostowany); wybór dostawcy przy G-6 (A-07) |
+| `IRozpoznawaniePisma` | `LlmRozpoznawaniePismaAdapter` (`Lemat.Modele.Llm`) | jak wyżej | wejście obrazowe `DataContent` (`image/jpeg`), wymuszony schemat JSON (ADR-004) |
+| wszystkie porty modeli | `MockModelDecyzyjny`, `MockChatClient : IChatClient`, `MockRozpoznawaniePisma` (`Lemat.Modele.Mock`) | `mock` | odpowiedzi z plików `backend/src/Lemat.Modele/Mock/Dane/**/*.json` wybierane po kodzie pytania / nazwie szablonu i SHA-256 stanu; brak dopasowania → deterministyczny rozkład z ziarnem = SHA-256 stanu; aktywacja konfiguracji `mock` w środowisku `Production` → `409 DOSTAWCA_NIEDOZWOLONY`, a start procesu z aktywną konfiguracją `mock` w `Production` kończy się błędem |
+| `ISprawdzanieSymboliczne` | `SympySidecarKlient` (`Lemat.Infrastructure.Piaskownice`) | — | ADR-050; w testach jednostkowych `FalszyweSprawdzanieSymboliczne` |
+| `IOgranicznikSzybkosci` | `OgranicznikSzybkosci` (`Lemat.Infrastructure.Modele`) | — | tabela `limit_szybkosci_modelu`, blokada doradcza (13.2) |
+| `IPredyktorSukcesu` | `PredyktorSukcesuElo` (`Lemat.Agenci.Rekomendacje`); po 20 000 Wyników zadania eksperymentalnie `PredyktorSukcesuGbm` (`Lemat.Modele.Predyktory`, ML.NET LightGBM) | — | ADR-010 |
+
+Szablony promptów są plikami Semantic Kernel w formacie YAML
+(`PromptTemplateConfig`, składnia Handlebars) w
+`backend/src/Lemat.Agenci/Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml`
+(np. `Prompty/GENERATYWNY_WSKAZOWKI/wskazowka-v1.yaml`); wartość
+`konfiguracja_modelu.wersja_promptu` wskazuje plik. Pliki są zasobami
+osadzonymi; test `KazdaWersjaPromptuIstnieje` sprawdza, że każda wersja z
+migracji danych i każdej aktywnej konfiguracji ma plik. Schematy JSON
+ustrukturyzowanych odpowiedzi są generowane z rekordów C#
+(`AIJsonUtilities.CreateJsonSchema`) i zapisywane do
+`backend/src/Lemat.Modele/Schematy/*.json`; test porównuje zapisane pliki z
+wygenerowanymi (dryf schematu kończy test błędem) i podaje je testowi
+słownika. Szczegóły kontraktów agentów i adapterów w .NET — iteracja 2.
+
+### 6.7 Struktura katalogów `backend/`
+
+```text
+backend/
+├── Lemat.slnx
+├── global.json                       # SDK 10.0.100, rollForward latestPatch
+├── Directory.Build.props             # Nullable, TreatWarningsAsErrors, AnalysisLevel
+├── Directory.Packages.props          # Central Package Management (wersje 5.2)
+├── BannedSymbols.txt                 # BannedApiAnalyzers (6.5)
+├── .editorconfig
+├── openapi/lemat-v1.json             # generowany przy budowie Lemat.Api; źródło typów frontendu
+├── src/
+│   ├── Lemat.Domain/
+│   │   ├── Wspolne/                  # Agregat<TId>, IZdarzenieDomenowe, identyfikatory, PoziomMatury, RodzajZadania,
+│   │   │                             # PoziomTrudnosci, KalendarzDniRoboczych, NiezmiennikNaruszonyException
+│   │   ├── Konta/  Konta/Rodo/  Klasy/  Tresci/  Profil/  Rekomendacje/
+│   │   ├── Rozwiazania/              # Rozwiazanie, Transkrypcja, Odpowiedz, KopiaTreningowa, ZasadyPoprawekTranskrypcji
+│   │   │   └── FiltrDanychOsobowych/ # FiltrDanychOsobowych.cs, slownik_matematyczny.txt (zasób osadzony)
+│   │   ├── Ocenianie/                # Ocena, ZasadyOceniania (11.1), PewnoscOceny (11.2), Trasowanie (11.3)
+│   │   ├── Weryfikacje/  Kalibracja/  Modele/  Powiadomienia/  Audyt/
+│   ├── Lemat.Application/
+│   │   ├── Wspolne/                  # IJednostkaPracy, LematOpcje, TimeProvider, wyjątki aplikacyjne
+│   │   ├── Konta/ … Audyt/           # na moduł: Komendy/, Zapytania/, I<Modul>Fasada.cs, Repozytoria/ (interfejsy)
+│   │   ├── Modele/                   # porty modeli (13.1), PrzyjeciePlanu, wyjątki adapterów
+│   │   ├── Agenci/                   # IAgentRekomendujacy … IAgentWyjasniajacy
+│   │   └── Orkiestracja/             # Orkiestrator, IZlecaniePrac, PracaWTle, TypPracy, PulaPracy, Handlery/
+│   ├── Lemat.Agenci/
+│   │   ├── Rekomendacje/  Generowanie/  Rozpoznawanie/  Ocenianie/  Wyjasnianie/
+│   │   ├── Pluginy/                  # SprawdzanieSymbolicznePlugin
+│   │   └── Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml
+│   ├── Lemat.Modele/
+│   │   ├── Decyzyjne/  Jev/  Zapasowy/  Llm/  Predyktory/
+│   │   ├── Mock/  Mock/Dane/         # implementacje Mock i ich dane
+│   │   ├── Schematy/                 # schematy JSON ustrukturyzowanych odpowiedzi (generowane, testowane)
+│   │   └── RejestrAdapterow.cs
+│   ├── Lemat.Infrastructure/
+│   │   ├── Persistence/              # LematDbContext, KonwencjaNazw, <Encja>EntityTypeConfiguration, repozytoria
+│   │   │   └── Migrations/  Migrations/Sql/   # migracje EF Core i pliki SQL (triggery, funkcje, partycje)
+│   │   ├── PraceWTle/                # SklepPracWTle (Npgsql), ZlecaniePracInterceptor, NasluchPowiadomien
+│   │   ├── Modele/                   # OgranicznikSzybkosci
+│   │   ├── Piaskownice/              # SympySidecarKlient, ImageSandboxKlient (HttpClient na gnieździe Unix)
+│   │   ├── Magazyn/                  # MagazynObiektowS3
+│   │   ├── Rodo/                     # RejestrZdarzenRodoS3
+│   │   ├── Bezpieczenstwo/           # WystawcaTokenow (ES256), HaszowanieHasel (argon2id)
+│   │   └── Email/                    # NadawcaEmail (MailKit)
+│   ├── Lemat.Api/
+│   │   ├── Program.cs
+│   │   ├── Endpointy/                # KontaEndpointy.cs … AdminEndpointy.cs (MapGroup per moduł)
+│   │   ├── Kontrakty/<Modul>/        # rekordy DTO: OcenaWyjscie, TranskrypcjaWejscie, …
+│   │   ├── Walidatory/<Modul>/       # FluentValidation (12.5)
+│   │   ├── Strumienie/               # KoncentratorZdarzen, endpointy SSE (ADR-051)
+│   │   └── Infrastruktura/           # ProblemDetails, idempotencja, ETag/If-Match, limity szybkości
+│   ├── Lemat.Worker/                 # Program.cs, PulaPracHostedService
+│   ├── Lemat.Scheduler/              # Program.cs, HarmonogramHostedService, Harmonogram.cs (13.5)
+│   └── Lemat.ImageSandbox/           # Program.cs, Normalizacja.cs, Maskowanie.cs, Wycinki.cs
+├── sandbox/sympy/
+│   ├── pyproject.toml  uv.lock
+│   ├── lemat_sympy/serwer.py         # Starlette: /v1/postac-liniowa, /v1/rownowaznosc-krokow, /v1/rownowaznosc-wyniku, /zdrowie
+│   ├── lemat_sympy/obliczenia.py     # parse_latex (lark), limity, wynik trójwartościowy
+│   ├── Dockerfile
+│   └── tests/
+├── tests/
+│   ├── Lemat.Domain.Tests/  Lemat.Application.Tests/  Lemat.Agenci.Tests/  Lemat.Modele.Tests/
+│   ├── Lemat.Infrastructure.Tests/  Lemat.Api.Tests/  Lemat.Symulacje/
+│   └── Lemat.Architecture.Tests/
+│       └── Slownik/                  # TestSlownika.cs, slownik_tokeny.yaml, slownik_wyjatki.yaml (3.4)
+└── Dockerfile                        # obraz lemat-backend (wszystkie punkty wejścia + efbundle)
+```
+
+Odpowiedniki plików testowych wersji 2.4 (nazwy w sekcjach 10–17):
+`tests/test_slownik.py` → `Lemat.Architecture.Tests/Slownik/TestSlownika.cs`;
+`tests/modele/test_ogranicznik.py` →
+`Lemat.Infrastructure.Tests/Modele/OgranicznikSzybkosciTests.cs` (testy (a)–(e))
+i `Lemat.Symulacje/OgranicznikSymulacja.cs` (testy (f)–(h) z FsCheck zamiast
+`hypothesis`); `tests/kalibracja/symulacja_bezpiecznika.py` →
+`Lemat.Symulacje/BezpiecznikSymulacja.cs`; `test_bezpiecznik.py` →
+`Lemat.Domain.Tests/Kalibracja/BezpiecznikTests.cs`. Litery przypadków
+testowych ((a)–(k) w 11.5.3, (a)–(h) w 13.2) pozostają nazwami metod testów
+(np. `G_Degradacja4ProcentProgNiemalejacy`).
+
+### 6.8 Struktura katalogów `frontend/` i grupy tras
+
+```text
+frontend/
+├── package.json  package-lock.json  next.config.ts  tsconfig.json
+├── eslint.config.mjs  .dependency-cruiser.cjs  vitest.config.ts  playwright.config.ts
+├── messages/pl-PL.json                  # wszystkie teksty UI (NFR-10); test słownika: zakazane synonimy
+├── public/ikony/                        # ikony PWA
+├── e2e/                                 # Playwright: scenariusze per FR (np. fr16-przeslanie.spec.ts)
+└── src/
+    ├── proxy.ts                         # Next.js 16 (dawniej middleware.ts): przekierowania wg cookie lemat_rola
+    ├── app/
+    │   ├── layout.tsx                   # <html lang="pl">, NextIntlClientProvider, style KaTeX, QueryClientProvider
+    │   ├── manifest.ts  sw.ts           # manifest PWA, service worker Serwist
+    │   ├── offline/page.tsx
+    │   ├── (publiczne)/                 # bez logowania
+    │   │   ├── page.tsx                 # /
+    │   │   ├── logowanie/page.tsx  rejestracja/page.tsx  rejestracja/nauczyciel/page.tsx
+    │   │   ├── reset-hasla/page.tsx  reset-hasla/potwierdzenie/page.tsx
+    │   │   └── dolacz/[kod]/page.tsx    # dołączenie do Klasy kodem zaproszenia (FR-30)
+    │   ├── (uczen)/                     # layout: nawigacja Ucznia, strażnik roli UCZEN
+    │   │   ├── layout.tsx
+    │   │   ├── start/page.tsx           # następny element Ścieżki nauki (FR-05, FR-10)
+    │   │   ├── test-diagnostyczny/page.tsx                      # FR-03
+    │   │   ├── sciezka-nauki/page.tsx                           # FR-05 … FR-09
+    │   │   ├── wkladki-teoretyczne/[wkladkaId]/page.tsx         # FR-06
+    │   │   ├── zadania/[zadanieId]/page.tsx                     # FR-15 (Odpowiedź), FR-16 (zdjęcia)
+    │   │   ├── rozwiazania/page.tsx  rozwiazania/[rozwiazanieId]/page.tsx   # SSE, Transkrypcja (FR-18), Ocena (FR-27)
+    │   │   ├── profil/page.tsx                                  # FR-04
+    │   │   ├── przypisania/page.tsx                             # FR-32 (widok Ucznia)
+    │   │   └── ustawienia/page.tsx      # poziom matury, termin (FR-02), zgoda na trening, usunięcie konta (NFR-09)
+    │   ├── (nauczyciel)/nauczyciel/     # layout: nawigacja Nauczyciela, strażnik roli NAUCZYCIEL
+    │   │   ├── layout.tsx  page.tsx
+    │   │   ├── klasy/page.tsx  klasy/[klasaId]/page.tsx  klasy/[klasaId]/uczniowie/[uczenId]/page.tsx   # FR-30, FR-31
+    │   │   ├── zestawy-zadan/page.tsx  zestawy-zadan/[zestawId]/page.tsx  przypisania/page.tsx           # FR-32
+    │   │   ├── weryfikacje/page.tsx  weryfikacje/[weryfikacjaId]/page.tsx                                # FR-33, FR-34
+    │   │   ├── zadania/page.tsx  zadania/nowe/page.tsx  zadania/generowanie/page.tsx  zadania/[zadanieId]/przeglad/page.tsx  # FR-11, FR-14
+    │   │   ├── zgloszenia-bledu-zadan/page.tsx                  # ADR-038 (recenzent treści)
+    │   │   └── ustawienia/page.tsx
+    │   └── (administrator)/admin/       # layout: nawigacja Administratora, strażnik roli ADMINISTRATOR
+    │       ├── layout.tsx  page.tsx
+    │       ├── uzytkownicy/page.tsx  klasy/page.tsx  arkusze-cke/page.tsx  arkusze-cke/importy/[importId]/page.tsx  # FR-35
+    │       ├── konfiguracje-modeli/page.tsx  progi-pewnosci/page.tsx  kalibracja/page.tsx  bezpieczniki/page.tsx
+    │       ├── obciazenie-weryfikacji/page.tsx  pula-diagnostyczna/page.tsx  wkladki-teoretyczne/page.tsx
+    │       └── praca-w-tle/page.tsx
+    ├── features/                        # moduły frontendu (granice 6.9); każdy z index.ts (publiczne API)
+    │   ├── konta/  nauka/  rozwiazania/  profil/  klasy/  przypisania/
+    │   ├── weryfikacje/  tresci/  administracja/  powiadomienia/
+    ├── lib/
+    │   ├── api/                         # schema.d.ts (generowany), klient.ts (openapi-fetch), typy.ts (aliasy 3.5)
+    │   ├── auth/                        # DostawcaSesji (access token w pamięci, odświeżanie przez /auth/odswiezenie)
+    │   ├── sse/                         # strumien.ts (fetch + eventsource-parser, Last-Event-ID, przejście na odpytywanie)
+    │   ├── zdjecia/                     # kompresja.worker.ts, kompresja.ts
+    │   ├── katex/                       # Wzor.tsx, TrescMarkdown.tsx
+    │   └── i18n/                        # konfiguracja next-intl (jedna lokalizacja pl-PL)
+    └── ui/                              # komponenty wspólne (Przycisk, Dialog, Lista, Formularz …)
+```
+
+Grupy tras `(publiczne)`, `(uczen)`, `(nauczyciel)` i `(administrator)`
+dają każdej roli osobny układ (`layout.tsx`: nawigacja, strażnik roli) bez
+wpływu nawiasu na URL. Trasy Ucznia nie mają prefiksu (najczęstszy ruch,
+krótkie adresy na telefonie), trasy Nauczyciela mają prefiks `/nauczyciel`,
+a Administratora `/admin`, więc segmenty o tej samej nazwie (`zadania`,
+`przypisania`, `klasy`, `ustawienia`) nie kolidują między grupami. Segmenty
+URL są w `kebab-case` po polsku (ADR-049), parametry dynamiczne w
+`camelCase` z sufiksem `Id` (`[rozwiazanieId]`), bo są zmiennymi TypeScript.
+
+Strażnik roli działa w dwóch warstwach: `src/proxy.ts` odczytuje cookie
+`lemat_rola` (`HttpOnly; Secure; SameSite=Strict; Path=/`, wartość
+`UCZEN`/`NAUCZYCIEL`/`ADMINISTRATOR`, ustawiane przez `POST /auth/logowanie`
+i `POST /auth/odswiezenie`, usuwane przez `POST /auth/wylogowanie`) i
+przekierowuje do `/logowanie` albo do strony startowej właściwej roli; jest
+to wyłącznie wygoda nawigacji, bo cookie nie jest poświadczeniem.
+Autoryzację wykonuje API (rola z JWT, uprawnienia obiektowe 12.8): brak
+uprawnień → `403`, a klient pokazuje stronę „Brak dostępu”.
+
+Renderowanie: komponenty serwerowe (RSC) renderują układy, nawigację,
+strony publiczne i teksty z `messages/pl-PL.json`; wszystkie dane
+użytkownika są pobierane w komponentach klienckich (`"use client"`) przez
+TanStack Query z access tokenem z pamięci, bo serwer Next.js nie ma tokenów
+(ADR-054). Strony z danymi mają `export const dynamic = "force-dynamic"`
+tylko w układach ról (powłoka bez danych), a odpowiedzi API nie są
+buforowane przez Next.js (`cache: "no-store"` w kliencie).
+
+### 6.9 Granice modułów frontendu
+
+| Moduł (`src/features/`) | Zawartość | Może importować | Ekrany (`src/app/`) |
+|---|---|---|---|
+| `konta` | logowanie, rejestracja, reset hasła, ustawienia konta, usunięcie konta | `lib/*`, `ui` | `(publiczne)/*`, `*/ustawienia` |
+| `nauka` | następny element, Ścieżka nauki, Wkładki teoretyczne, Test diagnostyczny, Odpowiedź w Zadaniu zamkniętym | `lib/*`, `ui`, `rozwiazania` (przez `index.ts`: przycisk „Prześlij zdjęcia”) | `(uczen)/start`, `sciezka-nauki`, `wkladki-teoretyczne`, `test-diagnostyczny`, `zadania` |
+| `rozwiazania` | aparat i kompresja, przesłanie, status przez SSE, edycja Transkrypcji i Poprawki, Ocena i Wskazówka, zgłoszenie błędu odczytu | `lib/*`, `ui` | `(uczen)/rozwiazania`, `(uczen)/zadania` |
+| `profil` | Profil ucznia (FR-04), postępy | `lib/*`, `ui` | `(uczen)/profil`, `(nauczyciel)/nauczyciel/klasy/[klasaId]/uczniowie/[uczenId]` |
+| `klasy` | Klasy, kody zaproszeń, członkostwo, postępy klasy | `lib/*`, `ui`, `profil` | `(nauczyciel)/nauczyciel/klasy`, `(publiczne)/dolacz` |
+| `przypisania` | Zestawy zadań, Przypisania, postęp Przypisania, lista Przypisań Ucznia | `lib/*`, `ui` | `(nauczyciel)/nauczyciel/zestawy-zadan`, `przypisania`, `(uczen)/przypisania` |
+| `weryfikacje` | Kolejka weryfikacji, podjęcie i przedłużanie Blokady weryfikacji, szkic, rozstrzygnięcie, korekta | `lib/*`, `ui`, `rozwiazania` (komponent podglądu Transkrypcji i zdjęć) | `(nauczyciel)/nauczyciel/weryfikacje` |
+| `tresci` | Zadania, generowanie, Przegląd, Zgłoszenia błędu w Zadaniu, Wkładki do przeglądu | `lib/*`, `ui` | `(nauczyciel)/nauczyciel/zadania`, `zgloszenia-bledu-zadan`, `(administrator)/admin/wkladki-teoretyczne` |
+| `administracja` | użytkownicy, Przekazanie Klasy, Arkusze CKE, Konfiguracje modeli, progi, kalibracja, bezpieczniki, obciążenie, pula diagnostyczna, prace w tle | `lib/*`, `ui`, `tresci` | `(administrator)/admin/*` |
+| `powiadomienia` | lista i strumień SSE powiadomień | `lib/*`, `ui` | układy wszystkich ról |
+
+Reguły dependency-cruiser (`.dependency-cruiser.cjs`, błąd w CI): (1)
+`src/app/**` importuje z `src/features/<modul>` wyłącznie plik `index.ts`;
+(2) moduł `features/X` importuje z `features/Y` wyłącznie `index.ts` i tylko
+pary z kolumny „Może importować”; (3) `src/lib/**` i `src/ui/**` nie
+importują z `src/features/**` ani `src/app/**`; (4) wyłącznie
+`src/lib/api/klient.ts` używa `fetch` do `/api/*` (pozostały kod korzysta z
+klienta), a wyłącznie `src/lib/sse/strumien.ts` otwiera strumienie SSE; (5)
+`src/lib/api/schema.d.ts` nie jest edytowany ręcznie (CI generuje go
+ponownie i porównuje).
+
+### 6.10 Mapowanie modułów wersji 2.4 na .NET
+
+Sekcje 7–18 odwołują się do modułów `lemat.*` z wersji 2.4. Obowiązuje
+mapowanie:
+
+| Wersja 2.4 | Wersja 3.0 |
+|---|---|
+| `lemat.http` | `Lemat.Api` (`Endpointy/`, `Kontrakty/`, `Walidatory/`, `Infrastruktura/`, `Strumienie/`) |
+| `lemat.konta` | `Lemat.Domain.Konta`, `Lemat.Domain.Konta.Rodo`, `Lemat.Application.Konta`, `Lemat.Infrastructure.Rodo`, `Lemat.Infrastructure.Bezpieczenstwo` |
+| `lemat.klasy` | `Lemat.Domain.Klasy`, `Lemat.Application.Klasy` |
+| `lemat.tresci` | `Lemat.Domain.Tresci`, `Lemat.Application.Tresci` |
+| `lemat.profil` | `Lemat.Domain.Profil`, `Lemat.Application.Profil` |
+| `lemat.rekomendacje` | `Lemat.Domain.Rekomendacje`, `Lemat.Application.Rekomendacje` |
+| `lemat.rozwiazania` | `Lemat.Domain.Rozwiazania`, `Lemat.Application.Rozwiazania` |
+| `lemat.rozpoznawanie` (Słownik terminów matematycznych) | `Lemat.Domain.Rozwiazania.FiltrDanychOsobowych` (`slownik_matematyczny.txt` jako zasób osadzony) |
+| `lemat.ocenianie` | `Lemat.Domain.Ocenianie`, `Lemat.Application.Ocenianie` |
+| `lemat.weryfikacja` | `Lemat.Domain.Weryfikacje`, `Lemat.Application.Weryfikacje` |
+| `lemat.kalibracja` | `Lemat.Domain.Kalibracja`, `Lemat.Application.Kalibracja` |
+| `lemat.modele` (porty) | `Lemat.Application.Modele` |
+| `lemat.modele.adaptery`, `lemat.modele.rejestr` | `Lemat.Modele` (`RejestrAdapterow`) |
+| `lemat/modele/schematy/*.json` | `backend/src/Lemat.Modele/Schematy/*.json` (generowane z rekordów C#) |
+| `lemat.agenci.*` | `Lemat.Agenci` |
+| `lemat.orkiestrator` | `Lemat.Application.Orkiestracja` (+ hosting w `Lemat.Worker` i `Lemat.Scheduler`) |
+| `lemat.powiadomienia` | `Lemat.Domain.Powiadomienia`, `Lemat.Application.Powiadomienia` |
+| `lemat.audyt` | `Lemat.Domain.Audyt`, `Lemat.Application.Audyt` |
+| `lemat/konfiguracja.py` | `Lemat.Application.Wspolne.LematOpcje` |
+| PWA (React + Vite) | `frontend/` (Next.js, 6.8) |
 
 ---
 
 ## 7. Model danych
+
+> **Do przepisania na .NET w iteracji 2 — treść domenowa obowiązuje.** DDL PostgreSQL 16 (7.3) pozostaje schematem docelowym; iteracja 2 dopisuje encje i konfiguracje EF Core oraz migracje odpowiadające temu DDL (zmiana nazwy kolumny `praca_w_tle.dzierzawa_do` i CHECK `pojemnosc` z wersji 3.0 są już naniesione). Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+
 
 ### 7.1 Diagram ERD (encje rdzenia domeny)
 
@@ -1427,7 +2942,7 @@ CREATE UNLOGGED TABLE limit_szybkosci_modelu (
                                                       -- osobny wiersz na pulę R i S tej samej repliki (C4-06 p. 8)
     waga                   numeric(3,2) NOT NULL CHECK (waga > 0 AND waga <= 1),
                                                       -- Jev: worker 1.00, api 0.10; rozpoznawanie: R 1.00, S 0.30 (parametr 22)
-    pojemnosc              smallint NOT NULL CHECK (pojemnosc BETWEEN 1 AND 34),
+    pojemnosc              smallint NOT NULL CHECK (pojemnosc BETWEEN 0 AND 34),   -- 0: dołączanie przy pełnym wykorzystaniu i wiersz ponad limit (13.2, C5-03)
                                                       -- opublikowana pojemność kubełka; Jev, 2 workery + 2 api: worker 16, api 1
     przydzial              numeric(6,2) NOT NULL DEFAULT 0 CHECK (przydzial >= 0),
                                                       -- opublikowany przydział (wywołania/s; rozpoznawanie: /min), używany przez proces
@@ -1491,7 +3006,8 @@ CREATE TABLE stan_bezpiecznika (
     updated_at             timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (konfiguracja_modelu_id, rodzaj_zadania, typ),
     CHECK ((dezaktywowano_at IS NULL) = (uzasadnienie_dezaktywacji IS NULL))
-    -- TRAFNOSC podnosi próg przez prog_pewnosci (zrodlo = BEZPIECZNIK); aktywny = blokada obniżania (11.5.3, C4-02)
+    -- TRAFNOSC podnosi próg przez prog_pewnosci (zrodlo = BEZPIECZNIK); aktywny = bezpiecznik w stanie aktywnym,
+    -- skutek dla TRAFNOSC: Blokada obniżania progu (11.5.3, C4-02), dla POPRAWKI: T-7 (3.1 p. 5, C5-04)
 );
 
 CREATE TABLE decyzja_modelu (
@@ -1702,7 +3218,7 @@ CREATE TABLE praca_w_tle (
     proby             smallint NOT NULL DEFAULT 0,
     max_prob          smallint NOT NULL,
     dostepna_od       timestamptz NOT NULL DEFAULT now(),
-    zablokowana_do    timestamptz,
+    dzierzawa_do      timestamptz,             -- dzierżawa pracy (13.4); do wersji 2.4: zablokowana_do (C5-04)
     wykonawca         text,
     ostatni_blad      text,
     created_at        timestamptz NOT NULL DEFAULT now(),
@@ -1718,7 +3234,7 @@ CREATE UNIQUE INDEX ux_praca_dedup_oczekujace ON praca_w_tle (typ, klucz_dedupli
     WHERE status = 'OCZEKUJE' AND klucz_deduplikacji IS NOT NULL
       AND typ IN ('AKTUALIZUJ_PROFIL','SPRAWDZ_POPRAWKI_TRANSKRYPCJI');
 CREATE INDEX ix_praca_pobieranie ON praca_w_tle (pula, priorytet, dostepna_od) WHERE status = 'OCZEKUJE';
-CREATE INDEX ix_praca_dzierzawa ON praca_w_tle (zablokowana_do) WHERE status = 'W_TOKU';
+CREATE INDEX ix_praca_dzierzawa ON praca_w_tle (dzierzawa_do) WHERE status = 'W_TOKU';
 
 CREATE TABLE klucz_idempotencji (
     uzytkownik_id     uuid NOT NULL REFERENCES uzytkownik(id) ON DELETE CASCADE,
@@ -2831,6 +4347,9 @@ nie nadpisze jego pracy (C-23). Od wersji 2.2 podjęcie nie zmienia
 
 ## 10. Agenci — kontrakty, algorytmy, pytania do Jev
 
+> **Do przepisania na .NET w iteracji 2 — treść domenowa obowiązuje.** Kontrakty agentów zapisane w Pythonie (Pydantic) przechodzą w iteracji 2 na rekordy i interfejsy C# w `Lemat.Application.Agenci` i `Lemat.Agenci` (6.6); prompty — na szablony Semantic Kernel. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+
+
 Wszyscy agenci są klasami Pythona w `lemat.agenci.<nazwa>`, przyjmują i
 zwracają modele Pydantic, nie wykonują operacji na bazie (Orkiestrator
 dostarcza dane i zapisuje wyniki). Dzięki temu są testowalni bez bazy i bez
@@ -3321,16 +4840,25 @@ Przetwarzanie:
    (rodzaj `DOKLADNE`). **Token ze Słownika terminów matematycznych** (np.
    „pole”, „kula”, „granica”, „suma”, „prosta”, „koło”, „kąt” i ich formy
    odmiany) równy imieniu lub nazwisku Ucznia **jest zastępowany wyłącznie,
-   gdy** (wersja 2.4, C4-03): (b1) sąsiaduje (najbliższy token z pominięciem
-   znaków interpunkcyjnych, przed nim albo po nim) z tokenem dopasowanym do
-   drugiego członu imienia i nazwiska z konta albo z jego inicjałem („Jan
-   Pole”, „Pole Jan”, „J. Pole”) — dopasowanie `DOKLADNE`; albo (b2) leży w
+   gdy** (wersja 2.4, C4-03; doprecyzowanie wersji 3.0, C5-01): (b1)
+   sąsiaduje (najbliższy token z pominięciem znaków interpunkcyjnych, przed
+   nim albo po nim) z tokenem dopasowanym `DOKLADNE` do **pełnego** drugiego
+   członu imienia i nazwiska z konta (≥ 2 litery; „Jan Pole”, „Pole Jan”) —
+   w każdym kroku; albo (b1-i) sąsiaduje z **inicjałem** drugiego członu,
+   przy czym inicjał to pojedyncza litera, po której **w oryginalnym
+   tekście** (przed pominięciem interpunkcji) stoi kropka („J. Pole”, „Pole
+   P.”), i wyłącznie w kroku **bez treści matematycznej** po wyłączeniach z
+   reguły (a); w kroku **z** treścią matematyczną sąsiedztwo z inicjałem z
+   kropką nie zastępuje tokenu, tylko ustawia `konflikt_filtra = true`
+   (kierunek bezpieczny: T-3 i Weryfikacja, Z-1), a pojedyncza litera bez
+   kropki nie jest inicjałem („Pole P trójkąta”, „prosta k”, „suma S” —
+   brak zastąpienia i brak `konflikt_filtra`); albo (b2) leży w
    kroku Transkrypcji agenta z `podejrzenie_danych_osobowych = true`
    (wtedy krok ma i tak `konflikt_filtra` albo `tylko_dane_osobowe`, więc
    Ocena idzie do Weryfikacji albo krok nie jest krokiem rozwiązania). W
    pozostałych przypadkach (np. „Pole trójkąta jest równe 12” poza ramką
    danych osobowych) token Słownika nie jest zastępowany, także gdy jest
-   równy nazwisku Ucznia; słownik `lemat/rozpoznawanie/slownik_matematyczny.txt` zawiera ≈ 350
+   równy nazwisku Ucznia; słownik `slownik_matematyczny.txt` (od wersji 3.0 zasób osadzony `Lemat.Domain/Rozwiazania/FiltrDanychOsobowych/`) zawiera ≈ 350
    lematów terminów z podstawy programowej i nazw funkcji (sin, cos, log)
    rozwiniętych do wszystkich form odmiany (słownik fleksyjny generowany przy
    budowie obrazu, ≈ 4 000 form); (c) ciągi 11 cyfr (PESEL) i adresy e-mail
@@ -3354,8 +4882,8 @@ Przetwarzanie:
    | Krok | Reguła (a) — ramka | Reguła (b) | Reguła (c) | `konflikt_filtra` |
    |---|---|---|---|---|
    | niezmieniony (`zmieniony_przez_ucznia = false`) | nie jest liczona ponownie: `podejrzenie_danych_osobowych`, `tylko_dane_osobowe` i treść kopiowane z kroku agenta | — (treść jak w kroku agenta) | — | liczony jak dla agenta |
-   | zmieniony, w tym przywrócony krok `tylko_dane_osobowe` | nie jest stosowana: `podejrzenie_danych_osobowych` kopiowane z kroku agenta, `tylko_dane_osobowe := false`, tekst nie jest ponownie maskowany w całości | `DOKLADNE` z warunkiem (b1); (b2) nie dotyczy kroku zmienionego, więc przywrócone słowo „Pole” zostaje, a „Jan Pole” jest zastępowane | stosowana | krok nie wlicza się (kontrolę przejmuje Sprawdzenie zgodności poprawek i T-7) |
-   | wstawiony | brak ramki (`obszar` NULL) | `DOKLADNE` z warunkiem (b1) | stosowana | nie wlicza się |
+   | zmieniony, w tym przywrócony krok `tylko_dane_osobowe` | nie jest stosowana: `podejrzenie_danych_osobowych` kopiowane z kroku agenta, `tylko_dane_osobowe := false`, tekst nie jest ponownie maskowany w całości | `DOKLADNE` z warunkiem (b1) (pełny drugi człon); (b1-i) i (b2) nie dotyczą kroku zmienionego; **token wpisany przez Ucznia w miejscu znacznika `[DANE_OSOBOWE]`** (pozycja z `zastapienia_danych_osobowych` kroku agenta) **nie jest zastępowany ponownie żadną regułą b** (wersja 3.0, C5-01), więc przywrócone „Pole” w „Pole P trójkąta” zostaje, a nowo dopisane „Jan Pole” poza tą pozycją jest zastępowane | stosowana | krok nie wlicza się (kontrolę przejmuje Sprawdzenie zgodności poprawek i T-7) |
+   | wstawiony | brak ramki (`obszar` NULL) | `DOKLADNE` z warunkiem (b1) (pełny drugi człon); (b1-i) nie dotyczy | stosowana | nie wlicza się |
 
    Krok przywrócony z `tylko_dane_osobowe` jest zwykłą Poprawką: wlicza się
    do limitów 9.4 (odległość edycyjna liczona od zapisanego tekstu
@@ -4023,7 +5551,8 @@ Populacja dla pary (konfiguracja, `OTWARTE_OBLICZENIOWE`), okno 90 dni,
 
 ```text
 π_dobor        = probka.prawdopodobienstwo_doboru
-π_wykonanie(k) = (Kontrole losowe zakończone z próbką) / (Kontrole losowe utworzone, bez ANULOWANA z USUNIECIE_KONTA
+π_wykonanie(k) = (Kontrole losowe zakończone z próbką) / (Kontrole losowe zakończone albo z termin_at ≤ now() — od wersji 3.0
+                 Kontrole przed terminem i niezakończone nie są w mianowniku, C5-02 —, bez ANULOWANA z USUNIECIE_KONTA
                  i bez Kontroli Uczniów z kontem USUWANE w chwili obliczenia — okres karencji, ADR-040)
                  w koszyku k pewności surowej {[0.80,0.90), [0.90,0.95), [0.95,1.00]} w oknie 90 dni
 w              = 1 / π_dobor                                   dla WERYFIKACJA_NISKA_PEWNOSC
@@ -4042,7 +5571,7 @@ jeśli brak takiego t: prog_nowy = prog_obecny (bez obniżania)
 
 ECE (10 koszyków równej szerokości) jest liczone na `p_oof`. Nowy kalibrator
 i próg wchodzą w życie tylko, gdy liczba próbek ≥ 400; zmiana progu w dół
-jest ograniczona do 0.02 na dobę i podlega blokadom z kroku 4 algorytmu
+jest ograniczona do 0.02 na dobę i podlega warunkom `zablokowane` z kroku 4 algorytmu
 „Wynik dnia KALIBRUJ” niżej (C4-02); `prog_nowy` z powyższego pseudokodu
 jest w nim oznaczony `p_wyb`.
 
@@ -4050,10 +5579,11 @@ jest w nim oznaczony `p_wyb`.
 
 | Warunek (okno 30 dni) | Skutek |
 |---|---|
-| `wykonanie_kontroli_30d` = Kontrole zakończone do `termin_at` (3 dni robocze) / utworzone (bez kont `USUWANE`) ≥ 0.90 | normalna praca |
+| `wykonanie_kontroli_30d` = Kontrole zakończone do `termin_at` (3 dni robocze) / Kontrole **wymagalne** ≥ 0.90; populacja (wersja 3.0, C5-02): Kontrole losowe pary (konfiguracja, rodzaj) utworzone w oknie `[now() − 30 dni, now()]` z `termin_at ≤ now()`, bez kont `USUWANE`; Kontrole, których termin jeszcze nie minął, nie należą ani do licznika, ani do mianownika | normalna praca |
+| populacja pusta (`wykonanie_kontroli_30d = null`: brak wymagalnych Kontroli, bo w oknie nie było Ocen automatycznych — m.in. tryb pełnej weryfikacji i pierwsze 3 dni robocze po wyjściu z niego) | **brak reguły nadzoru** — ani alert, ani blokada obniżania, ani bezpiecznik braku nadzoru (C5-02); stan widoczny w `/admin/kalibracja` jako `null` |
 | 0.80 ≤ `wykonanie_kontroli_30d` < 0.90 | alert `ALERT_KALIBRACJI` (ostrzeżenie) |
 | 0.60 ≤ `wykonanie_kontroli_30d` < 0.80 | próg **nie może spadać** (KALIBRUJ nie obniża), alert |
-| `wykonanie_kontroli_30d` < 0.60 lub liczba Kontroli zakończonych < 50 przy ≥ 100 utworzonych | **bezpiecznik braku nadzoru:** `prog := min(0.990, prog + 0.02)` na dobę, `zrodlo = BEZPIECZNIK`, alert |
+| `wykonanie_kontroli_30d` < 0.60 lub liczba Kontroli zakończonych < 50 przy ≥ 100 **wymagalnych** (ta sama populacja) | **bezpiecznik braku nadzoru:** `prog := min(0.990, prog + 0.02)` na dobę, `zrodlo = BEZPIECZNIK`, alert |
 
 **Bezpieczniki trafności i poprawek (ADR-046, wersja 2.3, C3-01).** W
 wersji 2.2 bezpiecznik reagował na **brak dowodu spełnienia** („`n ≥ 50` i
@@ -4107,8 +5637,9 @@ Krok 3 (Blokada obniżania progu):
                                                                    → BT.aktywny := false, wyjscie_z_blokady_at := now()
                      BT.aktywny ∧ p0 = 1,000                       → bez zmian (wyjście wyłącznie przez dezaktywację)
 Krok 4 (dozwolone obniżenie):
-                     zablokowane = BT.aktywny ∨ ostrzezenie_T ∨ wykonanie_kontroli_30d < 0,80
-                                   ∨ bezpiecznik braku nadzoru (tabela reguł nadzoru)
+                     zablokowane = BT.aktywny ∨ ostrzezenie_T
+                                   ∨ (wykonanie_kontroli_30d ≠ null ∧ wykonanie_kontroli_30d < 0,80)
+                                   ∨ bezpiecznik braku nadzoru (tabela reguł nadzoru; przy null — fałsz, C5-02)
                      p_dol = max(p_wyb, p0 − 0,02)
                      p_dol < p0 ∧ ¬zablokowane → test obniżenia na oknie 30 dni: populacja wyboru progu
                          (Próbki uwzgledniana_w_progu, wagi w z 11.5.3) z p(K1) > p_dol:
@@ -4132,17 +5663,17 @@ wyzwolenia podnoszą próg o 0,02 dziennie od `p0`, a nie od progu wybranego
 tego dnia; (3) wyzwolenie przy `p0 = 0,990` przełącza parę w **tryb pełnej
 weryfikacji** (`wartosc = 1.000`, CHECK 7.3 dopuszcza 1.000; alert krytyczny
 `ALERT_KALIBRACJI`; `udzial_zadan_otwartych = 5` jak w 10.1.2) — decyzja D-16;
-(4) **reguła wyjścia**: blokada kończy się automatycznie dopiero przy dowodzie
+(4) **reguła wyjścia**: Blokada obniżania progu kończy się automatycznie dopiero przy dowodzie
 spełnienia NFR-03 powyżej bieżącego progu (UB ≤ 2% przy `n_eff ≥ 189` na
 oknie 30 dni); przy LB ≤ 2% < UB albo `n_eff < 189` (mniejsza próba powyżej
-wyższego progu) blokada trwa, próg się nie zmienia, a nowy wzrost LB > 2%
+wyższego progu) Blokada obniżania progu trwa, próg się nie zmienia, a nowy wzrost LB > 2%
 podnosi go dalej; w trybie pełnej weryfikacji (`p0 = 1,000`) nie ma Ocen
 automatycznych, więc nie ma Kontroli losowych powyżej progu i wyjście
 następuje wyłącznie przez dezaktywację bezpiecznika trafności przez
 Administratora (`POST /admin/bezpieczniki/dezaktywacja`, typ `TRAFNOSC`),
 po której próg obniża się o ≤ 0,02 na dobę przez test kroku 4 (populacja
 wyboru progu zawiera wtedy Próbki `WERYFIKACJA_NISKA_PEWNOSC` wszystkich
-Ocen, `π_dobor = 1`); (5) po wyjściu z blokady obniżanie wymaga testu 30
+Ocen, `π_dobor = 1`); (5) po wyjściu z Blokady obniżania progu obniżanie wymaga testu 30
 dni powyżej progu docelowego, więc błędy z okresu degradacji (do 30 dni)
 blokują powrót do niższego progu.
 
@@ -4170,7 +5701,10 @@ testem H0: e ≤ 2% o nominalnym poziomie 2,5%, ale granica Wilsona jest przy
 małym `n` antykonserwatywna, więc rzeczywisty rozmiar pojedynczej oceny przy
 e = 2% wynosi **2,6–7,8%** (kolumna „e = 2%” tabeli), a nie ≤ 2,5%; przy e =
 1% — ≤ 1,4%. Przy codziennej ocenie przez 90 dni P(≥ 1 wyzwolenie) przy e =
-2% wynosi 31–36% (tabela symulacji niżej). Jest to świadomie przyjęty koszt
+2% wynosi 31–36% przy oknie napełnianym od zera na starcie (tabela symulacji
+niżej), a do 45%, gdy okno 30 dni jest pełne od dnia 1 (faza ustalona po
+okresie stabilnym, wniosek (3) symulacji dynamiki); zakres 31–45% podany w
+changelogu wersji 2.4 (C4-06 p. 5) obejmuje oba przypadki (C5-05 p. 3). Jest to świadomie przyjęty koszt
 (D-16): na granicy NFR-03 bezpiecznik nie odróżnia e = 2% od e nieco
 wyższego. Oczekiwana liczba **fałszywych podniesień progu na kwartał** przy
 e = 2% (symulacja dynamiki niżej): **1,1**; przy e ≤ 1%: ≤ 0,01.
@@ -4216,7 +5750,7 @@ okno 30 dni wypełnione przed dniem 1, wybór progu pesymistyczny: `p_wyb =
 | e = 0,5% przez 90 dni | 0,0% | — | 0,930 / 0,930 / 0,930 / 0,930 | 67% / 67% / 67% | 0% | 0 |
 | degradacja jednorodna: e = 0,5% w dniach 1–60, 4% w dniach 61–90 (test (g)) | 98,7% | 13 | 0,930 (0,930–0,970) / 0,970 (0,930–1,000) / 0,990 (0,950–1,000) / 1,000 (0,990–1,000) | 38% / 15% / 0% | 61% | 0 |
 | degradacja skupiona: 8,5% dla p ∈ (0,930; 0,970], 0,5% powyżej, od dnia 61 (łącznie ≈ 4% przy 0,930) | 98,3% | 13 | 0,930 (0,930–0,950) / 0,950 (0,930–0,970) / 0,950 (0,950–0,970) / 0,970 (0,950–0,970) | 55% / 55% / 38% | 0% | 0 |
-| e = 2% przez 90 dni (granica NFR-03) | 44,7% | — | — | średnio 57,5% (zamiast 67%) | 11% | — (wyjście z blokady, potem obniżanie) |
+| e = 2% przez 90 dni (granica NFR-03) | 44,7% | — | — | średnio 57,5% (zamiast 67%) | 11% | — (wyjście z Blokady obniżania progu, potem obniżanie) |
 
 Wnioski: (1) we wszystkich przebiegach z degradacją próg jest
 niemalejący od pierwszego wyzwolenia (100%), więc reakcja jest skuteczna, a
@@ -4254,20 +5788,31 @@ podniesienie progu z 0,930 do 0,950 przy 300 Próbkach powyżej 0,930 i 120
 powyżej 0,950 → ocena następnego dnia używa 120 Próbek, a nie 0 (brak
 zapadki); (d) `n_eff < 50` przy 5/40 błędów → brak wyzwolenia; (e)
 bezpiecznik poprawek po dezaktywacji: Kontrole sprzed `okno_od` nie są liczone;
-(f) przypadek ostrzeżenia (n = 300, k = 3: UB 2,90%, LB 0,34%) → blokada
-obniżania bez podnoszenia progu; od wersji 2.4 (C4-02): (g) degradacja 4%
+(f) przypadek ostrzeżenia (n = 300, k = 3: UB 2,90%, LB 0,34%) → ostrzeżenie: KALIBRUJ nie obniża progu (krok 4),
+nie podnosi go i nie ustawia stanu Blokady obniżania progu; od wersji 2.4 (C4-02): (g) degradacja 4%
 przez 30 dni (dni 61–90) na tle 60 dni z błędem 0,5% (dane deterministyczne:
 co 25. Kontrola błędna w dniach 61–90, co 200. w dniach 1–60), `p_wyb =
 0,930` każdego dnia → próg niemalejący w każdym dniu od pierwszego
 wyzwolenia, przyrosty wyłącznie o 0,02 (albo 0,990 → 1,000) i tylko w dniach
 z LB > 2%; (h) dzień N: wyzwolenie przy p0 = 0,930 → p_nowy = 0,950; dzień N
 + 1: `p_wyb = 0,930`, LB ≤ 2% < UB → p_nowy = 0,950 (bez oscylacji, krok 4);
-(i) wyjście z blokady: próba powyżej 0,950 z n = 400, k = 2 (UB 1,80%) →
+(i) wyjście z Blokady obniżania progu: próba powyżej 0,950 z n = 400, k = 2 (UB 1,80%) →
 `aktywny = false`, następnego dnia obniżenie dopuszczone tylko przy
 spełnionym teście 30 dni powyżej progu docelowego; (j) wyzwolenie przy p0 =
 0,990 → `wartosc = 1.000`, a przy `p0 = 1.000` brak automatycznego wyjścia;
 (k) dezaktywacja typu `TRAFNOSC` ustawia `okno_od` i umożliwia obniżenie o
-0,02 na dobę.
+0,02 na dobę; od wersji 3.0 (C5-02): (l) populacja pusta — para w trybie
+pełnej weryfikacji (`p0 = 1,000`) bez Ocen automatycznych przez 30 dni →
+`wykonanie_kontroli_30d = null`, `zablokowane = false` z powodu nadzoru;
+po dezaktywacji `TRAFNOSC` przy bezbłędnych Próbkach
+`WERYFIKACJA_NISKA_PEWNOSC` (`n_eff ≥ 189`) i `p_wyb = 0,930` próg spada
+1,000 → 0,980 → 0,960 → 0,940 → 0,930 w kolejnych przebiegach (krok 4:
+`p_dol = max(p_wyb, p0 − 0,02)`), bez wyzwolenia bezpiecznika braku nadzoru w pierwszych 3
+dniach roboczych po pierwszej Ocenie automatycznej, mimo napływu ≈ 60
+Kontroli na dobę z niewymagalnym jeszcze terminem; (m) 120 Kontroli
+utworzonych w oknie, z czego 100 z `termin_at > now()` i 0 zakończonych →
+populacja 20, reguła braku nadzoru niespełniona (< 100 wymagalnych), alert
+wyłącznie przy wykonaniu < 0,90 wśród 20 wymagalnych.
 
 **Odsetek Kontroli losowej:** 0.20, dopóki para (konfiguracja, rodzaj) ma
 mniej niż 400 próbek `KONTROLA_LOSOWA` w oknie 90 dni; potem 0.05.
@@ -4332,6 +5877,9 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 ---
 
 ## 12. Kontrakty API (REST)
+
+> **Do przepisania na .NET w iteracji 3 — treść domenowa obowiązuje.** Iteracja 3 przepisuje konwencje 12.1 (OpenAPI z `Microsoft.AspNetCore.OpenApi`, SSE zamiast odpytywania — ADR-051), typy DTO 12.4 jako rekordy C# z typami TypeScript generowanymi z OpenAPI oraz dodaje kontrakty strumieni SSE. Parametry ścieżek są od wersji 3.0 ujednolicone według ADR-049 p. 5. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+
 
 ### 12.1 Konwencje
 
@@ -4426,13 +5974,13 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | DELETE | `/uczniowie/ja` | U | — | NFR-09 | `{haslo}` + Idempotency-Key → `202` (Zdarzenie RODO `WNIOSEK_O_USUNIECIE` w rejestrze przed zmianą w bazie; okres karencji 30 dni, ADR-040, ADR-041, 16.4) |
 | DELETE | `/nauczyciele/ja` | N | — | NFR-09 | `{haslo}` + Idempotency-Key → `202` (usunięcie konta Nauczyciela po 30 dniach, ADR-044; Administratorzy dostają `KLASA_DO_PRZEKAZANIA` dla każdej niezarchiwizowanej Klasy) |
 | GET | `/uczniowie/ja/eksport-danych` | U | — | NFR-09 | → `200 application/zip` (dane osobowe, Rozwiązania, Oceny) |
-| DELETE | `/uczniowie/ja/klasy/{klasaId}` | U | — | FR-30 | → `204` (opuszczenie Klasy; otwarte Weryfikacje tej Klasy pozostają u Nauczyciela docelowego) |
+| DELETE | `/uczniowie/ja/klasy/{id}` | U | — | FR-30 | → `204` (opuszczenie Klasy; otwarte Weryfikacje tej Klasy pozostają u Nauczyciela docelowego) |
 | POST | `/uczniowie/ja/test-diagnostyczny` | U | — | FR-03 | — → `201 TestDiagnostycznyWyjscie` (lub `200` istniejący `W_TOKU`; `409 TEST_JUZ_WYKONANY`; `409 TEST_NIEDOSTEPNY`, 9.1) |
 | GET | `/testy-diagnostyczne/{id}` | U | — | FR-03 | → `TestDiagnostycznyWyjscie` |
-| POST | `/testy-diagnostyczne/{id}/pozycje/{pozycjaId}/odpowiedz` | U | — | FR-03 | `{wybor}` → `201 {czy_zapisano: true}` (bez ujawniania poprawności do końca testu) |
+| POST | `/testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` | U | — | FR-03 | `{wybor}` → `201 {czy_zapisano: true}` (bez ujawniania poprawności do końca testu) |
 | POST | `/testy-diagnostyczne/{id}/zakonczenie` | U | — | FR-03 | — → `202 TestDiagnostycznyWyjscie` (Profil aktualizuje `AKTUALIZUJ_PROFIL`, 9.1) |
 | POST | `/testy-diagnostyczne/{id}/pominiecie` | U | — | FR-03 | — → `204` (D-14; Odpowiedzi bez Wyników zadania) |
-| GET | `/uczniowie/{uczenId}/profil` | U (`ja`), N (Uczeń swojej Klasy) | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` |
+| GET | `/uczniowie/{id}/profil` | U (`ja`), N (Uczeń swojej Klasy) | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` |
 | GET | `/uczniowie/ja/rekomendacje/nastepna` | U | — | FR-05…FR-10 | → `200 RekomendacjaWyjscie` |
 | GET | `/uczniowie/ja/sciezka-nauki` | U | — | FR-05 | `?kursor` → strona `ElementSciezkiWyjscie` |
 | POST | `/elementy-sciezki/{id}/rozpoczecie` | U | — | FR-05, FR-16 | — → `200 ElementSciezkiWyjscie` (idempotentne; ustala `zadanie_wersja_id`) |
@@ -4447,7 +5995,7 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | POST | `/rozwiazania` | U | — | FR-16 | multipart `RozwiazanieWejscie` + Idempotency-Key → `202 RozwiazanieWyjscie` |
 | GET | `/rozwiazania` | U | — | FR-24 | `?status&kursor` → strona `RozwiazanieWyjscie` (własne) |
 | GET | `/rozwiazania/{id}` | U (własne), N (Uczeń Klasy / Weryfikacja) | — | FR-17, FR-24 | → `RozwiazanieWyjscie` + ETag |
-| GET | `/rozwiazania/{id}/zdjecia/{zdjecieId}` | U (własne), N | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINAL\|MASKOWANE` (domyślnie `ORYGINAL`) → `302` na podpisany URL (ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) |
+| GET | `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}` | U (własne), N | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINAL\|MASKOWANE` (domyślnie `ORYGINAL`) → `302` na podpisany URL (ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) |
 | PUT | `/rozwiazania/{id}/transkrypcja` | U | R | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` (z `transkrypcja.zakres_poprawek`) / `422 POPRAWKI_ZBYT_ROZLEGLE` (ADR-036) |
 | POST | `/rozwiazania/{id}/zatwierdzenie` | U | R | FR-18, FR-19 | — → `202 RozwiazanieWyjscie` |
 | POST | `/rozwiazania/{id}/zdjecia` | U | R | FR-16 | multipart `zdjecia[]` → `202` (nowe przesłanie; `409 LIMIT_PRZESLAN`) |
@@ -4462,9 +6010,9 @@ sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
 | POST | `/klasy/{id}/kod-zaproszenia` | N | K | FR-30 | — → `200 {kod_zaproszenia, kod_wazny_do, link}` (stary kod unieważniony) |
 | POST | `/klasy/{id}/archiwizacja` | N | K | FR-30 | — → `200 KlasaWyjscie` (kod zaproszenia unieważniony; Klasa nie uczestniczy w przydziale 11.4.1 p. 2; Przypisania i Weryfikacje pozostają) |
 | POST | `/klasy/dolaczenie` | U | — | FR-30 | `{kod_zaproszenia}` → `200 KlasaSkrot` (Klasa niezarchiwizowana, kod ważny) |
-| DELETE | `/klasy/{id}/uczniowie/{uczenId}` | N | — | FR-30 | → `204` |
+| DELETE | `/klasy/{id}/uczniowie/{uczen_id}` | N | — | FR-30 | → `204` |
 | GET | `/klasy/{id}/postepy` | N | — | FR-31 | → `PostepyKlasyWyjscie` |
-| GET | `/klasy/{id}/uczniowie/{uczenId}/rozwiazania` | N | — | FR-31 | `?kursor` → strona `RozwiazanieWyjscie` |
+| GET | `/klasy/{id}/uczniowie/{uczen_id}/rozwiazania` | N | — | FR-31 | `?kursor` → strona `RozwiazanieWyjscie` |
 | POST | `/zestawy-zadan` | N | — | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `201 ZestawZadanWyjscie` |
 | GET | `/zestawy-zadan` | N | — | FR-32 | → lista `ZestawZadanWyjscie` (własne) |
 | GET | `/zestawy-zadan/{id}` | N | — | FR-32 | → `ZestawZadanWyjscie` + ETag |
@@ -4959,6 +6507,9 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
 
 ## 13. Kontrakty wewnętrzne (porty) i prace w tle
 
+> **Do przepisania na .NET w iteracji 2 — treść domenowa obowiązuje.** Porty 13.1 (Python `Protocol`) mają odpowiedniki C# w `Lemat.Application.Modele` (6.6); mechanika prac w tle 13.4 jest realizowana przez `BackgroundService` (ADR-053), a SymPy przez sidecar (ADR-050). Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+
+
 ### 13.1 Porty modeli (NFR-06)
 
 ```python
@@ -5177,9 +6728,12 @@ wersji 2.4 (C4-05): (f) **granica chwilowa** — symulowany zegar, N ∈ {2, 3,
 losowe chwile dołączenia i odejścia procesów (`hypothesis`, 500 przypadków):
 maksimum wywołań w dowolnym przesuwnym oknie 1 s ≤ 74 przy `B_całk = 34` i ≤
 50 przy `B_całk = 10`, w oknie 5 s ≤ 234; (g) dołączenie 3. workera przy
-pełnym wykorzystaniu: przydział nowego procesu = 0 do odnowienia
+pełnym wykorzystaniu: `INSERT` wiersza nowego procesu kończy się sukcesem
+z `pojemnosc = 0` i `przydzial = 0` (asercja na wierszu po `INSERT`, C5-03),
+przydział nowego procesu = 0 do odnowienia
 pozostałych, Σ opublikowanych przydziałów ≤ 40/s w każdej chwili, pełny
-przydział 12,5/s po ≤ 12 s; (h) dwa jednoczesne odnowienia (dwa wątki,
+przydział 12,5/s po ≤ 12 s; wiersz ponad limit `B_całk − n_api` zapisuje
+się z `pojemnosc = 0`; (h) dwa jednoczesne odnowienia (dwa wątki,
 blokada doradcza) nie przekraczają niezmienników.
 
 ```http
@@ -5260,7 +6814,7 @@ Pule (13.4): `R` — ROZPOZNAWANIE, `S` — SPRAWDZANIE (od wersji 2.3, C3-05), 
 | `ESKALUJ_WERYFIKACJE` | W | `{godzina}` | godzina | 5 | 3 | 5 min | reguły 11.4.3 (terminy w dniach roboczych) + kontrola przyjęć globalna i per Klasa (`odsetek_eskalacji_7d`) + dzienne podsumowanie dla Nauczycieli (05:00 UTC, tylko w dni robocze) | alert |
 | `ZAMIATAJ_PROFILE` | W | `{}` | `cykl` | 2 | 3 | 1 min | `SELECT DISTINCT uczen_id FROM wynik_zadania` po `ix_wynik_do_profilu` z `created_at` lub `uniewazniony_at` < `now() − 2 min`, konto `AKTYWNE`, `LIMIT 500` → zlecenie `AKTUALIZUJ_PROFIL`; metryka `wynik_najstarszy_niezastosowany_sekundy` (C2-04) | alert |
 | `SPRAWDZ_PULE_DIAGNOSTYCZNA` | W | `{data}` | data | 8 | 3 | 10 min | dla każdej trójki (Dział, poziom matury, nominalny Poziom trudności ∈ {2, 4}) liczba Zadań diagnostycznych `OPUBLIKOWANE` ≥ 3 (9.1, G-5) | `ALERT_PULA_DIAGNOSTYCZNA` |
-| `UZGODNIJ_REJESTR_RODO` | W | `{}` | `cykl` | 3 | 5 | 1 min | (1) obiekty `rejestr-zdarzen-rodo/zdarzenia/` z ostatnich 24 h, starsze niż 5 min, z `zrodlo = API` i bez wiersza `zdarzenie_rodo` o tym `id` (zatwierdzenie transakcji `api` nie powiodło się) → zapis obiektu kompensującego `{typ: "UNIEWAZNIENIE", zdarzenie_id}`; przy cyklu co 5 min (13.5) zdarzenie bez transakcji jest unieważniane najpóźniej **10 min** po zapisie obiektu (5 min wieku + ≤ 5 min do następnego przebiegu; wersja 2.3: cykl 10 min, czyli do 15 min — C4-06 p. 2); (2) obiekty `zrodlo = WORKER` (`USUNIECIE_WYKONANE`, prefiks `rejestr-zdarzen-rodo/wykonane/` bez daty) **nigdy nie są unieważniane** — stanem docelowym jest usunięcie konta: gdy 2 h po zapisie obiektu `uzytkownik` o tym `uzytkownik_id` nadal istnieje, praca zleca ponownie `USUN_KONTO` (klucz `uzytkownik_id`), a po 26 h — `ALERT_RODO` (ADR-041, C3-03) | `ALERT_RODO` |
+| `UZGODNIJ_REJESTR_RODO` | W | `{}` | `cykl` | 3 | 5 | 1 min | (1) obiekty `rejestr-zdarzen-rodo/zdarzenia/` z okna od `max(ostatni_udany_przebieg − 5 min, now() − 60 dni)` (wersja 3.0, C5-05 p. 4: `ostatni_udany_przebieg` = `created_at` ostatniej pracy `UZGODNIJ_REJESTR_RODO` ze statusem `ZAKONCZONA`; brak takiej pracy — zakończone prace są usuwane po 7 dniach — daje `now() − 60 dni`, czyli cały okres Object Lock; przerwa > 24 h podnosi `ALERT_RODO`; w wersji 2.4: „z ostatnich 24 h”), starsze niż 5 min, z `zrodlo = API` i bez wiersza `zdarzenie_rodo` o tym `id` (zatwierdzenie transakcji `api` nie powiodło się) → zapis obiektu kompensującego `{typ: "UNIEWAZNIENIE", zdarzenie_id}`; przy cyklu co 5 min (13.5) zdarzenie bez transakcji jest unieważniane najpóźniej **10 min** po zapisie obiektu (5 min wieku + ≤ 5 min do następnego przebiegu; wersja 2.3: cykl 10 min, czyli do 15 min — C4-06 p. 2); (2) obiekty `zrodlo = WORKER` (`USUNIECIE_WYKONANE`, prefiks `rejestr-zdarzen-rodo/wykonane/` bez daty) **nigdy nie są unieważniane** — stanem docelowym jest usunięcie konta: gdy 2 h po zapisie obiektu `uzytkownik` o tym `uzytkownik_id` nadal istnieje, praca zleca ponownie `USUN_KONTO` (klucz `uzytkownik_id`), a po 26 h — `ALERT_RODO` (ADR-041, C3-03) | `ALERT_RODO` |
 | `PORZUC_NIEZATWIERDZONE` | W | `{data}` | data | 5 | 3 | 10 min | Rozwiązania 7 dni w `PRZESLANE`/`TRANSKRYPCJA_GOTOWA`/`BLAD_ROZPOZNAWANIA` → `PORZUCONE`, `usun_po := now()` | alert |
 | `WYGAS_ELEMENTY` | W | `{}` | `cykl` | 5 | 3 | 1 min | konto `AKTYWNE`; `PROPONOWANY` z `wygasa_at < now()` → `WYGASLY`; `ROZPOCZETY` z `wygasa_at < now()` → `POMINIETY` (Wkładka bez przeczytania, 8.5; Zadanie bez Rozwiązania nieterminalnego); Seria nieaktywna 7 dni → zakończona | — |
 | `USUN_KONTO` | W | `{uzytkownik_id}` | id | 3 | 5 | 1 h | `status = USUWANE` i `usuniecie_zaplanowane_at ≤ now()` **albo** istnieje obiekt `USUNIECIE_WYKONANE` dla konta (ponowienie po awarii, PITR); kroki wg `uzytkownik.rola`: 0–6 z 16.4 (`UCZEN`) albo (1)–(5) z 16.4 „Usunięcie konta Nauczyciela lub Administratora” (`NAUCZYCIEL`, `ADMINISTRATOR`); krok 0 = zapis obiektu `USUNIECIE_WYKONANE` (`zrodlo = WORKER`, deterministyczne `id`, `dane.rola`, klucz bez daty `rejestr-zdarzen-rodo/wykonane/{uzytkownik_id}/{id}.json`, `If-None-Match: *` — istniejący obiekt oznacza ponowienie w dowolnym dniu i jest akceptowany, C4-06 p. 3); każdy krok jest idempotentny, więc ponowienie po przerwaniu w dowolnym kroku (awaria, PITR) kończy usunięcie (C4-01) | `ALERT_RODO` |
@@ -5295,29 +6849,29 @@ WITH kandydat AS (
     LIMIT 1)
 UPDATE praca_w_tle p
 SET status = 'W_TOKU', proby = p.proby + 1, wykonawca = :wykonawca,
-    zablokowana_do = now() + interval '60 seconds', updated_at = now()
+    dzierzawa_do = now() + interval '60 seconds', updated_at = now()
 FROM kandydat WHERE p.id = kandydat.id
 RETURNING p.*;
 
 -- Odnowienie dzierżawy co 15 s
-UPDATE praca_w_tle SET zablokowana_do = now() + interval '60 seconds'
+UPDATE praca_w_tle SET dzierzawa_do = now() + interval '60 seconds'
 WHERE id = :id AND wykonawca = :wykonawca AND status = 'W_TOKU';
 
 -- Sukces
-UPDATE praca_w_tle SET status = 'ZAKONCZONA', zablokowana_do = NULL, updated_at = now()
+UPDATE praca_w_tle SET status = 'ZAKONCZONA', dzierzawa_do = NULL, updated_at = now()
 WHERE id = :id AND wykonawca = :wykonawca;
 
 -- Błąd przejściowy
 UPDATE praca_w_tle
 SET status = CASE WHEN proby >= max_prob THEN 'MARTWA' ELSE 'OCZEKUJE' END,
-    dostepna_od = now() + :odstep, ostatni_blad = :blad, wykonawca = NULL, zablokowana_do = NULL
+    dostepna_od = now() + :odstep, ostatni_blad = :blad, wykonawca = NULL, dzierzawa_do = NULL
 WHERE id = :id AND wykonawca = :wykonawca;
 
 -- Odzyskiwanie porzuconych dzierżaw (scheduler co 30 s)
 UPDATE praca_w_tle
 SET status = CASE WHEN proby >= max_prob THEN 'MARTWA' ELSE 'OCZEKUJE' END,
-    wykonawca = NULL, zablokowana_do = NULL, ostatni_blad = 'DZIERZAWA_WYGASLA'
-WHERE status = 'W_TOKU' AND zablokowana_do < now()
+    wykonawca = NULL, dzierzawa_do = NULL, ostatni_blad = 'DZIERZAWA_WYGASLA'
+WHERE status = 'W_TOKU' AND dzierzawa_do < now()
 RETURNING id, typ, status;
 ```
 
@@ -5411,6 +6965,9 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 
 ## 14. Obsługa błędów
 
+> **Do przepisania na .NET w iteracji 3 — treść domenowa obowiązuje.** Iteracja 3 mapuje macierz błędów na wyjątki domenowe C# (`NiezmiennikNaruszonyException`, wyjątki adapterów) i ProblemDetails. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+
+
 ### 14.1 Macierz błędów
 
 | # | Awaria | Wykrycie | Reakcja systemu | Skutek dla użytkownika |
@@ -5482,6 +7039,9 @@ lub powiadomienia. Nie ma zewnętrznego brokera.
 ---
 
 ## 15. Współbieżność i spójność
+
+> **Do przepisania na .NET w iteracji 3 — treść domenowa obowiązuje.** Iteracja 3 opisuje realizację scenariuszy w EF Core (token współbieżności `version`, `DbUpdateConcurrencyException`) i Npgsql. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+
 
 ### 15.1 Zasady
 
@@ -6142,7 +7702,7 @@ flowchart LR
 |---|---|
 | G-0 | **Akceptacja właściciela produktu i właścicieli słownika:** PZS-1 (3.4); interpretacja NFR-01 (A-11); założenie A-12; rozszerzenia względem wymagań: powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu (ADR-022); kolejka globalna z pseudonimizacją i kontrolą przyjęć (ADR-021, ADR-031); brak wpisu ręcznego (ADR-024); tryb pełnej weryfikacji, jeśli G-1(b) nie jest spełnione; zatwierdzanie kont Nauczycieli przez Administratora; **(2.1)** rekrutacja i finansowanie Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy (A-14, ADR-034); zawieszenie Wyniku zadania na czas Zgłoszenia błędu odczytu (11.6); rozstrzyganie na korzyść Ucznia po usunięciu zdjęć (11.4.3 p. 3); kopie treningowe za zgodą (ADR-035); **(2.2)** limity Poprawek Transkrypcji i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (ADR-036, D-10); Przegląd Zadań wygenerowanych przez zlecającego Nauczyciela i Zgłoszenia błędu w Zadaniu zamiast bezpośredniej poprawki Zadań `GLOBALNY` (ADR-028, ADR-038, D-11); kryterium G-1(a) dla dowodów LB ≥ 85% przy n ≥ 350 (11.5.1, D-12); SLA w dniach roboczych, pula 18 weryfikatorów globalnych i kontrola przyjęć per Klasa (A-15, ADR-043, D-13); pominięcie Testu diagnostycznego (D-14); **(2.3)** Klasy przekazane w karencji nie wracają do przywróconego Nauczyciela (D-15); **(2.4)** automatyczne przejście pary w tryb pełnej weryfikacji przez bezpiecznik trafności przy progu 0,990 i koszt na granicy NFR-03 (D-16); zapas puli globalnej przy aktywnym bezpieczniku poprawek w fazie startowej (D-17). Akceptacja zapisana jako podpisany wpis w `docs/` (decyzja produktowa z datą). |
 | G-1 | ZT-1 (A-09: ≥ 700 obliczeniowych, ≥ 350 z dowodem), Transkrypcje referencyjne: (a) Zgodność Oceny (ADR-027) ≥ 90% — dla Jev **i** modelu zapasowego, osobno dla każdego rodzaju zadania otwartego (NFR-02) — oraz dolna granica Wilsona 95% ≥ 87,5% dla `OTWARTE_OBLICZENIOWE` i ≥ 85,0% dla `OTWARTE_Z_DOWODEM` (analiza mocy 11.5.1, tabela 2; D-12); (b) próg z 11.5.3 (wartości out-of-fold) z UB błędu auto ≤ 2% i `n_eff ≥ 189` — albo tryb pełnej weryfikacji zaakceptowany w G-0; (c) ECE ≤ 0.05 |
-| G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję); **(2.2)** Sprawdzenie zgodności poprawek (10.3.3): wykrywalność Poprawek „zastępujących” ≥ 95% na 200 syntetycznych przypadkach, **(2.3)** wykrywalność „wstawień rozwiązania” (T-7 albo `422`) ≥ 95% na 200 syntetycznych przypadkach i odsetek fałszywych alarmów ≤ 5% na 200 rzeczywistych Poprawkach błędów odczytu (wersja 2.2: ≤ 10%), p95 czasu Sprawdzenia ≤ 4 s; Filtr danych osobowych (2.3, C3-02): 0 wystąpień imienia i nazwiska z konta w zapisanych Transkrypcjach ≥ 150 kartek ZT-1 z danymi (w tym ≥ 30 z imionami lub nazwiskami < 4 znaków; górna granica Wilsona 95% odsetka kartek z wyciekiem 2,5%), ≥ 98% obszarów danych osobowych zamaskowanych, **0 zastąpień tokenów ze Słownika terminów matematycznych** i ≤ 0,5% kroków z fałszywym zastąpieniem innych tokenów na wszystkich 1 050 Transkrypcjach referencyjnych ZT-1 przefiltrowanych z syntetycznymi danymi konta (200 par imię–nazwisko z listy najczęstszych w Polsce, w tym nazwiska Pole, Kula, Granica, Suma, Prosta, Koło), `konflikt_filtra` ≤ 1% Transkrypcji, 0 zmian w `latex`; **(2.4, C4-03)** osobne kryterium dla ≥ 30 kartek z nazwiskiem równym terminowi matematycznemu (A-09): 0 wystąpień nazwiska w zapisanych Transkrypcjach, gdy stoi obok imienia lub inicjału albo w kroku w ramce danych osobowych (reguły a, b1, b2), i ≤ 1 kartka z `konflikt_filtra` wywołanym linią podpisu (≤ 3,3%); na 1 050 Transkrypcjach z syntetycznymi danymi konta `uczniowie_z_konfliktem_filtra_udzial` ≤ 1% (200 syntetycznych kont po ≥ 5 Transkrypcji); test Poprawek: przywrócenie kroku `tylko_dane_osobowe` na 50 przypadkach nie jest ponownie maskowane i trafia do Sprawdzenia zgodności poprawek (100%) |
+| G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję); **(2.2)** Sprawdzenie zgodności poprawek (10.3.3): wykrywalność Poprawek „zastępujących” ≥ 95% na 200 syntetycznych przypadkach, **(2.3)** wykrywalność „wstawień rozwiązania” (T-7 albo `422`) ≥ 95% na 200 syntetycznych przypadkach i odsetek fałszywych alarmów ≤ 5% na 200 rzeczywistych Poprawkach błędów odczytu (wersja 2.2: ≤ 10%), p95 czasu Sprawdzenia ≤ 4 s; Filtr danych osobowych (2.3, C3-02): 0 wystąpień imienia i nazwiska z konta w zapisanych Transkrypcjach ≥ 150 kartek ZT-1 z danymi (w tym ≥ 30 z imionami lub nazwiskami < 4 znaków; górna granica Wilsona 95% odsetka kartek z wyciekiem 2,5%), ≥ 98% obszarów danych osobowych zamaskowanych, **0 zastąpień tokenów ze Słownika terminów matematycznych w krokach z treścią matematyczną** (wersja 3.0, C5-01; wyjątek: sąsiedztwo z pełnym drugim członem imienia i nazwiska z konta, reguła b1, liczone i raportowane osobno, oczekiwane ≤ 0,1% kroków) i ≤ 0,5% kroków z fałszywym zastąpieniem innych tokenów na wszystkich 1 050 Transkrypcjach referencyjnych ZT-1 przefiltrowanych z syntetycznymi danymi konta (200 par imię–nazwisko z listy najczęstszych w Polsce, w tym nazwiska Pole, Kula, Granica, Suma, Prosta, Koło), `konflikt_filtra` ≤ 1% Transkrypcji, 0 zmian w `latex`; **(2.4, C4-03)** osobne kryterium dla ≥ 30 kartek z nazwiskiem równym terminowi matematycznemu (A-09): 0 wystąpień nazwiska w zapisanych Transkrypcjach, gdy stoi obok imienia lub inicjału albo w kroku w ramce danych osobowych (reguły a, b1, b2), i ≤ 1 kartka z `konflikt_filtra` wywołanym linią podpisu (≤ 3,3%); na 1 050 Transkrypcjach z syntetycznymi danymi konta `uczniowie_z_konfliktem_filtra_udzial` ≤ 1% (200 syntetycznych kont po ≥ 5 Transkrypcji); test Poprawek: przywrócenie kroku `tylko_dane_osobowe` na 50 przypadkach nie jest ponownie maskowane i trafia do Sprawdzenia zgodności poprawek (100%); **(3.0, C5-01)** celowy zestaw ≥ 20 kartek z nazwiskiem-terminem i oznaczeniem równym inicjałowi imienia (np. konto „Piotr Pole” i kroki „Pole P trójkąta wynosi 12”, konto „Kamil Prosta” i „prosta k: y = 2x + 1”, konto „Szymon Suma” i „suma S₁₀”): 0 zastąpień i 0 `konflikt_filtra` dla oznaczeń bez kropki, `konflikt_filtra` (bez zastąpienia) dla „Pole P. =” w kroku z treścią matematyczną; test przywrócenia słowa w miejscu znacznika w kroku z oznaczeniem (20 przypadków): słowo zostaje (100%) |
 | G-3 | Test obciążeniowy: (a) 2× szczyt wieczorny A-03 (600 Rozwiązań/h) przez 30 min; (b) „koniec lekcji”: 90 przesłań w 60 s, następnie 90 zatwierdzeń w 120 s; kryterium w obu: p95 czasu systemowego ≤ 20 s, ≥ 99% ≤ 28 s (czas widoczny ≤ 30 s), 0 przypadków T-6; **(2.4, C4-05)** (c) scenariusz (b) przy 3 replikach workera i dołączeniu 4. repliki w trakcie szczytu: 0 odpowiedzi `429`, maksimum wywołań Jev w dowolnym oknie 1 s ≤ 74 (pomiar po stronie zaślepki), Σ opublikowanych przydziałów ≤ 40/s w każdej próbce co 1 s |
 | G-4 | Test chaosu NFR-07 przy 300 Rozwiązaniach/h, trzy scenariusze: (a) Jev zaczyna zwracać timeout na 100% wywołań przy obwodzie ZAMKNIĘTYM (pomiar 10 min od wstrzyknięcia awarii, obejmuje przejście obwodu); (b) Jev zwraca natychmiast 503; (c) Jev degraduje do p95 2.5 s; (d) Jev zwraca `429` dla 30% żądań przez 10 min — obwód nie może się otworzyć, a przydział ogranicznika spada i wraca (ADR-039); kryterium w każdym: ≥ 99% Ocen z czasem systemowym ≤ 28 s (czas widoczny ≤ 30 s) i 0 przypadków T-6. Przed G-4 ustalany jest `parametry.tryb_jev` (test wsadu 32 pytań; brak wsadu → `POJEDYNCZY` i G-3/G-4 w tym trybie) oraz **(2.3)** tolerancja limitu (A-01): seria 74 wywołań w 1 s po 10 s bezczynności bez `429` → łączna pojemność kubełków `B_całk = 34` (worker 16 przy 2 replikach), inaczej `B_całk = 10` (13.2, C4-05) |
 | G-5 | Wszystkie Umiejętności **obu poziomów matury** mają opublikowaną Wkładkę teoretyczną i ≥ 3 Zadania `GLOBALNY` na każdy z Poziomów trudności 2–4 (FR-06, FR-07); **(2.2)** pula Testu diagnostycznego: ≥ 3 Zadania `diagnostyczne = true` (`ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`) na każdą trójkę (Dział poziomu matury, poziom matury, nominalny Poziom trudności ∈ {2, 4}) — 12 × 2 × 3 = 72 dla `PODSTAWOWY` i 13 × 2 × 3 = 78 dla `ROZSZERZONY` (raport `GET /admin/pula-diagnostyczna`, FR-03, C2-13) |
@@ -6298,6 +7858,8 @@ Słownika.
 
 ## 18. Mapowanie wymagań na komponenty, przepływy i API
 
+> Kolumna komponentów używa nazw modułów wersji 2.4 (`lemat.*`); odpowiedniki .NET — 6.10. Pełna macierz RTM na projekty, klasy i testy .NET powstaje w iteracji 4.
+
 ### 18.1 Wymagania funkcjonalne
 
 | Wymaganie | Komponenty | Przepływ / reguły | API | Dane |
@@ -6351,312 +7913,100 @@ Pełne mapowanie w 17.1; budżety w 17.2; bramki weryfikujące w 17.6.
 | Otwarte obliczeniowe | 9.4 → 9.5 | Agent oceniający krok po kroku | wg 11.3 (T-2…T-5) |
 | Otwarte z dowodem | 9.4 → 9.5 | Ocena wstępna (bez Q-OC-01) | zawsze (T-1) |
 
+
+### 18.4 Wymagania dla planu `TASKS.md` po pętli 3.x (C5-06 … C5-09)
+
+Obecne `TASKS.md`, `HANDOFF.md` i `CLAUDE.md` opisują stos wersji 2.4 i nie
+są edytowane w tej iteracji. Po iteracji 4 pętli 3.x planista generuje nowy
+`TASKS.md` od zera; uwagi C5-06 … C5-09 są dla niego wymaganiami
+obowiązkowymi (sprawdzanymi przez krytyka przy weryfikacji pokrycia planu):
+
+| Uwaga | Wymaganie dla nowego planu | Sprawdzenie |
+|---|---|---|
+| C5-06 | Zadanie Filtra danych osobowych opisuje reguły dokładnie jak 10.3.1 p. 3a: (a) ramka i **wyłączenia** (imię, nazwisko, inicjały, oznaczenie klasy nie są treścią matematyczną; nie są zastępowane tą regułą), (b) zastępowanie imienia, nazwiska i części lokalnej e-maila z regułami b1, b1-i, b2, (c) PESEL i e-mail. DoD: test każdego wiersza tabeli „Działanie filtra na Poprawkach” (krok niezmieniony, zmieniony, przywrócony `tylko_dane_osobowe`, wstawiony), test G-2 „50 przywróceń bez ponownego maskowania i ze Sprawdzeniem zgodności poprawek”, zestaw C5-01 („Pole P”, „prosta k”, „suma S”, „Pole P.” w kroku z treścią matematyczną) oraz test przywrócenia słowa w miejscu znacznika. Testy w `Lemat.Domain.Tests/Rozwiazania/FiltrDanychOsobowychTests.cs`. | opis i DoD zawierają identyfikatory reguł `a`, `b1`, `b1-i`, `b2`, `c` i 4 wiersze tabeli |
+| C5-07 | DoD zadania bezpiecznika wymienia testy (a)–(m) z 11.5.3 (w tym dane deterministyczne testu (g) i testy (l), (m) z wersji 3.0) w `Lemat.Domain.Tests/Kalibracja/BezpiecznikTests.cs`; DoD zadania ogranicznika — testy (a)–(h) z 13.2 (z asercją `pojemnosc = 0` po `INSERT` w (g), C5-03) w `OgranicznikSzybkosciTests.cs` i `OgranicznikSymulacja.cs`; DoD zadania odtworzenia po PITR — G-6 (a1)–(a4) i (b)–(d) jako testy automatyczne w `Lemat.Infrastructure.Tests` (Testcontainers), w tym konto Nauczyciela z asercją „0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie`”; protokół G-6 jest osobnym DoD, a nie jedynym. | każda litera testu występuje w DoD dokładnie jednego zadania |
+| C5-08 | Kolejność zależności zgodna z implementacją: (1) ocena bezpieczników (populacja, LB/UB, klasyfikacja 1–4, Blokada obniżania progu) jest osobnym zadaniem zależnym od zadania Próbek kalibracyjnych i wag IPW, a zadanie „Wynik dnia KALIBRUJ” (kroki 1–6) zależy od niego; (2) każde zadanie tworzące tabelę z kluczem obcym zależy (bezpośrednio albo przez przodka) od zadania tworzącego tabelę wskazywaną — w szczególności zadanie `klucz_idempotencji`/`powiadomienie` od zadania `uzytkownik`; w stosie .NET kolejność migracji EF Core jest kolejnością zadań. | test acykliczności i test „FK → przodek” krytyka; dodatkowo test logiczny: DoD nie odwołuje się do zachowania zadania niebędącego przodkiem |
+| C5-09 | (1) Odwołania między zadaniami wyłącznie identyfikatorami `TASK-NNN`, bez nazw roboczych; (2) DoD bez odwołań „zgodnie z sekcją X” — kryterium sprawdzalne wprost (np. dla adapterów: które błędy są `ModelNiedostepnyException`, które przejściowe, według wierszy E-09 macierzy 14.1); (3) słownictwo zgodne z 3.1 p. 5: „prace w tle”, nigdy „kolejka prac”; „dzierżawa”, nigdy „blokada pracy”; (4) `HANDOFF.md` aktualizowany po pętli 3.x: stan przeglądu wersji 3.0, stos .NET/Next.js, mapowanie 6.10, bez stwierdzeń o braku przeglądu wersji 2.4. | test słownika uruchamiany także na `TASKS.md`, `HANDOFF.md` i `CLAUDE.md` (część 4 — zakazane synonimy; część 3 — `kolejk*` z listą dozwolonych użyć) |
+
+Dodatkowe wymagania wynikające ze zmiany stosu: (a) zadania są
+przypisane do projektów z 6.4 i katalogów z 6.7–6.8 (pole „Projekt”);
+(b) każde zadanie z kodem C# wymienia klasy z 3.5/3.6, które tworzy;
+(c) pierwsze zadania planu tworzą szkielet solucji (6.4), testy architektury
+(6.5) i test słownika (3.4) przed kodem domeny, aby granice były egzekwowane
+od pierwszego commita; (d) frontend ma zadania per moduł 6.9 z testami
+Playwright scenariuszy FR.
+
 ---
 
 ## 19. Rejestr decyzji architektonicznych (ADR)
 
-Statusy: **Przyjęta** (iteracja 1, bez zmian), **Zmieniona (it. 2)**,
-**Nowa (it. 2)**, **Nowa (it. 3)**, **Nowa (it. 4)** (wersja 2.2), **Nowa (it. 5)**
-(wersja 2.3: ADR-046, ADR-047); uzupełnienia wprowadzone w wersjach 2.1, 2.2
-i 2.3 do istniejących decyzji są oznaczone akapitem „Uzupełnienie (it. 3)”,
-„Uzupełnienie (it. 4)” albo „Uzupełnienie (it. 5)”. Decyzje
-wymagające akceptacji właściciela produktu są oznaczone „G-0”.
+Od wersji 3.0 każdy ADR jest osobnym plikiem w katalogu [`docs/adr/`](adr/)
+(sekcje: Status, Kontekst, Decyzja, Alternatywy, Konsekwencje, Uzupełnienia;
+pełna treść rejestru wersji 2.4 bez skrótów). Ta sekcja jest indeksem.
+Statusy: **Przyjęta** (iteracja 1), **Zmieniona (it. 2)**, **Nowa (it. N)**,
+**Zastąpiony przez ADR-NNN** (decyzja przestała obowiązywać; plik wyjaśnia,
+która treść domenowa przechodzi do decyzji zastępującej), dopisek
+„realizacja: ADR-048” (decyzja obowiązuje, zmienia się wyłącznie realizacja
+techniczna). Kolumna G-0 oznacza decyzje wymagające akceptacji właściciela
+produktu (23.4).
 
-### ADR-001 Modularny monolit z osobnymi procesami `api`, `worker`, `scheduler` — Przyjęta
-- **Kontekst:** skala A-03, mały zespół, wiele ściśle powiązanych przepływów.
-- **Decyzja:** jedno repozytorium i jeden obraz; granice modułów egzekwowane `import-linter`; procesy skalowane niezależnie.
-- **Alternatywy:** mikroserwisy per agent — odrzucone (koszt operacyjny, transakcje rozproszone).
-- **Konsekwencje:** prostsze wdrożenie i transakcje; ewentualny podział na serwisy wzdłuż modułów jest możliwy bez zmiany kontraktów portów.
-
-### ADR-002 PostgreSQL jako jedyne źródło prawdy i mechanizm prac w tle — Zmieniona (it. 2)
-- **Kontekst:** każda zmiana stanu Rozwiązania musi atomowo zlecić kolejny krok; szczyt rozpoznawania nie może blokować oceniania (C1-25).
-- **Decyzja:** tabela `praca_w_tle` z kolumną `pula` + `SKIP LOCKED` + `LISTEN/NOTIFY`; rozłączne pule korutyn (13.4).
-- **Alternatywy:** Redis + Celery (problem podwójnego zapisu, wymaga wzorca outbox), Kafka (nadmiarowa).
-- **Konsekwencje:** brak dodatkowego komponentu; przepustowość wystarcza do ~1 000 prac/s, dużo powyżej A-03.
-- **Uzupełnienie (it. 4, wersja 2.2, C2-04):** deduplikacja prac obejmuje dla typów-wybudzeń (`AKTUALIZUJ_PROFIL`) wyłącznie prace `OCZEKUJE` (`ux_praca_dedup_oczekujace`), bo deduplikacja z `W_TOKU` gubiła wybudzenie dla Wyniku zatwierdzonego po odczycie przez handler; handler działa w pętli do pustego wyniku, a `ZAMIATAJ_PROFILE` (co 5 min) jest zabezpieczeniem. Alternatywa „tylko pętla w handlerze” — odrzucona: okno między ostatnim odczytem a `ZAKONCZONA` nadal gubi wybudzenie.
-
-### ADR-003 Porty i adaptery dla modeli AI, konfiguracja w bazie — Przyjęta
-- **Kontekst:** NFR-06, NFR-07, Jev we wczesnym dostępie.
-- **Decyzja:** porty z 13.1, rejestr adapterów, tabela `konfiguracja_modelu` z rolami; SDK dostawców tylko w `lemat.modele.adaptery`.
-- **Alternatywy:** bezpośrednie użycie SDK w agentach — odrzucone.
-- **Konsekwencje:** zmiana dostawcy bez zmian logiki; konieczna ewaluacja ZT-1 dla ról decyzyjnych.
-
-### ADR-004 Agent rozpoznający oparty na multimodalnym LLM ze strukturyzowanym wyjściem — Zmieniona (it. 2)
-- **Kontekst:** potrzebne jednocześnie: LaTeX, podział na kroki, oznaczenie niepewności, ramki danych osobowych.
-- **Decyzja:** rola `ROZPOZNAWANIE_PISMA` = multimodalny LLM z wymuszonym schematem JSON; post-processing SymPy obniża pewność niepoprawnego LaTeX. Sygnały LLM (`pewnosc_odczytu`, `czytelne`) działają wyłącznie w kierunku bezpiecznym (Z-1). Decyzję o podejrzeniu błędu odczytu wpływającym na Ocenę podejmuje Model decyzyjny (Q-OC-04 `BLAD_ODCZYTU`, Q-OC-06), a nie samoocena LLM.
-- **Alternatywy:** wyspecjalizowany OCR wzorów — daje LaTeX, ale bez podziału na kroki i bez znaczników niepewności; pozostaje kandydatem do porównania na ZT-1 (G-2) jako alternatywny adapter.
-- **Konsekwencje:** nieskalibrowana samoocena LLM nie jest jedyną ochroną FR-28: działają trzy niezależne mechanizmy — poprawki Ucznia (FR-18), decyzje Modelu decyzyjnego (T-3) i zgłoszenie Ucznia po Ocenie (11.6); skuteczność mierzy 11.8.
-
-### ADR-005 Ocena per kryterium osobnymi pytaniami — Zmieniona (it. 2)
-- **Kontekst:** otwarte pytanie „całość naraz czy krok po kroku”; FR-21 wymaga sprawdzenia każdego kroku (C1-15).
-- **Decyzja:** SCORE per kryterium + CHOICE pierwszego błędu + CHOICE typu błędu + NOUL wyniku + NOUL wynikania kroków (≤ 12 par) + NOUL podejrzenia błędu odczytu; ≤ 29 pytań, 2 rundy (Jev) lub 1 wywołanie (model zapasowy). Więcej niesprawdzonych par → niespójność N-6 i Weryfikacja.
-- **Alternatywy:** jedno pytanie SCORE o sumę punktów — brak lokalizacji błędu (FR-27) i słabsza diagnostyka niespójności; limit 40 par — przekracza budżet 17.2.
-- **Konsekwencje:** więcej wywołań (tanich), reguły niespójności N-1…N-6; żadne niesprawdzone wynikanie nie przechodzi automatycznie.
-
-### ADR-006 Pewność oceny = minimum prawdopodobieństw + kalibracja izotoniczna — Zmieniona (it. 2)
-- **Kontekst:** FR-22, NFR-04; wiele decyzji składowych.
-- **Decyzja:** `pewnosc_surowa = min(p)` z ograniczeniem przy niespójności, kalibrator izotoniczny per (konfiguracja, rodzaj) w tabeli `kalibrator_pewnosci`; każda niespójność **niezależnie od kalibratora** wymusza powód `NISKA_PEWNOSC`.
-- **Alternatywy:** iloczyn prawdopodobieństw (zaniżony, zależny od liczby kryteriów), średnia (maskuje najsłabszą decyzję).
-- **Konsekwencje:** pewność porównywalna między Zadaniami o różnej liczbie kryteriów; kalibrator naprawia nadmierną pewność min, ale nie może „wyprowadzić” niespójnej Oceny na trasę automatyczną.
-
-### ADR-007 Próg pewności z górnej granicy Wilsona, Kontroli losowej z wagami IPW i analizy mocy — Zmieniona (it. 2)
-- **Kontekst:** NFR-03 wymaga mierzenia błędów ocen automatycznych, które z definicji nie trafiają do Nauczyciela; ZT-1 w wersji 1 był za mały (C1-09); Kontrola mogła nie być wykonywana (C1-10).
-- **Decyzja:** Kontrola losowa 20% → 5% (próg 400 próbek), termin 3 dni robocze (wersja 2.1: 72 h); wybór progu 11.5.3 z `n_eff ≥ 189`, kalibracją out-of-fold (5-krotna CV) i wagami IPW skorygowanymi o odsetek wykonania Kontroli; reguły nadzoru (blokada obniżania progu, bezpiecznik braku nadzoru); ZT-1 ≥ 700 obliczeniowych z analizy mocy (11.5.1); tryb pełnej weryfikacji, gdy ZT-1 nie daje progu (G-0).
-- **Alternatywy:** stały próg 0.9 (niemierzalny NFR-03); kalibracja tylko na Weryfikacjach z niskiej pewności (obciążenie selekcją); traktowanie niewykonanych Kontroli jako błędów (zbyt konserwatywne przy 90% wykonania — zawyża błąd o do 10 pp).
-- **Konsekwencje:** obciążenie Kontrolą wliczone w model 17.7 (6% na starcie, 3% później); brak nadzoru zawsze podnosi próg, nigdy go nie obniża.
-- **Uzupełnienie (it. 4, wersja 2.2, C2-05, C2-06):** źródło Próbki kalibracyjnej wynika z `weryfikacja.powody_poczatkowe` (powody dopisane później nie wykluczają próbki — usunięcie nielosowych braków); analiza mocy G-1(a) per rodzaj: 700 obliczeniowych z LB ≥ 87,5% i 350 dowodów z LB ≥ 85,0% (D-12); Transkrypcje z Poprawkami mają podwójny odsetek Kontroli losowej i własny bezpiecznik (11.5.2).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-01):** bezpieczniki trafności i poprawek reagują na dowód przekroczenia (LB Wilsona 95% > 2% przy `n_eff ≥ 50`), a nie na brak dowodu spełnienia; próba liczona dla pary (konfiguracja, rodzaj) powyżej bieżącego progu, nie dla rekordu progu — ADR-046.
-
-### ADR-008 Opinia pomocnicza LLM nie zmienia trasy Oceny — Przyjęta
-- **Kontekst:** architektura wstępna: „pewność < próg → druga ocena przez mocniejszy LLM”; FR-24: „pewność poniżej progu → Weryfikacja”.
-- **Decyzja:** zgodnie z Z-2 FR-24 ma pierwszeństwo; druga ocena LLM jest asynchroniczną Opinią pomocniczą dla Nauczyciela.
-- **Alternatywy:** zgoda Jev + LLM jako podstawa automatycznego zaliczenia — odrzucona do czasu, gdy zespół będzie miał własny kalibrator i ≥ 400 próbek (decyzja do ponownego rozpatrzenia w przyszłym ADR).
-- **Konsekwencje:** zgodność z FR-24; dane do oceny przyszłej automatyzacji.
-
-### ADR-009 Model zapasowy: LLM ze strukturyzowaną odpowiedzią + circuit breaker + osobna kalibracja — Zmieniona (it. 2)
-- **Kontekst:** NFR-07, A-02; pytania Agenta oceniającego są zależne (C1-07).
-- **Decyzja:** 9.9; jedna Ocena = jeden model decyzyjny; model zapasowy wykonuje cały `PlanPytan` jednym wywołaniem (pytania warunkowe zwinięte, 13.2); własny kalibrator i próg; ponowienie Jev tylko przy zapasie ≥ 13 s do terminu miękkiego; obwód otwiera się po 3 kolejnych błędach.
-- **Alternatywy:** przełączanie per pytanie (mieszanie rozkładów o różnej kalibracji) — odrzucone; model zapasowy w rundach jak Jev — odrzucony (2–3 wywołania LLM po 6 s przekraczają budżet).
-- **Konsekwencje:** najgorszy przypadek z przełączeniem w trakcie Oceny mieści się w SLO (17.2, S-1…S-3); przy awarii Jev rośnie odsetek Weryfikacji, ale NFR-03 pozostaje spełnione.
-
-### ADR-010 Profil ucznia jako model Elo per Umiejętność; model drzewiasty jako eksperyment — Zmieniona (it. 2)
-- **Kontekst:** potrzeba działania od pierwszego dnia (brak danych do GBM), kalibracji Poziomu trudności i deterministycznego odtwarzania po korektach (C1-11).
-- **Decyzja:** 10.1.3; Wyniki z Testu diagnostycznego są zwykłymi zdarzeniami w historii; odtwarzanie całego Profilu ucznia od stanu DOMYŚLNEGO; GBM przez port `PredyktorSukcesu` po zebraniu 20 000 Wyników zadania.
-- **Alternatywy:** BKT (gorzej obsługuje punkty cząstkowe), IRT offline (wymaga dużych danych na starcie); odtwarzanie od „punktu po teście” — odrzucone (podwójne liczenie).
-- **Konsekwencje:** prosta, deterministyczna aktualizacja; koszt odtworzenia < 50 ms dla ≤ 5 000 Wyników.
-
-### ADR-011 Uzasadnienie rekomendacji z szablonów, nie z LLM — Zmieniona (it. 2)
-- **Kontekst:** FR-10, NFR-05; ryzyko halucynacji liczb.
-- **Decyzja:** szablony 10.1.5 wypełniane faktami zapisanymi w `uzasadnienie_fakty`, dla **każdej** wartości `regula` (także `R-JEV-*`, `R-SERIA`, `R-UTRWALENIE`, `R-WKLADKA-DIAG`) i dla braku elementu; test pokrycia.
-- **Konsekwencje:** uzasadnienie zawsze prawdziwe i audytowalne; mniej „naturalny” język.
-
-### ADR-012 Wersjonowanie Zadań i niezmienność Ocen — Zmieniona (it. 2)
-- **Kontekst:** FR-14 (poprawki Zadań), FR-34 (korekty Ocen), NFR-05, asynchroniczna Wskazówka.
-- **Decyzja:** `zadanie_wersja` niezmienna (z `zastapiona_at`); Rozwiązanie, Odpowiedź i rozpoczęty element wskazują wersję; Ocena tylko dopisywana z `wersja`; jedyny wyjątek — jednokrotny zapis Wskazówki (trigger `trg_ocena_niezmienna`).
-- **Konsekwencje:** pełna historia; nieco bardziej złożone zapytania (indeks `ux_ocena_aktualna`, stała kolejność „najpierw `ZASTAPIONA`, potem `INSERT`”).
-
-### ADR-013 SymPy w piaskownicy procesowej — Przyjęta
-- **Kontekst:** FR-21, FR-13; ryzyko zawieszenia i nadużycia parsera.
-- **Decyzja:** pula procesów z limitami 16.2, `parse_latex` (backend `lark`), wynik trójwartościowy.
-- **Konsekwencje:** SymPy jest sygnałem, nie werdyktem — nierównoważne przekształcenia bywają poprawne (np. przejście do zbioru rozwiązań).
-
-### ADR-014 Odpytywanie (polling) zamiast WebSocket/SSE — Zmieniona (it. 2)
-- **Kontekst:** NFR-08 (sieci komórkowe), prostota infrastruktury, budżet NFR-01.
-- **Decyzja:** `GET /rozwiazania/{id}` co 1 s w stanach przejściowych i przy Wskazówce w przygotowaniu, z podpowiedzią `nastepne_odpytanie_ms`; powiadomienia co 60 s.
-- **Konsekwencje:** ≤ 1 s dodatkowego opóźnienia na fazę (ujęte w 17.2 jako różnica 28 s / 30 s); w szczycie lekcji ≤ 90 żądań/s — pomijalne dla `api`.
-
-### ADR-015 Publikacja Zadań wygenerowanych po Walidacji; Wkładki i dowody tylko po przeglądzie — Zmieniona (it. 2)
-- **Kontekst:** FR-13, FR-14; skala wymaga automatyzacji, ale dowodów nie da się sprawdzić symbolicznie; dowody bez zlecającego utykały w `DO_PRZEGLADU` (C1-22).
-- **Decyzja:** obliczeniowe i zamknięte → `OPUBLIKOWANE` (`GLOBALNY`) po pozytywnej Walidacji; dowody i Wkładki → `DO_PRZEGLADU`, publikuje recenzent treści lub Administrator (ADR-028). Generowanie systemowe (`UZUPELNIJ_PULE`) nigdy nie tworzy dowodów (CHECK w `zlecenie_generowania`); szkice Wkładek powstają także automatycznie przy E-20.
-- **Konsekwencje:** każde Zadanie i Wkładka w `DO_PRZEGLADU` ma uprawnionego recenzenta; FR-06 jest pokryte dla obu poziomów (G-5).
-
-### ADR-016 Identyfikatory domenowe po polsku, zgodne ze słownikiem — Zmieniona (it. 2)
-- **Kontekst:** wymóg zgodności ze słownikiem pojęć (Z-6); homonimy w wersji 1 (C1-03, C1-04).
-- **Decyzja:** reguły 3.1 (w tym „jedno słowo — jedno znaczenie” i lista dopuszczonych terminów technicznych); zmiany nazw: `DecyzjaSkladowa`, `RezultatPytan`, `RezultatOceny`, `RezultatRozpoznawania`, `Rownowaznosc`, `rezultat_walidacji`, `procent_grupy_eksperymentu`, `nr_kryterium`, `wymaga_nr_kryterium`, `wynik_koncowy_wzorcowy`, `typ_kolejki_weryfikacji`, `decyzja_modelu.wybor`; propozycja zmiany słownika PZS-1 (3.4).
-- **Konsekwencje:** brak tłumaczeń między warstwami; zmiany słownika wymagają akceptacji (G-0).
-
-- **Uzupełnienie (it. 6, wersja 2.4, C4-04):** „zdjęcie” = wyłącznie fotografia kartki; wyłączenie bezpiecznika = „dezaktywacja” (`POST /admin/bezpieczniki/dezaktywacja`, `dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`), odebranie flagi = „odebranie”, wyłączenie flagi danych = „wyłączenie”; „wstrzymanie” ma jedno znaczenie (3.1 p. 5); test CI, część 3, pilnuje tokenów `zdje*` i `wstrzym*` z listami dozwolonych użyć. Odrzucona alternatywa: „wyłączenie bezpiecznika” — słowo „wyłączenie” jest już używane dla flag danych i reguł 11.5.2 („wyłączenie powodów nielosowych”), więc łamałoby 3.1 p. 5 w ten sam sposób.
-
-### ADR-017 Obowiązkowe zatwierdzenie Transkrypcji przez Ucznia — Zmieniona (it. 2)
-- **Kontekst:** FR-18, FR-28; FR-28 nie może zależeć wyłącznie od uważności Ucznia (C1-01).
-- **Decyzja:** brak automatycznego zatwierdzenia; po 7 dniach Rozwiązanie `PORZUCONE`. Zatwierdzenie jest pierwszą, a nie jedyną linią obrony FR-28: dochodzą T-3 (ADR-022, decyzje Modelu decyzyjnego) i zgłoszenie po Ocenie (11.6).
-- **Konsekwencje:** Uczeń nie ponosi skutków błędu odczytu, którego nie zauważył: Ocena z podejrzeniem nie obniża punktów ani Profilu, a niezauważony błąd może zgłosić przez 14 dni.
-
-### ADR-018 Wynik zadania z Oceny wstępnej z wagą 0,5; bez Wyniku przy podejrzeniu błędu odczytu — Zmieniona (it. 2)
-- **Kontekst:** FR-29 vs. czas Weryfikacji (dni) — Profil nie może stać w miejscu; FR-28 — błąd odczytu nie może obniżyć Profilu (C1-01); wielokrotne próby nie mogą zawyżać Profilu (C1-21).
-- **Decyzja:** `waga = w_status × w_proba` (10.1.3): Ocena wstępna 0,5 (bez wpływu na `trudnosc_b`), Ocena wstępna z `mozliwy_blad_odczytu` — **brak** Wyniku zadania; kolejna próba tego samego Zadania w 60 dniach — × 0,5. Wynik wstępny jest unieważniany i zastępowany po Ocenie ostatecznej; odtworzenie 10.1.3.
-- **Konsekwencje:** rekomendacje reagują od razu; korekty są w pełni uwzględniane; Profil nie jest obniżany przez podejrzany odczyt.
-
-### ADR-019 Retencja zdjęć sterowana przejściami stanów, maks. 90 dni — Zmieniona (it. 2)
-- **Kontekst:** NFR-09 vs. potrzeba porównania zdjęcia przy Weryfikacji, Kontroli losowej i zgłoszeniu (C1-10, C1-12).
-- **Decyzja:** `usun_po` jako jedyne źródło prawdy, ustawiane przez przejścia z 16.4 (30 dni po ocenie bez otwartej Weryfikacji, przedłużenie do 90 dni przy otwartej, natychmiast po porzuceniu/anulowaniu); twardy limit `CHECK`; buckety bez wersjonowania + reguła cyklu życia 91 dni.
-- **Konsekwencje:** Weryfikacja dłuższa niż 90 dni odbywa się bez zdjęcia (SLA 3 dni robocze i alert po 80 dniach czynią to wyjątkiem).
-
-### ADR-020 JWT krótkotrwały + rotowany refresh token w cookie — Przyjęta
-- **Kontekst:** PWA na telefonach, bezpieczeństwo sesji.
-- **Decyzja:** 16.1.
-- **Alternatywy:** sesje serwerowe w bazie (dodatkowe zapytanie na każde żądanie), długożyjące JWT (brak unieważniania).
-- **Konsekwencje:** unieważnienie dostępu w ≤ 15 min (blokada konta unieważnia refresh tokeny natychmiast).
-
-### ADR-021 Kolejka weryfikacji globalna dla Uczniów bez Klasy — Zmieniona (it. 2), G-0
-- **Kontekst:** Uczeń może korzystać z platformy bez Nauczyciela (FR-01), a Weryfikacja jest obowiązkowa (FR-24…FR-26); w wersji 1 brakowało gwarancji istnienia weryfikatorów, SLA i ochrony danych (C1-02).
-- **Decyzja:** 11.4; weryfikatorzy globalni z deklarowanym czasem ≥ 90 min na dzień roboczy; bramka G-7 z liczbą wyliczoną z tygodniowego modelu 17.7 (start: 18, wersja 2.2 — ADR-043); SLA 3 dni robocze (w wersji 2.1: 72 h); eskalacja KLASA → GLOBALNA → alert Administratora (nie do tej samej kolejki); kontrola przyjęć; pseudonimizacja (ADR-031).
-- **Alternatywy:** automatyczne nadanie Ocenie wstępnej statusu ostatecznej po SLA — **odrzucone**, bo łamie FR-24 i FR-26 („zawsze”); blokada zadań otwartych dla Uczniów bez Klasy — odrzucona (sprzeczna z wizją „jak na maturze”), zastąpiona ograniczeniem udziału zadań otwartych tylko przy przeciążeniu.
-- **Konsekwencje:** przy przeciążeniu Uczeń bez Klasy dostaje więcej zadań zamkniętych i jawny status opóźnienia, ale nigdy nie traci Weryfikacji.
-
-### ADR-022 Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu i zgłoszenie Ucznia — Nowa (it. 2), G-0
-- **Kontekst:** FR-28 („błędy odczytu nie obniżają oceny”) vs. FR-24 („uczeń widzi ocenę wstępną”); w wersji 1 podejrzany błąd odczytu zerował punkty za wynik i trafiał do Profilu (C1-01).
-- **Decyzja:** (1) moda Q-OC-04 = `BLAD_ODCZYTU` nie jest błędem Ucznia: nie zeruje punktów (FR-20), nie ustala `typ_bledu`; (2) Ocena wstępna z `mozliwy_blad_odczytu` jest pokazywana Uczniowi jako „wstrzymana”: status, krok podejrzany, komunikat — bez punktów, typu błędu i Wskazówki; (3) taka Ocena nie tworzy Wyniku zadania; (4) Uczeń może zgłosić błąd odczytu do 14 dni po Ocenie (11.6), co tworzy Weryfikację z priorytetem 2.
-- **Alternatywy:** „ocena w najlepszej wierze” (maksimum punktów dla kryteriów, które mogły być dotknięte błędem) — odrzucona, bo pokazuje Uczniowi zawyżone punkty, które Nauczyciel potem obniża (gorsze doświadczenie niż wstrzymanie); pokazanie punktów modelu — odrzucone (łamie FR-28).
-- **Konsekwencje:** w tym jednym przypadku FR-28 ma pierwszeństwo przed literalnym brzmieniem FR-24 (Uczeń widzi Ocenę wstępną bez punktów); wymaga akceptacji w G-0. Skuteczność mierzona w 11.8.
-- **Uzupełnienie (it. 3, wersja 2.1):** (5) zgłoszenie błędu odczytu **zawiesza** Wynik zadania zgłoszonej Oceny do rozstrzygnięcia (unieważnienie z powodem `ZGLOSZENIE_BLEDU_ODCZYTU`, odtworzenie Profilu, 9.12), więc niezauważony przez Ucznia i przez T-3 błąd odczytu nie obniża Profilu także w czasie Weryfikacji; (6) po usunięciu zdjęć przed rozstrzygnięciem kroki podejrzane są oceniane na korzyść Ucznia, a odstępstwo wymaga komentarza (11.4.3 p. 3). Alternatywa „Wynik w mocy do rozstrzygnięcia” (wersja 2.0) — odrzucona, bo przez ≤ 72 h (SLA) Profil i rekomendacje opierałyby się na Ocenie, którą Uczeń zakwestionował z powodu odczytu.
-
-### ADR-023 Rekomendacja synchroniczna w procesie `api` przez fasadę Orkiestratora — Nowa (it. 2)
-- **Kontekst:** słownik: Orkiestrator koordynuje agentów; wersja 1 wywoływała Agenta rekomendującego z `api` z pominięciem Orkiestratora i bez timeoutu (C1-17).
-- **Decyzja:** 6.3: `Orkiestrator.rekomenduj_synchronicznie()` w procesie `api`; jedyne wywołanie modelu — Q-RE-01 z timeoutem 1,5 s, bez ponowień, z circuit breakerem; przy błędzie POLITYKA_ELO; zlecenia prac (`UZUPELNIJ_PULE`, `GENERUJ_SZKIC_WKLADKI`) w tej samej transakcji.
-- **Alternatywy:** praca w tle + odpytywanie — odrzucona (+ ≥ 1 s na każde „Dalej”, a przepływ nie angażuje innych agentów).
-- **Konsekwencje:** p95 `GET …/nastepna` ≤ 500 ms (bez JEV_CHOICE ≤ 150 ms); krawędź `api → Jev` w 5.1.
-
-### ADR-024 Brak wpisu ręcznego Rozwiązania — Nowa (it. 2), G-0
-- **Kontekst:** wizja i słownik: Rozwiązanie to zdjęcie kartki („jak na prawdziwej maturze”); wpis ręczny w wersji 1 był rozszerzeniem spoza wymagań, omijał T-3 i zmieniał rozkład danych kalibracyjnych (C1-26).
-- **Decyzja:** usunięto `WPIS_RECZNY_UCZNIA`. Po błędzie rozpoznawania Uczeń ma: nowe zdjęcia (≤ 3 przesłania), ponowienie rozpoznania tych samych zdjęć po awarii dostawcy (≤ 5, bez zużycia przesłania), porzucenie i nowe Rozwiązanie dla tego samego elementu do `wygasa_at`.
-- **Alternatywy:** wpis ręczny z obowiązkową Weryfikacją — odrzucony (obciąża Nauczycieli i nadal pozwala ominąć kartkę).
-- **Konsekwencje:** Transkrypcja zawsze pochodzi ze zdjęcia (PZS-1 B-1) — od wersji 2.2 gwarantują to limity i Sprawdzenie zgodności Poprawek Transkrypcji (ADR-036), bo bez nich nieograniczona edycja Transkrypcji była wpisem ręcznym „tylnymi drzwiami” (C2-01); dane kalibracyjne jednorodne.
-
-### ADR-025 NFR-01 jako czas systemowy; termin miękki i twardy; Wskazówka asynchroniczna — Nowa (it. 2), G-0
-- **Kontekst:** wersja 1 mierzyła NFR-01 od zatwierdzenia i liczyła T-6 jako sukces, przez co NFR-01 było spełnione z definicji (C1-08); Agent wyjaśniający był na ścieżce krytycznej.
-- **Decyzja:** A-11 i 17.1: pomiar obejmuje rozpoznanie i ocenę; T-6 i błędy dostawcy są naruszeniami; termin miękki skraca timeouty, termin twardy 120 s kończy próby Oceną albo T-6; Wskazówka powstaje w pracy `NAPISZ_WSKAZOWKE` po zapisie Oceny.
-- **Alternatywy:** pomiar od przesłania z czasem Ucznia na sprawdzenie Transkrypcji — odrzucony (system nie kontroluje czasu Ucznia, a FR-18 go wymaga); twardy termin 28 s z T-6 — odrzucony (zamieniał spóźnione Oceny na brak Oceny).
-- **Konsekwencje:** NFR-01 mierzalne i niespełnialne „z definicji” tylko przez poprawne działanie; Wskazówka pojawia się do ~10 s po Ocenie.
-
-### ADR-026 Plan pytań z zależnościami jako kontrakt portu `ModelDecyzyjny` — Nowa (it. 2)
-- **Kontekst:** pytania Agenta oceniającego są zależne (wariant → kryteria, pierwszy błąd → typ błędu); model zapasowy nie znał wyników wcześniejszych rund (C1-07).
-- **Decyzja:** `PlanPytan` z `WarunekPytania` (głębokość 1); Jev wykonuje plan w 2 rundach, model zapasowy jednym wywołaniem z pytaniami warunkowymi zwiniętymi do pól schematu (13.2).
-- **Alternatywy:** zadawanie Q-OC-04 dla każdego kroku — odrzucone (do 40 pytań więcej dla Jev); rundy dla modelu zapasowego — odrzucone (budżet).
-- **Konsekwencje:** Agent oceniający niezależny od modelu (NFR-06); pytania warunkowe niespełnione są jawnie zwracane w `pominiete`.
-
-### ADR-027 Zgodność Oceny = punkty + pierwszy błędny krok + brakujący krok — Nowa (it. 2), G-0
-- **Kontekst:** słownik: Ocena obejmuje wskazanie błędnego kroku, a Pewność oceny to prawdopodobieństwo, że Ocena jest poprawna; wersja 1 kalibrowała tylko sumę punktów (C1-16).
-- **Decyzja:** `probka_kalibracyjna.zgodna` = równe punkty ∧ równy `pierwszy_bledny_krok` (lub oba brak) ∧ równe `brakujacy_krok`. Typ błędu jest mierzony osobno (`zgodny_typ_bledu`), bo jest klasyfikacją pomocniczą dla Wskazówki, a nie elementem definicji Oceny w słowniku. Ta sama definicja służy NFR-02 (PZS-1 B-5).
-- **Alternatywy:** tylko punkty — odrzucone (Ocena z dobrą sumą i złym krokiem byłaby „poprawna”); punkty + krok + typ — odrzucone (zaniżałoby zgodność z powodu rozbieżności klasyfikacji, które nie zmieniają Oceny).
-- **Konsekwencje:** NFR-02 i NFR-04 są trudniejsze do spełnienia, ale zgodne ze słownikiem; ZT-1 musi mieć oznaczony pierwszy błędny krok przez Nauczycieli.
-
-### ADR-028 Zasięg Zadań i recenzent treści — Nowa (it. 2), G-0
-- **Kontekst:** w wersji 1 każdy Nauczyciel mógł poprawić lub wycofać dowolne Zadanie (także z Arkusza CKE), a Zadania Nauczycieli trafiały do globalnego doboru bez przeglądu (C1-22).
-- **Decyzja:** `zadanie.zasieg` (`GLOBALNY`/`PRYWATNY`); Zadania `BAZOWE_NAUCZYCIEL` są `PRYWATNY` (tylko Przypisania autora), dopóki recenzent treści lub Administrator nie zatwierdzi ich do `GLOBALNY`; flaga `nauczyciel.recenzent_tresci`; uprawnienia 8.4; endpointy Przeglądu i wycofania dla Administratora.
-- **Alternatywy:** wszystkie Zadania globalne z obowiązkowym przeglądem — odrzucone (blokuje Nauczyciela, który chce użyć własnego zadania w swojej Klasie od razu).
-- **Konsekwencje:** zmiany treści wpływające na wszystkich Uczniów wykonują tylko osoby uprawnione; `POST /zadania` tylko dla roli Nauczyciel (Administrator importuje Arkusze CKE), co zachowuje definicję Zadania bazowego.
-- **Uzupełnienie (it. 4, wersja 2.2, C2-03):** ograniczenie bezpośredniej poprawki Zadań `GLOBALNY` do recenzentów treści zawęża FR-14 („Nauczyciel może przejrzeć, poprawić lub odrzucić”), więc decyzja jest oznaczona G-0 (D-11); FR-14 dla Zadań zleconych przez Nauczyciela jest spełnione w pełni przez ADR-038, a dla Zadań `GLOBALNY` — przez Zgłoszenie błędu w Zadaniu.
-
-### ADR-029 Kalibracja Poziomu trudności w osobnej tabeli z atomową aktualizacją — Nowa (it. 2)
-- **Kontekst:** równoległe Wyniki zadania gubiły aktualizacje `trudnosc_b` i podnosiły `zadanie.version`, powodując `412` w Przeglądzie (C1-23).
-- **Decyzja:** tabela `kalibracja_trudnosci` (`trudnosc_b`, `liczba_wynikow_kalibracji`, skalibrowany `poziom_trudnosci`), atomowy `UPDATE` z blokadą wiersza (10.1.3), histereza 0,1, audyt zmiany poziomu; `zadanie.poziom_trudnosci_nominalny` zmienia tylko człowiek (Przegląd, import).
-- **Konsekwencje:** brak utraconych aktualizacji (C-24); Poziom trudności w API = wartość skalibrowana (słownik), nominalna dostępna osobno (PZS-1 B-4).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-09):** ten sam wzorzec obejmuje Wstrzymanie w doborze (tabela `wstrzymanie_w_doborze` zamiast kolumny `zadanie.wstrzymane_w_doborze`): zmiana systemowa wywołana zgłoszeniem nie podnosi `zadanie.version`, więc recenzent z `If-Match` nie dostaje `412` po każdym nowym zgłoszeniu (powrót problemu C1-23 wykluczony).
-
-### ADR-030 Seria nauki po Wkładce teoretycznej — Nowa (it. 2)
-- **Kontekst:** wizja: po Wkładce „seria zadań z tego działu o stopniowo rosnącej trudności, aż do poziomu maturalnego”; polityka wersji 1 mogła po Wkładce przeskoczyć do innej Umiejętności (C1-29).
-- **Decyzja:** stan Serii w `sciezka_nauki.seria_*`; reguła R-SERIA (10.1.2 krok 3) z poziomem niemalejącym przy sukcesach; zakończenie sukcesem po `ulamek ≥ 0,7` na Poziomie trudności ≥ 4, a porażką po 3 kolejnych błędach, 8 elementach lub 7 dniach.
-- **Alternatywy:** brak Serii (czysty ranking) — odrzucone (niezgodne z wizją).
-- **Konsekwencje:** przewidywalna ścieżka po Wkładce; Przypisania mają pierwszeństwo, powtórki są wstrzymane na czas Serii.
-
-### ADR-031 Pseudonimizacja i maskowanie zdjęć w kolejce globalnej — Nowa (it. 2), G-0
-- **Kontekst:** w wersji 1 Nauczyciel spoza Klasy widział imię, nazwisko i niezamaskowane zdjęcia Ucznia (C1-02).
-- **Decyzja:** 11.4.4: pseudonim HMAC, brak Klasy i innych Rozwiązań, zdjęcia maskowane na podstawie ramek danych osobowych z Agenta rozpoznającego; informacja przy rejestracji; umowy poufności weryfikatorów (16.3).
-- **Alternatywy:** brak kolejki globalnej — odrzucone (FR-24…FR-26 dla Uczniów bez Klasy). Twierdzenie wersji 2.1, że anonimizacja Transkrypcji jest zbędna, bo „Transkrypcja zawiera wyłącznie rozwiązanie”, było niczym niezagwarantowane (C2-10) — zastąpione Filtrem danych osobowych (ADR-042).
-- **Konsekwencje:** minimalizacja danych zgodna z NFR-09; koszt: jedno maskowanie zdjęcia (Pillow, ~50 ms) na przesłanie.
-
-### ADR-032 Jeden kontekst na próbę, wielokrotne próby i ujawnianie klucza po terminie — Nowa (it. 2)
-- **Kontekst:** Odpowiedź bez kontekstu pozwalała powtarzać Zadanie zamknięte i zawyżać Profil; brak unikalności w Przypisaniach; klucz ujawniany od razu w Przypisaniu (C1-21).
-- **Decyzja:** każda Odpowiedź i każde Rozwiązanie ma dokładnie jeden kontekst: element Ścieżki nauki albo pozycję Przypisania (CHECK w DDL, Test diagnostyczny osobno); indeksy unikalne per (Uczeń, Przypisanie, Zadanie); kolejna próba tego samego Zadania w 60 dniach ma wagę × 0,5 (ADR-018); w Przypisaniu wynik i klucz Odpowiedzi są ujawniane od terminu (`rezultat_ujawniony_od`). Rozwiązania z listy Przypisań nie tworzą elementów Ścieżki nauki (Ścieżka zawiera wyłącznie propozycje agenta — PZS-1 B-3).
-- **Konsekwencje:** brak duplikatów Weryfikacji dla Nauczyciela; Profil odporny na powtarzanie.
-- **Uzupełnienie (it. 4, wersja 2.2, C1-21):** element Ścieżki nauki z reguły `R-PRZYPISANIE` był obejściem niezmiennika (próba miała tylko `element_sciezki_id`). Decyzja: klient podaje jeden kontekst, ale **kontekst efektywny** próby z elementu `R-PRZYPISANIE` zawiera także `przypisanie_id` elementu — dziedziczone w bazie przez `trg_kontekst_proby` (para dozwolona wyłącznie przy `element.przypisanie_id = przypisanie_id`). Skutki: `ux_odpowiedz_przypisanie`/`ux_rozwiazanie_przypisanie` obejmują obie drogi (C-30); `rezultat_ujawniony_od = greatest(now(), termin)` także z elementu; przydział 11.4.1 p. 1 kieruje Weryfikację do Nauczyciela Przypisania; próba liczy się do `PostepPrzypisaniaWyjscie`; CHECK w 7.3 jawnie wylicza kombinacje {E}, {P}, {E, P}, {T}. Alternatywa „rezygnacja z elementu `R-PRZYPISANIE` i kierowanie Ucznia na listę Przypisań” — odrzucona, bo Przypisania przestałyby być częścią Ścieżki nauki proponowanej przez agenta (PZS-1 B-3) i rekomendacja nie mogłaby wybierać, kiedy je zaproponować.
-
-### ADR-033 Weryfikacja: SLA, zwalnianie wygasłych blokad, przedłużanie i szkice — Nowa (it. 2)
-- **Kontekst:** w wersji 1 wygasła blokada zostawiała Weryfikację na zawsze w `W_TRAKCIE`, nie było przedłużenia ani autozapisu (C1-06); Kontrola losowa nie miała terminu (C1-10).
-- **Decyzja:** reguła odczytu „dostępna” + `ZWOLNIJ_BLOKADY_WERYFIKACJI` co minutę; `POST …/przedluzenie` (łącznie ≤ 2 h) i idempotentne podjęcie przez właściciela; `szkic_rozstrzygniecia` per (Weryfikacja, Nauczyciel); `termin_at` dla wszystkich powodów (wersja 2.1: 72 h; od 2.2: 3 dni robocze, ADR-043); eskalacja co godzinę; poprawiony SQL podjęcia (9.6.1).
-- **Konsekwencje:** porzucona Weryfikacja wraca do kolejki w ≤ 1 min; Nauczyciel nie traci pracy przy przejęciu; każda Weryfikacja ma mierzalny termin.
-- **Uzupełnienie (it. 4, wersja 2.2, C2-02, C2-16):** przedłużenie i podjęcie nie zmieniają `version` (ADR-037); ponowne podjęcie przez właściciela nie wydłuża blokady poza `podjeta_at + 2 h`.
-
-### ADR-034 Pula weryfikatorów globalnych: Nauczyciele bez Klas + Nauczyciele współpracujący — Nowa (it. 3), G-0
-- **Kontekst:** G-7 wymagało w wersji 2.1 na starcie 12 weryfikatorów globalnych (17.7; od wersji 2.2 — 18, ADR-043), a A-03 przewiduje 50 Nauczycieli, z których 40 prowadzi Klasy — bez Klas jest tylko 10. Wersja 2.0 nie mówiła, skąd pochodzi brakująca pojemność, więc G-7 było niespełnialne przy założeniach A-03 (uzupełnienie C1-02).
-- **Decyzja:** A-14: pula = 10 Nauczycieli bez Klas + ≥ 8 Nauczycieli współpracujących na umowę (wersja 2.1: ≥ 2; zmiana wynika z modelu tygodniowego z eskalacjami, ADR-043); Nauczyciel prowadzący Klasę może dołączyć tylko przy łącznym obciążeniu ≤ 180 min na dzień roboczy (walidacja `422 LIMIT_OBCIAZENIA_WERYFIKATORA`). Plan awaryjny bez rekrutacji: start z `LEMAT_REJESTRACJA_BEZ_KLASY = false` (rejestracja Ucznia tylko z kodem zaproszenia), wtedy kolejka `GLOBALNA` obsługuje wyłącznie eskalacje z Klas i Uczniów, którzy opuścili Klasę.
-- **Alternatywy:** obowiązkowy przydział każdego Nauczyciela prowadzącego Klasę do puli globalnej — odrzucony (72 + 90 = 162 min/dobę na start, czyli ponad 2,5 h pracy dziennie dla każdego, R-02); Ocena wstępna jako ostateczna po SLA — odrzucona w ADR-021 (łamie FR-24/FR-26).
-- **Konsekwencje:** koszt operacyjny (umowy z ≥ 8 Nauczycielami na czas fazy startowej, ≥ 4 w fazie ustalonej) albo ograniczenie zakresu pilotażu do Uczniów z Klas — **decyzja właściciela produktu w G-0**; architektura obsługuje oba warianty bez zmian kodu (flaga konfiguracji).
-
-### ADR-035 Kopie treningowe z rejestrem powiązań w bazie — Nowa (it. 3), G-0
-- **Kontekst:** 16.4 (wersja 2.0) przewidywało kopie zdjęć do zbioru treningowego „z pseudonimem zamiast `uczen_id`” i usunięcie po odwołaniu zgody, ale nie było żadnego powiązania kopii z kontem — odwołania zgody ani usunięcia konta nie dało się wykonać (uzupełnienie C1-12).
-- **Decyzja:** tabela `kopia_treningowa` (7.3) jako jedyne powiązanie kopii z Uczniem; kopia zawiera zdjęcie maskowane, Transkrypcję i Ocenę ostateczną; tworzy ją `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` przy przejściu do `OCENIONE` (przed upływem `usun_po` zdjęcia); odwołanie zgody (`PATCH /uczniowie/ja`) i `USUN_KONTO` (krok 4a) ustawiają usunięcie; `ON DELETE RESTRICT` wymusza kolejność kroków.
-- **Alternatywy:** pseudonim bez powiązania (anonimizacja) — odrzucony, bo zgoda jest odwołalna (art. 7 ust. 3 RODO) i musi dać się wykonać; kopie oryginałów zdjęć — odrzucone (minimalizacja: oryginał może zawierać imię i nazwisko).
-- **Konsekwencje:** prawo do odwołania zgody i do usunięcia jest wykonalne w ≤ 1 h; zbiór treningowy nie zawiera danych identyfikacyjnych (od wersji 2.2 gwarantuje to Filtr danych osobowych, ADR-042).
-- **Uzupełnienie (it. 4, wersja 2.2, C2-16):** kopia jest zlecana przy każdym przejściu do stanu „`OCENIONE` bez otwartej Weryfikacji” (także po zamknięciu Kontroli losowej lub zgłoszenia) i nadpisywana, gdy Ocena aktualna jest nowsza niż zapisana (`kopia_treningowa.ocena_id`).
-
-### ADR-036 Poprawki Transkrypcji ograniczone i sprawdzane ze zdjęciem — Nowa (it. 4), G-0
-- **Kontekst:** `PUT …/transkrypcja` przyjmował dowolną listę 1–40 kroków, a kroki zmienione były wyłączone z podejrzenia odczytu (11.1 p. 7c); Uczeń mógł sfotografować dowolną kartkę, wpisać gotowe rozwiązanie i przejść trasą automatyczną — sprzeczność z ADR-024 i PZS-1 B-1 (C2-01). FR-18 mówi o poprawie „błędnie odczytanego **fragmentu**”.
-- **Decyzja:** (1) `TranskrypcjaWejscie` wiąże każdy krok z krokiem agenta (`nr_kroku_agenta`): bez usuwania, ≤ 2 kroki wstawione; (2) limity twarde (`422 POPRAWKI_ZBYT_ROZLEGLE`): zmienione + wstawione ≤ max(3, ⌈0,5 n⌉), odsetek zmienionych znaków ≤ 0,50; (3) limity miękkie i **Sprawdzenie zgodności poprawek** (rola `ROZPOZNAWANIE_PISMA`, praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` startująca przy `PUT`) — niezgodność, brak rezultatu albo przekroczenie limitu miękkiego dodaje powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (T-7, priorytet 2), wyłącznie w kierunku bezpiecznym (Z-1); (4) Oceny z T-7 są poza populacją progu (`WERYFIKACJA_INNY_POWOD`), Oceny automatyczne z Poprawkami mają podwójny odsetek Kontroli losowej i własny bezpiecznik (11.5.2); (5) metryki `odsetek_rozwiazan_z_poprawkami_30d`, `blad_automatycznych_z_poprawkami_30d`; G-2 mierzy wykrywalność (≥ 95%) i fałszywe alarmy (≤ 10%).
-- **Alternatywy:** każda Poprawka → Weryfikacja — odrzucona (FR-18 jest codzienną funkcją; podwoiłoby obciążenie Nauczycieli z 17.7); pełne wyłączenie Rozwiązań z Poprawkami z populacji progu — odrzucone, bo NFR-03 dotyczy wszystkich ocen automatycznych, więc te Rozwiązania muszą być mierzone (podwójna Kontrola losowa zamiast wyłączenia); edycja tylko kroków z `pewnosc_odczytu < 0.80` — odrzucona (agent bywa pewny błędnego odczytu, a to właśnie chroni FR-28).
-- **Konsekwencje:** Transkrypcja pochodzi ze zdjęcia także po Poprawkach; ≈ 3% Rozwiązań obliczeniowych więcej w Weryfikacji (17.7); Uczeń z rozległymi zmianami wysyła nowe zdjęcia. Limity zawężają literalne FR-18 — decyzja D-10 (G-0).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-05):** kroki wstawione wchodzą do licznika odsetka zmienionych znaków (mianownik: wszystkie kroki agenta), krok wstawiony ≤ min(200, max(60, ⌈1,5 × mediana⌉)) znaków; autozapis Poprawek w PWA (debounce 2 s), deduplikacja Sprawdzenia po `rozwiazanie_id` tylko wśród `OCZEKUJE` z podmianą ładunku; osobna pula `S` (4 korutyny na replikę), wejście z wycinków i zdjęcia poglądowego 1024 px (A-08: p95 ≤ 4 s, limit ≥ 150/min); G-2: „wstawienia rozwiązania” ≥ 95%, fałszywe alarmy ≤ 5%; T-7 wyprowadzone z rozkładu w 17.7 (2,5–3,1%).
-
-- **Uzupełnienie (it. 6, wersja 2.4, C4-06 p. 10):** okno oczekiwania Oceny na rezultat Sprawdzenia zgodności poprawek jest stałe — `zatwierdzono_at + 6 s` — zamiast `min(zatwierdzono_at + 6 s, termin_miekki − 9 s)`, które przy `t_R ≥ 18 s` malało do 1 s i dawało brak rezultatu dla prawie każdej Poprawki zatwierdzonej od razu po edycji; rachunek p_brak ≤ 0,5% obowiązuje dla każdego `t_R` (9.4), a termin miękki (≥ 10 s) nie jest naruszany, bo model zapasowy startuje równolegle ze Sprawdzeniem.
-
-### ADR-037 Wersja treści Weryfikacji oddzielona od blokady — Nowa (it. 4)
-- **Kontekst:** podjęcie, ponowne podjęcie, przedłużenie (co 5 min) i `ZWOLNIJ_BLOKADY` podnosiły `weryfikacja.version`, a odpowiedź przedłużenia nie zwracała ETag; rozstrzygnięcie Weryfikacji trwającej > 5 min kończyło się `412`, a sygnał „pojawiło się zgłoszenie” tracił znaczenie (C2-02).
-- **Decyzja:** `weryfikacja.version` = wersja **treści**; zmienia ją wyłącznie trigger `trg_weryfikacja_wersja` przy zmianie powodów, zgłoszenia, Oceny weryfikowanej, `ponowna_ocena_at`, Oceny Nauczyciela, anulowania lub zamknięcia; operacje blokady i trasowania (eskalacja, `termin_at`, priorytet po 80 dniach) oraz `opinia_pomocnicza` jej nie zmieniają. Przedłużenie zwraca `{zablokowana_do, version}` i ETag; `412` przy rozstrzygnięciu zawiera `zmiany_tresci`. Scenariusz C-31.
-- **Alternatywy:** zwracanie nowego ETag po każdym przedłużeniu i aktualizacja w PWA — odrzucona (wyścig między odpowiedzią przedłużenia a wysyłką rozstrzygnięcia z drugiej karty nadal daje fałszywe `412`, a `412` nie odróżnia przyczyny); osobna kolumna `wersja_blokady` z `If-Match` na obie — odrzucona (blokadę i tak chroni warunek `podjeta_przez = ja AND zablokowana_do > now()`).
-- **Konsekwencje:** `412` zawsze oznacza zmianę, którą Nauczyciel musi zobaczyć (C-28); C-23 opiera się na warunku `status = 'OCZEKUJE'`; konwencja 7.2 ma jawny wyjątek.
-
-### ADR-038 Przegląd Zadań zleconych przez Nauczyciela i Zgłoszenia błędu w Zadaniu — Nowa (it. 4), G-0
-- **Kontekst:** Zadania wygenerowane (obliczeniowe i zamknięte), także zlecone przez Nauczyciela, po Walidacji trafiały od razu do `OPUBLIKOWANE`/`GLOBALNY`, a poprawić je mogli tylko recenzent treści i Administrator; FR-14 przyznaje to prawo Nauczycielowi; zawężenie nie było w G-0 (C2-03).
-- **Decyzja:** (1) Zadanie wygenerowane na zlecenie Nauczyciela zawsze przechodzi `WALIDACJA → DO_PRZEGLADU`; zlecający przegląda, poprawia albo odrzuca (FR-14 w pełni), wynik `PRYWATNY`; promocja do `GLOBALNY` — recenzent treści lub Administrator; po 14 dniach Zadanie trafia także do kolejki recenzentów; (2) Zadania `GLOBALNY`: każdy Nauczyciel składa **Zgłoszenie błędu w Zadaniu** (`zgloszenie_bledu_zadania`, `POST /zadania/{id}/zgloszenia-bledu`), rozpatrywane przez recenzentów i Administratorów z SLA 5 dni roboczych; 3 otwarte zgłoszenia od różnych Nauczycieli tworzą wiersz `wstrzymanie_w_doborze` (od wersji 2.3 poza `zadanie.version`, C3-09); (3) zlecenia Administratora i systemu — bez zmian (ADR-015).
-- **Alternatywy:** bezpośrednia poprawka Zadania `GLOBALNY` przez każdego Nauczyciela — odrzucona jako opcja domyślna (jedna osoba zmienia treść dla wszystkich Uczniów bez przeglądu; nowa wersja Zadania wpływa na kalibrację Poziomu trudności); prywatna kopia Zadania `GLOBALNY` do poprawy — odrzucona (kopia nie jest Zadaniem bazowym ani wygenerowanym w rozumieniu słownika).
-- **Konsekwencje:** Nauczyciel ma pełne FR-14 dla Zadań, które sam zlecił, i ścieżkę zgłoszenia dla pozostałych; pula `GLOBALNY` rośnie z zleceń Nauczycieli wolniej (wymaga promocji). Zawężenie dla Zadań `GLOBALNY` — decyzja D-11 (G-0).
-
-### ADR-039 Tryb wsadowy Jev i globalny ogranicznik szybkości — Nowa (it. 4)
-- **Kontekst:** plan pytań ma do 29 pytań (28 w rundzie 1 przy jednym wariancie), a budżet 17.2 zakładał ≤ 2 fale po 8 wywołań; limit A-01 jest per klucz, a pilnował go semafor per proces; `429` otwierał obwód i przełączał ruch na model zapasowy przy działającym Jev (C2-07).
-- **Decyzja:** (1) wymaganie A-01: żądanie wsadowe (≤ 32 pytania na rundę); bez niego tryb `POJEDYNCZY` z ≤ 16 wywołaniami na Ocenę i 3 falami — budżet i S-1…S-7 liczone dla tego trybu; (2) termin miękki `max(10 s, 28 s − t_R)` zgodny z SLO 28 s; (3) globalny ogranicznik: przydział `0,8 × limit × waga / Σ wag` z rejestru `limit_szybkosci_modelu` (wagi worker 1,0, `api` 0,1), lokalny token bucket, oczekiwanie do `termin_miekki − 11 s` (od wersji 2.3 zastąpione przyjęciem planu i terminami fal — uzupełnienie it. 5), potem model zapasowy z przyczyną `OGRANICZENIE_LOKALNE`; (4) `429` i brak przydziału nie liczą się do circuit breakera; `429` zmniejsza przydział o połowę na 30 s.
-- **Alternatywy:** token bucket w PostgreSQL (wiersz na klucz, `UPDATE … RETURNING` na każde żądanie) — odrzucony (≈ 44 dodatkowe zapisy/s w szczycie i zależność ścieżki krytycznej od bazy); Redis jako licznik — odrzucony (nowy komponent, ADR-002).
-- **Konsekwencje:** szczyt „koniec lekcji” mieści się w limicie klucza; nadmiar degraduje do modelu zapasowego bez fałszywego otwarcia obwodu; G-4 (d) testuje `429`.
-- **Uzupełnienie (it. 5, wersja 2.3, C3-04):** jedna formuła przydziału `0,8 × limit × waga_i / Σ wag` z kolumną `waga` w `limit_szybkosci_modelu` (DDL, 13.2, 17.4, 22 zgodne); jeden token = jedno wywołanie HTTP; pojemność kubełka workera 16 ≥ maks. fala (kolumna `pojemnosc`; 4 przy ścisłym oknie 1 s po G-4); przyjęcie planu przed falą 1 z przewidywanym końcem ≤ termin miękki, terminy fal ≥ 2 i pierwszeństwo fal ≥ 2 zastępują „oczekiwanie do `termin_miekki − 11 s`”; symulacja profili A–D (17.4) i S-6/S-6b przeliczone.
-- **Uzupełnienie (it. 6, wersja 2.4, C4-05, C4-06 p. 8 i 9):** łączna pojemność kubełków `B_całk` (34 przy tolerancji A-01, 10 przy ścisłym oknie) dzielona między wiersze — `api` 1, pozostałe proporcjonalnie do wagi z podłogą — zamiast pojemności stałej per proces; przydział `r_i = min(formuła, 0,8 × limit − Σ_{j≠i} r_j)` i pojemność ograniczona resztą do `B_całk`, publikowane w kolumnach `przydzial` i `pojemnosc` i liczone pod blokadą doradczą klucza; nowy proces z pustym kubełkiem i odnowieniem co 2 s; granica chwilowa ≤ `B_całk` + 40 T niezależnie od liczby replik (2 / 3 / 4 workery: 74 / 72 / 74 w 1 s; wersja 2.3: 74 / 90 / 106); klucz rejestru `(konfiguracja_modelu_id, wykonawca, pula)` z wierszami R i S dla roli `ROZPOZNAWANIE_PISMA`; popyt 28 wywołań na Ocenę w budżecie, S-6 i 17.4 (29 = maksimum pytań). Odrzucona alternatywa: pojemność proporcjonalna do wagi bez wydzielenia `api` (`B_i = B_całk × w_i / Σ w`) — przy 2 workerach daje kubełek 15 < fala 16 i zmienia wyniki S-6 bez zysku dla granicy.
-
-### ADR-040 Okres karencji usunięcia konta: procesy wstrzymane, nie anulowane — Nowa (it. 4)
-- **Kontekst:** żądanie usunięcia natychmiast anulowało Weryfikacje i Rozwiązania, a przywrócenie w 30 dniach zostawiało trwale zawieszone Wyniki, zużyty limit zgłoszeń, Rozwiązania `ANULOWANE` z Wynikami wstępnymi i Kontrole pominięte w `π_wykonanie` (C2-08).
-- **Decyzja:** w okresie karencji stany się nie zmieniają; handlery kończą się z `KONTO_USUWANE`, Kolejka weryfikacji pomija konta `USUWANE`, Kontrole tych kont są poza licznikiem i mianownikiem nadzoru; przywrócenie wznawia procesy (tabela 16.4: nowe `termin_at`, ponowne zlecenie rozpoznania, T-6 dla przerwanych ocen); anulowanie wykonuje `USUN_KONTO` w kroku 0. Scenariusz C-33.
-- **Alternatywy:** anulowanie przy żądaniu i odtwarzanie procesów przy przywróceniu — odrzucone (odtworzenie Weryfikacji wymagałoby zachowania pełnego stanu sprzed anulowania, czyli i tak wstrzymania danych).
-- **Konsekwencje:** przywrócenie jest bezstratne; przez 30 dni dane są przechowywane bez przetwarzania (art. 12 ust. 3 RODO — realizacja żądania w ciągu miesiąca).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-08):** rozstrzygnięcie i korekta wymagają konta Ucznia `AKTYWNE` (`409 KONTO_UCZNIA_NIEAKTYWNE`, szkic zachowany), więc w karencji nie powstaje Ocena Nauczyciela, Wynik zadania ani Próbka kalibracyjna — deklaracja „bez przetwarzania” nie ma wyjątków; przywrócenie zleca `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` dla Rozwiązań bez aktualnej kopii; dla kont Nauczycieli i Administratorów — osobna tabela przywrócenia (16.4) i odroczenie odebrania flag oraz usunięcia szkiców do `USUN_KONTO`.
-
-### ADR-041 Rejestr wszystkich Zdarzeń RODO w Object Lock przed transakcją — Nowa (it. 4)
-- **Kontekst:** do wersji 2.1 rejestr zawierał tylko wykonane usunięcia; odtworzenie PITR do punktu sprzed wniosku o usunięcie lub odwołania zgody przywracało konto `AKTYWNE` i zgodę `true` (C2-09).
-- **Decyzja:** `api` zapisuje każde Zdarzenie RODO (`WNIOSEK_O_USUNIECIE`, `ANULOWANIE_USUNIECIA`, `USUNIECIE_WYKONANE`, `ODWOLANIE_ZGODY`, `UDZIELENIE_ZGODY`) do bucketu `rejestr-zdarzen-rodo` **przed** transakcją, a kopię do `zdarzenie_rodo`; `UZGODNIJ_REJESTR_RODO` unieważnia obiekty bez zatwierdzonej transakcji; `ponow_zdarzenia_rodo` stosuje zdarzenia po punkcie odtworzenia przed startem workerów. G-6 testuje trzy scenariusze.
-- **Alternatywy:** wzorzec outbox (zapis w bazie, potem praca w tle do bucketu) — odrzucony, bo odtworzenie do chwili między zatwierdzeniem a wysyłką gubi zdarzenie; zapis do bucketu po transakcji — odrzucony z tego samego powodu.
-- **Konsekwencje:** żądania RODO przeżywają odtworzenie bazy; niejednoznaczność (zdarzenie bez transakcji w oknie 10 min) jest rozstrzygana w kierunku ochrony danych.
-- **Uzupełnienie (it. 5, wersja 2.3, C3-03, C3-07):** zdarzenia z inicjatywy użytkownika zapisuje `api` (`zrodlo = API`), a `USUNIECIE_WYKONANE` — `worker` (`zrodlo = WORKER`, deterministyczne `id`, obiekt przed pierwszą zmianą w bazie, wiersz `zdarzenie_rodo` w pierwszej transakcji `USUN_KONTO`); `UZGODNIJ_REJESTR_RODO` unieważnia wyłącznie zdarzenia `API` bez wiersza, a dla `WORKER` doprowadza konto do usunięcia (ponowne `USUN_KONTO` po 2 h, alert po 26 h); `ponow_zdarzenia_rodo` wykonuje kroki 1–6 synchronicznie niezależnie od czasu od usunięcia. Nazwy: `WNIOSEK_O_USUNIECIE` (zamiast `ZADANIE_USUNIECIA`), bucket `rejestr-zdarzen-rodo`, pojęcie „Rejestr Zdarzeń RODO”. Odrzucona alternatywa: unieważnianie także zdarzeń `WORKER` z wydłużonym oknem (np. 24 h) — każde okno skończone zostawia przypadek PITR wykonanego po oknie (C3-03 p. 3b).
-- **Uzupełnienie (it. 6, wersja 2.4, C4-01, C4-06 p. 2 i 3):** w `ponow_zdarzenia_rodo` kryterium zastosowania zależy od źródła — `API`: wiersz `zdarzenie_rodo` o tym `id`; `WORKER`: brak wiersza `uzytkownik` (wiersz zdarzenia powstaje na początku usunięcia, więc PITR w trakcie `USUN_KONTO` dawał bazę z wierszem zdarzenia i danymi konta); prefiks `wykonane/` przeglądany w całości; ponowienie każdego zdarzenia przez te same funkcje domenowe co `api`/`USUN_KONTO`, według `dane.rola` (kroki Nauczyciela, skutki `KontoUsuwane` / `KontoPrzywrocone`); `rola` w każdym zdarzeniu (CHECK); klucz `USUNIECIE_WYKONANE` bez daty (`wykonane/{uzytkownik_id}/{id}.json`), więc `If-None-Match: *` działa przy ponowieniu w innym dniu; `UZGODNIJ_REJESTR_RODO` co 5 min — okno unieważniania ≤ 10 min zgodne z 13.3, 16.4 i G-6; G-6 (a3), (a4), scenariusz C-39. Odrzucona alternatywa: wiersz `zdarzenie_rodo` dla `USUNIECIE_WYKONANE` zapisywany w ostatniej transakcji (krok 5) — wtedy PITR po kroku 4 traci informację, że usunięcie się rozpoczęło, a obiekty zdjęć są już skasowane; kryterium „konto nie istnieje” jest poprawne przy każdym punkcie `T`.
-
-### ADR-042 Filtr danych osobowych w Transkrypcji — Nowa (it. 4)
-- **Kontekst:** Agent rozpoznający oznaczał ramki danych osobowych tylko do maskowania zdjęcia; nic nie zabraniało przepisania imienia i nazwiska do kroków, skąd trafiały do stanu Jev, promptów, obcego weryfikatora i kopii treningowej (C2-10).
-- **Decyzja:** reguła promptu „nie przepisuj obszarów danych osobowych”; deterministyczny filtr w Lemat przed zapisem każdej Transkrypcji i przed kopią treningową: usunięcie kroków pokrywających się z ramkami w ≥ 50%, zastąpienie imienia, nazwiska i części lokalnej e-maila z konta (porównanie po stronie Lemat, odległość Levenshteina ≤ 1 na rdzeniu ≥ 4 znaków) oraz PESEL i e-maili znacznikiem `[DANE_OSOBOWE]`; metryka i test G-2/G-6 (0 wystąpień na ≥ 50 kartkach z danymi).
-- **Alternatywy:** drugi model wykrywający dane osobowe w tekście — odrzucony (koszt, opóźnienie fazy R, niedeterministyczność); poleganie wyłącznie na prompcie — odrzucone (brak gwarancji).
-- **Konsekwencje:** deklaracja 16.3 jest egzekwowana kodem; ryzyko pozostaje dla danych osób trzecich niewystępujących na koncie (np. imię kolegi) — pokrywa je reguła promptu i ramki maskowania.
-- **Uzupełnienie (it. 5, wersja 2.3, C3-02):** filtr nie usuwa kroków i nie zmienia `latex`; krok w ramce danych osobowych bez treści matematycznej jest maskowany w całości (`tylko_dane_osobowe`), z treścią matematyczną — zachowany z `konflikt_filtra` → T-3 (Z-1); dopasowanie nazw tylko w `tekst`, z wykluczeniem Słownika terminów matematycznych; nazwy < 4 znaków — dopasowanie dokładne; pozycje zastąpień w `zastapienia_danych_osobowych` i przywracanie słowa Poprawką (dopasowania przybliżone nie są ponownie filtrowane); G-2: 150 kartek, 0 zastąpień terminów matematycznych, ≤ 0,5% fałszywych zastąpień. Odrzucona alternatywa: usuwanie kroku z możliwością przywrócenia — usunięcie przed zatwierdzeniem zmienia Ocenę bez Weryfikacji, gdy Uczeń nie zauważy braku.
-- **Uzupełnienie (it. 6, wersja 2.4, C4-03):** w regule (a) tokeny imienia i nazwiska z konta, inicjały i oznaczenie klasy nie są treścią matematyczną, więc linia „Jan Pole” jest krokiem `tylko_dane_osobowe`, a nie `konflikt_filtra`; w regule (b) token Słownika równy nazwisku jest zastępowany przy sąsiedztwie z drugim członem imienia i nazwiska lub inicjałem (b1) albo w kroku agenta z podejrzeniem danych osobowych (b2); na Poprawkach reguła (a) nie jest liczona ponownie — krok przywrócony z `tylko_dane_osobowe` nie jest maskowany, podlega limitom 9.4, Sprawdzeniu zgodności poprawek i T-7; `konflikt_filtra` liczony wyłącznie z kroków niezmienionych; G-2: osobne kryterium dla kartek z nazwiskiem-terminem i metryka `uczniowie_z_konfliktem_filtra_udzial`. Odrzucona alternatywa: wyłączenie nazwisk-terminów ze Słownika dla konkretnego Ucznia (lista per konto) — zastępowałoby „Pole trójkąta” w każdym kroku tego Ucznia i zmieniało treść matematyczną w `tekst` poza ramką. Ryzyko resztkowe: samo nazwisko-termin bez imienia i poza ramką danych osobowych (np. podpis „Pole” niewykryty jako ramka) nie jest zastępowane — chroni je reguła promptu (R-19).
-
-### ADR-043 SLA w dniach roboczych i tygodniowy model obciążenia z eskalacjami — Nowa (it. 4), G-0
-- **Kontekst:** model 17.7 liczył obciążenie na 7 dni przy pracy Nauczycieli 5 dni i pomijał napływ eskalacji z Klas do kolejki `GLOBALNA`; kontrola przyjęć nie hamowała eskalacji; G-7 = 12 było spełnialne „na papierze” (C2-12).
-- **Decyzja:** SLA = 3 dni robocze (`dodaj_dni_robocze`, tabela `dzien_wolny`); model tygodniowy (obciążenie dnia roboczego = 7/5 dobowego) z jawnym odsetkiem eskalacji 5% (A-15) i współczynnikiem 1,3; G-7 start = 18 (10 bez Klas + ≥ 8 współpracujących); `zaleglosc_globalna_min` z podziałem na źródło; kontrola przyjęć per Klasa przy `odsetek_eskalacji_7d ≥ 0,20`.
-- **Alternatywy:** SLA 72 h kalendarzowe z akceptacją ryzyka poniedziałkowych eskalacji — odrzucona jako opcja domyślna (pierwszy tydzień pilotażu dałby lawinę `opozniona`); obowiązkowa praca weekendowa weryfikatorów — odrzucona (koszt, brak podstaw w umowach).
-- **Konsekwencje:** termin dla Ucznia może wynosić do 5 dni kalendarzowych (Weryfikacja z piątku → środa); wyższy koszt puli globalnej; decyzja D-13 (G-0).
-- **Uzupełnienie (it. 6, wersja 2.4, C4-06 p. 6 i 7):** eskalacje z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` nie wliczają się do `odsetek_eskalacji_7d` (per Klasa i globalnie); Klasy Nauczyciela w karencji są objęte kontrolą przyjęć wprost do Przekazania Klasy albo przywrócenia; wariant 17.7 z aktywnym bezpiecznikiem poprawek (start: `M` = 3 951 min, 20 weryfikatorów; faza ustalona: 16) i decyzja D-17 o zapasie puli.
-
-### ADR-044 Usuwanie kont Nauczycieli i Administratorów — Nowa (it. 4)
-- **Kontekst:** brak przepływu i endpointu usunięcia konta Nauczyciela, a klucze obce `RESTRICT` blokowały `DELETE FROM uzytkownik`; dane Nauczyciela są danymi osobowymi (C2-14).
-- **Decyzja:** `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` (ochrona ostatniego Administratora); okres karencji 30 dni; natychmiastowe zwolnienie blokad, odebranie flag (od wersji 2.3 odroczone do `USUN_KONTO`), eskalacja Weryfikacji `KLASA`; Przekazanie Klasy przez Administratora; po karencji archiwizacja nieprzekazanych Klas i zamknięcie ich Przypisań, `WYCOFANE` dla nieprzekazanych Zadań `PRYWATNY`, pseudonimizacja uzasadnień `R-PRZYPISANIE`, klucze obce `ON DELETE SET NULL` (DDL 7.3), Oceny Nauczyciela bez wskazania osoby.
-- **Alternatywy:** wyłączenie z zakresu (NFR-09 wymienia Uczniów) — odrzucone (RODO dotyczy wszystkich osób); usuwanie miękkie z zachowaniem danych — odrzucone (brak podstawy przetwarzania po ustaniu umowy).
-- **Konsekwencje:** Uczniowie nie tracą historii Ocen; Klasa bez Nauczyciela istnieje tylko jako zarchiwizowana (CHECK w DDL).
-- **Uzupełnienie (it. 5, wersja 2.3, C3-08):** natychmiastowe skutki karencji ograniczone do zwolnienia blokad (szkice zachowane) i eskalacji z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`; flagi odbiera dopiero `USUN_KONTO`; przywrócenie cofa eskalacje oczekujące, Klasy przekazane pozostają u nowego Nauczyciela (D-15).
-
-### ADR-045 Normalizacja zdjęć w piaskownicy procesowej `api` — Nowa (it. 4)
-- **Kontekst:** dekodowanie HEIC/PNG/WEBP i zmiana rozmiaru do 5 × 10 MB odbywały się w procesie `api` bez limitów, wbrew deklaracji 16.2 (bomba dekompresyjna, blokowanie pętli zdarzeń w szczycie „koniec lekcji”, C2-15).
-- **Decyzja:** `ProcessPoolExecutor` z 2 procesami na replikę `api`, `RLIMIT_AS` 512 MiB, `RLIMIT_CPU` 5 s, 8 s czasu ściennego na plik; odczyt nagłówka przed dekodowaniem, ≤ 12 000 px na wymiar i ≤ 40 Mpx (`MAX_IMAGE_PIXELS`), `422 ZDJECIE_NIEPRAWIDLOWE`; oczekiwanie na proces > 5 s → `503`; `run_in_executor` w pętli zdarzeń.
-- **Alternatywy:** normalizacja w workerze przed `ROZPOZNAJ_PISMO` — odrzucona (zapis nieznormalizowanego oryginału z EXIF/GPS do S3 przed usunięciem metadanych, +0,4 s w fazie R na ścieżce krytycznej, osobna obsługa błędów formatu po `202`).
-- **Konsekwencje:** wykorzystanie piaskownicy ≈ 9% w szczycie (17.4); błędne pliki odrzucane synchronicznie przed zapisem.
-
-
-### ADR-046 Bezpieczniki trafności i poprawek reagujące na dowód przekroczenia — Nowa (it. 5)
-- **Kontekst:** reguła „`n ≥ 50` i UB Wilsona > 2%” z wersji 2.2 była spełniona z konstrukcji dla 50 ≤ n < 189 przy zerze błędów (UB = z²/(n + z²)), więc na starcie produkcji i po awariach Jev podnosiła próg do 0,990, a bezpiecznik poprawek kierował każdą Poprawkę do Weryfikacji — sprzecznie z minimum `n_eff ≥ 189` z 11.5.1 i z modelem obciążenia 17.7 (C3-01).
-- **Decyzja:** wyzwolenie wyłącznie przy dowodzie przekroczenia: dolna granica Wilsona 95% błędu (wagi IPW) > 2% przy `n_eff ≥ 50`; próba = Kontrole losowe z 30 dni dla pary (konfiguracja, rodzaj) z pewnością (bieżący kalibrator) powyżej bieżącego progu — nie dla rekordu progu; UB > 2% przy `n_eff ≥ 189` tylko blokuje obniżanie progu; stan w tabeli `stan_bezpiecznika` (zastępuje flagę środowiskową), dezaktywacja bezpiecznika poprawek przez Administratora (nazwa od wersji 2.4; w 2.3 „zdjęcie”) ustawia `okno_od`; testy jednostkowe dla n = 50 … 188 bez błędów i dla progów `k_min` (11.5.3).
-- **Alternatywy:** SPRT (H0: e ≤ 1%, H1: e ≥ 3%, α = β = 0,05) — odrzucony jako opcja domyślna: wymaga stanu sekwencyjnego per para i resetu po każdej zmianie progu (powrót problemu zapadki), a przy oknie kroczącym traci własności testu; samo minimum `n_eff ≥ 189` przed UB — odrzucone: przy e = 0,5% UB > 2% utrzymuje się do n ≈ 335 (11.5.1, tabela 1), więc w przedziale 189–335 bezpiecznik nadal wyzwalałby się bez dowodu.
-- **Konsekwencje:** przy e ≤ 0,5% fałszywe wyzwolenie w 90 dniach ≤ 0,2%, przy e = 1% ≤ 2,2% (symulacja 11.5.3); model z błędem 4% od początku okna wykrywany w 2–4 dni (model zapasowy: 12 dni), nagła degradacja 0,5% → 4% w fazie ustalonej — w medianie 13 dni (doprecyzowanie wersji 2.4: „wykrywanie” oznacza pierwsze podniesienie progu, a skuteczną reakcję gwarantuje Blokada obniżania progu z uzupełnienia it. 6); błąd 2–3% nie jest szybko wykrywany przez bezpiecznik — chroni przed nim reguła wyboru progu (UB ≤ 2% przy `n_eff ≥ 189`) i blokada obniżania; model 17.7 i G-7 = 18 pozostają ważne (scenariusz startowy 17.7).
-
-- **Uzupełnienie (it. 6, wersja 2.4, C4-02, C4-04, C4-06 p. 5):** jawna kolejność dnia KALIBRUJ (kroki 1–6, 11.5.3): bezpieczniki oceniane na progu i kalibratorze sprzed przebiegu, wynik `p_nowy = max(p_dol, p0 + 0,02)` przy wyzwoleniu, jeden rekord `prog_pewnosci`; Blokada obniżania progu (`stan_bezpiecznika.aktywny` dla `TRAFNOSC`) od wyzwolenia do UB ≤ 2% przy `n_eff ≥ 189` powyżej bieżącego progu; obniżenie tylko po teście 30 dni powyżej progu docelowego (LB ≤ 2% i UB ≤ 2% przy `n_eff ≥ 189`); wyzwolenie przy 0,990 → tryb pełnej weryfikacji (1.000) z wyjściem przez dezaktywację (D-16); symulacja dynamiki (próg niemalejący w 100% przebiegów z degradacją, 61% przebiegów z degradacją jednorodną kończy w trybie pełnej weryfikacji w 30 dni); rozmiar testu przy e = 2% nazwany wprost (2,6–7,8% na ocenę, 1,1 fałszywego podniesienia na kwartał); „zdjęcie” → „dezaktywacja” dla obu typów. Odrzucone alternatywy: okno 7 dni obok 30 dni (wykrycie 7 zamiast 13 dni, ale 2,0 fałszywego podniesienia na kwartał i 28,5% kwartałów w trybie pełnej weryfikacji przy e = 2%); zatrzymanie na 0,990 bez trybu pełnej weryfikacji — przy degradacji jednorodnej błąd ocen automatycznych pozostaje > 2% bez końca (naruszenie NFR-03).
-
-### ADR-047 Sprzątanie osieroconych obiektów magazynu — Nowa (it. 5)
-- **Kontekst:** po odtworzeniu bazy z PITR obiekty kopii treningowych i zdjęć utworzone po punkcie odtworzenia zostawały w magazynie bez wierszy `kopia_treningowa` / `zdjecie_rozwiazania`, więc odwołanie zgody i `USUN_KONTO` nie mogły ich usunąć (do reguły 24 miesięcy) — przypadek odrzucony w ADR-035; sprzątanie z E-02 obejmowało tylko prefiks `zdjecia/` (C3-06).
-- **Decyzja:** praca `SPRZATAJ_OSIEROCONE_OBIEKTY` dla bucketów `zbior-treningowy/`, `zdjecia/`, `zdjecia-maskowane/`: tryb `CODZIENNY` (04:30 UTC, obiekty starsze niż 1 h bez wiersza → `DELETE`) i tryb `ODTWORZENIE` (krok 2a procedury PITR przed startem workerów, obiekty nowsze niż `T − 5 min` bez wiersza → `DELETE`); metryka i alert; G-6 (d).
-- **Alternatywy:** Zdarzenie RODO `KOPIA_TRENINGOWA_UTWORZONA` w Object Lock — odrzucone: ≈ 750 obiektów dziennie w rejestrze rozliczalności dla zdarzenia, które nie jest decyzją osoby, a i tak nie obejmuje zdjęć Rozwiązań; S3 Inventory zamiast listowania — odrzucone dla pilotażu (raport z opóźnieniem do 48 h nie spełnia kroku 2a), do ponownej oceny przy 20× A-03.
-- **Konsekwencje:** każdy obiekt danych osobowych w magazynie ma wiersz w bazie albo zostaje usunięty w ≤ 25 h (tryb codzienny) lub przed wznowieniem przetwarzania (odtworzenie); koszt ≈ 1 900 wywołań LIST i ≈ 6 min pracy dziennie (16.4).
+| ID | Tytuł | Status | G-0 | Plik |
+|---|---|---|---|---|
+| ADR-001 | Modularny monolit z osobnymi procesami `api`, `worker`, `scheduler` | Zastąpiony przez ADR-048 | — | [ADR-001-modularny-monolit-z-osobnymi-procesami-api-worker-scheduler.md](adr/ADR-001-modularny-monolit-z-osobnymi-procesami-api-worker-scheduler.md) |
+| ADR-002 | PostgreSQL jako jedyne źródło prawdy i mechanizm prac w tle | Zmieniona (it. 2); realizacja: ADR-048 | — | [ADR-002-postgresql-jako-jedyne-zrodlo-prawdy-i-mechanizm-prac-w-tle.md](adr/ADR-002-postgresql-jako-jedyne-zrodlo-prawdy-i-mechanizm-prac-w-tle.md) |
+| ADR-003 | Porty i adaptery dla modeli AI, konfiguracja w bazie | Przyjęta; realizacja: ADR-048 | — | [ADR-003-porty-i-adaptery-dla-modeli-ai-konfiguracja-w-bazie.md](adr/ADR-003-porty-i-adaptery-dla-modeli-ai-konfiguracja-w-bazie.md) |
+| ADR-004 | Agent rozpoznający oparty na multimodalnym LLM ze strukturyzowanym wyjściem | Zmieniona (it. 2) | — | [ADR-004-agent-rozpoznajacy-oparty-na-multimodalnym-llm-ze.md](adr/ADR-004-agent-rozpoznajacy-oparty-na-multimodalnym-llm-ze.md) |
+| ADR-005 | Ocena per kryterium osobnymi pytaniami | Zmieniona (it. 2) | — | [ADR-005-ocena-per-kryterium-osobnymi-pytaniami.md](adr/ADR-005-ocena-per-kryterium-osobnymi-pytaniami.md) |
+| ADR-006 | Pewność oceny = minimum prawdopodobieństw + kalibracja izotoniczna | Zmieniona (it. 2) | — | [ADR-006-pewnosc-oceny-minimum-prawdopodobienstw-kalibracja.md](adr/ADR-006-pewnosc-oceny-minimum-prawdopodobienstw-kalibracja.md) |
+| ADR-007 | Próg pewności z górnej granicy Wilsona, Kontroli losowej z wagami IPW i analizy mocy | Zmieniona (it. 2) | — | [ADR-007-prog-pewnosci-z-gornej-granicy-wilsona-kontroli-losowej-z.md](adr/ADR-007-prog-pewnosci-z-gornej-granicy-wilsona-kontroli-losowej-z.md) |
+| ADR-008 | Opinia pomocnicza LLM nie zmienia trasy Oceny | Przyjęta | — | [ADR-008-opinia-pomocnicza-llm-nie-zmienia-trasy-oceny.md](adr/ADR-008-opinia-pomocnicza-llm-nie-zmienia-trasy-oceny.md) |
+| ADR-009 | Model zapasowy: LLM ze strukturyzowaną odpowiedzią + circuit breaker + osobna kalibracja | Zmieniona (it. 2) | — | [ADR-009-model-zapasowy-llm-ze-strukturyzowana-odpowiedzia-circuit.md](adr/ADR-009-model-zapasowy-llm-ze-strukturyzowana-odpowiedzia-circuit.md) |
+| ADR-010 | Profil ucznia jako model Elo per Umiejętność; model drzewiasty jako eksperyment | Zmieniona (it. 2) | — | [ADR-010-profil-ucznia-jako-model-elo-per-umiejetnosc-model.md](adr/ADR-010-profil-ucznia-jako-model-elo-per-umiejetnosc-model.md) |
+| ADR-011 | Uzasadnienie rekomendacji z szablonów, nie z LLM | Zmieniona (it. 2) | — | [ADR-011-uzasadnienie-rekomendacji-z-szablonow-nie-z-llm.md](adr/ADR-011-uzasadnienie-rekomendacji-z-szablonow-nie-z-llm.md) |
+| ADR-012 | Wersjonowanie Zadań i niezmienność Ocen | Zmieniona (it. 2) | — | [ADR-012-wersjonowanie-zadan-i-niezmiennosc-ocen.md](adr/ADR-012-wersjonowanie-zadan-i-niezmiennosc-ocen.md) |
+| ADR-013 | SymPy w piaskownicy procesowej | Zastąpiony przez ADR-048 | — | [ADR-013-sympy-w-piaskownicy-procesowej.md](adr/ADR-013-sympy-w-piaskownicy-procesowej.md) |
+| ADR-014 | Odpytywanie (polling) zamiast WebSocket/SSE | Zastąpiony przez ADR-048 | — | [ADR-014-odpytywanie-polling-zamiast-websocket-sse.md](adr/ADR-014-odpytywanie-polling-zamiast-websocket-sse.md) |
+| ADR-015 | Publikacja Zadań wygenerowanych po Walidacji; Wkładki i dowody tylko po przeglądzie | Zmieniona (it. 2) | — | [ADR-015-publikacja-zadan-wygenerowanych-po-walidacji-wkladki-i.md](adr/ADR-015-publikacja-zadan-wygenerowanych-po-walidacji-wkladki-i.md) |
+| ADR-016 | Identyfikatory domenowe po polsku, zgodne ze słownikiem | Zmieniona (it. 2); realizacja: ADR-048 | — | [ADR-016-identyfikatory-domenowe-po-polsku-zgodne-ze-slownikiem.md](adr/ADR-016-identyfikatory-domenowe-po-polsku-zgodne-ze-slownikiem.md) |
+| ADR-017 | Obowiązkowe zatwierdzenie Transkrypcji przez Ucznia | Zmieniona (it. 2) | — | [ADR-017-obowiazkowe-zatwierdzenie-transkrypcji-przez-ucznia.md](adr/ADR-017-obowiazkowe-zatwierdzenie-transkrypcji-przez-ucznia.md) |
+| ADR-018 | Wynik zadania z Oceny wstępnej z wagą 0,5; bez Wyniku przy podejrzeniu błędu odczytu | Zmieniona (it. 2) | — | [ADR-018-wynik-zadania-z-oceny-wstepnej-z-waga-0-5-bez-wyniku-przy.md](adr/ADR-018-wynik-zadania-z-oceny-wstepnej-z-waga-0-5-bez-wyniku-przy.md) |
+| ADR-019 | Retencja zdjęć sterowana przejściami stanów, maks. 90 dni | Zmieniona (it. 2) | — | [ADR-019-retencja-zdjec-sterowana-przejsciami-stanow-maks-90-dni.md](adr/ADR-019-retencja-zdjec-sterowana-przejsciami-stanow-maks-90-dni.md) |
+| ADR-020 | JWT krótkotrwały + rotowany refresh token w cookie | Przyjęta; realizacja: ADR-048 | — | [ADR-020-jwt-krotkotrwaly-rotowany-refresh-token-w-cookie.md](adr/ADR-020-jwt-krotkotrwaly-rotowany-refresh-token-w-cookie.md) |
+| ADR-021 | Kolejka weryfikacji globalna dla Uczniów bez Klasy | Zmieniona (it. 2) | tak | [ADR-021-kolejka-weryfikacji-globalna-dla-uczniow-bez-klasy.md](adr/ADR-021-kolejka-weryfikacji-globalna-dla-uczniow-bez-klasy.md) |
+| ADR-022 | Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu i zgłoszenie Ucznia | Nowa (it. 2) | tak | [ADR-022-ocena-wstepna-wstrzymana-przy-podejrzeniu-bledu-odczytu-i.md](adr/ADR-022-ocena-wstepna-wstrzymana-przy-podejrzeniu-bledu-odczytu-i.md) |
+| ADR-023 | Rekomendacja synchroniczna w procesie `api` przez fasadę Orkiestratora | Nowa (it. 2) | — | [ADR-023-rekomendacja-synchroniczna-w-procesie-api-przez-fasade.md](adr/ADR-023-rekomendacja-synchroniczna-w-procesie-api-przez-fasade.md) |
+| ADR-024 | Brak wpisu ręcznego Rozwiązania | Nowa (it. 2) | tak | [ADR-024-brak-wpisu-recznego-rozwiazania.md](adr/ADR-024-brak-wpisu-recznego-rozwiazania.md) |
+| ADR-025 | NFR-01 jako czas systemowy; termin miękki i twardy; Wskazówka asynchroniczna | Nowa (it. 2) | tak | [ADR-025-nfr-01-jako-czas-systemowy-termin-miekki-i-twardy-wskazowka.md](adr/ADR-025-nfr-01-jako-czas-systemowy-termin-miekki-i-twardy-wskazowka.md) |
+| ADR-026 | Plan pytań z zależnościami jako kontrakt portu `ModelDecyzyjny` | Nowa (it. 2) | — | [ADR-026-plan-pytan-z-zaleznosciami-jako-kontrakt-portu.md](adr/ADR-026-plan-pytan-z-zaleznosciami-jako-kontrakt-portu.md) |
+| ADR-027 | Zgodność Oceny = punkty + pierwszy błędny krok + brakujący krok | Nowa (it. 2) | tak | [ADR-027-zgodnosc-oceny-punkty-pierwszy-bledny-krok-brakujacy-krok.md](adr/ADR-027-zgodnosc-oceny-punkty-pierwszy-bledny-krok-brakujacy-krok.md) |
+| ADR-028 | Zasięg Zadań i recenzent treści | Nowa (it. 2) | tak | [ADR-028-zasieg-zadan-i-recenzent-tresci.md](adr/ADR-028-zasieg-zadan-i-recenzent-tresci.md) |
+| ADR-029 | Kalibracja Poziomu trudności w osobnej tabeli z atomową aktualizacją | Nowa (it. 2) | — | [ADR-029-kalibracja-poziomu-trudnosci-w-osobnej-tabeli-z-atomowa.md](adr/ADR-029-kalibracja-poziomu-trudnosci-w-osobnej-tabeli-z-atomowa.md) |
+| ADR-030 | Seria nauki po Wkładce teoretycznej | Nowa (it. 2) | — | [ADR-030-seria-nauki-po-wkladce-teoretycznej.md](adr/ADR-030-seria-nauki-po-wkladce-teoretycznej.md) |
+| ADR-031 | Pseudonimizacja i maskowanie zdjęć w kolejce globalnej | Nowa (it. 2); realizacja: ADR-048 | tak | [ADR-031-pseudonimizacja-i-maskowanie-zdjec-w-kolejce-globalnej.md](adr/ADR-031-pseudonimizacja-i-maskowanie-zdjec-w-kolejce-globalnej.md) |
+| ADR-032 | Jeden kontekst na próbę, wielokrotne próby i ujawnianie klucza po terminie | Nowa (it. 2) | — | [ADR-032-jeden-kontekst-na-probe-wielokrotne-proby-i-ujawnianie.md](adr/ADR-032-jeden-kontekst-na-probe-wielokrotne-proby-i-ujawnianie.md) |
+| ADR-033 | Weryfikacja: SLA, zwalnianie wygasłych blokad, przedłużanie i szkice | Nowa (it. 2) | — | [ADR-033-weryfikacja-sla-zwalnianie-wygaslych-blokad-przedluzanie-i.md](adr/ADR-033-weryfikacja-sla-zwalnianie-wygaslych-blokad-przedluzanie-i.md) |
+| ADR-034 | Pula weryfikatorów globalnych: Nauczyciele bez Klas + Nauczyciele współpracujący | Nowa (it. 3) | tak | [ADR-034-pula-weryfikatorow-globalnych-nauczyciele-bez-klas.md](adr/ADR-034-pula-weryfikatorow-globalnych-nauczyciele-bez-klas.md) |
+| ADR-035 | Kopie treningowe z rejestrem powiązań w bazie | Nowa (it. 3) | tak | [ADR-035-kopie-treningowe-z-rejestrem-powiazan-w-bazie.md](adr/ADR-035-kopie-treningowe-z-rejestrem-powiazan-w-bazie.md) |
+| ADR-036 | Poprawki Transkrypcji ograniczone i sprawdzane ze zdjęciem | Nowa (it. 4) | tak | [ADR-036-poprawki-transkrypcji-ograniczone-i-sprawdzane-ze-zdjeciem.md](adr/ADR-036-poprawki-transkrypcji-ograniczone-i-sprawdzane-ze-zdjeciem.md) |
+| ADR-037 | Wersja treści Weryfikacji oddzielona od blokady | Nowa (it. 4) | — | [ADR-037-wersja-tresci-weryfikacji-oddzielona-od-blokady.md](adr/ADR-037-wersja-tresci-weryfikacji-oddzielona-od-blokady.md) |
+| ADR-038 | Przegląd Zadań zleconych przez Nauczyciela i Zgłoszenia błędu w Zadaniu | Nowa (it. 4) | tak | [ADR-038-przeglad-zadan-zleconych-przez-nauczyciela-i-zgloszenia.md](adr/ADR-038-przeglad-zadan-zleconych-przez-nauczyciela-i-zgloszenia.md) |
+| ADR-039 | Tryb wsadowy Jev i globalny ogranicznik szybkości | Nowa (it. 4) | — | [ADR-039-tryb-wsadowy-jev-i-globalny-ogranicznik-szybkosci.md](adr/ADR-039-tryb-wsadowy-jev-i-globalny-ogranicznik-szybkosci.md) |
+| ADR-040 | Okres karencji usunięcia konta: procesy wstrzymane, nie anulowane | Nowa (it. 4) | — | [ADR-040-okres-karencji-usuniecia-konta-procesy-wstrzymane-nie.md](adr/ADR-040-okres-karencji-usuniecia-konta-procesy-wstrzymane-nie.md) |
+| ADR-041 | Rejestr wszystkich Zdarzeń RODO w Object Lock przed transakcją | Nowa (it. 4) | — | [ADR-041-rejestr-wszystkich-zdarzen-rodo-w-object-lock-przed.md](adr/ADR-041-rejestr-wszystkich-zdarzen-rodo-w-object-lock-przed.md) |
+| ADR-042 | Filtr danych osobowych w Transkrypcji | Nowa (it. 4) | — | [ADR-042-filtr-danych-osobowych-w-transkrypcji.md](adr/ADR-042-filtr-danych-osobowych-w-transkrypcji.md) |
+| ADR-043 | SLA w dniach roboczych i tygodniowy model obciążenia z eskalacjami | Nowa (it. 4) | tak | [ADR-043-sla-w-dniach-roboczych-i-tygodniowy-model-obciazenia-z.md](adr/ADR-043-sla-w-dniach-roboczych-i-tygodniowy-model-obciazenia-z.md) |
+| ADR-044 | Usuwanie kont Nauczycieli i Administratorów | Nowa (it. 4) | — | [ADR-044-usuwanie-kont-nauczycieli-i-administratorow.md](adr/ADR-044-usuwanie-kont-nauczycieli-i-administratorow.md) |
+| ADR-045 | Normalizacja zdjęć w piaskownicy procesowej `api` | Zastąpiony przez ADR-048 | — | [ADR-045-normalizacja-zdjec-w-piaskownicy-procesowej-api.md](adr/ADR-045-normalizacja-zdjec-w-piaskownicy-procesowej-api.md) |
+| ADR-046 | Bezpieczniki trafności i poprawek reagujące na dowód przekroczenia | Nowa (it. 5) | — | [ADR-046-bezpieczniki-trafnosci-i-poprawek-reagujace-na-dowod.md](adr/ADR-046-bezpieczniki-trafnosci-i-poprawek-reagujace-na-dowod.md) |
+| ADR-047 | Sprzątanie osieroconych obiektów magazynu | Nowa (it. 5) | — | [ADR-047-sprzatanie-osieroconych-obiektow-magazynu.md](adr/ADR-047-sprzatanie-osieroconych-obiektow-magazynu.md) |
+| ADR-048 | Zmiana stosu na .NET 10 + Next.js | Przyjęta (wersja 3.0) | — | [ADR-048-zmiana-stosu-na-net-10-next-js.md](adr/ADR-048-zmiana-stosu-na-net-10-next-js.md) |
+| ADR-049 | Transliteracja i konwencje nazw identyfikatorów w C#, PostgreSQL, JSON, URL i TypeScript | Przyjęta (wersja 3.0) | — | [ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md](adr/ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md) |
+| ADR-050 | Obliczenia symboliczne — sidecar SymPy w piaskownicy zamiast biblioteki .NET | Przyjęta (wersja 3.0) | — | [ADR-050-obliczenia-symboliczne-sidecar-sympy.md](adr/ADR-050-obliczenia-symboliczne-sidecar-sympy.md) |
+| ADR-051 | SSE dla postępu długotrwałych operacji; odpytywanie jako ścieżka zapasowa | Przyjęta (wersja 3.0) | — | [ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md](adr/ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md) |
+| ADR-052 | Przetwarzanie obrazów — Magick.NET w osobnym procesie `Lemat.ImageSandbox` | Przyjęta (wersja 3.0) | — | [ADR-052-przetwarzanie-obrazow-magick-net-w-piaskownicy.md](adr/ADR-052-przetwarzanie-obrazow-magick-net-w-piaskownicy.md) |
+| ADR-053 | Prace w tle w .NET — `BackgroundService` na pulę i `FOR UPDATE SKIP LOCKED` | Przyjęta (wersja 3.0) | — | [ADR-053-prace-w-tle-backgroundservice-skip-locked.md](adr/ADR-053-prace-w-tle-backgroundservice-skip-locked.md) |
+| ADR-054 | Frontend Next.js — App Router, grupy tras per rola, PWA, bez BFF | Przyjęta (wersja 3.0) | — | [ADR-054-frontend-next-js-app-router-pwa.md](adr/ADR-054-frontend-next-js-app-router-pwa.md) |
+| ADR-055 | Warstwa agentów AI w .NET — Microsoft.Extensions.AI, Semantic Kernel i implementacje Mock | Przyjęta (wersja 3.0) | — | [ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md](adr/ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md) |
 
 ---
 
@@ -6695,18 +8045,23 @@ wymagające akceptacji właściciela produktu są oznaczone „G-0”.
 | R-16 | Odtworzenie bazy cofa Zdarzenia RODO | niskie / wysoki | rejestr wszystkich Zdarzeń RODO w Object Lock zapisywany przed transakcją, `ponow_zdarzenia_rodo` przed startem workerów, uzgadnianie co 5 min (okno ≤ 10 min, ADR-041); `USUNIECIE_WYKONANE` zapisywane przez `worker` i nigdy nieunieważniane, `SPRZATAJ_OSIEROCONE_OBIEKTY` w kroku 2a (ADR-041, ADR-047); od wersji 2.4 kryterium „konto nie istnieje” dla zdarzeń `WORKER` i ponowienie według roli konta (C-39); G-6 (4 scenariusze, w tym (a3) PITR w trakcie `USUN_KONTO` i (a4) konto Nauczyciela) |
 | R-17 | Dostawca Jev bez trybu wsadowego lub z niższym limitem szybkości | średnie / średni | tryb `POJEDYNCZY` z budżetem 3 fal, globalny ogranicznik bez otwierania obwodu, model zapasowy dla nadmiaru (ADR-039); G-4 (d) |
 | R-18 | Zgłoszenia błędu w Zadaniu nierozpatrywane przez recenzentów | średnie / niski | SLA 5 dni roboczych z metryką, wstrzymanie w doborze po 3 zgłoszeniach, alert dla Administratorów (ADR-038) |
-| R-19 | Filtr danych osobowych zastępuje tokeny matematyczne albo przepuszcza krótkie imiona lub nazwiska równe terminom matematycznym | średnie / średni | Słownik terminów matematycznych, filtr tylko w `tekst`, dopasowanie dokładne dla nazw < 4 znaków, `konflikt_filtra` → T-3 zamiast usuwania kroku, przywracanie słowa Poprawką; od wersji 2.4 imię i nazwisko nigdy nie są treścią matematyczną, reguły b1/b2 dla nazwisk-terminów, metryka `uczniowie_z_konfliktem_filtra_udzial`; G-2 na 150 kartkach (w tym ≥ 30 z nazwiskiem-terminem, osobne kryterium) i 1 050 Transkrypcjach z syntetycznymi danymi konta (ADR-042); ryzyko resztkowe: samo nazwisko-termin bez imienia poza ramką — reguła promptu |
+| R-19 | Filtr danych osobowych zastępuje tokeny matematyczne albo przepuszcza krótkie imiona lub nazwiska równe terminom matematycznym | średnie / średni | Słownik terminów matematycznych, filtr tylko w `tekst`, dopasowanie dokładne dla nazw < 4 znaków, `konflikt_filtra` → T-3 zamiast usuwania kroku, przywracanie słowa Poprawką; od wersji 2.4 imię i nazwisko nigdy nie są treścią matematyczną, reguły b1/b2 dla nazwisk-terminów (od wersji 3.0 inicjał tylko z kropką i tylko w kroku bez treści matematycznej, b1-i, C5-01), metryka `uczniowie_z_konfliktem_filtra_udzial`; G-2 na 150 kartkach (w tym ≥ 30 z nazwiskiem-terminem, osobne kryterium) i 1 050 Transkrypcjach z syntetycznymi danymi konta (ADR-042); ryzyko resztkowe: samo nazwisko-termin bez imienia poza ramką — reguła promptu |
 | R-20 | Bezpiecznik nie wykrywa umiarkowanego wzrostu błędu (2–3%) ani szybko nagłej degradacji (mediana 13 dni dla 0,5% → 4% w fazie ustalonej) | średnie / średni | reguła wyboru progu (UB ≤ 2% przy `n_eff ≥ 189`, okno 90 dni), ostrzeżenie z blokadą obniżania progu przy UB > 2%, Blokada obniżania progu po wyzwoleniu i test obniżenia na 30 dniach (wersja 2.4, C4-02), alert `gorna_granica_bledu_30d > 0,02`, cotygodniowy przegląd `/admin/kalibracja` (ADR-046); okno 7 dni odrzucone z powodu kosztu na granicy NFR-03 (11.5.3) |
 | R-21 | Dostawca Jev liczy limit w ścisłym oknie 1 s i odrzuca chwilowe przekroczenia; skalowanie liczby replik zwiększa ruch chwilowy | średnie / niski | test G-4 (seria 74 wywołań), `B_całk = 10` zamiast 34 (kubełek workera 4 przy 2 replikach, +1,1 s w trybie pojedynczym, 17.2), `429` poza circuit breakerem (ADR-039); od wersji 2.4 łączna pojemność i przydział dzielone między repliki z niezmiennikami pod blokadą doradczą — granica ≤ 74 w 1 s przy 2/3/4 workerach, także przy dołączaniu (13.2, C-40, G-3 c) |
 | R-22 | Bezpiecznik trafności na granicy NFR-03 (e ≈ 2%) fałszywie podnosi próg i przełącza parę w tryb pełnej weryfikacji | średnie / średni | koszt nazwany i policzony (1,1 podniesienia na kwartał, 11% kwartałów w trybie pełnej weryfikacji, auto 57,5% zamiast 67%, 11.5.3, 17.7); decyzja D-16 w G-0; wyjście z trybu pełnej weryfikacji przez dezaktywację Administratora po analizie `/admin/kalibracja`; plan obciążenia „Tryb pełnej weryfikacji” (16 weryfikatorów ≤ G-7) |
+| R-23 | Sidecar Python (`lemat-sympy`) jako jedyny komponent spoza .NET: osobny obraz, łatki bezpieczeństwa i kompetencje zespołu (ADR-050) | średnie / niski | kontrakt HTTP 3 operacji z testami kontraktowymi w `Lemat.Infrastructure.Tests` (Testcontainers), obraz `python:3.12-slim-bookworm` przebudowywany co tydzień ze skanem podatności, brak sieci i bazy w kontenerze; awaria sidecara → `NIEROZSTRZYGNIETE` (SymPy jest sygnałem, ADR-013), a nie błąd Oceny |
+| R-24 | Dekoder HEVC (libde265 w Magick.NET) — licencjonowanie patentowe HEVC przy dekodowaniu HEIC po stronie serwera (ADR-052) | niskie / średni | kompresja w przeglądarce zamienia HEIC na JPEG wszędzie, gdzie przeglądarka dekoduje HEIC (Safari na iOS/macOS), więc serwer dekoduje HEIC wyłącznie przy awarii kompresji w kliencie; metryka `zdjecia_heic_po_stronie_serwera_total`; przełącznik `LEMAT_HEIC_PO_STRONIE_SERWERA = false` odrzuca HEIC kodem `422 ZDJECIE_NIEPRAWIDLOWE` z komunikatem o formacie, decyzja prawna przed startem produkcyjnym (G-6) |
+| R-25 | Zmiana stosu w trakcie projektu: nieprzeniesione reguły wersji 2.4 w sekcjach z kodem Python (7, 10, 12–15) | średnie / wysoki | notki „Do przepisania” na początku sekcji, mapowania 5.5 i 6.10, iteracje 2–3 przepisują kontrakty bez zmiany reguł, iteracja 4 audytuje pokrycie (RTM), test słownika obejmuje typy C# i trasy Next.js (3.4) |
 
 ---
 
 ## 22. Parametry systemu (wartości domyślne)
 
-Parametry przechowywane w kodzie (`lemat/konfiguracja.py`, nadpisywalne
-zmiennymi środowiskowymi `LEMAT_*`), poza progami, kalibratorami i
-konfiguracją modeli (baza danych).
+Parametry przechowywane w kodzie (od wersji 3.0 klasa
+`Lemat.Application.Wspolne.LematOpcje` wiązana z sekcją `Lemat` pliku
+`appsettings.json`, w 2.4 `lemat/konfiguracja.py`), nadpisywalne zmiennymi
+środowiskowymi `LEMAT_*` o niezmienionych nazwach (ADR-049 p. 8), poza
+progami, kalibratorami i konfiguracją modeli (baza danych).
 
 | Parametr | Wartość | Sekcja |
 |---|---|---|
@@ -6726,9 +8081,10 @@ konfiguracją modeli (baza danych).
 | Model zapasowy timeout | 9 s | 13.2 |
 | Q-RE-01 timeout | 1,5 s, bez ponowień | 10.1.6 |
 | Agent wyjaśniający | 8 s, ≤ 400 znaków, asynchronicznie | 10.5 |
-| SymPy | 2 s CPU / para, 3 s / Rozwiązanie, 512 MiB | 13.1, 17.2 |
-| Pule workera (na replikę) | R 15 / S 4 / O 15 / P 6 / W 4 korutyn; 4 procesy CPU | 13.4 |
-| Odpytywanie klienta | 1 s w stanach przejściowych | 12.1 |
+| SymPy | 2 s CPU / para, 3 s / Rozwiązanie, 512 MiB; sidecar `lemat-sympy`: 4 procesy na replikę workera, timeout klienta HTTP 2,2 s na parę (przekroczenie → `NIEROZSTRZYGNIETE`) | 13.1, 17.2, ADR-050 |
+| Pule workera (na replikę) | R 15 / S 4 / O 15 / P 6 / W 4 pętli asynchronicznych (`BackgroundService` na pulę; w 2.4 korutyn); 4 procesy sidecara `lemat-sympy` i 4 równoległe operacje `obrazy-worker` | 13.4, ADR-053 |
+| Strumień SSE | heartbeat (komentarz `: ping`) co 15 s; maks. czas strumienia 10 min (klient łączy się ponownie z `Last-Event-ID`); ≤ 3 strumienie na użytkownika, ≤ 1 na (użytkownik, Rozwiązanie); przejście na odpytywanie po 2 nieudanych połączeniach w 10 s, ponowna próba SSE co 60 s | ADR-051 |
+| Odpytywanie klienta (ścieżka zapasowa) | 1 s w stanach przejściowych | 12.1, ADR-051 |
 | Próg początkowy Jev / zapasowy (tylko środowisko testowe, przed ZT-1) | 0.95 / 0.98 | 11.2.2 |
 | Zakres progu | 0.800–0.990 (dowód i tryb pełnej weryfikacji: 1.000) | 11.5 |
 | Odsetek Kontroli losowej | 0.20 do 400 próbek, potem 0.05 | 11.5.3 |
@@ -6760,7 +8116,7 @@ konfiguracją modeli (baza danych).
 | Jev: tryb / wsad / równoległość w trybie pojedynczym | `WSADOWY` (wymaganie A-01) albo `POJEDYNCZY` / ≤ 32 pytania / 16 na Ocenę | 13.2 |
 | Globalny ogranicznik szybkości modelu | `r_i = min(0,8 × limit × waga_i / Σ wag, 0,8 × limit − Σ_{j≠i} r_j)`; wagi: worker 1,0, `api` 0,1; łączna pojemność kubełków `B_całk` (`LEMAT_POJEMNOSC_LACZNA_KUBELKOW`): 34 (tolerancja A-01), 10 (ścisłe okno 1 s, G-4); pojemność `api` 1, pozostałe ⌊(B_całk − n_api) × w_i / Σ w⌋ (worker 16 / 10 / 8 przy 2 / 3 / 4 replikach); nowy wiersz z pustym kubełkiem, odnowienie co 2 s do osiągnięcia formuły; 1 token = 1 wywołanie; fale ≥ 2 z pierwszeństwem; `t_fali` 1,2 s (pojedynczy) / 0,8 s (wsadowy); odnowienie 10 s pod `pg_advisory_xact_lock`, wygasanie 30 s; po `429` przydział × 0,5 na 30 s; rozpoznawanie: 0,8 × 150 = 120/min, `B_całk = 30`, wiersze R (1,0) i S (0,3) na replikę | 13.2, 13.4, ADR-039 |
 | Popyt Jev na Ocenę (tryb pojedynczy) | 28 wywołań (plan budżetowy 16 + 11 + 1, 3 fale); maksimum pytań 29 (16 + 13, 2 fale) | 10.4.3, 17.2, 17.4 |
-| Normalizacja zdjęć w `api` | 2 procesy na replikę; `RLIMIT_AS` 512 MiB, `RLIMIT_CPU` 5 s, 8 s czasu ściennego; ≤ 40 Mpx, ≤ 12 000 px na wymiar; oczekiwanie > 5 s → `503` | 16.2, ADR-045 |
+| Normalizacja zdjęć w `api` | sidecar `obrazy-api` (`Lemat.ImageSandbox`): 2 równoległe operacje na replikę `api`; limit kontenera 1 GiB / 1 vCPU; `ResourceLimits` Magick.NET: pamięć 512 MiB, obszar 40 Mpx, szerokość i wysokość ≤ 12 000 px, czas 5 s; 8 s czasu ściennego na plik; ≤ 40 Mpx, ≤ 12 000 px na wymiar; oczekiwanie > 5 s → `503` | 16.2, ADR-052 (w 2.4 ADR-045) |
 | Pula Testu diagnostycznego | ≥ 3 Zadania na (Dział, poziom matury, nominalny Poziom trudności 2/4); test niedostępny < 50% pozycji | 9.1, G-5 |
 | Zgłoszenia błędu w Zadaniu | 10 / dobę na Nauczyciela; wstrzymanie w doborze przy 3 otwartych od różnych Nauczycieli; SLA 5 dni roboczych; Przegląd recenzentów po 14 dniach bez Przeglądu zlecającego | 8.4, ADR-038 |
 | Automatyczne szkice Wkładek | ≤ 20 / dobę w budżecie 12.7; wstrzymanie na 30 dni po 2 odrzuceniach | 10.2.1, 13.3 |
@@ -6776,9 +8132,10 @@ konfiguracją modeli (baza danych).
 | Kopie treningowe | maks. 24 miesiące; usunięcie obiektów ≤ 1 h po odwołaniu zgody lub w `USUN_KONTO` | 16.4 |
 | Rozpoznawanie: dopuszczalny odsetek błędów/timeoutów dostawcy | ≤ 0,3% wywołań | A-08, 17.2 S-7 |
 | Weryfikator globalny prowadzący Klasę: maks. łączne obciążenie | 180 min na dzień roboczy (prognoza Klasy na dzień roboczy, 7/5 dobowej + deklaracja) | A-14 |
-| Filtr danych osobowych | tylko `tekst`; rdzeń ≥ 4 znaki: dokładnie lub Levenshtein ≤ 1; < 4 znaki: dokładnie; Słownik terminów matematycznych (≈ 4 000 form) niezastępowany poza regułami b1 (sąsiedztwo drugiego członu lub inicjału) i b2 (krok agenta w ramce); krok bez treści matematycznej (po wyłączeniu imienia, nazwiska, inicjałów i oznaczenia klasy) ≤ 6 tokenów → `[DANE_OSOBOWE]` w całości; na Poprawkach reguła (a) nie jest liczona ponownie | 10.3.1, ADR-042 |
+| Filtr danych osobowych | tylko `tekst`; rdzeń ≥ 4 znaki: dokładnie lub Levenshtein ≤ 1; < 4 znaki: dokładnie; Słownik terminów matematycznych (≈ 4 000 form) niezastępowany poza regułami b1 (sąsiedztwo pełnego drugiego członu), b1-i (inicjał z kropką w kroku bez treści matematycznej; w kroku z treścią → `konflikt_filtra`, C5-01) i b2 (krok agenta w ramce); token przywrócony przez Ucznia w miejscu znacznika nie jest zastępowany ponownie; krok bez treści matematycznej (po wyłączeniu imienia, nazwiska, inicjałów i oznaczenia klasy) ≤ 6 tokenów → `[DANE_OSOBOWE]` w całości; na Poprawkach reguła (a) nie jest liczona ponownie | 10.3.1, ADR-042 |
 | Sprzątanie osieroconych obiektów | codziennie 04:30 UTC, obiekty starsze niż 1 h; przy odtworzeniu: od `T − 5 min`; alert > 100 obiektów na dobę | 13.3, 16.4, ADR-047 |
 | Uzgadnianie Rejestru Zdarzeń RODO | cykl co 5 min; unieważnianie zdarzeń `API` bez wiersza starszych niż 5 min (okno ≤ 10 min); `USUNIECIE_WYKONANE` (klucz bez daty `wykonane/…`): ponowne `USUN_KONTO` po 2 h, alert po 26 h | 13.3, 13.5, ADR-041 |
+| Dekodowanie HEIC po stronie serwera | `LEMAT_HEIC_PO_STRONIE_SERWERA` = true (false → `422 ZDJECIE_NIEPRAWIDLOWE` dla HEIC; decyzja prawna przed G-6, R-24) | ADR-052 |
 | Rejestracja Ucznia bez kodu zaproszenia | `LEMAT_REJESTRACJA_BEZ_KLASY` = true (false, gdy G-7 niespełnione) | A-14 |
 | Raport nadużyć zgłoszeń błędu odczytu | uznane < 20% przy ≥ 5 zgłoszeniach Ucznia | 9.12 |
 | Dzierżawa pracy / odnowienie | 60 s / 15 s | 13.4 |
@@ -6786,132 +8143,13 @@ konfiguracją modeli (baza danych).
 
 ---
 
-## 23. Changelog iteracji
+## 23. Decyzje właściciela produktu i historia zmian
 
-### 23.1 Iteracja 1 (2026-10-31)
-
-Utworzenie dokumentu na podstawie `vision.md`, `glossary.md`,
-`requirements.md`, `architecture.md`. `docs/CRITIQUE_LOG.md` nie istniał —
-brak punktów krytyki do zaadresowania.
-
-- Dodano: język wszechobecny z mapowaniem słownika na identyfikatory oraz
-  listę pojęć uzupełniających do dopisania do słownika (sekcja 3).
-- Dodano: widoki kontekstu, kontenerów, komponentów i wdrożenia (Mermaid).
-- Dodano: pełne DDL PostgreSQL, typy wyliczeniowe, ograniczenia, indeksy
-  częściowe, schematy JSONB, ERD.
-- Dodano: maszyny stanów Rozwiązania, Oceny, Weryfikacji, Zadania, elementu
-  Ścieżki nauki.
-- Dodano: 11 diagramów sekwencji dla wszystkich głównych przepływów.
-- Dodano: kontrakty agentów, katalog pytań do Jev, reguły punktacji,
-  pewności, niespójności i trasowania (T-1…T-6), algorytm progu (Wilson + IPW).
-- Dodano: katalog endpointów REST, typy DTO, model błędów, idempotencję,
-  uprawnienia na poziomie obiektów, format importu Arkuszy CKE.
-- Dodano: porty modeli, kontrakt adaptera Jev, katalog prac w tle,
-  mechanikę kolejki, harmonogram, zdarzenia domenowe.
-- Dodano: macierz błędów (25 pozycji), scenariusze współbieżności (22),
-  bezpieczeństwo, retencję RODO, budżet NFR-01, obserwowalność, bramki G-1…G-6.
-- Decyzje sprzeczne z architekturą wstępną: druga ocena LLM nie może
-  zaliczyć rozwiązania poniżej progu (ADR-008, wymóg FR-24).
-- Rozszerzenia względem wymagań (do potwierdzenia przez właściciela
-  produktu): powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`,
-  `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; kolejka globalna (ADR-021);
-  zatwierdzanie kont Nauczycieli przez Administratora.
-
-### 23.2 Iteracja 2 (2026-10-31, wersja 2.0)
-
-Zaadresowano wszystkie 29 uwag z `docs/CRITIQUE_LOG.md`, iteracja 1
-(2 krytyczne, 10 wysokich, 14 średnich, 3 niskie). Żadna uwaga nie została
-odrzucona w całości; odstępstwa od proponowanej poprawki są opisane w
-kolumnie „Zmiany” i w ADR (C1-02: brak automatycznej finalizacji po SLA;
-C1-08: zobowiązanie 99% zamiast 100%; C1-17: wyjątek synchroniczny zamiast
-pracy w tle; C1-20: wersja zapisana przy rozpoczęciu zamiast okna 24 h).
-
-| ID uwagi | Zmiany | Sekcje dokumentu |
-|---|---|---|
-| C1-01 (KRYTYCZNA) | Q-OC-04 = `BLAD_ODCZYTU` nie zeruje punktów i nie ustala `typ_bledu` (nowa kolumna `krok_podejrzany_odczyt`); Ocena wstępna z podejrzeniem odczytu jest „wstrzymana” dla Ucznia (bez punktów, typu i Wskazówki) i nie tworzy Wyniku zadania; T-3 opiera się na decyzjach Modelu decyzyjnego (Q-OC-04 z τ_odczyt = 0.20, nowe Q-OC-06), a `pewnosc_odczytu` tylko dodaje powód; endpoint `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu` z powodem `ZGLOSZENIE_BLEDU_ODCZYTU`, oknem 14 dni i limitami; metryki `bledy_odczytu_niewykryte_30d`, `czulosc_t3` powiązane z G-2; Z-1 przeformułowana (sygnały LLM działają tylko w kierunku bezpiecznym) | 1.2, 3.3, 7.3, 8.2, 9.5, 9.12, 10.3, 10.4, 11.1, 11.3, 11.6, 11.8, 12.3, 12.4, 12.6, 17.6, ADR-004, ADR-017, ADR-018, ADR-022 |
-| C1-02 (KRYTYCZNA) | Bramka G-7 (min. 12 weryfikatorów globalnych z modelu obciążenia); `deklarowane_minuty_weryfikacji`; SLA 72 h (`termin_at`), eskalacja KLASA → GLOBALNA → alert Administratora; status „opóźniona” dla Ucznia; kontrola przyjęć (mniej zadań otwartych dla Uczniów bez Klasy przy przeciążeniu); pseudonim HMAC, brak Klasy i zdjęcia maskowane dla obcego weryfikatora; podstawa prawna i informacja przy rejestracji; pełny model obciążenia z Kontrolą losową. Odrzucono automatyczną finalizację Oceny wstępnej po SLA (łamie FR-24/FR-26) — uzasadnienie w ADR-021 | 2 (A-12, A-13), 7.3, 10.3, 11.4, 12.3, 12.4, 12.8, 14.1 (E-28), 16.3, 17.6, 17.7, 21, ADR-021, ADR-031 |
-| C1-03 (WYSOKA) | Formalna propozycja zmiany słownika PZS-1 (części A–C) z bramką G-0; Transkrypcja tylko ze zdjęcia (+ poprawki Ucznia); Weryfikacja — zmiana definicji; „Model System One” mapowany na `JevAdapter`, port = „Model decyzyjny”; `kalibrator` wydzielony z `prog_pewnosci` do `kalibrator_pewnosci`; `uzasadnienie` w `OcenaWyjscie`; `POST /zadania` tylko dla Nauczyciela; Powtórka jako `cel_elementu`, nie typ; elementy z Przypisań wyłącznie z reguły agenta | 1.2 (Z-6), 3.2, 3.3, 3.4, 7.3, 11.7, 12.3, 12.4, ADR-016, ADR-028, ADR-032 |
-| C1-04 (WYSOKA) | Reguła „jedno słowo — jedno znaczenie” i lista terminów technicznych; zmiany nazw: `DecyzjaSkladowa`, `RezultatPytan`, `decyzja_modelu.wybor`, `procent_grupy_eksperymentu`, `nr_kryterium`/`wymaga_nr_kryterium`, `RezultatOceny`, `RezultatRozpoznawania`, `Rownowaznosc`, `rezultat_walidacji`, `wynik_koncowy_wzorcowy`, `typ_kolejki_weryfikacji`/`typ_kolejki` | 3.1, 3.3, 7.3, 7.5, 10, 12.4, 12.9, 13.1, ADR-016 |
-| C1-05 (WYSOKA) | CHECK zmieniony na `ocena_weryfikowana_id IS NOT NULL OR 'BLAD_PRZETWARZANIA' = ANY(powody)`; pełna semantyka `PONOW_OCENE` (dwie trasy, Wynik zadania, powiadomienia, `ponowna_ocena_at`, `powod_anulowania`); warunek `OCZEKUJE` + zapis warunkowy na `weryfikacja.version`; scenariusz C-23 | 7.3, 8.1, 8.3, 9.13, 13.3, 14.2, 15.2 |
-| C1-06 (WYSOKA) | Reguła odczytu „dostępna” + praca schedulera `ZWOLNIJ_BLOKADY_WERYFIKACJI`; eskalacja obejmuje wygasłe blokady; `POST /weryfikacje/{id}/przedluzenie` i idempotentne podjęcie przez właściciela (≤ 2 h, `podjeta_at`); tabela `szkic_rozstrzygniecia` i `PUT …/szkic`; poprawiony SQL podjęcia z `id = :id` i nawiasami | 7.3, 8.3, 9.6.1, 11.4.2, 12.3, 13.5, 15.2 (C-07, C-08), ADR-033 |
-| C1-07 (WYSOKA) | `PlanPytan` z zależnościami; model zapasowy wykonuje cały plan jednym wywołaniem (pytania warunkowe zwinięte); Jev w 2 rundach; reguła ponowienia zależna od zapasu do terminu; skrócone timeouty (Jev 2 s, zapasowy 9 s); Wskazówka poza ścieżką krytyczną; tabela najgorszych przypadków S-1…S-6; G-4 z trzema scenariuszami (w tym timeouty przy zamkniętym obwodzie) | 9.5, 9.9, 10.4.3, 10.4.4, 13.1, 13.2, 17.2, 17.6, 22, ADR-009, ADR-026 |
-| C1-08 (WYSOKA) | NFR-01 mierzone jako czas systemowy (rozpoznanie + ocena); T-6 i błędy dostawcy liczone jako naruszenia; SLO `odsetek_t6 ≤ 0,2%`, metryka end-to-end; termin twardy 120 s zamiast 28 s; A-11 przekazane do akceptacji w G-0. Odstępstwo: zobowiązanie 99% (nie 100%) z uzasadnieniem w A-11/ADR-025 | 2 (A-11), 7.3, 9.5, 14.2, 17.1, 17.2, 17.6, ADR-025 |
-| C1-09 (WYSOKA) | Analiza mocy (tabela n_eff dla e = 0…1%); ZT-1 ≥ 700 obliczeniowych + ≥ 250 dowodów; `n_eff ≥ 189` w regule; kalibracja 5-krotną CV (out-of-fold zamiast 80/20); tryb pełnej weryfikacji jako jawne kryterium startowe; G-2 z pomiarem end-to-end; poprawka A-09 („oba rodzaje”) | 2 (A-09), 11.5.1, 11.5.3, 17.1, 17.6, 21 (R-10), ADR-007 |
-| C1-10 (WYSOKA) | Kontrola losowa: priorytet 3 (jak zwykłe Weryfikacje), `termin_at` 72 h, zdjęcia zachowane do zamknięcia; metryka `wykonanie_kontroli_30d` i alert; reguły nadzoru (blokada obniżania progu, bezpiecznik braku nadzoru); wagi IPW skorygowane o wykonanie per koszyk; Kontrola wliczona w model 17.7 | 11.3, 11.5.3, 14.1 (E-29), 16.4, 17.7, ADR-007, ADR-033 |
-| C1-11 (WYSOKA) | Usunięto `theta_poczatkowa`; odtwarzanie całego Profilu od stanu DOMYŚLNEGO z Wynikami Testu diagnostycznego jako zdarzeniami (`wynik_zadania.test_diagnostyczny_id`); test raz na poziom matury (`ux_test_jeden`, `TEST_JUZ_WYKONANY`); zakończenie testu przez `AKTUALIZUJ_PROFIL` (202 + `oczekujace_wyniki`); zdefiniowany skutek zmiany poziomu matury | 7.3, 9.1, 10.1.3, 12.3, 12.4, 13.6, ADR-010 |
-| C1-12 (WYSOKA) | `decyzja_modelu.uczen_id` + indeks; `USUN_KONTO` zeruje `stan` we wszystkich kontekstach; rejestr usunięć w buckecie z Object Lock (poza bazą); wyłączone wersjonowanie i reguła cyklu życia bucketów; retencja u dostawców w A-07, walidacja przy aktywacji i G-6; C-20 ustawia `usun_po := now()` | 2 (A-07), 7.3, 13.1, 15.2 (C-20), 16.4, 17.6, ADR-019 |
-| C1-13 (ŚREDNIA) | T-2: (SymPy `ROWNOWAZNE` lub p_tak(Q-OC-01) ≥ τ_FR25) i (błędny/brakujący krok lub p(błąd) ≥ τ_FR25); τ_FR25 = 0.20 z uzasadnieniem i w parametrach | 11.3, 22 |
-| C1-14 (ŚREDNIA) | Tryby Wskazówki przy rozstrzygnięciu (`WLASNA`/`AUTOMATYCZNA`/`ZACHOWAJ` tylko przy identycznym błędzie); Wskazówka automatyczna także przy `BLAD_PRZETWARZANIA`; reguła N-1 (brakujący etap + `NIEPELNE_ROZWIAZANIE` + Wskazówka cytująca kryterium); `uzasadnienie` w DTO z szablonem | 9.6.2, 10.5, 11.1 p. 6, 11.7, 12.4 |
-| C1-15 (ŚREDNIA) | Limit 12 par Q-OC-05, nadmiar → N-6 i Weryfikacja; zachowanie przy `ZADEN` (wariant o najwyższym p, `wariant` NOT NULL); N-1/N-2 liczone na `punkty_surowe` przed FR-20 (kolejność reguł) | 7.3, 10.4.3, 11.1, 11.2.1, ADR-005 |
-| C1-16 (ŚREDNIA) | Zgodność Oceny = punkty + pierwszy błędny krok + brakujący krok (kolumna generowana); reguły przypisania `zrodlo_probki`; `KOREKTA_NAUCZYCIELA` wykluczona z progu; deduplikacja `ux_probka_ocena_auto` | 3.3, 3.4 (B-5), 7.3, 11.5.2, 17.1, ADR-027 |
-| C1-17 (ŚREDNIA) | Jawny wyjątek synchroniczny: fasada Orkiestratora w `api`, timeout Q-RE-01 1,5 s, circuit breaker, powrót do POLITYKA_ELO; krawędź `api → Jev` w 5.1; moduły `lemat.rekomendacje`, `lemat.powiadomienia`, `lemat.audyt`, `lemat.http` w 6.1/6.2; właściciel `klucz_idempotencji` | 5.1, 6.1, 6.2, 6.3, 9.2, 10.1.6, 14.1 (E-27), ADR-023 |
-| C1-18 (ŚREDNIA) | Krok 5b „wszystko opanowane” (`R-UTRWALENIE`); krok 8 „brak Zadań” (`RekomendacjaWyjscie.brak_elementu`, UI, zlecenie puli); reguły i szablony `R-JEV-*`; szablon `R-WKLADKA-DIAG` (Wyniki z testu są Wynikami zadania); jednolity klucz puli z rodzajem | 10.1.1, 10.1.2, 10.1.5, 10.1.6, 12.4, 13.3, 14.1 (E-26), ADR-011 |
-| C1-19 (ŚREDNIA) | G-5 obejmuje oba poziomy matury; automatyczne zlecenie szkicu Wkładki (`GENERUJ_SZKIC_WKLADKI`) przy E-20 z przeglądem przez recenzentów; domknięcie elementu Wkładki `ROZPOCZETY` (≥ 60 s → `UKONCZONY`, inaczej `POMINIETY`; po 24 h `UKONCZONY`) | 8.5, 9.2, 10.2.1, 13.3, 14.1 (E-20), 17.6, ADR-015 |
-| C1-20 (ŚREDNIA) | `POST /elementy-sciezki/{id}/rozpoczecie` przy otwarciu treści (ważność 7 dni dla Zadania); `element_sciezki.zadanie_wersja_id` zapisywana przy rozpoczęciu i akceptowana mimo nowszej wersji; dla Przypisań okno 72 h (`zastapiona_at`). Odstępstwo od propozycji „24 h od publikacji”: wersja z chwili otwarcia jest dokładniejsza | 7.3, 8.5, 12.3, 12.5, 15.2 (C-16, C-17) |
-| C1-21 (ŚREDNIA) | Dokładnie jeden kontekst próby (CHECK, `422`); indeksy `ux_odpowiedz_przypisanie`, `ux_rozwiazanie_przypisanie`; waga × 0,5 dla kolejnej próby w 60 dniach; wynik i klucz w Przypisaniu ujawniane od terminu (`wynik_ujawniony_od`) | 7.3, 9.3, 10.1.3, 12.4, 12.5, ADR-018, ADR-032 |
-| C1-22 (ŚREDNIA) | Zasięg Zadań `GLOBALNY`/`PRYWATNY`; rola recenzenta treści; uprawnienia Przeglądu/wycofania (8.4); endpointy Przeglądu i `POST /zadania/{id}/wycofanie` dla Administratora; powiadomienia recenzentów dla Zadań bez zlecającego; system nie generuje dowodów | 3.3, 7.3, 8.4, 12.3, 12.8, 13.6, ADR-015, ADR-028 |
-| C1-23 (ŚREDNIA) | Tabela `kalibracja_trudnosci` z atomowym `UPDATE` i blokadą wiersza; `zadanie.version` niezmieniane; `poziom_trudnosci_nominalny` vs skalibrowany z histerezą i audytem; scenariusz C-24 | 3.2, 7.2, 7.3, 10.1.3, 15.1, 15.2, ADR-029 |
-| C1-24 (ŚREDNIA) | Korekta zamyka otwartą Weryfikację (Kontrola, zgłoszenie) jako `ZAKONCZONA` albo zwraca `409 WERYFIKACJA_ZAJETA`; kolumna „ETag” dla każdego endpointu; blokada wiersza `rozwiazanie` i `409 OCENA_ZMIENIONA`; poprawione C-09, nowe C-26 | 8.1, 8.3, 9.6.3, 12.1, 12.3, 15.2 |
-| C1-25 (ŚREDNIA) | Rozłączne pule (R/O/P/W) z kolumną `pula`; slot = korutyna asyncio, CPU w puli procesów; model szczytu „koniec lekcji” (A-03, 17.2 S-6, 17.4); G-3 ze scenariuszem „koniec lekcji” | 2 (A-03), 5.1, 7.3, 13.3, 13.4, 17.2, 17.4, 17.6, ADR-002 |
-| C1-26 (ŚREDNIA) | Usunięto wpis ręczny (`WPIS_RECZNY_UCZNIA`, przejście w 8.1, akcje E-03/E-04/E-06); zastąpiono ponowieniem rozpoznania, nowymi zdjęciami i porzuceniem; wpływ na słownik w PZS-1 B-1 | 1.3, 7.3, 8.1, 9.4, 12.3, 14.1, ADR-024 |
-| C1-27 (NISKA) | Dodano endpointy: przedłużenie blokady, `GET /przypisania`, `GET/PUT/DELETE /zestawy-zadan/{id}`, archiwizacja Klasy, opuszczenie Klasy przez Ucznia, `PUT /admin/zadania/{id}/diagnostyczne`, przywrócenie konta, wycofanie Zadania (oraz szkic, rozpoczęcie elementu, ponowienie rozpoznania, porzucenie, zgłoszenie, obciążenie) | 12.3, 12.4 |
-| C1-28 (NISKA) | Kolejność „najpierw `ZASTAPIONA`, potem `INSERT`” (9.6.2, 15.1); usunięto `SZKIC` ze statusów Zadania (8.4 = 9.7); liczniki `liczba_przeslan`, `liczba_ponowien_rozpoznania`, `przeslanie_nr` vs `praca_w_tle.proby`; `liczba_cykli` z inkrementacją warunkową; CHECK kontekstu Odpowiedzi | 7.3, 8.4, 9.6.2, 9.7, 13.3, 15.1 |
-| C1-29 (NISKA) | Seria po Wkładce (`R-SERIA`, stan w `sciezka_nauki`, warunki zakończenia z poziomem maturalnym); dzienny budżet generowania systemowego (200 zleceń, 150 PLN, `zlecenie_generowania.systemowe`, `koszt_pln`) | 7.3, 10.1.2, 10.1.5, 12.7, 13.3, 21 (R-05), ADR-030 |
-
-Zmiany przekrojowe: wersja 2.0; nowe sekcje 3.4 (PZS-1), 9.12, 9.13,
-11.4.2–11.4.4, 11.5.1–11.5.3, 11.6–11.8, 17.7; nowe bramki G-0 i G-7; nowe
-tabele `kalibracja_trudnosci`, `kalibrator_pewnosci`, `szkic_rozstrzygniecia`;
-ADR-022 … ADR-033; macierz błędów rozszerzona do E-30, scenariusze
-współbieżności do C-27.
-
-### 23.3 Iteracja 3 (2026-11-01, wersja 2.1) — weryfikacja zamknięcia uwag C1
-
-Każda uwaga iteracji 1 (`docs/CRITIQUE_LOG.md`, status OTWARTA — krytyk
-nie przeglądał jeszcze wersji 2.0) została ponownie sprawdzona punkt po
-punkcie (każdy podpunkt „Problem” i każdy element „Oczekiwanej poprawki”)
-względem treści wersji 2.0. Kolumna „Stan w 2.0” podaje wynik weryfikacji;
-„Uzupełnienie 2.1” — zmiany tej iteracji dla luk wykrytych przy weryfikacji;
-„Miejsce rozwiązania” — pełna lista sekcji, w których uwaga jest rozwiązana
-(stan po wersji 2.1).
-
-| ID uwagi | Stan w 2.0 | Uzupełnienie 2.1 | Miejsce rozwiązania |
-|---|---|---|---|
-| C1-01 (KRYTYCZNA) | pp. 1–5 rozwiązane (Q-OC-04 `BLAD_ODCZYTU` nie zeruje punktów, Ocena wstrzymana, brak Wyniku zadania, T-3 z decyzji Modelu decyzyjnego, endpoint zgłoszenia, metryki z G-2, Z-1); luka: po zgłoszeniu Wynik zadania zakwestionowanej Oceny zostawał w Profilu do rozstrzygnięcia (do 72 h), a po usunięciu zdjęć nie było reguły rozstrzygania | zawieszenie Wyniku zadania na czas zgłoszenia (`powod_uniewaznienia`, odtworzenie Profilu); maszyna stanów Wyniku zadania; komunikat dla Ucznia; reguła „na korzyść Ucznia” po usunięciu zdjęć z wymaganym komentarzem; priorytet 1 po 80 dniach; scenariusze C-28, C-29; R-13 | 1.2 (Z-1, Z-3), 7.3 (`ocena`, `wynik_zadania.powod_uniewaznienia`), 8.2, 8.6, 9.5, 9.12, 10.1.3, 10.3, 10.4.3, 11.1 pp. 5–7, 11.3 (T-3, komunikaty), 11.4.3 p. 3, 11.6, 11.8, 12.3, 12.4, 12.5, 12.6, 15.2 (C-28, C-29), 17.6 (G-2), 21 (R-13), ADR-004, ADR-017, ADR-018, ADR-022 |
-| C1-02 (KRYTYCZNA) | rozwiązane: G-7, SLA 72 h, eskalacja, status „opóźniona”, alert pustej puli, kontrola przyjęć, pseudonimizacja, zdjęcia maskowane, podstawa prawna, model obciążenia z Kontrolą; luka: G-7 = 12 weryfikatorów, a A-03 daje tylko 10 Nauczycieli bez Klas — źródło brakującej pojemności nieokreślone | A-14 i ADR-034: skład puli (10 bez Klas + ≥ 2 współpracujących), limit 180 min/dobę dla prowadzących Klasy (`422 LIMIT_OBCIAZENIA_WERYFIKATORA`), plan awaryjny `LEMAT_REJESTRACJA_BEZ_KLASY = false` z `kod_zaproszenia` w rejestracji; tabela składu puli w 17.7; R-12 | 2 (A-12, A-13, A-14), 7.3, 10.3, 11.4, 12.2, 12.3, 12.4, 12.8, 14.1 (E-28), 16.3, 17.6 (G-0, G-7), 17.7, 21 (R-02, R-12), 22, ADR-021, ADR-031, ADR-034 |
-| C1-03 (WYSOKA) | pp. 1–7 rozwiązane (PZS-1 B-1…B-7, `kalibrator_pewnosci`, `uzasadnienie` w DTO, `POST /zadania` tylko N, `JevAdapter`); luka w p. 8: 19 nazw używanych w DDL/API (m.in. `element_sciezki`, `zlecenie_generowania`, weryfikator globalny, szkic rozstrzygnięcia) nie miało wpisu w 3.3, a `kalibrator_pewnosci.zrodlo` używał typu `zrodlo_progu` | 19 nowych pojęć w 3.3 (PZS-1 A: 61 pojęć) i test CI z zamkniętą listą wyłączeń; typ `zrodlo_kalibratora` | 1.2 (Z-6), 3.1, 3.2, 3.3, 3.4, 7.3, 11.7, 12.3, 12.4, ADR-016, ADR-028, ADR-032 |
-| C1-04 (WYSOKA) | rozwiązane w całości (sprawdzono brak nazw `Odpowiedz` modelu, `procent_wariantu`, `nr_kroku`, `WynikRozpoznawania`, `wynik_walidacji`, `kolejka_weryfikacji` jako typu) | `zrodlo_kalibratora` rozdziela źródło kalibratora od źródła progu (3.1 p. 5) | 3.1 pp. 5–6, 3.3, 3.4 C, 7.3, 7.5, 10, 12.4, 12.9, 13.1, ADR-016 |
-| C1-05 (WYSOKA) | rozwiązane (CHECK, semantyka, warunek `OCZEKUJE` + `version`, C-23); luka: trasa Weryfikacja w `PONOW_OCENE` nie zlecała `AKTUALIZUJ_PROFIL` mimo zapisu Wyniku zadania, a kolejność „anulowanie → Kontrola losowa” nie była jawna wobec `ux_weryfikacja_otwarta` | `AKTUALIZUJ_PROFIL` w trasie Weryfikacja; jawna kolejność anulowania przed `INSERT` Kontroli losowej | 7.3 (`weryfikacja`), 8.1, 8.3, 9.13, 13.3, 14.2, 15.1 p. 3, 15.2 (C-23) |
-| C1-06 (WYSOKA) | rozwiązane w całości (reguła odczytu, `ZWOLNIJ_BLOKADY_WERYFIKACJI`, eskalacja dostępnych, `…/przedluzenie`, idempotentne podjęcie, szkice, poprawiony SQL) | — | 7.3, 8.3, 9.6.1, 11.4.2, 12.3, 13.5, 15.2 (C-07, C-08), ADR-033 |
-| C1-07 (WYSOKA) | rozwiązane (`PlanPytan`, zwijanie pytań warunkowych, 2 rundy Jev, reguła ponowienia, Wskazówka asynchroniczna, S-1…S-6, G-4 z trzema scenariuszami) | — | 9.5, 9.9, 10.4.3, 10.4.4, 13.1, 13.2, 17.2, 17.6 (G-4), 22, ADR-009, ADR-026 |
-| C1-08 (WYSOKA) | rozwiązane (czas systemowy z rozpoznaniem, T-6 jako naruszenie, SLO T-6, metryka end-to-end, A-11 w G-0); luka: termin wywołania rozpoznawania liczony od `przeslano_at` był już miniony przy ponowieniu, a scenariusz „timeout rozpoznania + ponowienie” nie był policzony | termin per próba (10.3.1, 9.4); scenariusz S-7 i rozpisanie budżetu 1% SLO; wymaganie A-08 ≤ 0,3% błędów/timeoutów dostawcy | 2 (A-08, A-11), 7.3, 9.4, 9.5, 10.3.1, 14.2, 17.1, 17.2 (S-1…S-7), 17.6, 22, ADR-025 |
-| C1-09 (WYSOKA) | rozwiązane (analiza mocy — tabela `n_eff` sprawdzona obliczeniowo: 189 / 335 / 482 / 753; ZT-1 ≥ 700 + ≥ 250; CV5; tryb pełnej weryfikacji; G-2 end-to-end; A-09) | — | 2 (A-09), 11.5.1, 11.5.3, 17.1, 17.6 (G-1, G-2), 21 (R-10), ADR-007 |
-| C1-10 (WYSOKA) | rozwiązane (priorytet 3 i SLA 72 h dla Kontroli, zdjęcia do zamknięcia, `wykonanie_kontroli_30d`, reguły nadzoru, IPW z korektą wykonania per koszyk, Kontrola w modelu 17.7) | — | 11.3, 11.5.3, 14.1 (E-29), 16.4, 17.7, ADR-007, ADR-033 |
-| C1-11 (WYSOKA) | rozwiązane w całości (brak `theta_poczatkowa`, odtwarzanie od stanu DOMYŚLNEGO z Wynikami testu jako zdarzeniami, test raz na poziom, `AKTUALIZUJ_PROFIL`, zmiana poziomu matury) | — | 7.3, 9.1, 10.1.3, 12.3, 12.4, 13.6, ADR-010 |
-| C1-12 (WYSOKA) | pp. 1–5 rozwiązane (`decyzja_modelu.uczen_id`, rejestr usunięć w Object Lock, wersjonowanie bucketów, retencja dostawców, C-20); luka: kopie zdjęć w zbiorze treningowym nie miały powiązania z kontem, więc odwołania zgody i usunięcia konta nie dało się dla nich wykonać | tabela `kopia_treningowa` (`ON DELETE RESTRICT`), prace `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` i `USUN_KOPIE_TRENINGOWE`, krok 4a w `USUN_KONTO`, `zgoda_na_trening` w `PATCH /uczniowie/ja`, ADR-035 | 2 (A-07), 6.2, 7.1, 7.3, 12.3, 13.1, 13.3, 13.5, 15.2 (C-20), 16.4, 17.6 (G-6), 22, ADR-019, ADR-035 |
-| C1-13 (ŚREDNIA) | rozwiązane w całości (T-2 z τ_FR25 = 0.20, uzasadnienie, parametr) | — | 11.3, 22 |
-| C1-14 (ŚREDNIA) | rozwiązane w całości (tryby Wskazówki, Wskazówka przy `BLAD_PRZETWARZANIA`, reguła N-1, `uzasadnienie` w DTO) | — | 9.6.2, 10.5, 11.1 p. 6, 11.7, 12.4 |
-| C1-15 (ŚREDNIA) | rozwiązane w całości (12 par i N-6, `ZADEN` → wariant o najwyższym p, kolejność reguł na `punkty_surowe`) | — | 7.3, 10.4.3, 11.1, 11.2.1, ADR-005 |
-| C1-16 (ŚREDNIA) | rozwiązane w całości (Zgodność Oceny, reguły źródła próbki, wykluczenie `KOREKTA_NAUCZYCIELA`, `ux_probka_ocena_auto`) | — | 3.3, 3.4 (B-5), 7.3, 11.5.2, 17.1, ADR-027 |
-| C1-17 (ŚREDNIA) | rozwiązane w całości (jawny wyjątek synchroniczny przez fasadę Orkiestratora, timeout 1,5 s, krawędź `api → Jev`, moduły w 6.1/6.2, właściciel `klucz_idempotencji`) | — | 5.1, 6.1, 6.2, 6.3, 9.2, 10.1.6, 14.1 (E-27), ADR-023 |
-| C1-18 (ŚREDNIA) | pp. 1–5 rozwiązane; luka w p. 1: krok 5b nie definiował zachowania, gdy wybrana Umiejętność nie ma Zadania na Poziomie trudności ≥ 4 | ścieżka zastępcza kroku 5b (kolejne Umiejętności, potem najwyższy Poziom trudności w zakresie, zapotrzebowanie puli, krok 8) | 10.1.1, 10.1.2 (kroki 5b, 8), 10.1.5, 10.1.6, 12.4, 13.3, 14.1 (E-26), ADR-011 |
-| C1-19 (ŚREDNIA) | rozwiązane w całości (G-5 dla obu poziomów, `GENERUJ_SZKIC_WKLADKI`, domknięcie elementu Wkładki) | — | 8.5, 9.2, 10.2.1, 13.3, 14.1 (E-20), 17.6 (G-5), ADR-015 |
-| C1-20 (ŚREDNIA) | rozwiązane w całości (rozpoczęcie przy otwarciu treści, wersja ustalana przy rozpoczęciu, okno 72 h dla Przypisań) | — | 7.3, 8.5, 12.3, 12.5, 15.2 (C-16, C-17) |
-| C1-21 (ŚREDNIA) | rozwiązane w całości (dokładnie jeden kontekst, indeksy per Przypisanie, waga kolejnej próby, ujawnianie po terminie) | — | 7.3, 9.3, 10.1.3, 12.4, 12.5, ADR-018, ADR-032 |
-| C1-22 (ŚREDNIA) | rozwiązane w całości (zasięg, recenzent treści, uprawnienia 8.4, endpointy Administratora, brak dowodów systemowych) | — | 3.3, 7.3, 8.4, 12.3, 12.8, 13.6, ADR-015, ADR-028 |
-| C1-23 (ŚREDNIA) | rozwiązane w całości (`kalibracja_trudnosci`, atomowy `UPDATE`, histereza i audyt, C-24) | — | 3.2, 7.2, 7.3, 10.1.3, 15.1, 15.2 (C-24), ADR-029 |
-| C1-24 (ŚREDNIA) | rozwiązane w całości (korekta zamyka otwartą Weryfikację albo `409`, kolumna „ETag”, C-09, C-26) | — | 8.1, 8.3, 9.6.3, 12.1, 12.3, 15.2 (C-09, C-26) |
-| C1-25 (ŚREDNIA) | rozwiązane w całości (rozłączne pule, slot = korutyna, model „koniec lekcji”, G-3 b) | — | 2 (A-03), 5.1, 7.3, 13.3, 13.4, 17.2 (S-6), 17.4, 17.6 (G-3), ADR-002 |
-| C1-26 (ŚREDNIA) | rozwiązane w całości (brak wpisu ręcznego, ADR-024, PZS-1 B-1) | — | 1.3, 7.3, 8.1, 9.4, 12.3, 14.1, ADR-024 |
-| C1-27 (NISKA) | rozwiązane w całości (wszystkie 8 brakujących operacji ma endpointy) | — | 12.3, 12.4 |
-| C1-28 (NISKA) | rozwiązane w całości (kolejność `ZASTAPIONA` → `INSERT`, statusy Zadania, liczniki przesłań i prób, inkrementacja warunkowa cykli, CHECK kontekstu Odpowiedzi) | — | 7.3, 8.4, 9.6.2, 9.7, 13.3, 15.1 |
-| C1-29 (NISKA) | rozwiązane w całości (Seria z warunkiem wyjścia na poziomie maturalnym, budżet generowania systemowego) | — | 7.3, 10.1.2, 10.1.5, 12.7, 13.3, 21 (R-05), ADR-030 |
-
-Zmiany przekrojowe wersji 2.1: nowe założenie A-14; nowa sekcja 8.6;
-nowe tabele i typy `kopia_treningowa`, `zrodlo_kalibratora`,
-`powod_uniewaznienia_wyniku`; nowe prace w tle `KOPIUJ_DO_ZBIORU_TRENINGOWEGO`,
-`USUN_KOPIE_TRENINGOWE`; nowe kody błędów `WYMAGANY_KOD_ZAPROSZENIA`,
-`LIMIT_OBCIAZENIA_WERYFIKATORA`; scenariusz S-7; scenariusze współbieżności
-C-28, C-29; ryzyka R-12, R-13; ADR-034, ADR-035; uzupełnienie ADR-022.
+Historia iteracji (dawne 23.1–23.3 i 23.5–23.7) oraz mapowanie uwag krytyka
+C1 … C5 na miejsca rozwiązania są od wersji 3.0 w
+[`docs/ARCHITECTURE_CHANGELOG.md`](ARCHITECTURE_CHANGELOG.md). W dokumencie
+zostaje sekcja 23.4 (numer zachowany, bo odwołują się do niej ADR, bramka
+G-0 i `TASKS.md`).
 
 ### 23.4 Decyzje, które wymagają właściciela produktu (bramka G-0)
 
@@ -6943,151 +8181,6 @@ opisuje opcję alternatywną, tak aby implementacja nie była blokowana
 | D-17 | Zapas puli weryfikatorów globalnych na wariant „aktywny bezpiecznik poprawek w fazie startowej” (20 wymaganych) | G-7 = 18; w tym wariancie współczynnik zapasu 1,22 zamiast 1,3, nadwyżkę zatrzymuje kontrola przyjęć kolejki globalnej (17.7) | G-7 = 20 (≥ 10 Nauczycieli współpracujących zamiast ≥ 8, koszt 2 umów) | C4-06 p. 7 |
 
 Do czasu akceptacji implementacja realizuje opcje domyślne; zmiana
-opcji dotyczy reguł w modułach `lemat.ocenianie`, `lemat.weryfikacja`,
-`lemat.konta` i konfiguracji (22), bez zmiany struktury kontenerów, modułów
+opcji dotyczy reguł w modułach Ocenianie, Weryfikacje i Konta
+(`Lemat.Domain.*` / `Lemat.Application.*`, 6.2) i konfiguracji (22), bez zmiany struktury kontenerów, modułów
 ani portów (R-11).
-
-### 23.5 Iteracja 4 (2026-11-01, wersja 2.2) — zamknięcie uwag C1-21 i C2-01 … C2-16
-
-Zaadresowano wszystkie 17 otwartych uwag z `docs/CRITIQUE_LOG.md`: ponownie
-otwartą C1-21 oraz C2-01 … C2-16 z iteracji 2 (3 wysokie, 10 średnich, 3
-niskie). Decyzje zmieniające lub zawężające wymagania przekazano do G-0
-jako D-10 … D-14 z opcją domyślną opisaną w całości w dokumencie.
-Odstępstwa od proponowanych poprawek: C2-01 — Oceny automatyczne z
-Poprawkami nie są wyłączane z populacji progu, tylko objęte podwójną
-Kontrolą losową i bezpiecznikiem (wyłączenie uczyniłoby NFR-03
-niemierzalnym dla tej grupy; wyłączone są Oceny z T-7); C2-07 — globalny
-ogranicznik jest przydziałem lokalnym z rejestru procesów, a nie token
-bucketem w PostgreSQL (koszt zapisu na żądanie); C2-08 — wybrano wariant
-„odroczenie anulowania do `USUN_KONTO`” zaproponowany przez krytyka.
-
-| ID uwagi | Rozwiązanie | Miejsce rozwiązania |
-|---|---|---|
-| C1-21 (ŚREDNIA) | Kontekst efektywny próby: element `R-PRZYPISANIE` przekazuje `przypisanie_id` każdej próbie (trigger `trg_kontekst_proby`), więc jedna unikalność (Uczeń, Przypisanie, Zadanie) obejmuje obie drogi; klucz Zadania zamkniętego ujawniany od terminu także z elementu; Weryfikacja trafia do Nauczyciela Przypisania; próba liczy się do `PostepPrzypisaniaWyjscie` (nowy DTO, pole `droga`); jednoznaczny CHECK z kombinacjami {E}, {P}, {E, P}, {T}; `wygasa_at` elementu z Zadaniem zamkniętym ≤ termin; błąd `PRZYPISANIE_PO_TERMINIE` | 7.3 (`element_sciezki`, `rozwiazanie`, `odpowiedz`, `trg_kontekst_proby`), 8.5, 9.3, 10.1.1, 10.1.2 krok 1, 11.4.1 p. 1, 12.2, 12.4 (`OdpowiedzWejscie`, `OdpowiedzWyjscie`, `PostepPrzypisaniaWyjscie`), 12.5, 15.2 (C-30), 18.1 (FR-32), ADR-032 (uzupełnienie it. 4) |
-| C2-01 (WYSOKA) | Poprawki Transkrypcji związane z krokami agenta (`nr_kroku_agenta`), bez usuwania, ≤ 2 wstawione; limity twarde (`422 POPRAWKI_ZBYT_ROZLEGLE`) i miękkie; Sprawdzenie zgodności poprawek ze zdjęciem (`SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, rola `ROZPOZNAWANIE_PISMA`, Z-1); reguła T-7 i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`; Oceny z T-7 poza populacją progu; podwójny odsetek Kontroli losowej i bezpiecznik poprawek; metryki; G-2; PZS-1 B-1/B-2 | 1.3, 3.3, 3.4 (B-1, B-2), 7.3 (`powod_weryfikacji`, `transkrypcja`, `krok_transkrypcji`), 8.1, 9.4, 9.5, 10.3.1, 10.3.3, 11.1 p. 7, 11.3 (T-7, T-5, priorytet, komunikat), 11.5.2, 12.2, 12.3, 12.4, 12.5, 13.1, 13.3, 13.6, 14.1 (E-31, E-32), 15.2 (C-35), 17.2, 17.3, 17.6 (G-0, G-2), 17.7, 18.1 (FR-18), 21 (R-14), 22, ADR-024, ADR-036, D-10 |
-| C2-02 (WYSOKA) | `weryfikacja.version` = wersja treści ustawiana triggerem `trg_weryfikacja_wersja`; podjęcie, przedłużenie, zwolnienie, eskalacja bez zmiany `version`; przedłużenie zwraca ETag i `version`; `412` z polem `zmiany_tresci`; scenariusz rozstrzygnięcia po przedłużeniach | 7.2, 7.3 (`weryfikacja`, trigger), 8.3, 9.6.1 (SQL i diagram), 9.12, 9.13, 11.4.2, 11.4.3, 12.3, 12.4, 15.1 p. 4, 15.2 (C-23, C-28, C-31), ADR-033 (uzupełnienie), ADR-037 |
-| C2-03 (WYSOKA) | Zadania wygenerowane na zlecenie Nauczyciela zawsze `DO_PRZEGLADU` z Przeglądem zlecającego (wynik `PRYWATNY`, promocja przez recenzenta); Zgłoszenie błędu w Zadaniu dla Zadań `GLOBALNY` (tabela, endpointy, powiadomienie, SLA 5 dni roboczych), wstrzymanie w doborze po 3 zgłoszeniach; ADR-028 oznaczony G-0; decyzja D-11 | 3.3, 6.2, 7.3 (`zadanie.wstrzymane_w_doborze`, `zgloszenie_bledu_zadania`), 8.4, 9.7, 10.1.2 krok 7, 12.2, 12.3, 12.4, 12.7, 12.8, 13.6, 15.2 (C-36), 17.6 (G-0), 18.1 (FR-14), 21 (R-18), 22, ADR-028, ADR-038, D-11 |
-| C2-04 (ŚREDNIA) | Deduplikacja `AKTUALIZUJ_PROFIL` tylko wśród prac `OCZEKUJE` (`ux_praca_dedup_oczekujace`), pętla handlera do pustego wyniku, zamiatacz `ZAMIATAJ_PROFILE` co 5 min, metryka i alert wieku najstarszego niezastosowanego Wyniku | 7.3 (`praca_w_tle`), 13.3, 13.4, 13.5, 15.2 (C-11, C-32), 17.3, 22, ADR-002 (uzupełnienie) |
-| C2-05 (ŚREDNIA) | Kolumna `weryfikacja.powody_poczatkowe` (niezmienna poza dołączeniem Oceny przez `PONOW_OCENE`, trigger `trg_powody_poczatkowe`); źródło Próbki z powodów początkowych, zgłoszenie dopisane później nie wyklucza próbki; test jednostkowy | 3.3, 7.3, 9.5, 9.6.2, 9.12, 9.13, 11.5.2, 12.4 (`WeryfikacjaSzczegoly`), ADR-007 (uzupełnienie) |
-| C2-06 (ŚREDNIA) | Analiza mocy G-1(a) per rodzaj (tabela 2: LB, minimalna obserwowana zgodność, moc); ZT-1 ≥ 350 dowodów z LB ≥ 85,0% (≥ 700 obliczeniowych z LB ≥ 87,5%); poprawiona półszerokość ±3,1 pp; D-12 | 2 (A-09), 11.5.1, 17.6 (G-0, G-1), ADR-007 (uzupełnienie), D-12 |
-| C2-07 (ŚREDNIA) | Skład rund i fal (27 + 1 albo 16 + 13 pytań); tryby Jev `WSADOWY`/`POJEDYNCZY` (A-01); budżet 17.2 i S-1 … S-7 przeliczone dla 3 fal i terminu miękkiego `max(10 s, 28 s − t_R)`; globalny ogranicznik szybkości (`limit_szybkosci_modelu`, przydział ważony, token bucket); `429` i brak przydziału poza circuit breakerem; G-4 (d) | 2 (A-01), 3.1 p. 6, 6.2, 7.3 (`limit_szybkosci_modelu`), 9.5, 10.4.3, 13.1 (`OgranicznikSzybkosci`), 13.2, 14.1 (E-33), 14.2, 17.1, 17.2, 17.4, 17.6 (G-4), 21 (R-17), 22, ADR-039 |
-| C2-08 (ŚREDNIA) | Okres karencji: żądanie usunięcia wstrzymuje procesy zamiast je anulować; przywrócenie wznawia procesy (tabela 16.4: Weryfikacje z nowym SLA, zgłoszenia i zawieszone Wyniki rozstrzygane normalnie, ponowne rozpoznanie, T-6 dla przerwanych ocen); anulowanie w kroku 0 `USUN_KONTO`; Kontrole kont `USUWANE` poza `π_wykonanie`; scenariusz C-33 | 3.3, 8.1, 8.3, 9.6.1, 9.12, 11.4.2, 11.5.3, 12.3, 13.3, 13.6, 15.2 (C-20, C-33), 16.4, 22, ADR-040 |
-| C2-09 (ŚREDNIA) | Rejestr wszystkich Zdarzeń RODO (żądanie, anulowanie, wykonanie usunięcia, odwołanie i udzielenie zgody) zapisywany w Object Lock **przed** transakcją, kopia w `zdarzenie_rodo`; `UZGODNIJ_REJESTR_RODO`; procedura `ponow_zdarzenia_rodo` przed startem workerów; G-6 z trzema scenariuszami | 3.3, 5.1, 6.2, 7.3 (`zdarzenie_rodo`, `typ_zdarzenia_rodo`), 12.2, 12.3, 13.3, 13.5, 14.1 (E-36), 15.2 (C-34), 16.4, 17.1, 17.6 (G-6), 21 (R-16), ADR-041 |
-| C2-10 (ŚREDNIA) | Reguła promptu i deterministyczny Filtr danych osobowych przed zapisem Transkrypcji, Poprawek i kopii treningowej (ramki kroków, dane z konta, PESEL, e-mail); kolumna `dane_osobowe_usuniete`, metryka; test na ZT-1 (G-2, G-6); poprawione ADR-031 i 16.3 | 2 (A-09), 3.3, 7.3 (`transkrypcja`, `krok_transkrypcji.obszar`), 9.4, 10.3.1 p. 2 i 3a, 10.3.2, 13.3, 16.3, 17.3, 17.6 (G-2), ADR-031, ADR-035, ADR-042 |
-| C2-11 (ŚREDNIA) | Zmiany nazw: `decyzje_skladowe` (schemat adaptera zapasowego), `kod_statusu_http`/`cialo_http`, `opcje_zamkniete`, `?wersja_zdjecia=`, `rezultat_przestarzaly`, `rezultat_ujawniony_od`, `OdpowiedzWyjscie.rezultat`, „prace w tle” zamiast „kolejka”, „Strategia eksperymentalna” zamiast „Wariant eksperymentalny”, „opcja” zamiast „wariant” w 23.4; 3.1 p. 5 rozszerzony; 17 nowych pojęć w 3.3 (w tym Pewność surowa, Punkty surowe, Niespójność, Rozstrzygnięcie, Korekta, Eskalacja); PZS-1 B-8 (Agent), B-9 (Jev); test CI na tabele, tokeny kolumn, typów, OpenAPI, schematów modeli i słowa zarezerwowane | 3.1, 3.3, 3.4 (A, B-8, B-9, C), 5.1, 5.2, 6.3, 7.3, 7.5.1, 9.3, 10.1.6, 10.2.1, 12.3, 12.4, 13.2, 13.4, 14.1 (E-13), 15.2, 23.4 |
-| C2-12 (ŚREDNIA) | SLA 3 dni robocze (`dzien_wolny`, `dodaj_dni_robocze`); model tygodniowy 7/5 z jawnymi eskalacjami 5% (A-15) i współczynnikiem 1,3; G-7 = 18 na start; `zaleglosc_globalna_min` z eskalacjami; kontrola przyjęć per Klasa; D-13 | 2 (A-13, A-14, A-15), 3.3, 7.3, 11.4.1 p. 4, 11.4.3, 11.5.3, 12.4 (`ObciazenieWeryfikacjiWyjscie`), 13.3, 17.3, 17.6 (G-0, G-7), 17.7, 21 (R-02, R-12, R-15), 22, ADR-021, ADR-034, ADR-043, D-4, D-13 |
-| C2-13 (ŚREDNIA) | G-5 wymaga ≥ 3 Zadań diagnostycznych na (Dział, poziom matury, nominalny Poziom trudności 2/4); dobór po poziomie nominalnym; test częściowy (`pominiete_dzialy`) albo `409 TEST_NIEDOSTEPNY` < 50%; `SPRAWDZ_PULE_DIAGNOSTYCZNA`, `409 PULA_DIAGNOSTYCZNA_ZA_MALA`, `GET /admin/pula-diagnostyczna`; DTO `TestDiagnostycznyWyjscie`; pominięcie testu jako D-14 | 7.3 (`ix_zadanie_diagnostyczne`, `pominiete_dzialy`), 9.1, 12.2, 12.3, 12.4, 13.3, 13.5, 14.1 (E-34), 17.6 (G-0, G-5), 18.1 (FR-03), 22, D-14 |
-| C2-14 (NISKA) | Przepływ usunięcia konta Nauczyciela i Administratora (endpointy, karencja, Przekazanie Klasy, archiwizacja nieprzekazanych Klas, pseudonimizacja uzasadnień, ochrona ostatniego Administratora); DDL z `ON DELETE SET NULL` i CHECK „Klasa bez Nauczyciela tylko zarchiwizowana” | 1.3, 3.3, 6.2, 7.3 (`klasa`, `zestaw_zadan`, `przypisanie`, `import_arkusza`), 11.4.1 p. 1, 11.4.3 p. 1, 12.2, 12.3, 13.3, 13.6, 16.3, 16.4, 17.6 (G-6), 18.1 (FR-30), ADR-044 |
-| C2-15 (NISKA) | Piaskownica procesowa Pillow w `api` (2 procesy na replikę, RLIMIT, limit czasu), limit pikseli i wymiarów przed dekodowaniem, `422 ZDJECIE_NIEPRAWIDLOWE`, `503` przy zajętej piaskownicy; budżet i pojemność | 5.1, 5.2, 9.4, 10.3.1 p. 1, 12.2, 14.1 (E-35), 16.2, 17.2, 17.4, 22, ADR-045 |
-| C2-16 (NISKA) | (1) `rezultat_ujawniony_od` NULL dla Odpowiedzi testu do `…/zakonczenie` lub `…/pominiecie`; (2) warunek 2 h przy ponownym podjęciu przez właściciela; (3) `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` przy każdym przejściu do „`OCENIONE` bez otwartej Weryfikacji” i nadpisanie przy nowszej Ocenie; (4) okno zgłoszenia od Oceny aktualnej; (5) limit 2 odrzuceń automatycznych szkiców Wkładek na 30 dni i szkice w budżecie generowania systemowego; (6) Wkładka bez dowodu przeczytania po `wygasa_at` → `POMINIETY` w 8.5 i 13.3 | (1) 7.3, 9.1; (2) 9.6.1, 11.4.2, ADR-033; (3) 7.3 (`kopia_treningowa.ocena_id`), 9.5, 9.6.2, 9.13, 13.3, 16.4, ADR-035; (4) 11.6, 7.3; (5) 7.3 (`wkladka_teoretyczna`), 10.2.1, 12.7, 13.3, 14.1 (E-30), 22; (6) 8.5, 13.3 |
-
-Zmiany przekrojowe wersji 2.2: nowe założenie A-15; nowe tabele
-`zgloszenie_bledu_zadania`, `zdarzenie_rodo`, `dzien_wolny`,
-`limit_szybkosci_modelu`; nowe typy `status_zgloszenia_zadania`,
-`typ_zdarzenia_rodo` i wartość `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`; nowe
-triggery `trg_kontekst_proby`, `trg_weryfikacja_wersja`,
-`trg_powody_poczatkowe`; nowa sekcja 10.3.3; reguła trasowania T-7; nowe
-prace w tle `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, `ZAMIATAJ_PROFILE`,
-`SPRAWDZ_PULE_DIAGNOSTYCZNA`, `UZGODNIJ_REJESTR_RODO`; nowe kody błędów
-`PRZYPISANIE_PO_TERMINIE`, `TEST_NIEDOSTEPNY`, `PULA_DIAGNOSTYCZNA_ZA_MALA`,
-`ZGLOSZENIE_ZADANIA_ISTNIEJE`, `OSTATNI_ADMINISTRATOR`,
-`ZDJECIE_NIEPRAWIDLOWE`, `POPRAWKI_ZBYT_ROZLEGLE`; macierz błędów do E-36;
-scenariusze współbieżności do C-36; scenariusze budżetu S-1b, S-2b; ryzyka
-R-14 … R-18; ADR-036 … ADR-045; decyzje G-0 D-10 … D-14; PZS-1: 78 pojęć w
-części A, B-8 i B-9 w części B.
-
-
-### 23.6 Iteracja 5 (2026-11-01, wersja 2.3) — zamknięcie uwag C3-01 … C3-09
-
-Zaadresowano wszystkie 9 otwartych uwag z `docs/CRITIQUE_LOG.md`, iteracja 3
-(1 wysoka, 6 średnich, 2 niskie). Jedna decyzja wymaga właściciela produktu
-(D-15, z opcją domyślną opisaną w 16.4). Odstępstwa od sugerowanych
-poprawek: C3-01 — wybrano dolną granicę Wilsona (LB > 2% przy `n_eff ≥ 50`)
-zamiast SPRT, z uzasadnieniem w ADR-046; C3-02 — zamiast maskowania
-fragmentu kroku wg ramki (ramka pikselowa nie wskazuje znaków w tekście) krok
-z treścią matematyczną pozostaje nienaruszony i kieruje Ocenę do Weryfikacji
-(T-3), a maskowany w całości jest tylko krok bez treści matematycznej; C3-03
-— zastosowano oba warianty krytyka jednocześnie (wiersz w pierwszej
-transakcji **i** `zrodlo = WORKER` wyłączone z unieważniania); C3-06 —
-sprzątanie zamiast Zdarzenia RODO dla kopii (ADR-047).
-
-| ID uwagi | Rozwiązanie | Miejsce rozwiązania |
-|---|---|---|
-| C3-01 (WYSOKA) | Bezpieczniki trafności i poprawek wyzwalane wyłącznie dowodem przekroczenia: LB Wilsona 95% błędu (IPW) > 2% przy `n_eff ≥ 50`; ostrzeżenie (blokada obniżania progu) przy UB > 2% i `n_eff ≥ 189`; próba dla pary (konfiguracja, rodzaj) powyżej bieżącego progu, nie dla rekordu progu (brak zapadki); rachunek: tabela `k_min` i P(wyzwolenie) dla n = 50 … 1 000 (przy 0 błędach LB = 0 — nigdy) i symulacja 90 dni dla startu, fazy ustalonej i modelu zapasowego; tabela `stan_bezpiecznika` zamiast flagi środowiskowej, dezaktywacja (w wersji 2.3: „zdjęcie”) przez Administratora z `okno_od`; testy jednostkowe (a)–(f), w tym „0 błędów przy n = 50 … 188 nie wyzwala”; scenariusz startowy w 17.7: reguła 2.2 dawałaby auto ≈ 0%, `M` = 5 154 min, 137 min na Nauczyciela i 26 weryfikatorów globalnych zamiast 18 — reguła 2.3 zachowuje „Start: auto 47%” i G-7 = 18 | 3.3 (Bezpiecznik), 7.3 (`typ_bezpiecznika`, `stan_bezpiecznika`), 9.8, 11.5.2, 11.5.3, 12.3 (`/admin/bezpieczniki`, `/admin/bezpieczniki/zdjecie` — od wersji 2.4 `/admin/bezpieczniki/dezaktywacja`), 12.2 (`BEZPIECZNIK_NIEAKTYWNY`), 12.4 (`StanBezpiecznikaWyjscie`), 13.3 (`KALIBRUJ`), 14.1 (E-21), 17.1 (NFR-03), 17.3, 17.7, 20, 21 (R-20), 22, ADR-007 (uzupełnienie), ADR-046 |
-| C3-02 (ŚREDNIA) | Filtr danych osobowych nie usuwa kroków i nie zmienia `latex`; krok w ramce bez treści matematycznej → `[DANE_OSOBOWE]` w całości, z treścią matematyczną → zachowany, `konflikt_filtra` → T-3 (11.1 p. 7d, Z-1); dopasowanie nazw tylko w `tekst`, Słownik terminów matematycznych (≈ 350 lematów, ≈ 4 000 form) nigdy niezastępowany, nazwy < 4 znaków — dopasowanie dokładne; pozycje zastąpień w `zastapienia_danych_osobowych`, przywracanie słowa Poprawką (dopasowania przybliżone nie są ponownie filtrowane, Poprawka podlega Sprawdzeniu i podwójnej Kontroli); G-2: 150 kartek (UB 2,5%), w tym krótkie imiona i nazwiska-terminy, 0 zastąpień terminów matematycznych i ≤ 0,5% fałszywych zastąpień na 1 050 Transkrypcjach, `konflikt_filtra` ≤ 1% | 2 (A-09), 3.3 (Filtr, Słownik terminów matematycznych, Obszar kroku), 7.3 (`krok_transkrypcji`, `transkrypcja.konflikt_filtra`), 10.3.1 p. 3a, 11.1 p. 7d, 12.4 (`KrokTranskrypcji`, `TranskrypcjaWyjscie`), 14.1 (E-37), 17.3, 17.6 (G-2), 21 (R-19), 22, ADR-042 (uzupełnienie) |
-| C3-03 (ŚREDNIA) | `USUNIECIE_WYKONANE` zapisuje `worker` (`zrodlo = WORKER`, deterministyczne `id` = uuid5, `If-None-Match: *`) przed pierwszą zmianą w bazie, wiersz `zdarzenie_rodo` w pierwszej transakcji `USUN_KONTO` (krok 1, razem z anulowaniem procesów); `UZGODNIJ_REJESTR_RODO` unieważnia tylko zdarzenia `API`, a dla `WORKER` ponawia `USUN_KONTO` po 2 h i alarmuje po 26 h; `ponow_zdarzenia_rodo` wykonuje kroki 1–6 synchronicznie bez względu na czas od usunięcia; poprawione ADR-041 i komentarz `zdarzenie_rodo.id`; G-6 (a) z odtworzeniem 60 min po usunięciu | 3.3 (Zdarzenie RODO), 5.1, 7.3 (`zrodlo_zdarzenia_rodo`, `zdarzenie_rodo`), 13.3 (`UZGODNIJ_REJESTR_RODO`, `USUN_KONTO`), 14.1 (E-36), 16.4 (kroki 0–1, procedura odtworzenia, konto Nauczyciela p. 1), 17.3, 17.6 (G-6 a), 21 (R-16), 22, ADR-041 (uzupełnienie) |
-| C3-04 (ŚREDNIA) | Jedna formuła `0,8 × limit × waga_i / Σ wag` (kolumny `waga` i `pojemnosc` w `limit_szybkosci_modelu`); 1 token = 1 wywołanie HTTP; kubełek workera 16 ≥ maks. fala (4 przy ścisłym oknie 1 s, test G-4); przyjęcie planu przed falą 1 (przewidywany koniec ≤ termin miękki), terminy fal ≥ 2, pierwszeństwo fal ≥ 2; porty `przyjmij_plan`, `zarezerwuj_wywolanie`, `zwolnij`; testy jednostkowe (a)–(e); symulacja profili A–D: przy A-03 0 Ocen do modelu zapasowego (wersja 2.2: 18%), S-6 ≤ 26,2 s, S-6b w budżecie SLO; A-01 z tolerancją 75 wywołań w 1 s | 2 (A-01), 3.3 (Przyjęcie planu), 7.3 (`limit_szybkosci_modelu`), 9.9, 13.1 (`PrzyjeciePlanu`, `OgranicznikSzybkosci`), 13.2, 14.1 (E-33), 17.2 (S-6, S-6b, budżet SLO), 17.3, 17.4 (symulacja), 17.6 (G-4), 21 (R-21), 22, ADR-039 (uzupełnienie) |
-| C3-05 (ŚREDNIA) | Kroki wstawione w liczniku odsetka znaków (mianownik: wszystkie kroki agenta), limit długości kroku wstawionego ≤ min(200, max(60, ⌈1,5 × mediana⌉)) z przykładem; obszar kroku wstawionego między sąsiednimi krokami; autozapis PWA (debounce 2 s, zapis przed zatwierdzeniem), deduplikacja Sprawdzenia tylko wśród `OCZEKUJE` z podmianą ładunku (C-38); osobna pula `S`, wejście z wycinków i zdjęcia 1024 px, A-08: p95 ≤ 4 s i limit ≥ 150/min; rachunek braku rezultatu (≈ 0,1% przy `G ≈ 0`, przyjęte ≤ 0,5%); pojemność dostawcy w szczycie 117/min ≤ 120/min; T-7 wyprowadzone z rozkładu (2,5–3,1%, model 3%); G-2: „wstawienia rozwiązania” ≥ 95%, fałszywe alarmy ≤ 5% | 2 (A-08), 7.3 (`praca_w_tle.pula`, indeksy deduplikacji), 9.4, 10.3.1 (`PoprawkaDoSprawdzenia.obszar`), 10.3.3, 12.2, 12.5, 13.3, 13.4, 15.2 (C-38), 17.2, 17.3, 17.4, 17.6 (G-2), 17.7, 21 (R-14), 22, ADR-036 (uzupełnienie) |
-| C3-06 (ŚREDNIA) | Praca `SPRZATAJ_OSIEROCONE_OBIEKTY` dla `zbior-treningowy/`, `zdjecia/`, `zdjecia-maskowane/`: tryb `CODZIENNY` (04:30 UTC, okno 1 h) i `ODTWORZENIE` (krok 2a procedury PITR przed startem workerów); koszt przebiegu; metryka i alert; E-02 rozszerzone; G-6 (d) | 13.3, 13.5, 14.1 (E-02, E-38), 16.4 (retencja, procedura odtworzenia p. 2a, magazyn obiektów), 17.3, 17.6 (G-6 d), 21 (R-16), 22, ADR-047 |
-| C3-07 (ŚREDNIA) | Reguła transliteracji „żądanie” → „wniosek” / „wywołanie” (3.1 p. 3); `WNIOSEK_O_USUNIECIE` zamiast `ZADANIE_USUNIECIA`, `jev_wywolania_http_total`, parametr `liczba_zadan` usunięty (rezerwacja per wywołanie); test CI z tokenem `zadan*` i listą dozwolonych użyć; „Grupa eksperymentu” i Q-RE-01 bez słowa „wariant”; B-5 ujednolicone z ADR-027 (brakujący krok); typy `ObszarNaZdjeciu` / `ObszarKroku`; „Rejestr Zdarzeń RODO” i bucket `rejestr-zdarzen-rodo` | 3.1 p. 3, 3.3, 3.4 (część A, test CI część 3, B-5), 5.1, 7.3 (`typ_zdarzenia_rodo`), 10.3.1, 10.3.2, 10.4.3, 12.3, 13.1, 16.4, 17.3, ADR-041 (uzupełnienie), D-1 |
-| C3-08 (NISKA) | Karencja konta Nauczyciela: natychmiast tylko zwolnienie blokad (szkice zachowane) i eskalacja z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA`, flagi do `USUN_KONTO`; tabela przywrócenia dla Nauczyciela i Administratora (cofnięcie eskalacji oczekujących, Klasy przekazane bez zwrotu — D-15); rozstrzygnięcie i korekta wymagają konta Ucznia `AKTYWNE` (`409 KONTO_UCZNIA_NIEAKTYWNE`, C-37); przywrócenie zleca `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` | 7.3 (`powod_eskalacji`, `weryfikacja.powod_eskalacji`), 9.6.2, 9.6.3, 11.4.3 p. 1, 12.2, 12.3, 12.5, 13.6, 15.2 (C-37), 16.4, 17.6 (G-0, G-6), ADR-040 i ADR-044 (uzupełnienia), D-15 |
-| C3-09 (NISKA) | (1) R-02: SLA 3 dni robocze; (2) 12.6: `termin_at` = 2026-11-05T07:00:00Z z rachunkiem `dodaj_dni_robocze`; (3) `LIMIT_OBCIAZENIA_WERYFIKATORA` i parametry 22: minuty na dzień roboczy; (4) `WYCZYSC_DANE_TECHNICZNE` usuwa `zdarzenie_rodo` po 2 latach; (5) C-07 z SQL podjęcia 2.2+ (`podjeta_at + 2 h`, konto `AKTYWNE`); (6) Wstrzymanie w doborze w tabeli `wstrzymanie_w_doborze` poza `zadanie.version` (ADR-029), C-36 przepisany | (1) 21; (2) 12.6; (3) 12.2, 22; (4) 13.3; (5) 15.2; (6) 3.3, 7.2, 7.3, 8.4, 10.1.2 krok 7, 12.3, 12.4, 12.5, 13.6, 15.2 (C-36), 18.1, ADR-029 (uzupełnienie), ADR-038 |
-
-Zmiany przekrojowe wersji 2.3: nowe typy `zrodlo_zdarzenia_rodo`,
-`typ_bezpiecznika`, `powod_eskalacji`; nowe tabele `stan_bezpiecznika`,
-`wstrzymanie_w_doborze`; nowe kolumny `zdarzenie_rodo.zrodlo`,
-`weryfikacja.powod_eskalacji`, `krok_transkrypcji.podejrzenie_danych_osobowych`,
-`tylko_dane_osobowe`, `zastapienia_danych_osobowych`,
-`transkrypcja.konflikt_filtra`, `limit_szybkosci_modelu.waga`, `pojemnosc`;
-usunięta kolumna `zadanie.wstrzymane_w_doborze`; zmieniona wartość
-`ZADANIE_USUNIECIA` → `WNIOSEK_O_USUNIECIE`; nowa pula `SPRAWDZANIE`; nowa
-praca w tle `SPRZATAJ_OSIEROCONE_OBIEKTY`; nowe endpointy `GET
-/admin/bezpieczniki`, `POST /admin/bezpieczniki/zdjecie` (od wersji 2.4 `POST /admin/bezpieczniki/dezaktywacja`, C4-04); nowe kody błędów
-`KONTO_UCZNIA_NIEAKTYWNE`, `BEZPIECZNIK_NIEAKTYWNY`; macierz błędów do
-E-38; scenariusze współbieżności do C-38; scenariusz budżetu S-6b; ryzyka
-R-19 … R-21; ADR-046, ADR-047 oraz uzupełnienia ADR-007, ADR-029, ADR-036,
-ADR-039 … ADR-042, ADR-044; decyzja G-0 D-15; PZS-1: 83 pojęcia w części A;
-słowa ogólne dopisane do `tests/slownik_tokeny.yaml`: `sprzataj`,
-`osierocone`, `obiekty`, `wniosek`, `wywolania`, `pojemnosc`, `waga`,
-`okno`.
-
-### 23.7 Iteracja 6 (2026-11-01, wersja 2.4) — zamknięcie uwag C4-01 … C4-06
-
-Zaadresowano wszystkie 6 otwartych uwag z `docs/CRITIQUE_LOG.md`, iteracja 4
-(4 średnie, 2 niskie), w tym wszystkie 10 podpunktów C4-06. Dwie decyzje
-wymagają właściciela produktu (D-16, D-17; opcje domyślne w 11.5.3 i 17.7).
-Odstępstwa od sugerowanych poprawek: C4-02 — oprócz `prog_nowy = max(wybór,
-prog_obecny + 0,02)` i zakazu obniżania dodano tryb pełnej weryfikacji przy
-wyzwoleniu na 0,990 (bez niego reakcja na degradację jednorodną kończy się na
-0,990 z błędem > 2%), a symulacja wykazała, że okno 30 dni wykrywa nagłą
-degradację w medianie 13 dni (nie 2–4) — skorygowano ADR-046 i R-20, a okno
-7 dni odrzucono z rachunkiem; C4-04 — `dezaktywowany_przez` zamiast
-`dezaktywowal_id` (konwencja `utworzony_przez`, `podjeta_przez`), a
-„wstrzymanie” dostało jedną definicję zamiast zmiany nazw; C4-05 — pojemność
-`api` stała (1), a workery dzielą resztę `B_całk` proporcjonalnie do wagi,
-co przy 2 workerach zachowuje kubełek 16 i wyniki S-6.
-
-| ID uwagi | Rozwiązanie | Miejsce rozwiązania |
-|---|---|---|
-| C4-01 (ŚREDNIA) | `ponow_zdarzenia_rodo`: kryterium zastosowania zależne od źródła — `API`: wiersz `zdarzenie_rodo`; `WORKER`: brak wiersza `uzytkownik` (PITR w trakcie `USUN_KONTO` daje wiersz zdarzenia i pełne dane konta); cały prefiks `wykonane/` bez filtra czasu; ponowienie każdego zdarzenia według `dane.rola` tymi samymi funkcjami domenowymi co `api` i `USUN_KONTO` (kroki (1)–(5) Nauczyciela, skutki `KontoUsuwane` / `KontoPrzywrocone`, tabela przywrócenia właściwa dla roli); `rola` w każdym Zdarzeniu RODO (CHECK); G-6 (a3) PITR po krokach 1–4 i (a4) konto Nauczyciela; scenariusz C-39 | 7.3 (`zdarzenie_rodo.dane`, CHECK), 13.3 (`USUN_KONTO`), 13.6 (`KontoUsuwane`, `KontoPrzywrocone`), 15.2 (C-39), 16.4 (wniosek p. 1, krok 0, procedura odtworzenia p. 2, konto Nauczyciela p. (1)), 17.3, 17.6 (G-6), 21 (R-16), ADR-041 (uzupełnienie it. 6) |
-| C4-02 (ŚREDNIA) | „Wynik dnia KALIBRUJ”: kroki 1–6 w jawnej kolejności — wybór progu, ocena bezpieczników na progu i kalibratorze sprzed przebiegu, Blokada obniżania progu (wejście przy wyzwoleniu, wyjście przy UB ≤ 2% i `n_eff ≥ 189` powyżej bieżącego progu), dozwolone obniżenie z testem 30 dni powyżej progu docelowego, `p_nowy = max(p_dol, p0 + 0,02)` przy wyzwoleniu, 0,990 → 1,000, jeden rekord `prog_pewnosci`; `stan_bezpiecznika.aktywny` dla `TRAFNOSC`, `wyjscie_z_blokady_at`; testy (g)–(k), w tym „degradacja 4% przez 30 dni na tle 60 dni z błędem 0,5% → próg niemalejący”; symulacja dynamiki (trajektoria progu i udział auto: 67% → 38% → 15% → 0% przy degradacji jednorodnej, próg niemalejący w 100% przebiegów) | 3.3 (Blokada obniżania progu), 7.3 (`stan_bezpiecznika`), 9.8, 11.5.3, 12.4 (`StanBezpiecznikaWyjscie`), 13.3 (`KALIBRUJ`), 14.1 (E-21), 17.3, 17.7, 21 (R-20, R-22), 22, 23.4 (D-16), ADR-046 (konsekwencje, uzupełnienie it. 6) |
-| C4-03 (ŚREDNIA) | Reguła (a): imię i nazwisko z konta, inicjały i oznaczenie klasy nie są treścią matematyczną („Jan Pole” → `tylko_dane_osobowe`, bez `konflikt_filtra`); reguła (b): token Słownika równy nazwisku zastępowany przy sąsiedztwie z drugim członem lub inicjałem (b1) albo w kroku agenta w ramce (b2); Poprawki: reguła (a) nie jest liczona ponownie, krok przywrócony z `tylko_dane_osobowe` nie jest maskowany i podlega limitom 9.4, Sprawdzeniu zgodności i T-7, `konflikt_filtra` tylko z kroków niezmienionych; G-2: osobne kryterium dla ≥ 30 kartek z nazwiskiem-terminem; metryka `uczniowie_z_konfliktem_filtra_udzial` z alertem | 3.3 (Filtr, Słownik terminów matematycznych), 7.3 (`transkrypcja.konflikt_filtra`), 10.3.1 p. 3a, 11.1 p. 7d, 14.1 (E-37), 17.3, 17.6 (G-2), 17.7, 21 (R-19), 22, ADR-042 (uzupełnienie it. 6) |
-| C4-04 (ŚREDNIA) | „Dezaktywacja” zamiast „zdjęcie” dla bezpiecznika: `POST /admin/bezpieczniki/dezaktywacja` (oba typy, `DezaktywacjaBezpiecznikaWejscie`), kolumny `dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`, DTO `dezaktywowano_at`; „odebranie” flag i „wyłączenie” flagi `diagnostyczne` w prozie; definicja „wstrzymania” (jedno znaczenie) w 3.1 p. 5; nowe pojęcia PZS-1 (86); test CI: słowa zarezerwowane `zdje*`, `wstrzym*` z listami dozwolonych użyć i przypadek kontrolny `zdjeto_at` | 3.1 p. 5, 3.3, 3.4 (część A, test CI części 2 i 3), 7.3 (`stan_bezpiecznika`), 8.4, 11.5.2, 11.5.3, 12.2 (`BEZPIECZNIK_NIEAKTYWNY`, `PULA_DIAGNOSTYCZNA_ZA_MALA`), 12.3, 12.4, 16.4, 23.4 (D-1), ADR-016 (uzupełnienie it. 6), ADR-040, ADR-044 |
-| C4-05 (NISKA) | Łączna pojemność kubełków `B_całk` (34 / 10) dzielona między wiersze (`api` 1, pozostałe proporcjonalnie do wagi), przydział `min(formuła, 0,8 × limit − Σ pozostałych)`, publikacja `przydzial`/`pojemnosc` pod blokadą doradczą, zmniejszenie przed i zwiększenie po `COMMIT`, nowy proces z pustym kubełkiem i odnowieniem co 2 s; rachunek granicy dla 2 / 3 / 4 workerów: 74 / 72 / 74 w 1 s (wersja 2.3: 74 / 90 / 106) i ≤ 234 w 5 s; testy (f)–(h), G-3 (c), scenariusz C-40 | 2 (A-01), 7.3 (`limit_szybkosci_modelu`), 13.2, 15.2 (C-40), 17.2, 17.3, 17.4, 17.6 (G-3, G-4), 21 (R-21), 22, ADR-039 (uzupełnienie it. 6) |
-| C4-06 p. 1 | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` w puli S | 10.3.3 |
-| C4-06 p. 2 | `UZGODNIJ_REJESTR_RODO` co 5 min z wiekiem > 5 min → okno unieważniania ≤ 10 min, zgodne z 16.4, ADR-041 i G-6 | 13.3, 13.5, 16.4, 21 (R-16), 22, ADR-041 |
-| C4-06 p. 3 | Klucz `USUNIECIE_WYKONANE` bez daty: `rejestr-zdarzen-rodo/wykonane/{uzytkownik_id}/{id}.json`; `If-None-Match: *` działa przy ponowieniu w dowolnym dniu | 7.3 (`zdarzenie_rodo.klucz_obiektu`), 13.3, 16.4 (krok 0, procedura p. 2), 22, ADR-041 |
-| C4-06 p. 4 | `SELECT status FROM uzytkownik WHERE id = :uczen_id FOR SHARE` po blokadzie `rozwiazanie` i `weryfikacja` w rozstrzygnięciu i korekcie; kolejność blokad bez zakleszczenia | 9.6.2, 9.6.3, 15.2 (C-37) |
-| C4-06 p. 5 | Rozmiar testu nazwany wprost: 2,6–7,8% na ocenę przy e = 2% (antykonserwatywna granica Wilsona przy małym `n`), P(≥ 1 wyzwolenie w 90 dniach) 31–45% zależnie od napełnienia okna, 1,1 fałszywego podniesienia progu na kwartał, 11% kwartałów w trybie pełnej weryfikacji | 11.5.3, 17.7, 21 (R-22), 23.4 (D-16), ADR-046 |
-| C4-06 p. 6 | Eskalacje `KARENCJA_KONTA_NAUCZYCIELA` poza licznikiem `odsetek_eskalacji_7d` (per Klasa i globalnie); Klasy Nauczyciela w karencji pod kontrolą przyjęć wprost do przywrócenia albo Przekazania Klasy | 3.3 (Kontrola przyjęć), 11.4.3, 13.6, 22, ADR-043 |
-| C4-06 p. 7 | Wariant 17.7 „aktywny bezpiecznik poprawek”: start +249 min/dobę (`M` = 3 951, 105 min na Nauczyciela, 20 weryfikatorów), faza ustalona +451 min (`M` = 3 277, 16 weryfikatorów); G-7 = 18 z zapasem 1,22 i kontrolą przyjęć (D-17) | 17.6 (G-7), 17.7, 23.4 (D-17), ADR-043 |
-| C4-06 p. 8 | Klucz `limit_szybkosci_modelu (konfiguracja_modelu_id, wykonawca, pula)` z wierszami R (waga 1,0) i S (0,3) dla roli `ROZPOZNAWANIE_PISMA`; `B_całk = 30` dla rozpoznawania | 7.3, 13.4, 22, ADR-039 |
-| C4-06 p. 9 | Popyt 28 wywołań na Ocenę (plan 16 + 11 + 1) w S-6, 17.4 i symulacji; 29 wyłącznie jako maksimum pytań; oszacowanie S-6 dla planów 29 (t_O 9,5 s) | 17.2 (S-6), 17.4, 22, ADR-039 |
-| C4-06 p. 10 | Okno na rezultat Sprawdzenia stałe `zatwierdzono_at + 6 s`, niezależne od `t_R`; rachunek p_brak ≤ 0,5% dla każdego `t_R` | 9.4, 17.2, 22, ADR-036 (uzupełnienie it. 6) |
-
-Zmiany przekrojowe wersji 2.4: nowe kolumny `limit_szybkosci_modelu.pula`,
-`przydzial`, `stan_bezpiecznika.wyjscie_z_blokady_at`; zmienione nazwy
-kolumn `stan_bezpiecznika.zdjety_przez` → `dezaktywowany_przez`, `zdjeto_at`
-→ `dezaktywowano_at`, `uzasadnienie_zdjecia` → `uzasadnienie_dezaktywacji`;
-zmieniony klucz główny `limit_szybkosci_modelu`; usunięty CHECK `typ =
-'POPRAWKI' OR NOT aktywny`; nowy CHECK `zdarzenie_rodo.dane ? 'rola'`; nowy
-prefiks `rejestr-zdarzen-rodo/wykonane/`; endpoint `POST
-/admin/bezpieczniki/zdjecie` zastąpiony przez `POST
-/admin/bezpieczniki/dezaktywacja` (typ `DezaktywacjaBezpiecznikaWejscie`);
-cykl `UZGODNIJ_REJESTR_RODO` 5 min; scenariusze współbieżności do C-40;
-ryzyko R-22; uzupełnienia ADR-016, ADR-036, ADR-039, ADR-041, ADR-042,
-ADR-043, ADR-046; decyzje G-0 D-16, D-17; PZS-1: 86 pojęć w części A; słowa
-ogólne dopisane do `tests/slownik_tokeny.yaml`: `dezaktywacja`,
-`dezaktywowany`, `dezaktywowano`, `dezaktywacji`, `blokada`, `obnizania`,
-`przydzial`, `laczna`, `wykonane`, `podpisu`; nowy plik symulacji
-`tests/kalibracja/symulacja_bezpiecznika.py --dynamika` (założenia w 11.5.3).
