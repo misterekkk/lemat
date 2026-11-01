@@ -1,4 +1,5 @@
-// @Role: Kompozycja procesu scheduler (host ogólny + /zdrowie na porcie 8082, bez logiki) | @DependsOn: Microsoft.AspNetCore.App | @UsedBy: Lemat.Scheduler.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003
+// @Role: Kompozycja procesu scheduler (host ogólny + /zdrowie na porcie 8082, bez logiki) | @DependsOn: Lemat.Application.Common, Microsoft.AspNetCore.App | @UsedBy: Lemat.Scheduler.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003, TASK-004
+using Lemat.Application.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -14,6 +15,9 @@ public static class SchedulerHost
     public static WebApplicationBuilder CreateBuilder(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Configuration.DodajZmienneLemat();
+        builder.Services.AddLematOpcje(builder.Configuration, builder.Environment.EnvironmentName);
 
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole();

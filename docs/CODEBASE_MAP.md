@@ -138,7 +138,7 @@ Moduł = `Lemat.Domain.<Module>` + `Lemat.Application.<Module>` + grupa tras w `
 
 ### 5.1 Projekty backendu (strzałka = „ma referencję do”)
 
-Stan (TASK-001, TASK-002, TASK-003; w TASK-003 Worker i Scheduler dostały `FrameworkReference Microsoft.AspNetCore.App` — to nie zmienia grafu referencji projektów): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj` i pilnowane testami `Lemat.Architecture.Tests`; projekty `Lemat.*.Tests` nie są częścią diagramu — każdy referuje wyłącznie testowany projekt, a Architecture.Tests wszystkie 9); węzły z linią przerywaną są POST-MVP i nie istnieją.
+Stan (TASK-001 … TASK-004; TASK-004 nie zmienia grafu referencji projektów — `LematOpcje` jest w Application, hosty Api/Worker/Scheduler już referują Application; w TASK-003 Worker i Scheduler dostały `FrameworkReference Microsoft.AspNetCore.App` — to nie zmienia grafu referencji projektów): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj` i pilnowane testami `Lemat.Architecture.Tests`; projekty `Lemat.*.Tests` nie są częścią diagramu — każdy referuje wyłącznie testowany projekt, a Architecture.Tests wszystkie 9); węzły z linią przerywaną są POST-MVP i nie istnieją.
 
 ```mermaid
 flowchart BT
@@ -275,14 +275,19 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/src/Lemat.Worker/Program.cs` | Punkt kompozycji procesu worker (szkielet, /zdrowie na porcie 8081) | Lemat.Worker.Configuration, Lemat.Application, Lemat.Infrastructure | host ASP.NET Core | TASK-001, TASK-003 |
 | `backend/src/Lemat.Scheduler/Program.cs` | Punkt kompozycji procesu scheduler (szkielet, /zdrowie na porcie 8082) | Lemat.Scheduler.Configuration, Lemat.Application, Lemat.Infrastructure | host ASP.NET Core | TASK-001, TASK-003 |
 | `backend/src/Lemat.Tools/Program.cs` | Narzędzie wiersza poleceń (dispatcher; migrate i seed-dev w kolejnych zadaniach) | Lemat.Tools.Commands, Lemat.Application, Lemat.Infrastructure | operator, scripts | TASK-001, TASK-003 |
-| `backend/src/Lemat.Api/Configuration/ApiHost.cs` | Kompozycja procesu api (logi JSON, ProblemDetails, OpenAPI, adres dev 5080); `CreateBuilder`, `MapEndpoints` | Microsoft.AspNetCore.OpenApi | Lemat.Api.Program, KontenerDiTests | TASK-003 |
+| `backend/src/Lemat.Api/Configuration/ApiHost.cs` | Kompozycja procesu api (logi JSON, ProblemDetails, OpenAPI, adres dev 5080); `CreateBuilder`, `MapEndpoints` | Microsoft.AspNetCore.OpenApi, LematKonfiguracja | Lemat.Api.Program, KontenerDiTests | TASK-003, TASK-004 |
 | `backend/src/Lemat.Api/Endpoints/HealthEndpoints.cs` | Endpoint `GET /api/v1/zdrowie` (grupa tras; `MapGroup("/api/v1/...")` dla kolejnych) | Lemat.Api.Contracts.Common | ApiHost | TASK-003 |
 | `backend/src/Lemat.Api/Contracts/Common/ZdrowieWyjscie.cs` | DTO odpowiedzi `GET /api/v1/zdrowie` | brak | HealthEndpoints | TASK-003 |
-| `backend/src/Lemat.Worker/Configuration/WorkerHost.cs` | Kompozycja procesu worker (host ogólny, `/zdrowie` na 8081, bez logiki) | Microsoft.AspNetCore.App | Worker.Program, KontenerDiTests | TASK-003 |
-| `backend/src/Lemat.Scheduler/Configuration/SchedulerHost.cs` | Kompozycja procesu scheduler (host ogólny, `/zdrowie` na 8082, bez logiki) | Microsoft.AspNetCore.App | Scheduler.Program, KontenerDiTests | TASK-003 |
+| `backend/src/Lemat.Worker/Configuration/WorkerHost.cs` | Kompozycja procesu worker (host ogólny, `/zdrowie` na 8081, bez logiki) | Microsoft.AspNetCore.App, LematKonfiguracja | Worker.Program, KontenerDiTests | TASK-003, TASK-004 |
+| `backend/src/Lemat.Scheduler/Configuration/SchedulerHost.cs` | Kompozycja procesu scheduler (host ogólny, `/zdrowie` na 8082, bez logiki) | Microsoft.AspNetCore.App, LematKonfiguracja | Scheduler.Program, KontenerDiTests | TASK-003, TASK-004 |
 | `backend/src/Lemat.Tools/Commands/CommandDispatcher.cs` | Dispatcher poleceń (`IPolecenie`, `--help`, nieznane polecenie -> kod 2) | brak | Tools.Program, testy | TASK-003 |
 | `backend/tests/Lemat.Api.Tests/HealthEndpointTests.cs` | Test `GET /api/v1/zdrowie` i dokumentu OpenAPI (WebApplicationFactory) | Lemat.Api | dotnet test | TASK-003 |
 | `backend/tests/Lemat.Architecture.Tests/Hosts/KontenerDiTests.cs` | Test kontenerów DI api/worker/scheduler (ValidateOnBuild, ValidateScopes) | Lemat.Api, Lemat.Worker, Lemat.Scheduler | dotnet test | TASK-003 |
+| `backend/src/Lemat.Application/Common/LematOpcje.cs` | Parametry MVP (sekcja 22) wiązane z sekcją `Lemat`; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | Microsoft.Extensions.Options | ApiHost, WorkerHost, SchedulerHost, LematOpcjeWalidator | TASK-004 |
+| `backend/src/Lemat.Application/Common/LematOpcjeWalidator.cs` | Walidacja `LematOpcje` przy starcie (Production bez mocków, A-07 retencja, ścieżka magazynu, zakresy) | LematOpcje | LematKonfiguracja | TASK-004 |
+| `backend/src/Lemat.Application/Common/LematKonfiguracja.cs` | Rejestracja Options + `ValidateOnStart`; mapowanie `LEMAT_*` -> klucze `Lemat:*` (`MapowanieZmiennych`, `DodajZmienneLemat`, `AddLematOpcje`) | LematOpcje, LematOpcjeWalidator | ApiHost, WorkerHost, SchedulerHost | TASK-004 |
+| `backend/tests/Lemat.Application.Tests/Common/LematOpcjeTests.cs` | Testy `LematOpcje`: domyślne = tabela 22, nadpisanie `LEMAT_*`, walidacja startu | Lemat.Application.Common | dotnet test | TASK-004 |
+| `backend/tests/Lemat.Architecture.Tests/Hosts/LematOpcjeHostyTests.cs` | Start hostów api/worker/scheduler w Development bez zmiennych, odrzucenie mocka w Production, spójność appsettings | Lemat.Api, Lemat.Worker, Lemat.Scheduler | dotnet test | TASK-004 |
 | `backend/tests/Lemat.Domain.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Domain (szkielet do czasu pojawienia się typów) | Lemat.Domain | dotnet test | TASK-002 |
 | `backend/tests/Lemat.Application.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Application (szkielet do czasu pojawienia się typów) | Lemat.Application | dotnet test | TASK-002 |
 | `backend/tests/Lemat.Agents.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Agents (szkielet do czasu pojawienia się typów) | Lemat.Agents | dotnet test | TASK-002 |
@@ -301,7 +306,8 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/tests/Lemat.Architecture.Tests/Conventions/BrakNiestandardowychZnakowWNazwachPlikowTests.cs` | Test ASCII w ścieżkach z git ls-files (ADR-075) | FileNamePolicy, RepositoryLocator | dotnet test | TASK-002 |
 | `backend/tests/Lemat.Architecture.Tests/Support/RepositoryLocator.cs` | Lokalizacja katalogów repozytorium i plików źródłowych dla testów architektury | system plików, git | Layers, Glossary, Conventions | TASK-002 |
 
-Projekty `Lemat.Domain`, `Lemat.Application`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Projekt `Lemat.Application` ma od TASK-004 `Common/` (LematOpcje); projekty `Lemat.Domain`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Pliki nie-C# (TASK-004): `backend/src/Lemat.{Api,Worker,Scheduler}/appsettings.json` i `appsettings.Development.json` (sekcja `Lemat`, domyślnie Mock/lokalne); `Lemat.Application.csproj` ma teraz pakiety Options/Configuration (graf referencji projektów bez zmian).
 Pliki nie-C# (TASK-003): `backend/openapi/lemat-v1.json` (OpenAPI 3.1.1, generowany przy buildzie `Lemat.Api`, deterministyczny, commitowany; źródło typów TS, ADR-061), `backend/Directory.Packages.props` (pakiet OpenAPI), `.csproj` Api/Worker/Scheduler.
 
 Pliki konfiguracyjne solucji (TASK-001, TASK-002): `backend/{Lemat.slnx,global.json,Directory.Build.props,Directory.Packages.props,BannedSymbols.txt,BannedSymbols.Sdk.txt,.editorconfig}`, `backend/src/Directory.Build.props` (analizator BannedApiAnalyzers tylko dla `src`), `backend/tests/Directory.Build.props` (xUnit v3, Shouldly; poza zakresem BannedApi), `.gitignore`.

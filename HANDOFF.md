@@ -127,13 +127,13 @@ Kolumna „Blokuje produkcję” oznacza, że do startu produkcyjnego z prawdziw
 
 ---
 
-## 5. Jak uruchomić (stan na dziś: szkielet backendu .NET + testy architektury, frontend nie istnieje)
+## 5. Jak uruchomić (stan na dziś: szkielet backendu .NET + LematOpcje + testy architektury, frontend nie istnieje)
 
 Dziś działa wyłącznie (SDK .NET 10.0.100, `global.json`, `rollForward: latestPatch`; brak zmiennych środowiskowych i bazy; testy nie wymagają Dockera):
 
 ```bash
 dotnet build backend/Lemat.slnx -warnaserror
-dotnet test backend/Lemat.slnx                       # Architecture.Tests 96 (warstwy, słownik, nagłówki, ASCII, KontenerDiTests), Api.Tests 3, testy dymne
+dotnet test backend/Lemat.slnx                       # Architecture.Tests 104 (warstwy, słownik, nagłówki, ASCII, KontenerDiTests, LematOpcjeHostyTests), Application.Tests 14, Api.Tests 3, testy dymne
 dotnet format backend/Lemat.slnx --verify-no-changes
 dotnet run --project backend/src/Lemat.Tools -- --help   # dispatcher (jeszcze bez poleceń; nieznane polecenie -> kod 2)
 dotnet run --project backend/src/Lemat.Api         # http://localhost:5080/api/v1/zdrowie -> 200 {"status":"OK"}; /api/v1/openapi.json
@@ -141,7 +141,7 @@ dotnet run --project backend/src/Lemat.Worker      # GET http://localhost:8081/z
 dotnet run --project backend/src/Lemat.Scheduler   # GET http://localhost:8082/zdrowie
 ```
 
-`Lemat.Api` ma tylko `GET /api/v1/zdrowie` (Development: adres 5080; poza Development adres z konfiguracji ASP.NET Core); `Worker`/`Scheduler` to hosty bez logiki z `/zdrowie` na 8081/8082. Logi JSON na konsoli. Zmienne środowiskowe: żadne nowe (LematOpcje dopiero w TASK-004). Docelowo (po TASK-005, 013, 026, 112):
+`Lemat.Api` ma tylko `GET /api/v1/zdrowie` (Development: adres 5080; poza Development adres z konfiguracji ASP.NET Core); `Worker`/`Scheduler` to hosty bez logiki z `/zdrowie` na 8081/8082. Logi JSON na konsoli. Zmienne środowiskowe: opcjonalne `LEMAT_*` (tabela w sekcji 6; w Development nic nie jest wymagane — hosty startują na Mockach/lokalnych). Docelowo (po TASK-005, 013, 026, 112):
 
 ```bash
 # 1. Baza (Docker; domyślnie port 5433, żeby nie kolidować z lokalnym PostgreSQL na 5432)
@@ -164,13 +164,14 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Do wykonania przez właściciela / człowieka (agent nie może tego zrobić sam):**
 
-0. **Po TASK-003:** brak akcji obowiązkowych; porty 5080/8081/8082 muszą być wolne; `backend/openapi/lemat-v1.json` jest generowany przy buildzie i ma być commitowany (zmiana kontraktu = zmiana pliku w diffie).
+0. **Po TASK-004:** brak akcji obowiązkowych (Development startuje na Mockach bez zmiennych). W Production wymagane: `LEMAT_JWT_KLUCZ`, `LEMAT_KURSOR_KLUCZ`, dostawca ≠ mock wraz z `LEMAT_MODELE_KLUCZ_API`/`LEMAT_MODELE_ENDPOINT` i `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY=true`; mock i autozatwierdzanie nauczycieli są w Production odrzucane. Zatwierdzić rozszerzenia kluczy z OQ-06 (wprowadzone, patrz niżej).
+   Wcześniej (po TASK-003): brak akcji obowiązkowych; porty 5080/8081/8082 muszą być wolne; `backend/openapi/lemat-v1.json` jest generowany przy buildzie i ma być commitowany (zmiana kontraktu = zmiana pliku w diffie).
    Wcześniej (po TASK-002): brak akcji obowiązkowych; `Testcontainers.PostgreSql` jest już w pakietach, ale żaden test go jeszcze nie używa (Docker potrzebny dopiero od testów integracyjnych, TASK-014+); `git` musi być w PATH (testy architektury wołają `git ls-files`). Zalecane: ocenić odstępstwo OQ-03 (lekki test słownika zamiast pełnego).
    Wcześniej (po TASK-001): brak akcji obowiązkowych; zalecane: zainstalować SDK .NET 10.0.100+ (zgodnie z `backend/global.json`) i zdecydować, czy pakiety z podbitymi wersjami (NU1901–1903) akceptujemy do czasu TASK-004.
 1. **Klucze modeli AI (opcjonalne — MVP działa bez nich na Mockach).** Aby użyć prawdziwego LLM do rozpoznawania pisma, Wskazówek i oceny (`ZapasowyLlmAdapter`), ustaw w `.env`/user-secrets:
    `LEMAT_MODELE_DOSTAWCA` (`openai-zgodny` | `azure-openai` | `anthropic`), `LEMAT_MODELE_KLUCZ_API`, `LEMAT_MODELE_ENDPOINT` (dla Azure i punktów zgodnych z OpenAI), nazwy modeli
    (wielomodalny dla `ROZPOZNAWANIE_PISMA`) i **jawne potwierdzenie retencji** `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY=true` (A-07: zero-retention dla zdjęć, ≤ 30 dni dla reszty; umowa powierzenia).
-   Bez potwierdzenia aplikacja z dostawcą ≠ `mock` nie wystartuje. Nigdy nie commituj kluczy. (Nazwy zmiennych są propozycją P-01; ostateczne zapisuje TASK-004.)
+   Bez potwierdzenia aplikacja z dostawcą ≠ `mock` nie wystartuje. Nigdy nie commituj kluczy. (Nazwy zmiennych zatwierdzone w TASK-004.)
 2. **Bramka G-0** — akceptacja właściciela produktu i właścicieli słownika: PZS-1 (86 pojęć, D-1), interpretacja NFR-01 (D-2), pozostałe D-x z tabeli 3. Bez G-0 nie ma startu produkcyjnego;
    dla MVP obowiązują opcje domyślne. Po akceptacji: commit dopisujący PZS-1 do `docs/glossary.md` (jedyny dozwolony wyjątek od zasady „docs tylko do odczytu”).
 3. **Przegląd merytoryczny danych startowych (U-19)** — Zadania, Kryteria oceniania i Wkładki z TASK-027/028 są autorskie i mogą zawierać błędy matematyczne; wymagany przegląd przez nauczyciela
@@ -184,7 +185,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Mocki aktywne domyślnie** (nic nie trzeba konfigurować): `MockChatClient`, `MockModelDecyzyjny`, `MagazynObiektowLokalny`, `ProstaObrobkaObrazow`, `ProsteSprawdzanieSymboliczne`, `NadawcaEmailLog`.
 
-**Proponowane zmienne środowiskowe (P-01)**, ostateczne nazwy zapisze TASK-004: `ASPNETCORE_ENVIRONMENT` (`Development`/`E2E`/`Production`), `LEMAT_SRODOWISKO`, `LEMAT_BAZA`, `LEMAT_BAZA_MIGRACJE`, `LEMAT_TEST_BAZA`,
+**Zmienne środowiskowe (P-01, wdrożone w TASK-004 w `LematKonfiguracja.MapowanieZmiennych`; `LEMAT_TEST_BAZA`, `LEMAT_PG_PORT`, `LEMAT_API_URL` opcje nie czytają; `LEMAT_MOCK_OPOZNIENIE_MS` -> `Lemat:Modele:MockOpoznienieMs`; `LEMAT_REJESTRACJA_BEZ_KLASY` -> `Lemat:Konta:RejestracjaBezKlasy`):** `ASPNETCORE_ENVIRONMENT` (`Development`/`E2E`/`Production`), `LEMAT_SRODOWISKO`, `LEMAT_BAZA`, `LEMAT_BAZA_MIGRACJE`, `LEMAT_TEST_BAZA`,
 `LEMAT_PG_PORT` (compose), `LEMAT_API_URL` (frontend), `LEMAT_MODELE_DOSTAWCA`, `LEMAT_MODELE_KLUCZ_API`, `LEMAT_MODELE_ENDPOINT`, `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY`, `LEMAT_MAGAZYN_SCIEZKA`, `LEMAT_KURSOR_KLUCZ`,
 `LEMAT_JWT_KLUCZ` (PEM ES256; w Development generowany), `LEMAT_CZAS_TESTOWY`, `LEMAT_MOCK_OPOZNIENIE_MS`, `LEMAT_KONTA_AUTOZATWIERDZANIE_NAUCZYCIELI` (tylko Development).
 
@@ -194,7 +195,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
-| 1. Szkielet i środowisko (001 … 012) | 3 / 7 | 0 / 5 | **TASK-004** |
+| 1. Szkielet i środowisko (001 … 012) | 4 / 7 | 0 / 5 | **TASK-005** |
 | 2. Model domenowy i baza (013 … 037) | 0 / 16 | 0 / 9 | po TASK-001 … 007 |
 | 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
@@ -206,11 +207,15 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 **Co działa (TASK-003):** `GET /api/v1/zdrowie` -> 200 `{"status":"OK"}` (Api, `application/json`), `AddProblemDetails`, OpenAPI 3.1.1 generowane przy buildzie do `backend/openapi/lemat-v1.json` (deterministyczne) i serwowane pod `/api/v1/openapi.json`, `/zdrowie` w Worker (8081) i Scheduler (8082), dispatcher `Lemat.Tools` (`--help`), logi JSON, `KontenerDiTests`. Poza tym: kompilująca się solucja `backend/Lemat.slnx` z 9 pustymi projektami `src` i grafem referencji z 6.4 (Domain bez pakietów; Application bez referencji do Infrastructure/Agents/Models); analizatory
 (`TreatWarningsAsErrors`, `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`), Central Package Management, `.gitignore`; 7 projektów testowych w `backend/tests` (xUnit v3) z zielonymi testami: reguły warstw 6.5 (referencje projektów + NetArchTest, testy negatywne na syntetycznym grafie, reguły dodatkowe `ModeleBezInfrastruktury`, `InfrastrukturaBezWarstwWyzszych`, `HostyNieZalezaOdSiebie`, referencje = tabela 6.4), Roslyn-owy strażnik zakazanych synonimów w deklaracjach, nagłówek Living Documentation w każdym `.cs`, ASCII nazw plików (`git ls-files`). Brak hostów z endpointami, bazy, frontendu.
 
-**Ostatnia zmiana: TASK-003** (pliki: `TASKS.md` pod TASK-003). Zrobiono: hosty przez klasy `ApiHost` (`CreateBuilder`, `MapEndpoints`), `WorkerHost`/`SchedulerHost` (`CreateBuilder`, `MapHealth`) w `Configuration/`; endpointy w `Endpoints/` mapowane z `ApiHost.MapEndpoints` (grupy `MapGroup("/api/v1/...")`), DI w `Configuration`; DTO w `Contracts/`; `CommandDispatcher` + `IPolecenie`; OpenAPI (`Microsoft.AspNetCore.OpenApi`) w `backend/openapi/lemat-v1.json`; Worker/Scheduler z `FrameworkReference Microsoft.AspNetCore.App`; testy `HealthEndpointTests`, `KontenerDiTests` (ValidateOnBuild/ValidateScopes). Weryfikacja: build `-warnaserror`, testy (Architecture 96, Api 3), format OK, ręcznie `dotnet run` Api 200. Nagłówki wszystkich 11 plików `.cs` sprawdzone, poprawne.
+**Co działa (TASK-004):** `Lemat.Application.Common.LematOpcje` (sekcja `Lemat`, wartości domyślne = tabela 22), `LematOpcjeWalidator` (`IValidateOptions` + `ValidateOnStart`), `LematKonfiguracja` (`MapowanieZmiennych` `LEMAT_*` -> `Lemat:*`, `DodajZmienneLemat`, `AddLematOpcje`), podpięte w ApiHost/WorkerHost/SchedulerHost; `appsettings.json` + `appsettings.Development.json` w trzech hostach. Walidacja startu odrzuca: mock w Production; dostawcę ≠ mock bez `PotwierdzonaRetencjaDostawcy` (A-07) lub bez klucza/endpointu; pustą `Magazyn:Sciezka`; nieznane typy/zakresy; dodatkowo w Production autozatwierdzanie nauczycieli i brak kluczy JWT/kursora. Development: autozatwierdzanie włączone, `Magazyn:Sciezka=../../storage/magazyn`. Konsumenci wstrzykują `LematOpcje` albo `IOptions<LematOpcje>`.
+
+**Ostatnia zmiana: TASK-004** (pliki: `TASKS.md` pod TASK-004). Zrobiono: j.w.; testy `LematOpcjeTests` (Application 14) i `LematOpcjeHostyTests` (Architecture 104 łącznie). Weryfikacja: build `-warnaserror`, testy zielone, format OK, `lemat-v1.json` bez zmian. Odstępstwa: pakiety Microsoft.Extensions.Options/DI.Abstractions/Logging.Abstractions -> 10.0.14 + Options.ConfigurationExtensions 10.0.14 (NU1605); `ApiHost` pomija `ValidateOnStart`, gdy entry assembly = `GetDocument.Insider` (generator OpenAPI); `Zdjecia:DozwoloneTypyMime` nie jest w JSON (binder dopisywałby do domyślnych); `Obrazy/Symbolika/Email/Magazyn:Typ` akceptują na razie tylko `prosta/prosta/log/lokalny`. Nagłówki 17 plików sprawdzone, poprawne. Rozstrzygnięte: OQ-06/P-01 (nazwy kluczy i zmiennych).
+
+**Poprzednia zmiana: TASK-003** (pliki: `TASKS.md` pod TASK-003). Zrobiono: hosty przez klasy `ApiHost` (`CreateBuilder`, `MapEndpoints`), `WorkerHost`/`SchedulerHost` (`CreateBuilder`, `MapHealth`) w `Configuration/`; endpointy w `Endpoints/` mapowane z `ApiHost.MapEndpoints` (grupy `MapGroup("/api/v1/...")`), DI w `Configuration`; DTO w `Contracts/`; `CommandDispatcher` + `IPolecenie`; OpenAPI (`Microsoft.AspNetCore.OpenApi`) w `backend/openapi/lemat-v1.json`; Worker/Scheduler z `FrameworkReference Microsoft.AspNetCore.App`; testy `HealthEndpointTests`, `KontenerDiTests` (ValidateOnBuild/ValidateScopes). Weryfikacja: build `-warnaserror`, testy (Architecture 96, Api 3), format OK, ręcznie `dotnet run` Api 200. Nagłówki wszystkich 11 plików `.cs` sprawdzone, poprawne.
 
 **Poprzednia zmiana: TASK-002.** Zrobiono: `backend/tests` z 7 projektami (xUnit v3 3.2.2, Shouldly, NSubstitute, FsCheck.Xunit.v3, Testcontainers.PostgreSql 4.16.0, WireMock.Net 2.18.0 z `NoWarn NU1608` w Models.Tests, Mvc.Testing, NetArchTest.Rules 1.3.2, Roslyn 5.0.0) w `Directory.Packages.props` i `Lemat.slnx`; `backend/tests/Directory.Build.props` (OutputType Exe, CA1707 wyłączone). Weryfikacja: build `-warnaserror` OK, `dotnet test` zielone, format OK. Decyzje: testy architektury opierają się na referencjach/zespołach, więc działają na pustych projektach; testy negatywne używają syntetycznego grafu/typu (`Layers/Synthetic`); `RepositoryLocator` woła `git ls-files`.
 
-**Wytyczne dla TASK-004 (następne):** (1) nagłówek `// @Role | @DependsOn | @UsedBy | @Task: TASK-004` w pierwszej linii KAŻDEGO `.cs`; (2) `LematOpcje` w `Lemat.Application.Common`, podpięcie w `ApiHost.CreateBuilder`/`WorkerHost.CreateBuilder` (i Scheduler) w `Configuration/`, nie w `Endpoints`; (3) `ValidateOnStart` nie może łamać `KontenerDiTests` ani `WebApplicationFactory` (Development bez zmiennych musi startować); (4) zmiany `appsettings*.json` dla Api/Worker/Scheduler; (5) klucze i nazwy `LEMAT_*` zapisz w P-01/OQ-06, `.env.example` to TASK-005; (6) zakazane synonimy i ASCII w nazwach plików; (7) nie luzuj reguł warstw; (8) przy zmianie kontraktu HTTP zregeneruj i zacommituj `backend/openapi/lemat-v1.json`.
+**Wytyczne dla TASK-005 (następne):** (1) `.env.example` buduj z nazw `LematKonfiguracja.MapowanieZmiennych` (14 zmiennych) bez sekretów; `LEMAT_TEST_BAZA`, `LEMAT_PG_PORT`, `LEMAT_API_URL` nie są czytane przez opcje — to zmienne compose/testów/frontendu; (2) connection string: klucz `Lemat:Baza:Polaczenie` (zmienna `LEMAT_BAZA`), wpisz do `backend/src/Lemat.Api/appsettings.Development.json` (i Worker/Scheduler); (3) `LEMAT_JWT_KLUCZ` i `LEMAT_KURSOR_KLUCZ` wymagane tylko w Production; (4) pliki `.sh` i `docker-compose.yml` nie podlegają nagłówkom `.cs`, ale ASCII nazw plików obowiązuje; (5) nie wprowadzaj sekretów do repo; (6) nie zmieniaj kodu `.cs` poza koniecznym; testy nie mogą wymagać Dockera.
 
 **Poprzednia zmiana: TASK-001.** Decyzje developera:
 - `backend/BannedSymbols.txt` (zakaz `DateTime.Now/UtcNow`, `DateTimeOffset.Now/UtcNow`) dotyczy całego `backend/src`; `backend/BannedSymbols.Sdk.txt` (typy SDK dostawców modeli: `OpenAI.*`, `Azure.AI.*`, `Anthropic.*`) dołączany do wszystkich projektów `src` poza `Lemat.Models` (przez `backend/src/Directory.Build.props`, który dodaje też `Microsoft.CodeAnalysis.BannedApiAnalyzers` z `PrivateAssets=all`).
@@ -231,7 +236,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 | OQ-03 | Wymaganie 18.5 (c)/(m) każe tworzyć pełny test słownika i manifest nazw plików przed kodem domeny; plan MVP przesuwa je na POST-MVP (TASK-008, 009) i zastępuje lekkimi testami (TASK-002). Akceptacja odstępstwa? | Reguły nazewnictwa obowiązują ręcznie; `handoff-guardian` sprawdza nazwy w każdym TASK |
 | OQ-04 | Architektura wskazuje Node 24 LTS i `next build --webpack` (Serwist); lokalnie jest Node 22, a PWA jest POST-MVP — w MVP używamy domyślnego `next build`. Potwierdzić. | Node 22, `next build` bez `--webpack` do TASK-105 |
 | OQ-05 | Nazwa tymczasowa ścieżki lokalnego magazynu `GET /magazyn-lokalny/{token}` (U-03) jest spoza słownika | `// SLOWNIK-PROPOZYCJA`; zastąpiona podpisanym URL S3 w TASK-057 |
-| OQ-06 | Nazwy zmiennych/opcji z P-01 i klucze konfiguracji (`Lemat:Konta:AutozatwierdzanieNauczycieli`, `Lemat:Poprawki:ZawszeDoWeryfikacji`, `Lemat:Magazyn:*`) nie występują w sekcji 22 | Wprowadza je TASK-004 jako rozszerzenie; zatwierdzić |
+| OQ-06 | Nazwy zmiennych/opcji z P-01 i klucze konfiguracji (`Lemat:Konta:AutozatwierdzanieNauczycieli`, `Lemat:Poprawki:ZawszeDoWeryfikacji`, `Lemat:Magazyn:*`) nie występują w sekcji 22 | Wprowadzone w TASK-004 (`LematOpcje`, `MapowanieZmiennych`) jako rozszerzenie; nazwy ustalone — czeka na formalne zatwierdzenie |
 | OQ-07 | Czy kolejka `GLOBALNA` ma istnieć w MVP bez pseudonimizacji (U-07)? Alternatywa: Uczeń bez Klasy w MVP w ogóle nie może przesyłać zdjęć (`LEMAT_REJESTRACJA_BEZ_KLASY=false`) | Domyślnie dozwolone na danych demo; do decyzji przed pilotażem |
 | OQ-08 | Wagi egzaminacyjne Umiejętności (7.4) w MVP równe — czy wystarczy do testów rekomendacji? | Tak (U-19) |
 
@@ -244,28 +249,23 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ## 10. Gotowy prompt dla kolejnego dewelopera
 
-### 10.1 Następne TASK: TASK-004 (kopiuj do agenta `developer`)
+### 10.1 Następne TASK: TASK-005 (kopiuj do agenta `developer`)
 
 ```text
 Jesteś Senior Developerem .NET i Next.js w projekcie Lemat (repozytorium: /home/user/lemat).
-Zrealizuj dokładnie jedno zadanie planu: TASK-004 z TASKS.md ("LematOpcje i konfiguracja (wybór implementacji Mock/lokalnych)").
+Zrealizuj dokładnie jedno zadanie planu: TASK-005 z TASKS.md ("docker-compose z PostgreSQL 16, .env.example, skrypty bazy").
 
 Najpierw przeczytaj: CLAUDE.md (reguły: słownik pojęć, nagłówki Living Documentation, mocki, komendy weryfikacji),
-HANDOFF.md (uproszczenia MVP U-xx, otwarte pytania OQ-06, wytyczne dla TASK-004 w sekcji 7), docs/CODEBASE_MAP.md oraz opis TASK-004 w TASKS.md.
-Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/ARCHITECTURE_DETAILED.md ma ~10 000 linii): 22, 5.5, 6.4; ADR-049 p. 8, ADR-055 p. 6, ADR-065 p. 5; A-07.
+HANDOFF.md (uproszczenia MVP U-xx, wytyczne dla TASK-005 w sekcji 7), docs/CODEBASE_MAP.md oraz opis TASK-005 w TASKS.md.
+Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/ARCHITECTURE_DETAILED.md ma ~10 000 linii): 5.4, 17.5; ADR-059.
 
 Wymagania:
-- Kod w backend/ (nazwy plików i katalogów po angielsku, identyfikatory ze słownika po polsku ASCII).
-- Na samej górze KAŻDEGO pliku .cs/.ts/.tsx (także testów):
-  // @Role: ... | @DependsOn: ... | @UsedBy: ... | @Task: TASK-004
-- Testy z TASK-002/003 (Architecture.Tests, Api.Tests, KontenerDiTests) muszą pozostać zielone bez luzowania reguł.
-- Hosty (Lemat.Api/Worker/Scheduler) są zbudowane w klasach Configuration/ApiHost, WorkerHost, SchedulerHost (CreateBuilder) — tam podepnij LematOpcje (Options + ValidateOnStart).
-  Aplikacje api/worker muszą startować w Development bez żadnej zmiennej środowiskowej.
-- Zewnętrzne zależności (AI, magazyn, e-mail) tylko za interfejsem; domyślnie Mock/lokalne.
-- Weryfikacja przed zakończeniem: dotnet build backend/Lemat.slnx -warnaserror, dotnet test backend/Lemat.slnx, dotnet format backend/Lemat.slnx --verify-no-changes;
-  jeśli zmienił się kontrakt HTTP, zregeneruj backend/openapi/lemat-v1.json. Napraw wszystkie błędy, nie wyłączaj testów.
-- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj.
-- Nie wychodź poza zakres TASK-004 (bez docker-compose i .env.example — to TASK-005).
+- Pliki w korzeniu repo: docker-compose.yml (usługa postgres:16, wolumen, healthcheck, port ${LEMAT_PG_PORT:-5433}), .env.example (wszystkie nazwy z LematKonfiguracja.MapowanieZmiennych + LEMAT_PG_PORT, LEMAT_TEST_BAZA, LEMAT_API_URL; bez sekretów), scripts/db-up.sh, scripts/db-reset.sh, scripts/db-local-setup.sh.
+- Connection string developmentu (klucz Lemat:Baza:Polaczenie) dopisz do appsettings.Development.json hostów; testy dotnet muszą pozostać zielone i nie mogą wymagać Dockera.
+- Rola lemat musi móc wykonać CREATE EXTENSION citext, pg_trgm; db-reset.sh odtwarza pustą bazę; db-local-setup.sh opisany w komentarzu.
+- Nazwy plików ASCII; nagłówki Living Documentation w każdym zmienionym .cs/.ts/.tsx.
+- Weryfikacja: dotnet build backend/Lemat.slnx -warnaserror, dotnet test backend/Lemat.slnx, dotnet format backend/Lemat.slnx --verify-no-changes; jeśli Docker dostępny: docker compose up -d postgres -> healthy.
+- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-005.
 Zwróć raport: lista utworzonych/zmienionych plików, wyniki build/test, decyzje i odstępstwa, mocki, wskazówki dla TASK-005.
 ```
 

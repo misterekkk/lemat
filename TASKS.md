@@ -103,7 +103,7 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **Weryfikacja:** `dotnet build -warnaserror` OK; testy zielone (Architecture.Tests 96, Api.Tests 3); `dotnet format --verify-no-changes` OK; `dotnet run` Api -> `GET /api/v1/zdrowie` 200 `{"status":"OK"}`,
     logi JSON, `http://localhost:5080` w Development; OpenAPI 3.1.1 generowany przy buildzie (deterministyczny) i w runtime pod `/api/v1/openapi.json`. Worker/Scheduler mają `FrameworkReference Microsoft.AspNetCore.App`.
 
-- [ ] **TASK-004 [MVP] `LematOpcje` i konfiguracja (wybór implementacji Mock/lokalnych)**
+- [x] **TASK-004 [MVP] `LematOpcje` i konfiguracja (wybór implementacji Mock/lokalnych)**
   - **Opis:** `Lemat.Application.Common.LematOpcje` (wzorzec Options, sekcja `Lemat`) z parametrami MVP z sekcji 22: limity zdjęć (5 / 10 MB; JPEG, PNG, WEBP), maks. przesłań 3 i ponowień 5, maks. kroków 40,
     progi odczytu 0.80, τ_odczyt 0.20, τ_FR25 0.20, maks. pary Q-OC-05 = 12, terminy oceny (miękki `max(10 s, 28 s − t_R)`, twardy 120 s), heartbeat SSE 15 s, timeout Agenta wyjaśniającego 8 s, progi początkowe
     0.95 (Jev) / 0.98 (zapasowy), odsetek Kontroli losowej (MVP 0.0), flaga `Poprawki:ZawszeDoWeryfikacji` (MVP true), `Konta:AutozatwierdzanieNauczycieli` (Development true), sekcje wyboru
@@ -115,6 +115,16 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **Realizuje:** 22, 5.5 (konfiguracja), 6.4; ADR-049 p. 8, ADR-055 p. 6, ADR-065 p. 5; A-07.
   - **DoD:** testy jednostkowe `LematOpcje`: wartości domyślne = tabela 22, nadpisanie zmienną `LEMAT_*`, walidacja (mock w Production, brak potwierdzenia retencji, brak ścieżki magazynu);
     aplikacje `api`/`worker` startują w Development bez żadnej zmiennej środowiskowej; `.env.example` (TASK-005) zawiera wszystkie nazwy.
+  - **Pliki (TASK-004):** `backend/Directory.Packages.props`, `backend/src/Lemat.Application/Lemat.Application.csproj`, `backend/src/Lemat.Application/Common/LematOpcje.cs`,
+    `backend/src/Lemat.Application/Common/LematOpcjeWalidator.cs`, `backend/src/Lemat.Application/Common/LematKonfiguracja.cs`,
+    `backend/src/Lemat.Api/Configuration/ApiHost.cs`, `backend/src/Lemat.Api/appsettings.json`, `backend/src/Lemat.Api/appsettings.Development.json`,
+    `backend/src/Lemat.Worker/Configuration/WorkerHost.cs`, `backend/src/Lemat.Worker/appsettings.json`, `backend/src/Lemat.Worker/appsettings.Development.json`,
+    `backend/src/Lemat.Scheduler/Configuration/SchedulerHost.cs`, `backend/src/Lemat.Scheduler/appsettings.json`, `backend/src/Lemat.Scheduler/appsettings.Development.json`,
+    `backend/tests/Lemat.Application.Tests/Lemat.Application.Tests.csproj`, `backend/tests/Lemat.Application.Tests/Common/LematOpcjeTests.cs`,
+    `backend/tests/Lemat.Architecture.Tests/Hosts/LematOpcjeHostyTests.cs`.
+  - **Weryfikacja:** build `-warnaserror` OK; testy zielone (Architecture 104, Application 14, Api 3); `dotnet format --verify-no-changes` OK; `backend/openapi/lemat-v1.json` bez zmian.
+    Odstępstwa: pakiety Microsoft.Extensions.Options/DI.Abstractions/Logging.Abstractions podbite do 10.0.14 + Options.ConfigurationExtensions 10.0.14 (NU1605); `ApiHost` pomija `ValidateOnStart`
+    dla generatora OpenAPI (entry assembly `GetDocument.Insider`); `Obrazy/Symbolika/Email/Magazyn:Typ` akceptują na razie tylko `prosta/prosta/log/lokalny`.
 
 - [ ] **TASK-005 [MVP] docker-compose z PostgreSQL 16, `.env.example`, skrypty bazy**
   - **Opis:** `docker-compose.yml` (usługa `postgres:16`, wolumen, healthcheck, port hosta `${LEMAT_PG_PORT:-5433}` — lokalny PostgreSQL zajmuje 5432), `.env.example` (wszystkie zmienne z TASK-004,
