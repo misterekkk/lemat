@@ -50,6 +50,7 @@ handlera z osobna i były widoczne w OpenAPI (ADR-061).
    Ucznia albo Nauczyciela i `DELETE` kont) (brak → `428 WYMAGANY_IDEMPOTENCY_KEY`). Filtr w
    osobnej krótkiej transakcji wstawia `klucz_idempotencji (uzytkownik_id,
    klucz, skrot_zapytania = SHA-256(metoda ‖ ścieżka ‖ ciało), wygasa_at = now() + 24 h)`
+   (od wersji 3.5 skrót kanoniczny `SkrotZapytania` bez granicy `multipart` — ADR-068 uzup. 3.5)
    z `ON CONFLICT DO NOTHING`:
    - wstawiono → wykonuje endpoint, zapisuje `kod_statusu_http` i
      `cialo_http` (tylko odpowiedzi `2xx` i `4xx` poza `409

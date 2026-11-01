@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (p. 13–15); zmieniona w wersji 3.4 przez [ADR-075](ADR-075-english-file-and-directory-names.md) (nazwy plików, katalogów i przestrzeni nazw; p. 16–22) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (p. 13–15); zmieniona w wersji 3.4 przez [ADR-075](ADR-075-english-file-and-directory-names.md) (nazwy plików, katalogów i przestrzeni nazw; p. 16–22); uzupełnienie 3.5 (C9-03) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie — rozszerza ADR-016, nie zmienia słownika |
 | Rozszerza | ADR-016 (identyfikatory domenowe po polsku), 3.1 dokumentu głównego |
@@ -263,3 +263,14 @@ identyfikatorów z tabeli p. 3 (typy, właściwości, enumy, kolumny, JSON,
 22. **Zakazane synonimy (3.1 p. 4)** nie dotyczą nazw plików i katalogów
     (`Student.cs`, `Grade.cs`, `review/` są dozwolone); dotyczą wyłącznie
     identyfikatorów i tekstów UI.
+
+## Uzupełnienie wersji 3.5 (C9-03)
+
+Reguły p. 2 („cyfry przylegają do poprzedniego tokenu”: `zt1`, `sha256`,
+`cv5`) i p. 14 („cyfra po słowie jest osobnym segmentem”:
+`oswiadczenie_wieku_16`) są rozgraniczone jawnie: p. 2 dotyczy wyłącznie
+tokenów z zamkniętej listy `KonwencjaNazw.TokenyZCyframi` (`zt1`, `cv5`,
+`sha256`, `fnv1a`, `argon2id`, `uuid5`, `uuid7`, `es256`, `s3`), a p. 14 —
+każdego innego tokenu (`wieku_16`, `wynikow_7d`, `pln_1k`, `POSTEPU_7_DNI`).
+Jedna implementacja (`KonwencjaNazw`, ADR-067 uzup. 3.5) obsługuje JSON,
+kolumny, wartości enumów PostgreSQL i test słownika.

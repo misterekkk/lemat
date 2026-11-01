@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.1, 2026-11-01); p. 5 zastąpiony przez ADR-064 (wersja 3.2) |
+| Status | Przyjęta (wersja 3.1, 2026-11-01); p. 5 zastąpiony przez ADR-064 (wersja 3.2); uzupełnienie 3.5 (C9-05) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 2, wersja 3.1) |
 | Bramka G-0 | nie |
 | Realizuje | C6-02, C6-09 p. 1–3, p. 5; uzupełnia ADR-020, ADR-051, ADR-054 |
@@ -37,7 +37,7 @@ limit 3 strumieni i wpadał w pętlę „zamknij najstarszy” (C6-09).
    - karta otwierana pierwszy raz wysyła `{ typ: "PROSBA_O_TOKEN" }` i czeka
      150 ms na odpowiedź innej karty, zanim zacznie odświeżanie;
    - wylogowanie rozgłasza `{ typ: "WYLOGOWANIE" }`, a każda karta czyści
-     pamięć i przechodzi do `/logowanie`;
+     pamięć i przechodzi do strony logowania `/login` (adres od wersji 3.4, ADR-075; poprawione w 3.5, C9-05);
    - odświeżenie proaktywne: 60 s przed `exp`; w React 19 Strict Mode
      drugi efekt trafia w tę samą sekcję krytyczną.
    Brak Web Locks (przeglądarka spoza A-10) → odświeżanie bez sekcji
@@ -135,3 +135,20 @@ Nieudane odświeżenie nie wylogowuje kart, chyba że serwer odpowiedział
 błędem `SESJA_TYMCZASOWO_NIEDOSTEPNA` bez komunikatu `WYLOGOWANIE`
 (ADR-070 p. 4). Termin odświeżenia proaktywnego uwzględnia różnicę zegara
 urządzenia (ADR-064 uzup. 3.3 p. 4).
+
+## Uzupełnienie wersji 3.5 (C9-05)
+
+Wylogowanie w jednej karcie i `401` z `/auth/odswiezenie` rozgłaszają
+`WYLOGOWANIE`; pozostałe karty przechodzą na `/login` (`api.md` 6.2), a
+nie na adres `/logowanie` z wersji 3.3, który od ADR-075 jest stroną 404.
+Test `session-two-tabs.spec.ts` ma scenariusz „wylogowanie w karcie A”:
+po kliknięciu „Wyloguj” w karcie A karta B w ciągu 2 s ma
+`expect(page).toHaveURL("/login")` i `expect(page.getByRole("heading",
+{ name: "Zaloguj się" })).toBeVisible()`; ten sam scenariusz z `401`
+wstrzykniętym na `/auth/odswiezenie` (`page.route`). Skrypt
+`docs/spec/tools/check_rtm.py` (sprawdzenie 11) porównuje każdy literał
+adresu strony (`"/…"` w blokach `ts`/`tsx` dokumentów `docs/` i w
+`window.location.assign`, `router.push`, `redirect`, `href`) z adresami
+stron tabeli 6.11.4 i drzewa 6.8; adres spoza tej listy (z wyjątkiem
+ścieżek REST `/api/v1/…` i ścieżek 12.3 przekazywanych do `client.ts`)
+jest błędem.

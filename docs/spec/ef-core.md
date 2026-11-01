@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ef-core.md` |
-| Wersja | 3.4 (angielskie nazwy plików i katalogów, ADR-075; treść jak w 3.3 — pętla 3.x, iteracja 4) |
+| Wersja | 3.5 (C9-02: `szkic_transkrypcji.numer_zapisu` jako `long`/`bigint` z licznikiem serwera; C9-03: `KonwencjaNazw` z wyjątkami dla oznaczeń z cyframi; C9-07 p. 2: `.editorconfig` ze stałymi `PascalCase`; wcześniej 3.4 — ADR-075) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 3.6 (agregaty), 7 (model danych), 13.4 (prace w tle); schemat: [`docs/spec/ddl.md`](ddl.md) |
 | Projekt | `backend/src/Lemat.Infrastructure/Persistence/` |
 
@@ -133,7 +133,12 @@ public sealed class TlumaczNazwUpperSnake : INpgsqlNameTranslator
     public string TranslateTypeName(string nazwa) => KonwencjaNazw.NaSnakeCase(nazwa);        // StatusRozwiazania → status_rozwiazania
     public string TranslateMemberName(string nazwa) => KonwencjaNazw.NaSnakeCase(nazwa).ToUpperInvariant();
                                                                                          // OtwarteZDowodem → OTWARTE_Z_DOWODEM
-}
+}                                                                                        // EwaluacjaZt1 → EWALUACJA_ZT1, IzotonicznyCv5 → IZOTONICZNY_CV5
+// KonwencjaNazw (Lemat.Domain/Common/NamingConvention.cs, listing w api.md 1) jest tą samą regułą, którą stosuje NazwyLemat
+// w JSON API (3.5, C9-03): separator `_` przed liczbą (OswiadczenieWieku16 → oswiadczenie_wieku_16) poza tokenami
+// KonwencjaNazw.TokenyZCyframi (zt1, cv5, sha256, fnv1a, argon2id, uuid5, uuid7, es256, s3). Kolumny: UseSnakeCaseNamingConvention
+// daje oswiadczenie_wieku16, więc właściwość, dla której KonwencjaNazw.NaSnakeCase ≠ wynik konwencji EF, ma HasColumnName
+// (test KolumnyZCyframiMajaHasColumnName porównuje obie funkcje dla każdej właściwości modelu; argumenty_sha256 — bez HasColumnName).
 
 public static class MapowanieTypowWyliczeniowych
 {
@@ -239,7 +244,7 @@ wymagana (ADR-058 p. 4, test `ZgodnoscBajtowaLatexTests`).
 | `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `przypisanie` (3.3, ADR-074), `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; agregat nowy ma `Version = 1` z fabryki | `WersjaAgregatuInterceptor` (`SavingChangesAsync`, 3.2 — C7-06 p. 8): dla każdego wpisu `Added`/`Modified`/`Deleted` wyszukuje korzeń agregatu (po kluczu własności `IsOwnership` albo FK encji `IEncjaWewnetrzna`, rekurencyjnie, dla `Deleted` po wartościach oryginalnych) i zwiększa `Version` korzenia `Unchanged`/`Modified` o 1, o ile zmiana nie dotyczy wyłącznie właściwości `[BezZmianyWersji]` (ADR-029); sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` daje `UPDATE profil_ucznia SET version = … WHERE version = @oryginalna` |
 | `version` zmieniane przez trigger | `weryfikacja` (`trg_weryfikacja_wersja`, ADR-037) | `Property(w => w.Version).IsConcurrencyToken().ValueGeneratedOnAddOrUpdate()` | EF Core nie wysyła `version` w `SET`, warunek `WHERE version = @oryginalna` i odczyt `RETURNING version`; interceptor pomija `Weryfikacja` |
 | `xmin` (systemowy licznik wiersza PostgreSQL) | `transkrypcja`, `wynik_zadania`, `zlecenie_generowania`, `import_arkusza`, `konfiguracja_modelu`, `ocena` | `Property<uint>("xmin").HasColumnName("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken()` | PostgreSQL przy każdej zmianie wiersza; kolumny nie ma w DDL (kolumna systemowa) |
-| brak (zapis wyłącznie SQL) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` (funkcja `zarezerwuj_klucz_idempotencji` i `UPDATE … WHERE rezerwacja = @moja`, ADR-068), `szkic_transkrypcji` (`INSERT … ON CONFLICT … WHERE numer_zapisu <`, ADR-073) | encja tylko do odczytu albo brak encji | warunki `UPDATE … WHERE` (13.2, 13.4, 10.1.3, C-36) |
+| brak (zapis wyłącznie SQL) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` (funkcja `zarezerwuj_klucz_idempotencji` i `UPDATE … WHERE rezerwacja = @moja`, ADR-068), `szkic_transkrypcji` (`INSERT … ON CONFLICT … DO UPDATE SET numer_zapisu = numer_zapisu + 1 … WHERE numer_zapisu = @poprzedni_numer_zapisu`, ADR-073 uzup. 3.5) | encja tylko do odczytu albo brak encji | warunki `UPDATE … WHERE` (13.2, 13.4, 10.1.3, C-36) |
 
 `DbUpdateConcurrencyException` jest tłumaczony przez `Lemat.Api` na `412
 KONFLIKT_WERSJI` (żądanie z `If-Match`), `409 KONFLIKT_WSPOLBIEZNOSCI` (bez

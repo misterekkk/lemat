@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Nowa (wersja 3.3, 2026-11-01) |
+| Status | Nowa (wersja 3.3, 2026-11-01); uzupełniona w wersji 3.5 (C9-01, C9-07 p. 1) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 4, wersja 3.3) |
 | Bramka G-0 | nie |
 | Realizuje | C8-03; zastępuje ADR-062 p. 3 |
@@ -112,3 +112,87 @@ ponowienie z E-47.
   `PrzedZatwierdzeniem` po `UPDATE` → brak skutku; ponowienie → dokładnie
   jedno Rozwiązanie), `IdempotencjaPodwojneZadanie` (dwa równoległe
   żądania → jedno `202`, drugie `409 IDEMPOTENCJA_W_TOKU` albo powtórka).
+
+## Uzupełnienie wersji 3.5 (C9-01, C9-07 p. 1)
+
+**Kontekst.** C9-01: `skrot_zapytania` = SHA-256(metoda + ścieżka + ciało)
+obejmował losową granicę `multipart` — przeglądarka i undici generują
+nową granicę przy każdej serializacji tego samego `FormData`, więc
+ponowienie `POST /rozwiazania` (E-02) i podwójne kliknięcie (E-41)
+dostawały `422 KLUCZ_IDEMPOTENCJI_KONFLIKT` zamiast powtórki albo `409
+IDEMPOTENCJA_W_TOKU`. C9-07 p. 1: przejęcie wygasłej rezerwacji
+nadpisywało skrót bez porównania, a wiersz po `wygasa_at` dawał
+`POWTORKA`.
+
+**Decyzja.**
+
+1. **Kanoniczny skrót żądania** (`SkrotZapytania`, `api.md` 4.1),
+   obliczany przez `FiltrIdempotencji` **po wiązaniu** endpointu, z
+   każdym składnikiem zakodowanym jako (długość 4 B big-endian, UTF-8):
+   - prefiks wersji formatu `lemat-skrot-zapytania-v1`, metoda,
+     `PathBase + Path` (`/api/v1/rozwiazania`), `QueryString`;
+   - `application/json` (i `application/merge-patch+json`): `"B"` +
+     SHA-256 bajtów ciała. Ciało jest buforowane przed wiązaniem przez
+     `BuforowanieCialaIdempotencji` (`EnableBuffering(64 KB, 1 MB)`;
+     limit ciała JSON to 1 MB, 12.1), a klient przy ponowieniu wysyła
+     ten sam napis `JSON.stringify` (`client.ts` zachowuje obiekt
+     żądania w intencji);
+   - `multipart/form-data`: pola tekstowe posortowane porządkowo po
+     nazwie (`"P"`, nazwa, wartość; wartości jednej nazwy w kolejności
+     wysłania), potem pliki pogrupowane po nazwie pola (`"F"`, nazwa,
+     kolejność w grupie od 1, długość, SHA-256 treści szesnastkowo).
+     **Nie wchodzą:** nagłówek `Content-Type` z granicą, nazwa pliku
+     (`filename`), nagłówki części. Formularz jest czytany z
+     `IFormFeature` (już związany), treść plików strumieniowo z
+     `IFormFile.OpenReadStream()`; pliki > 64 KB są w plikach
+     tymczasowych `FormReader`, więc import ZIP do 50 MB nie jest
+     buforowany w pamięci procesu.
+   - żądanie bez ciała (`DELETE /uczniowie/ja`, `POST …/ponowienie`):
+     gałąź JSON ze skrótem pustego ciała.
+2. **Funkcja `zarezerwuj_klucz_idempotencji`** (`ddl.md` `0007_api.sql`,
+   wersja 3.5): przejęcie rezerwacji po `w_toku_do` wyłącznie przy
+   **tym samym** `skrot_zapytania` (inne ciało → `KONFLIKT_CIALA`, wiersz
+   bez zmian); wiersz z `wygasa_at <= now()` (jeszcze nieusunięty przez
+   sprzątanie) jest traktowany jak brak klucza — nowa rezerwacja, nowy
+   skrót, `kod_statusu_http = NULL`, nowe `wygasa_at`; wyścig ze
+   sprzątaniem (wiersz usunięty między `INSERT … ON CONFLICT` a `SELECT`)
+   powtarza próbę raz.
+3. **Klient** (uzupełnienie p. 5): zdjęcia są kompresowane raz na
+   intencję, a ponowienie wysyła te same obiekty `Blob` w nowym
+   `FormData` — skrót jest równy, choć granica jest inna. `422
+   KLUCZ_IDEMPOTENCJI_KONFLIKT` oznacza od wersji 3.5 wyłącznie rzeczywiście
+   inną treść pod tym samym kluczem (błąd programistyczny klienta) i jest
+   zgłaszane do telemetrii (`klient.idempotencja.konflikt`).
+
+**Konsekwencje.**
+
+- Sprawdzone uruchomieniem (ASP.NET Core 10, `SkrotZapytania` z
+  `api.md` 4.1): dwa `curl -F` z tym samym formularzem (różne granice) →
+  ten sam skrót; dwa `fetch` w Node 22 z jednym obiektem `FormData`
+  (granice różne) → ten sam skrót i równy skrótowi `curl`; inna nazwa
+  pliku i inny `Content-Type` części → ten sam skrót; inna kolejność pól
+  o różnych nazwach → ten sam skrót; zamiana kolejności zdjęć → inny
+  skrót; JSON: to samo ciało → ten sam skrót, inne → inny.
+- Sprawdzone na PostgreSQL 16 (pełne DDL 3.5): 8 scenariuszy funkcji
+  (`ddl.md` „Zmiany wersji 3.5”).
+- Testy (`Lemat.Api.Tests/Idempotency`, Testcontainers PostgreSQL 16,
+  `WebApplicationFactory`):
+  - `PonowienieMultipartTymSamymKluczemDajePowtorke` — dwa żądania
+    `multipart` z tymi samymi polami i plikami, różnymi granicami
+    (`MultipartFormDataContent` z jawną granicą `"a1"` i `"b2"`) i tym
+    samym `Idempotency-Key`: pierwsze `202`, drugie `202` +
+    `Idempotent-Replayed: true`, jedno Rozwiązanie w bazie; trzecie z innym
+    plikiem → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`;
+  - `PodwojneKlikniecieMultipartDajeWToku` — drugie żądanie w trakcie
+    pierwszego (handler wstrzymany `TaskCompletionSource`) → `409
+    IDEMPOTENCJA_W_TOKU`, nie `422`;
+  - `PrzejecieRezerwacjiTylkoTymSamymCialem` — rezerwacja bez odpowiedzi,
+    `TimeProvider` + 61 s, inne ciało → `422`, to samo ciało → `WYKONAJ`;
+  - `KluczPoWygasnieciuJestNowy` — `wygasa_at` w przeszłości, inne ciało →
+    `WYKONAJ` (nie `POWTORKA`);
+  - `SkrotZapytaniaKanoniczny` (jednostkowy) — przypadki z punktu
+    „Sprawdzone uruchomieniem”.
+- Playwright `double-click.spec.ts` i `cellular-network.spec.ts`
+  (przerwanie odpowiedzi `POST /rozwiazania` przez `route.abort()` po
+  odebraniu żądania) mają asercję: brak `422`, jedno Rozwiązanie, ekran
+  Transkrypcji po ponowieniu.

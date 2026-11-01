@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Nowa (wersja 3.3, 2026-11-01) |
+| Status | Nowa (wersja 3.3, 2026-11-01); p. 3 uzupełniony w wersji 3.5 (C9-03) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 4, wersja 3.3) |
 | Bramka G-0 | nie |
 | Realizuje | C8-01, C8-08; uzupełnia ADR-049 p. 14, ADR-060 i ADR-061 p. 2 |
@@ -154,3 +154,42 @@ weryfikacyjnym ASP.NET Core 10.0.14 + `Microsoft.AspNetCore.OpenApi`
   `Content-Type` i wymaga `application/problem+json` z `kod` z katalogu.
 - Kody `ZAPYTANIE_NIEPRAWIDLOWE` (400) i `ZASOB_USUNIETY` (410) oraz
   `BLAD_BRAMY` (tylko klient) są w katalogu 12.2.
+
+## Uzupełnienie wersji 3.5 (C9-03)
+
+Decyzja p. 3 w brzmieniu 3.3 rozdzielała cyfry również w oznaczeniach
+(`EwaluacjaZt1` → `EWALUACJA_ZT_1`, `Sha256` → `sha_256`), a DDL, EF Core i
+słownik mają `EWALUACJA_ZT1` i `sha256` — zdanie „ta sama reguła co ADR-049
+p. 14” było fałszywe. Od wersji 3.5:
+
+1. Reguła istnieje w jednym miejscu — `KonwencjaNazw`
+   (`Lemat.Domain/Common/NamingConvention.cs`, listing w `api.md` 1):
+   `NaSnakeCase(nazwa)` = `SnakeCaseLower` + separator `_` przed liczbą w
+   każdym tokenie **poza** tokenami z zamkniętej listy
+   `KonwencjaNazw.TokenyZCyframi` (`zt1`, `cv5`, `sha256`, `fnv1a`,
+   `argon2id`, `uuid5`, `uuid7`, `es256`, `s3` — terminy techniczne 3.1 p. 6
+   i oznaczenia, w których cyfra nie jest liczbą). `NazwyLemat` (JSON,
+   formularze, parametry), `TlumaczNazwUpperSnake` (wartości `pg_enum`,
+   `ef-core.md` 3.2), kolumny EF Core (`HasColumnName` tam, gdzie
+   `UseSnakeCaseNamingConvention` daje inny wynik) i test słownika wołają
+   tę samą funkcję.
+2. Wynik uruchomienia (ASP.NET Core 10, opcje `JsonApi.Konfiguruj` z
+   `api.md` 1, wersja 3.5): `oswiadczenie_wieku_16`, `liczba_wynikow_7d`,
+   `n_eff`, `cv5`, `argumenty_sha256`, `wynik_zt1`, `fnv1a`,
+   `cena_wejscie_pln_1k`; enumy `EWALUACJA_ZT1`, `IZOTONICZNY_CV5`,
+   `BRAK_POSTEPU_7_DNI`, `TOZSAMOSCIOWY` — zgodne z `zrodlo_progu`,
+   `zrodlo_kalibratora`, CHECK `metoda` i kolumną `sha256` w `ddl.md`.
+3. Dodanie tokenu do listy wymaga wpisu w sekcji `tokeny_z_cyframi`
+   pliku `glossary-tokens.yaml` (test słownika, 3.4); test
+   `TokenyZCyframiZgodneZeSlownikiem` porównuje tę sekcję z
+   `KonwencjaNazw.TokenyZCyframi`.
+4. Nowy test `WartosciEnumowApiRowneDdl` (`Lemat.Api.Tests/Contract`):
+   dla każdego schematu enum dokumentu OpenAPI zbiór wartości jest równy
+   zbiorowi `enum_range` typu PostgreSQL o tej samej nazwie
+   (`KonwencjaNazw.NaSnakeCase(nazwa typu)`) albo — dla wartości
+   przechowywanych w kolumnie `text` z CHECK (`metoda`, `typ` w
+   `powiadomienie`) — zbiorowi literałów CHECK odczytanych z
+   `pg_get_constraintdef`; wyjątki (enumy wyłącznie API, np.
+   `RolaRejestracji`, `PowodPorzucenia`) są na zamkniętej liście testu.
+   `NazwyJsonZgodneZKolumnamiDdl` obejmuje od 3.5 także właściwości z
+   tokenami z listy (`sha256`).

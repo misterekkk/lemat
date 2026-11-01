@@ -26,3 +26,7 @@ wycofanie Przypisania.
 ADR-075 (wersja 3.4) wprowadza angielskie nazwy plików i katalogów w całym
 repozytorium (w tym nazwy plików ADR) przy niezmienionych identyfikatorach
 ze słownika.
+Wersja 3.5 (C9-01 … C9-07) nie dodaje nowych ADR: poprawki są
+uzupełnieniami 3.5 w ADR-049, ADR-057, ADR-062, ADR-067, ADR-068, ADR-073 i
+ADR-075 (skrót kanoniczny żądania, licznik szkicu nadawany przez serwer,
+wyjątki `KonwencjaNazw`, `/login`, reguły nazw plików).

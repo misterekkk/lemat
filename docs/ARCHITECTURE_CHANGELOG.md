@@ -4,12 +4,97 @@
 |---|---|
 | Dokument | `docs/ARCHITECTURE_CHANGELOG.md` |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](ARCHITECTURE_DETAILED.md) |
-| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.4) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
+| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.5) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
 
 Numery sekcji w tabelach mapowania odnoszą się do wersji dokumentu
 głównego obowiązującej w danej iteracji. Od wersji 3.0 rejestr ADR jest w
 `docs/adr/`, a decyzje właściciela produktu D-1 … D-17 pozostają w sekcji
 23.4 dokumentu głównego.
+
+## Wersja 3.5 (2026-11-01) — runda naprawcza po audycie końcowym (C9-01 … C9-07)
+
+Kontekst: `docs/CRITIQUE_LOG.md` iteracja 9 (audyt końcowy wersji 3.4,
+STATUS: NEEDS_REVISION) — 7 uwag: 2 WYSOKA (C9-01, C9-02), 3 ŚREDNIA (C9-03,
+C9-04, C9-05), 2 NISKA (C9-06, C9-07). Wszystkie poprawki potwierdzone
+uruchomieniem: ASP.NET Core 10 (.NET SDK 10.0.114), Node 22, PostgreSQL 16
+(pełne DDL z `ddl.md`, bloki A i B: 0 błędów, 61 tabel + 4 partycje, 43
+enumy, 15 triggerów), `dotnet build` z `.editorconfig` 6.11.3, skrypty
+reguł nazw plików i `check_rtm.py` (0 błędów).
+
+**Zmiany:**
+
+- **Idempotencja (C9-01, C9-07 p. 1):** kanoniczny skrót żądania
+  `SkrotZapytania` (`api.md` 4.1) — metoda, ścieżka, zapytanie; JSON —
+  SHA-256 bajtów ciała; `multipart/form-data` — posortowane pola tekstowe i
+  (nazwa, kolejność, długość, SHA-256) plików, bez granicy, nazw plików i
+  nagłówków części; formularz czytany po wiązaniu, pliki strumieniowo.
+  Funkcja `zarezerwuj_klucz_idempotencji`: przejęcie tylko tą samą treścią,
+  wiersz po `wygasa_at` = brak klucza, ponowienie po wyścigu ze
+  sprzątaniem. ADR-068 uzup. 3.5, ADR-062 (odwołanie), 12.1, 12.12,
+  `ddl.md` („Zmiany wersji 3.5”, komentarz `skrot_zapytania`).
+- **Szkic Transkrypcji (C9-02, C9-07 p. 4):** `numer_zapisu` `long` /
+  `bigint` nadawany przez serwer (zapis warunkowy `WHERE numer_zapisu =
+  @poprzedni_numer_zapisu`), `SzkicTranskrypcjiWejscie.poprzedni_numer_zapisu`,
+  odpowiedź `200 SzkicTranskrypcjiWyjscie`, nowy kod `409 SZKIC_NIEAKTUALNY`
+  z `szczegoly.aktualny`, ponowienie tej samej treści → `200`; pasek
+  konfliktu w edytorze; ładunek szkicu budowany w `wykonaj`. ADR-073 uzup.
+  3.5, 9.4, 12.2, 12.3, 12.4, 12.5, 12.12, 15.4 (C-56 a–c), `api.md` 3, 4,
+  6.4, `ddl.md`, `ef-core.md`.
+- **Nazwy JSON z cyframi (C9-03):** `KonwencjaNazw`
+  (`Lemat.Domain/Common/NamingConvention.cs`) — jedna reguła dla JSON,
+  kolumn, wartości `pg_enum` i testu słownika: separator przed liczbą poza
+  tokenami `zt1`, `cv5`, `sha256`, `fnv1a`, `argon2id`, `uuid5`, `uuid7`,
+  `es256`, `s3`; `NazwyLemat` i `TlumaczNazwUpperSnake` ją wołają. Wynik
+  uruchomienia: `EWALUACJA_ZT1`, `IZOTONICZNY_CV5`, `sha256`, `cv5`,
+  `fnv1a`, `oswiadczenie_wieku_16`, `liczba_wynikow_7d`. Testy
+  `WartosciEnumowApiRowneDdl`, `TokenyZCyframiZgodneZeSlownikiem`. ADR-067
+  uzup. 3.5, ADR-049 uzup. 3.5, `api.md` 1, `ef-core.md` 3.2.
+- **Nazwy plików (C9-04):** 6.11.2 w brzmieniu 3.5 — zakres reguły 4c
+  przez pole `pojecie` manifestu (typ główny wiersza 3.5), fasady i
+  endpointy z segmentu modułu, przedrostek `I`, pełna lista przyrostków,
+  reguła 1 bez wyjątków, reguła 4e na całych tokenach z 16
+  `wspolne_tokeny`, nowa reguła 4g (segmenty tras). Kolumna EN 3.5: Klasa
+  `Class`, Arkusz CKE `CkeSheet`, Profil ucznia `Profile`; test
+  `fr09-curriculum-section-choice.spec.ts`. Drzewo 6.7: `BackgroundJob*.cs`,
+  `IGenerativeModel.cs`, `GenerativeModelClient.cs`,
+  `GenerativeModelFactory.cs`, `GdprEventRegistryS3.cs`, `IDecisionModel.cs`,
+  `IUnitOfWork.cs`, `IDomainEvent.cs`, `IPromptTemplates.cs`,
+  `IOrchestrator.cs`, `NamingConvention.cs`, `DayOff.cs`; brak
+  `Identifiers.cs`. Skrypt reguł (a)–(g): 0 naruszeń (478 nazw, 71 par plik–typ,
+  35 segmentów tras). Test `DrzewaDokumentuSpelniajaRegulyNazw`. ADR-075
+  uzup. 3.5.
+- **`/login` (C9-05):** `api.md` 6.2 i ADR-057 p. 1; ADR-057 uzup. 3.5
+  (scenariusz wylogowania w `session-two-tabs.spec.ts`); sprawdzenie (12)
+  `check_rtm.py` — adresy stron w listingach `ts`/`tsx`.
+- **RTM (C9-06):** kolumna „Wymagania” 12.3 i wiersze RTM uzgodnione
+  dwukierunkowo (18 par dopisanych do 12.3, 35 odwołań do endpointów dopisanych do
+  wierszy RTM, `GET /admin/praca-w-tle`, `POST /admin/praca-w-tle/{id}/ponowienie`,
+  `GET /admin/harmonogram` → NFR-01); strony zawsze pełną ścieżką z grupą
+  (RTM i `api.md` 7, wiersze dla `(public)`, `offline`,
+  `(administrator)/admin`); FR-06 — parametr `?element=` strony Wkładki;
+  `GET /uczniowie/ja/eksport-danych` w kolumnie „Odczyt”; `check_rtm.py`
+  sprawdzenia (11)–(17) (12.3 ↔ RTM, adresy stron w kodzie, notacja stron,
+  endpoint używany przez stronę wiersza, kolumny „Moduł”, „Agent”,
+  „Weryfikacja”); wynik: 46/46, 175 endpointów, 101 stron, 0 błędów.
+- **Drobne (C9-07):** `.editorconfig` — reguły `stale_pascal` i
+  `statyczne_tylko_do_odczytu_pascal` (sprawdzone `dotnet build`: `private
+  const int MaksPunktow` i `private static readonly … T` bez błędów,
+  `private int licznik` — IDE1006); 6.11.2 p. 6 — notacja
+  `Projekt/Katalog/KlasaTestowa` wskazuje klasę, plik z manifestu; 18.5 (l)–(r) —
+  wymagania dla planisty (p. 5: regeneracja `CLAUDE.md`, `TASKS.md`,
+  `HANDOFF.md` przed pierwszym zadaniem implementacyjnym).
+
+**Mapowanie uwag iteracji 9:**
+
+| Uwaga | Miejsce rozwiązania |
+|---|---|
+| C9-01 | ADR-068 uzup. 3.5 p. 1, p. 3; `api.md` 4.1 (`SkrotZapytania`, `BuforowanieCialaIdempotencji`); 12.1 (Idempotencja); `ddl.md` komentarz `skrot_zapytania`; testy `PonowienieMultipartTymSamymKluczemDajePowtorke`, `PodwojneKlikniecieMultipartDajeWToku`, `SkrotZapytaniaKanoniczny` (12.12); asercje `double-click.spec.ts`, `cellular-network.spec.ts` |
+| C9-02 | ADR-073 uzup. 3.5 p. 1–3; `ddl.md` `szkic_transkrypcji.numer_zapisu bigint`; `api.md` 3 (`SzkicTranskrypcjiWejscie`, `SzkicTranskrypcjiWyjscie`), 4 (`Produces<SzkicTranskrypcjiWyjscie>`, `SzkicNieaktualny`), 2 (`KodBledu`), 6.4 (edytor); 12.2 `SZKIC_NIEAKTUALNY`; 12.3; 12.4; 12.5; 9.4; 15.4 C-56 (a)–(c); testy `SzkicZNumeremZDateNowJestPrzyjety`, `SzkicZDwochKartDajeKonflikt`, `SzkicPonowionyPoUtracieOdpowiedziJestPrzyjety`, `SzkicBezNumeruPrzyIstniejacymDajeKonflikt` |
+| C9-03 | `api.md` 1 (`KonwencjaNazw`, `NazwyLemat`); `ef-core.md` 3.2; ADR-067 uzup. 3.5; ADR-049 uzup. 3.5; 6.7 (`NamingConvention.cs`); testy `WartosciEnumowApiRowneDdl`, `TokenyZCyframiZgodneZeSlownikiem` |
+| C9-04 | 3.5 (akapit kolumny EN, wiersze 8, 25, 27); 6.7 (drzewo `backend/`); 6.11.2 p. 1–4 (reguły a–g, manifest); 6.11.4 (`fr09-curriculum-section-choice`); 18.1 FR-09; ADR-075 uzup. 3.5; test `DrzewaDokumentuSpelniajaRegulyNazw` |
+| C9-05 | `api.md` 6.2; ADR-057 p. 1 i uzup. 3.5; `check_rtm.py` (12); 12.12 (`session-two-tabs.spec.ts`) |
+| C9-06 | 12.3 (kolumna „Wymagania”); 18 (konwencje, sprawdzenia 11–17, wyniki); 18.1, 18.2 (endpointy i strony); `api.md` 7 (pełne ścieżki, nowe wiersze, `?element=`, eksport danych); `docs/spec/tools/check_rtm.py` |
+| C9-07 | p. 1 — `ddl.md` `0007_api.sql`, ADR-068 uzup. 3.5 p. 2; p. 2 — 6.11.3; p. 3 — 6.11.2 p. 6; p. 4 — ADR-073 uzup. 3.5 p. 4, `api.md` 6.4; p. 5 — 18.5 (l) (regeneracja dokumentów planu przez planistę) |
 
 ## Wersja 3.4 (2026-11-01) — angielskie nazwy plików i katalogów (ADR-075)
 

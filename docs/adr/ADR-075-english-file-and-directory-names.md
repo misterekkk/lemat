@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Nowa (wersja 3.4, 2026-11-01) |
+| Status | Nowa (wersja 3.4, 2026-11-01); uzupełniona w wersji 3.5 (C9-04) |
 | Data decyzji | 2026-11-01 (wymaganie właściciela projektu po pętli 3.x, wersja 3.4) |
 | Bramka G-0 | nie — wymaganie zgłosił właściciel projektu; słownik i wymagania bez zmian |
 | Zmienia | ADR-049 p. 3 (wiersze „Przestrzeń nazw C#”, „Komponenty React”, „Pozostałe pliki TS”, „Ścieżki URL API i segmenty tras Next.js”), p. 6, p. 7, p. 10, p. 11 (uzupełnienie wersji 3.4 w ADR-049) |
@@ -128,3 +128,46 @@ dotyczy wyłącznie nazw plików i katalogów.
 - Dokumentacja wersji 3.4 ma przemianowane 73 pliki ADR i dwa pliki
   `docs/spec/`; odnośniki zaktualizowano, a skrypt sprawdzający odnośniki
   nie znajduje martwych celów.
+
+## Uzupełnienie wersji 3.5 (C9-04)
+
+**Kontekst.** C9-04: reguły `TestNazwPlikow` w brzmieniu 3.4 nie
+przechodziły na drzewach dokumentu (7 naruszeń reguły 4c — m.in.
+`JobType.cs`, `ChatClientFactory.cs`, `S3GdprEventRegistry.cs`; 4 reguły 1 —
+`Identifiers.cs` i pliki z dwoma typami; reguła 4e odrzucała
+`SolutionStatus.cs`, `(administrator)`, a przy dopasowaniu prefiksów także
+`Program.cs` i `RateLimiter.cs`), a kolumna EN 3.5 nie była jedyną nazwą
+pojęcia (`SchoolClass` obok `classes`, `CkeExamSheet` obok `cke-sheets`,
+`StudentProfile` obok `profile`, `fr09-section-choice` dla Działu).
+
+**Decyzja.**
+
+1. Reguła 4c obejmuje wpisy manifestu z polem `pojecie` (obowiązkowym dla
+   typu głównego wiersza 3.5 i jego `*Id`); fasady i grupy endpointów
+   biorą nazwę z segmentu modułu (`modul`); lista przyrostków ma `State`,
+   `Result`, `Request`, `Pool`, `Catalog`, `Enqueuing`, `Calendar`,
+   `Store` i przyrostki technologii `Sql`, `Ef`, `S3`; przedrostek `I` jest
+   obowiązkowy dla interfejsów (6.11.2 p. 2–3).
+2. Reguła 1 bez wyjątków: `*Id` po jednym pliku w katalogu modułu,
+   interfejs i rekord w osobnych plikach (6.7, 6.11.2 p. 1).
+3. Reguła 4e porównuje całe tokeny (podział na granicach znaków
+   niealfanumerycznych, wielkości liter i cyfr), a `wspolne_tokeny` ma 16
+   słów (`status`, `limit`, `element`, `administrator`, `version`, `total`,
+   `date`, `numeric`, `jsonb`, `typesafe` + 6 z wersji 3.4).
+4. Nowa reguła 4g: segment trasy App Router = forma `kebab-case` (pojedyncza
+   albo mnoga) nazwy EN pojęcia albo wpis `segmenty_techniczne`.
+5. Kolumna EN 3.5: Klasa → `Class`, Arkusz CKE → `CkeSheet`, Profil ucznia →
+   `Profile` (formy, których drzewa już używały); test akceptacyjny FR-09 →
+   `fr09-curriculum-section-choice.spec.ts`; katalogi modułów biorą nazwę z
+   segmentu modułu 6.11.1.
+6. Drzewo 6.7: `BackgroundJob*.cs` dla typów pojęcia „Praca w tle”,
+   `IGenerativeModel.cs` + `GenerativeModelClient.cs` +
+   `GenerativeModelFactory.cs`, `GdprEventRegistryS3.cs`, `IDecisionModel.cs`,
+   `IUnitOfWork.cs`, `IDomainEvent.cs`, `IPromptTemplates.cs`,
+   `IOrchestrator.cs`, `NamingConvention.cs`, `DayOff.cs`.
+
+**Konsekwencje.** Skrypt odtwarzający reguły (a)–(g) na drzewach 6.7, 6.8,
+6.11 i parach (plik, typ) z `docs/spec/*` daje 0 naruszeń (478 nazw, 71
+par, 35 segmentów tras); test `DrzewaDokumentuSpelniajaRegulyNazw`
+uruchamia te same reguły na `file-names.yaml` w CI od pierwszego commita
+szkieletu.

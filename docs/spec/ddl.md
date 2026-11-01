@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ddl.md` |
-| Wersja | 3.4 (angielskie nazwy plików i katalogów, ADR-075; treść jak w 3.3 — pętla 3.x, iteracja 4) |
+| Wersja | 3.5 (C9-01, C9-02, C9-07 p. 1: skrót kanoniczny, `numer_zapisu bigint`, poprawki `zarezerwuj_klucz_idempotencji`; wcześniej 3.4 — angielskie nazwy plików, ADR-075) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — sekcja 7 (decyzje, ERD, konwencje, schematy JSONB), mapowanie EF Core: [`docs/spec/ef-core.md`](ef-core.md) |
 | Status | Jedyne źródło schematu (ADR-063): migracje są klasami EF Core wykonującymi wyłącznie pliki SQL wycięte z tego dokumentu; model EF Core nie generuje schematu i jest sprawdzany z katalogiem testem `ModelEfZgodnyZKatalogiem` (`ef-core.md` 8) |
 
@@ -13,6 +13,28 @@ funkcje i uprawnienia** (w wersji 3.0 opisane komentarzami; od wersji 3.1
 pełna treść, z której powstają pliki `Persistence/Migrations/Sql/*.sql`).
 Skrypt CI `backend/tools/extract-ddl.sh` wycina oba bloki do
 `backend/src/Lemat.Infrastructure/Persistence/Schema/ddl.sql`.
+
+## Zmiany wersji 3.5
+
+| Obiekt | Zmiana | Uwaga krytyka / ADR |
+|---|---|---|
+| `klucz_idempotencji.skrot_zapytania` | bez zmiany typu; wartość = kanoniczny skrót `SkrotZapytania` (`api.md` 4.1) — dla `multipart/form-data` z pól i SHA-256 treści plików, bez granicy | C9-01, ADR-068 uzup. 3.5 |
+| `zarezerwuj_klucz_idempotencji` | przejęcie wygasłej rezerwacji wyłącznie przy tym samym `skrot_zapytania` (inne ciało → `KONFLIKT_CIALA`, wiersz bez zmian); wiersz z `wygasa_at <= now()` jest traktowany jak brak klucza (nowa rezerwacja z nowym `wygasa_at`); powtórzenie po wyścigu ze sprzątaniem | C9-07 p. 1, ADR-068 uzup. 3.5 |
+| `szkic_transkrypcji.numer_zapisu` | `integer` → `bigint`; licznik nadawany przez serwer (porównanie z `poprzedni_numer_zapisu`) | C9-02, ADR-073 uzup. 3.5 |
+
+Sprawdzone w wersji 3.5 na czystej bazie PostgreSQL 16 (bloki A i B, 0
+błędów, 61 tabel + 4 partycje): 8 scenariuszy funkcji
+`zarezerwuj_klucz_idempotencji` — (1) pierwsze wykonanie `WYKONAJ`; (2) ten
+sam skrót w toku `W_TOKU`, `retry_after_s = 60`; (3) inny skrót w toku
+`KONFLIKT_CIALA`; (4) rezerwacja wygasła, inny skrót → `KONFLIKT_CIALA` i
+`skrot_zapytania` bez zmian; (5) rezerwacja wygasła, ten sam skrót →
+`WYKONAJ` (przejęcie); (6) zapisane `202` → `POWTORKA 202`; (7) zapisane
+`202`, inny skrót → `KONFLIKT_CIALA`; (8) `wygasa_at` minął → `WYKONAJ`,
+nowy skrót, `kod_statusu_http = NULL`, `wygasa_at` = now() + 24 h. Zapis
+szkicu: pierwszy zapis → 1, kolejny z `poprzedni = 1` → 2, druga karta z
+`poprzedni = 1` → 0 wierszy (→ `409 SZKIC_NIEAKTUALNY`), ponowienie tej
+samej treści z `poprzedni = 1` → 0 wierszy i treść równa zapisanej (→
+`200`), `numer_zapisu = 1 793 527 047 367` (> `int.MaxValue`) przyjęty.
 
 ## Zmiany wersji 3.3
 
@@ -687,7 +709,8 @@ CREATE TABLE szkic_transkrypcji (
     transkrypcja_id     uuid NOT NULL,                    -- wersja Transkrypcji, od której zaczęto edycję (FK niżej)
     kroki               jsonb NOT NULL CHECK (jsonb_typeof(kroki) = 'array' AND jsonb_array_length(kroki) BETWEEN 1 AND 40),
                         -- [{nr_kroku_agenta: int|null, tekst: string ≤ 2000, latex: string ≤ 2000}] (schemat 7.5, TranskrypcjaWejscie)
-    numer_zapisu        integer NOT NULL CHECK (numer_zapisu >= 1),   -- monotoniczny numer zapisu z karty (odrzucenie zapisu starszego)
+    numer_zapisu        bigint NOT NULL CHECK (numer_zapisu >= 1),    -- 3.5 (C9-02): licznik nadawany przez serwer (1, 2, …); zapis warunkowy
+                        -- ON CONFLICT … DO UPDATE SET numer_zapisu = numer_zapisu + 1 … WHERE numer_zapisu = @poprzedni_numer_zapisu (ADR-073 uzup. 3.5)
     zapisano_at         timestamptz NOT NULL DEFAULT now()
 );
 
@@ -1143,7 +1166,8 @@ CREATE TABLE przebieg_harmonogramu (
 CREATE TABLE klucz_idempotencji (
     uzytkownik_id     uuid NOT NULL REFERENCES uzytkownik(id) ON DELETE CASCADE,
     klucz             uuid NOT NULL,                  -- nagłówek Idempotency-Key
-    skrot_zapytania   bytea NOT NULL,                 -- SHA-256(metoda + ścieżka + ciało)
+    skrot_zapytania   bytea NOT NULL,                 -- 3.5 (C9-01): kanoniczny skrót SkrotZapytania (api.md 4.1): metoda, ścieżka, zapytanie;
+                                                      -- JSON — SHA-256 bajtów ciała; multipart — pola tekstowe i (nazwa, kolejność, długość, SHA-256) plików, bez granicy
     rezerwacja        uuid,                           -- 3.3 (C8-03, ADR-068): identyfikator wykonania, które trzyma klucz
     w_toku_do         timestamptz,                    -- 3.3: koniec rezerwacji (now() + 60 s); po nim ponowienie przejmuje klucz
     kod_statusu_http  smallint CHECK (kod_statusu_http BETWEEN 200 AND 299),   -- 3.3: zapisywane wyłącznie 2xx, w transakcji skutku
@@ -1479,7 +1503,7 @@ BEGIN
     END LOOP;
 END $$;
 
--- ===================== 0007_api.sql (3.3, C8-03, ADR-068) =====================
+-- ===================== 0007_api.sql (3.3, C8-03, ADR-068; 3.5: C9-01, C9-07 p. 1) =====================
 -- Rezerwacja klucza idempotencji w krótkiej transakcji przed wykonaniem; odpowiedź 2xx zapisuje
 -- przypadek użycia w SWOJEJ transakcji: UPDATE … SET kod_statusu_http, cialo_http, w_toku_do = NULL,
 -- rezerwacja = NULL WHERE (uzytkownik_id, klucz) AND rezerwacja = @moja (0 wierszy → ROLLBACK skutku i powtórka).
@@ -1488,24 +1512,38 @@ RETURNS TABLE (wynik text, kod_statusu_http smallint, cialo_http jsonb, retry_af
 LANGUAGE plpgsql AS $$
 DECLARE r klucz_idempotencji;
 BEGIN
-    INSERT INTO klucz_idempotencji AS k (uzytkownik_id, klucz, skrot_zapytania, rezerwacja, w_toku_do, wygasa_at)
-    VALUES (p_uzytkownik_id, p_klucz, p_skrot, p_rezerwacja, now() + interval '60 seconds', now() + interval '24 hours')
-    ON CONFLICT (uzytkownik_id, klucz) DO UPDATE
-        SET rezerwacja = EXCLUDED.rezerwacja, w_toku_do = EXCLUDED.w_toku_do, skrot_zapytania = EXCLUDED.skrot_zapytania
-        WHERE k.kod_statusu_http IS NULL AND k.w_toku_do < now()          -- przejęcie klucza po awarii procesu
-    RETURNING * INTO r;
-    IF FOUND THEN
-        RETURN QUERY SELECT 'WYKONAJ'::text, NULL::smallint, NULL::jsonb, NULL::integer; RETURN;
-    END IF;
-    SELECT * INTO r FROM klucz_idempotencji k WHERE k.uzytkownik_id = p_uzytkownik_id AND k.klucz = p_klucz;
-    IF r.skrot_zapytania <> p_skrot THEN
-        RETURN QUERY SELECT 'KONFLIKT_CIALA'::text, NULL::smallint, NULL::jsonb, NULL::integer; RETURN;
-    END IF;
-    IF r.kod_statusu_http IS NOT NULL THEN
-        RETURN QUERY SELECT 'POWTORKA'::text, r.kod_statusu_http, r.cialo_http, NULL::integer; RETURN;
-    END IF;
-    RETURN QUERY SELECT 'W_TOKU'::text, NULL::smallint, NULL::jsonb,
-                        GREATEST(1, ceil(extract(epoch FROM r.w_toku_do - now())))::integer;
+    FOR proba IN 1..2 LOOP                                   -- 2. obieg: wiersz usunięty przez sprzątanie między INSERT a SELECT
+        INSERT INTO klucz_idempotencji AS k (uzytkownik_id, klucz, skrot_zapytania, rezerwacja, w_toku_do, wygasa_at)
+        VALUES (p_uzytkownik_id, p_klucz, p_skrot, p_rezerwacja, now() + interval '60 seconds', now() + interval '24 hours')
+        ON CONFLICT (uzytkownik_id, klucz) DO UPDATE
+            SET rezerwacja       = EXCLUDED.rezerwacja,
+                w_toku_do        = EXCLUDED.w_toku_do,
+                skrot_zapytania  = EXCLUDED.skrot_zapytania,
+                kod_statusu_http = NULL,
+                cialo_http       = NULL,
+                wygasa_at        = CASE WHEN k.wygasa_at <= now() THEN EXCLUDED.wygasa_at ELSE k.wygasa_at END,
+                created_at       = CASE WHEN k.wygasa_at <= now() THEN now() ELSE k.created_at END
+            WHERE k.wygasa_at <= now()                                        -- 3.5 (C9-07 p. 1): wiersz po 24 h = brak klucza
+               OR (k.kod_statusu_http IS NULL AND k.w_toku_do < now()        -- przejęcie po awarii procesu …
+                   AND k.skrot_zapytania = EXCLUDED.skrot_zapytania)          -- … wyłącznie przez to samo zapytanie (C9-07 p. 1)
+        RETURNING * INTO r;
+        IF FOUND THEN
+            RETURN QUERY SELECT 'WYKONAJ'::text, NULL::smallint, NULL::jsonb, NULL::integer; RETURN;
+        END IF;
+        SELECT * INTO r FROM klucz_idempotencji k WHERE k.uzytkownik_id = p_uzytkownik_id AND k.klucz = p_klucz;
+        IF FOUND THEN
+            IF r.skrot_zapytania <> p_skrot THEN
+                RETURN QUERY SELECT 'KONFLIKT_CIALA'::text, NULL::smallint, NULL::jsonb, NULL::integer; RETURN;
+            END IF;
+            IF r.kod_statusu_http IS NOT NULL THEN
+                RETURN QUERY SELECT 'POWTORKA'::text, r.kod_statusu_http, r.cialo_http, NULL::integer; RETURN;
+            END IF;
+            RETURN QUERY SELECT 'W_TOKU'::text, NULL::smallint, NULL::jsonb,
+                                GREATEST(1, ceil(extract(epoch FROM r.w_toku_do - now())))::integer;
+            RETURN;
+        END IF;
+    END LOOP;
+    RAISE EXCEPTION 'KLUCZ_IDEMPOTENCJI_NIEUSTALONY';
 END $$;
 GRANT EXECUTE ON FUNCTION zarezerwuj_klucz_idempotencji(uuid, uuid, bytea, uuid) TO lemat_api;
 ```
