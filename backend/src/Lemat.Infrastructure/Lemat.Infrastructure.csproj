@@ -12,4 +12,9 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
+  <!-- Pliki SQL migracji wycięte z docs/spec/ddl.md przez backend/tools/extract-ddl.sh (ADR-063); ZasobSql.Wczytaj. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Persistence\Migrations\Sql\*.sql" LogicalName="Lemat.Infrastructure.Persistence.Migrations.Sql.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Persistence\Schema\ddl.sql" LogicalName="Lemat.Infrastructure.Persistence.Schema.ddl.sql" />
+  </ItemGroup>
 </Project>

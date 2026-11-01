@@ -203,7 +203,7 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
 
 # Faza 2: Model domenowy i baza (DDL jako migracje SQL wg ADR-063, encje EF Core)
 
-- [ ] **TASK-013 [MVP] Schemat bazy: wycięcie DDL, migracje SQL, `Lemat.Tools migrate`, fixture testowy**
+- [x] **TASK-013 [MVP] Schemat bazy: wycięcie DDL, migracje SQL, `Lemat.Tools migrate`, fixture testowy**
   - **Opis:** `backend/tools/extract-ddl.sh` wycina bloki (A) i (B) z `docs/spec/ddl.md` do `Persistence/Schema/ddl.sql` oraz plików `Persistence/Migrations/Sql/0000_schema.sql … 0007_api.sql`
     (zasoby osadzone, `ZasobSql.Wczytaj`). Minimalny `LematDbContext` (Npgsql, `EFCore.NamingConventions` snake_case), klasa migracji `SchematPoczatkowy` (`0001_InitialSchema.cs`, `[Migration("0001_SchematPoczatkowy")]`)
     wykonująca wyłącznie `migrationBuilder.Sql`; brak `ModelSnapshot`. `Lemat.Tools migrate` (stosuje migracje, idempotentnie; po migracji wywołuje `utworz_partycje_decyzji` na 12 miesięcy naprzód — U-08).
@@ -213,6 +213,17 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **DoD:** test integracyjny na pustej bazie bez ról i bez danych Mock: wszystkie obiekty z `ddl.md` istnieją (liczby tabel, partycji, typów enum i triggerów z nagłówka `ddl.md` są zapisane w teście; rzeczywiste liczby w raporcie);
     `MigracjeNaPustejBazieNieTworzaKonfiguracjiMock` (0 wierszy w `konfiguracja_modelu`); `Lemat.Tools migrate` uruchomione dwukrotnie nie zmienia bazy; `extract-ddl.sh` jest deterministyczny (ponowne uruchomienie → brak różnic w gicie);
     smoke funkcji `dodaj_dni_robocze` i `utworz_partycje_decyzji`; w bazie istnieją partycje `decyzja_modelu` na 12 miesięcy.
+  - **Pliki (utworzone):** `backend/tools/extract-ddl.sh`, `backend/src/Lemat.Infrastructure/Persistence/Schema/ddl.sql`,
+    `backend/src/Lemat.Infrastructure/Persistence/Migrations/Sql/0000_schema.sql`, `0001_functions.sql`, `0002_invariant_triggers.sql`, `0003_notifications.sql`, `0004_partitions.sql`, `0005_permissions.sql`, `0006_background_jobs.sql`, `0007_api.sql`,
+    `backend/src/Lemat.Infrastructure/Persistence/LematDbContext.cs`, `backend/src/Lemat.Infrastructure/Persistence/MigratorBazy.cs`,
+    `backend/src/Lemat.Infrastructure/Persistence/Migrations/0001_InitialSchema.cs`, `backend/src/Lemat.Infrastructure/Persistence/Migrations/ZasobSql.cs`,
+    `backend/src/Lemat.Tools/Commands/MigrujBazeCommand.cs`,
+    `backend/tests/Lemat.Infrastructure.Tests/Persistence/PostgresFixture.cs`, `backend/tests/Lemat.Infrastructure.Tests/Persistence/SchematBazyTests.cs`.
+  - **Pliki (zmodyfikowane):** `backend/src/Lemat.Infrastructure/Lemat.Infrastructure.csproj` (EmbeddedResource), `backend/src/Lemat.Tools/Program.cs`, `backend/src/Lemat.Tools/Commands/CommandDispatcher.cs` (nagłówki @Task),
+    `backend/tests/Lemat.Infrastructure.Tests/Lemat.Infrastructure.Tests.csproj` (referencja do `Lemat.Tools`). Dokumenty (handoff-guardian): `TASKS.md`, `HANDOFF.md`, `docs/CODEBASE_MAP.md`. Nagłówki @Role/@DependsOn/@UsedBy/@Task we wszystkich 9 nowych/zmienionych `.cs` sprawdzone, poprawne.
+  - **Weryfikacja:** `dotnet build backend/Lemat.slnx -warnaserror` 0/0; `dotnet test` zielone (Infrastructure.Tests 15, Architecture.Tests 104), także z `LEMAT_TEST_BAZA`; `dotnet format --verify-no-changes` czysto; `extract-ddl.sh` powtórzony -> identyczne sumy, `--check` bez różnic.
+    Rzeczywiste liczby po `migrate`: 61 tabel (bez partycji i `__historia_migracji`), 43 typy enum, 15 triggerów, 13 partycji `decyzja_modelu` (bieżący miesiąc + 12), `konfiguracja_modelu` = 0 wierszy, historia: `0001_SchematPoczatkowy`.
+    Decyzje: tabela historii `__historia_migracji`; rola `lemat_migracje` NIE utworzona (do decyzji PO / TASK-112); role `lemat_api/worker/scheduler` tworzy 0005 jako NOLOGIN, gdy brak; testy zgodności modelu EF (ef-core.md 8) dochodzą z TASK-037.
 
 - [ ] **TASK-014 [MVP] `Lemat.Domain.Common`: agregat, identyfikatory, wspólne typy, konwencja nazw**
   - **Opis:** `Agregat<TId>` (`version`, kolekcja zdarzeń), `IZdarzenieDomenowe`, wyjątki domenowe (`WyjatekDomenowy`, `NiezmiennikNaruszonyException(kod)`), `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci` (1–5), generator UUIDv7,
