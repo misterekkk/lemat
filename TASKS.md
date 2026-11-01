@@ -60,7 +60,7 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
     `backend/src/Lemat.Api/Program.cs`, `backend/src/Lemat.Worker/Program.cs`, `backend/src/Lemat.Scheduler/Program.cs`, `backend/src/Lemat.Tools/Program.cs`.
   - **Weryfikacja:** `dotnet build backend/Lemat.slnx -warnaserror` OK; `dotnet format backend/Lemat.slnx --verify-no-changes` OK; brak projektów testowych (TASK-002).
 
-- [ ] **TASK-002 [MVP] Projekty testowe, testy architektury i lekki test słownika**
+- [x] **TASK-002 [MVP] Projekty testowe, testy architektury i lekki test słownika**
   - **Opis:** Dodaj `backend/tests`: `Lemat.Domain.Tests`, `Lemat.Application.Tests`, `Lemat.Agents.Tests`, `Lemat.Models.Tests`, `Lemat.Infrastructure.Tests`,
     `Lemat.Api.Tests`, `Lemat.Architecture.Tests` (xUnit v3, Shouldly, NSubstitute, FsCheck.Xunit.v3, Testcontainers.PostgreSql, WireMock.Net,
     Mvc.Testing, NetArchTest.Rules, Microsoft.CodeAnalysis.CSharp) z referencjami z 6.4. W `Lemat.Architecture.Tests`: reguły warstw 6.5 (`ProjektDomenyBezPakietow`,
@@ -74,6 +74,16 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **Realizuje:** 5.2 (Testy, Kontrola architektury), 6.4, 6.5, 3.4 (część uproszczona); ADR-049, ADR-075; 18.5 (c).
   - **DoD:** `dotnet test backend/Lemat.slnx` zielone; test `ZakazaneSynonimyWIdentyfikatorach` ma testy własne (próbka kodu z `grade`/`Student` → wykryta; `Ocena`/`SCORE` → ok);
     test nagłówka wykrywa plik bez nagłówka (test negatywny na próbce w pamięci); każda reguła warstw ma test negatywny na syntetycznym przykładzie; CI-skrypt (TASK-007) uruchamia te testy.
+  - **Pliki (TASK-002):** `backend/Lemat.slnx` (folder `/tests/`), `backend/Directory.Packages.props` (pakiety testowe), `backend/tests/Directory.Build.props`;
+    `backend/tests/Lemat.{Domain,Application,Agents,Models,Infrastructure,Api,Architecture}.Tests/Lemat.<Nazwa>.Tests.csproj`;
+    `backend/tests/Lemat.{Domain,Application,Agents,Models,Infrastructure,Api}.Tests/AssemblySmokeTests.cs`;
+    `backend/tests/Lemat.Architecture.Tests/Layers/{LayerRule,LayerRules,LayerRulesTests}.cs`, `backend/tests/Lemat.Architecture.Tests/Layers/Synthetic/SyntheticDomainType.cs`;
+    `backend/tests/Lemat.Architecture.Tests/Glossary/{ForbiddenSynonymAnalyzer,ZakazaneSynonimyWIdentyfikatorachTests}.cs`;
+    `backend/tests/Lemat.Architecture.Tests/Conventions/{FileNamePolicy,LivingDocumentationHeader,NaglowekLivingDocumentationTests,BrakNiestandardowychZnakowWNazwachPlikowTests}.cs`;
+    `backend/tests/Lemat.Architecture.Tests/Support/RepositoryLocator.cs`.
+  - **Weryfikacja:** `dotnet build backend/Lemat.slnx -warnaserror` OK; `dotnet test backend/Lemat.slnx` zielone (6 testów dymnych + 90 w Architecture.Tests); `dotnet format --verify-no-changes` OK.
+    Pakiety: xunit.v3 3.2.2, Shouldly 4.3.0, NSubstitute 5.3.0, FsCheck.Xunit.v3 3.3.4, Testcontainers.PostgreSql 4.16.0, WireMock.Net 2.18.0 (`NoWarn NU1608` w Models.Tests), NetArchTest.Rules 1.3.2, Roslyn 5.0.0.
+    Reguły dodatkowe poza opisem: `ModeleBezInfrastruktury`, `InfrastrukturaBezWarstwWyzszych`, `HostyNieZalezaOdSiebie`, test referencji projektów = tabela 6.4. CI-skrypt (TASK-007) jeszcze nie istnieje.
 
 - [ ] **TASK-003 [MVP] Hosty Api / Worker / Scheduler / Tools (szkielet), zdrowie, OpenAPI**
   - **Opis:** `Lemat.Api/Program.cs`: Minimal API, `AddProblemDetails`, `GET /api/v1/zdrowie`, OpenAPI przez `Microsoft.AspNetCore.OpenApi` generowane przy budowie do

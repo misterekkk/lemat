@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Agents\Lemat.Agents.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Models\Lemat.Models.csproj" />
+  </ItemGroup>
+</Project>

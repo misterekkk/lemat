@@ -4,8 +4,8 @@
 |---|---|
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
-| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
-| Ostatnia aktualizacja | 2026-11-01 (TASK-001) |
+| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
+| Ostatnia aktualizacja | 2026-11-01 (TASK-002) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -138,7 +138,7 @@ Moduł = `Lemat.Domain.<Module>` + `Lemat.Application.<Module>` + grupa tras w `
 
 ### 5.1 Projekty backendu (strzałka = „ma referencję do”)
 
-Stan (TASK-001): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj`); węzły z linią przerywaną są POST-MVP i nie istnieją.
+Stan (TASK-001, TASK-002): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj` i pilnowane testami `Lemat.Architecture.Tests`; projekty `Lemat.*.Tests` nie są częścią diagramu — każdy referuje wyłącznie testowany projekt, a Architecture.Tests wszystkie 9); węzły z linią przerywaną są POST-MVP i nie istnieją.
 
 ```mermaid
 flowchart BT
@@ -275,9 +275,27 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/src/Lemat.Worker/Program.cs` | Punkt kompozycji procesu worker (szkielet, bez pul prac w tle) | Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | host Generic Host | TASK-001 |
 | `backend/src/Lemat.Scheduler/Program.cs` | Punkt kompozycji procesu scheduler (szkielet, POST-MVP) | Lemat.Application, Lemat.Infrastructure | host Generic Host | TASK-001 |
 | `backend/src/Lemat.Tools/Program.cs` | Narzędzie wiersza poleceń (szkielet; migrate i seed-dev w kolejnych zadaniach) | Lemat.Application, Lemat.Infrastructure | operator, scripts | TASK-001 |
+| `backend/tests/Lemat.Domain.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Domain (szkielet do czasu pojawienia się typów) | Lemat.Domain | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Application.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Application (szkielet do czasu pojawienia się typów) | Lemat.Application | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Agents.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Agents (szkielet do czasu pojawienia się typów) | Lemat.Agents | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Models.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Models (szkielet do czasu pojawienia się typów) | Lemat.Models | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Infrastructure.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Infrastructure (szkielet do czasu pojawienia się typów) | Lemat.Infrastructure | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Api.Tests/AssemblySmokeTests.cs` | Test dymny składu Lemat.Api (szkielet do czasu pojawienia się typów) | Lemat.Api | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Layers/LayerRule.cs` | Opis reguły warstwy (6.5): projekty, zabronione zespoły/pakiety i przestrzenie nazw | brak | LayerRules, LayerRulesTests | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Layers/LayerRules.cs` | Definicje reguł warstw 6.5 i ich ewaluacja na grafie zależności (referencje projektów/pakietów/zespołów) oraz na typach (NetArchTest) | NetArchTest.Rules, System.Xml.Linq | LayerRulesTests | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Layers/LayerRulesTests.cs` | Testy reguł warstw 6.5 na realnych projektach oraz testy negatywne na syntetycznych przykładach | LayerRules, NetArchTest.Rules | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Layers/Synthetic/SyntheticDomainType.cs` | Syntetyczny typ naruszający regułę domeny (System.Net.Http) — materiał testu negatywnego | System.Net.Http | LayerRulesTests | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Glossary/ForbiddenSynonymAnalyzer.cs` | Analizator Roslyn deklaracji identyfikatorów pod kątem zakazanych synonimów (3.1, 3.4) | Microsoft.CodeAnalysis.CSharp | ZakazaneSynonimyWIdentyfikatorachTests | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Glossary/ZakazaneSynonimyWIdentyfikatorachTests.cs` | Strażnik słownika: brak zakazanych synonimów w identyfikatorach backend/src i backend/tests (wersja lekka) | ForbiddenSynonymAnalyzer, RepositoryLocator | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Conventions/FileNamePolicy.cs` | Reguła nazw plików: ścieżki ASCII bez spacji (ADR-075) | brak | BrakNiestandardowychZnakowWNazwachPlikowTests | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Conventions/LivingDocumentationHeader.cs` | Walidator nagłówka Living Documentation w plikach .cs | System.Text.RegularExpressions | NaglowekLivingDocumentationTests | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Conventions/NaglowekLivingDocumentationTests.cs` | Testy nagłówka Living Documentation we wszystkich .cs backendu (+ testy negatywne) | LivingDocumentationHeader, RepositoryLocator | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Conventions/BrakNiestandardowychZnakowWNazwachPlikowTests.cs` | Test ASCII w ścieżkach z git ls-files (ADR-075) | FileNamePolicy, RepositoryLocator | dotnet test | TASK-002 |
+| `backend/tests/Lemat.Architecture.Tests/Support/RepositoryLocator.cs` | Lokalizacja katalogów repozytorium i plików źródłowych dla testów architektury | system plików, git | Layers, Glossary, Conventions | TASK-002 |
 
 Projekty `Lemat.Domain`, `Lemat.Application`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
-Pliki konfiguracyjne solucji (TASK-001): `backend/{Lemat.slnx,global.json,Directory.Build.props,Directory.Packages.props,BannedSymbols.txt,BannedSymbols.Sdk.txt,.editorconfig}`, `backend/src/Directory.Build.props` (analizator BannedApiAnalyzers tylko dla `src`), `.gitignore`.
+Pliki konfiguracyjne solucji (TASK-001, TASK-002): `backend/{Lemat.slnx,global.json,Directory.Build.props,Directory.Packages.props,BannedSymbols.txt,BannedSymbols.Sdk.txt,.editorconfig}`, `backend/src/Directory.Build.props` (analizator BannedApiAnalyzers tylko dla `src`), `backend/tests/Directory.Build.props` (xUnit v3, Shouldly; poza zakresem BannedApi), `.gitignore`.
+Projekty testowe (TASK-002): `backend/tests/Lemat.{Domain,Application,Agents,Models,Infrastructure,Api,Architecture}.Tests` — referencje do projektu testowanego wg 6.4; testy architektury sprawdzają graf z sekcji 5.1.
 
 ### 6.1 Planowane drzewo (skrót; pełne: 6.7 i 6.8 architektury)
 

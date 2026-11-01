@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- WireMock.Net wymaga Humanizer.Core 3.x, a pakiety językowe Humanizer 2.14.1 ograniczają wersję (tylko testy). -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Models\Lemat.Models.csproj" />
+    <PackageReference Include="WireMock.Net" />
+  </ItemGroup>
+</Project>

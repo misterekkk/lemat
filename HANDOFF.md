@@ -3,12 +3,12 @@
 | Pole | Wartość |
 |---|---|
 | Data | 2026-11-01 |
-| Etap | **Implementacja w toku** — ukończono TASK-001 (1 z 120 pozycji `TASKS.md`; 1 z 60 `[MVP]`) |
+| Etap | **Implementacja w toku** — ukończono TASK-001, TASK-002 (2 z 120 pozycji `TASKS.md`; 2 z 60 `[MVP]`) |
 | Cel właściciela | **Działające MVP jak najszybciej**, kompletne end-to-end (Uczeń i Nauczyciel), całość uruchamialna lokalnie bez kluczy API (Mock) |
 | Architektura | `docs/ARCHITECTURE_DETAILED.md` v3.5; spec: `docs/spec/{ddl,ef-core,api,prompts}.md`; ADR-001 … ADR-075 w `docs/adr/` |
 | Stos | .NET 10 (`backend/`), Next.js App Router + TypeScript (`frontend/`), PostgreSQL 16, REST + SSE, Microsoft.Extensions.AI + Semantic Kernel |
-| Kod | szkielet solucji `backend/` (TASK-001); `frontend/` nie istnieje; dokumentacja i definicje agentów w `.claude/agents/` |
-| Następne TASK | **TASK-002** (Faza 1) |
+| Kod | szkielet solucji `backend/` (TASK-001) + 7 projektów testowych `backend/tests` (TASK-002); `frontend/` nie istnieje; dokumentacja i definicje agentów w `.claude/agents/` |
+| Następne TASK | **TASK-003** (Faza 1; równolegle możliwe TASK-004, 005, 006) |
 | Jak pracować | `CLAUDE.md` (reguły), `TASKS.md` (backlog + macierz pokrycia), `docs/CODEBASE_MAP.md` (żywa mapa), ten plik (stan, założenia, decyzje) |
 
 Poprzednia wersja `CLAUDE.md`/`TASKS.md`/`HANDOFF.md` (Python/FastAPI/React, ścieżki `src/lemat/…`) była nieaktualna i została
@@ -127,12 +127,13 @@ Kolumna „Blokuje produkcję” oznacza, że do startu produkcyjnego z prawdziw
 
 ---
 
-## 5. Jak uruchomić (stan na dziś: tylko szkielet backendu .NET, frontend nie istnieje)
+## 5. Jak uruchomić (stan na dziś: szkielet backendu .NET + testy architektury, frontend nie istnieje)
 
-Dziś działa wyłącznie (SDK .NET 10.0.100, `global.json`, `rollForward: latestPatch`; brak zmiennych środowiskowych, bazy i testów):
+Dziś działa wyłącznie (SDK .NET 10.0.100, `global.json`, `rollForward: latestPatch`; brak zmiennych środowiskowych i bazy; testy nie wymagają Dockera):
 
 ```bash
 dotnet build backend/Lemat.slnx -warnaserror
+dotnet test backend/Lemat.slnx                       # 6 testów dymnych + 90 w Lemat.Architecture.Tests (warstwy, słownik, nagłówki, ASCII)
 dotnet format backend/Lemat.slnx --verify-no-changes
 dotnet run --project backend/src/Lemat.Tools     # wypisuje "brak poleceń (szkielet)"
 ```
@@ -160,7 +161,8 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Do wykonania przez właściciela / człowieka (agent nie może tego zrobić sam):**
 
-0. **Po TASK-001:** brak akcji obowiązkowych; zalecane: zainstalować SDK .NET 10.0.100+ (zgodnie z `backend/global.json`) i zdecydować, czy pakiety z podbitymi wersjami (NU1901–1903) akceptujemy do czasu TASK-004.
+0. **Po TASK-002:** brak akcji obowiązkowych; `Testcontainers.PostgreSql` jest już w pakietach, ale żaden test go jeszcze nie używa (Docker potrzebny dopiero od testów integracyjnych, TASK-014+); `git` musi być w PATH (testy architektury wołają `git ls-files`). Zalecane: ocenić odstępstwo OQ-03 (lekki test słownika zamiast pełnego).
+   Wcześniej (po TASK-001): brak akcji obowiązkowych; zalecane: zainstalować SDK .NET 10.0.100+ (zgodnie z `backend/global.json`) i zdecydować, czy pakiety z podbitymi wersjami (NU1901–1903) akceptujemy do czasu TASK-004.
 1. **Klucze modeli AI (opcjonalne — MVP działa bez nich na Mockach).** Aby użyć prawdziwego LLM do rozpoznawania pisma, Wskazówek i oceny (`ZapasowyLlmAdapter`), ustaw w `.env`/user-secrets:
    `LEMAT_MODELE_DOSTAWCA` (`openai-zgodny` | `azure-openai` | `anthropic`), `LEMAT_MODELE_KLUCZ_API`, `LEMAT_MODELE_ENDPOINT` (dla Azure i punktów zgodnych z OpenAI), nazwy modeli
    (wielomodalny dla `ROZPOZNAWANIE_PISMA`) i **jawne potwierdzenie retencji** `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY=true` (A-07: zero-retention dla zdjęć, ≤ 30 dni dla reszty; umowa powierzenia).
@@ -188,7 +190,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
-| 1. Szkielet i środowisko (001 … 012) | 1 / 7 | 0 / 5 | **TASK-002** |
+| 1. Szkielet i środowisko (001 … 012) | 2 / 7 | 0 / 5 | **TASK-003** |
 | 2. Model domenowy i baza (013 … 037) | 0 / 16 | 0 / 9 | po TASK-001 … 007 |
 | 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
@@ -198,15 +200,18 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 071 → 072 → 073 … 080 → 081 → 082 … 089 → 109 → 110 → 111 → 112. Zadania frontendu 006 oraz 005 można wykonywać równolegle z backendem; 081 … 089 równolegle po 071/072.
 
 **Co działa:** kompilująca się solucja `backend/Lemat.slnx` z 9 pustymi projektami `src` i grafem referencji z 6.4 (Domain bez pakietów; Application bez referencji do Infrastructure/Agents/Models); analizatory
-(`TreatWarningsAsErrors`, `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`), Central Package Management, `.gitignore`. Brak testów, hostów z endpointami, bazy, frontendu.
+(`TreatWarningsAsErrors`, `AnalysisLevel=latest-recommended`, `EnforceCodeStyleInBuild`), Central Package Management, `.gitignore`; 7 projektów testowych w `backend/tests` (xUnit v3) z zielonymi testami: reguły warstw 6.5 (referencje projektów + NetArchTest, testy negatywne na syntetycznym grafie, reguły dodatkowe `ModeleBezInfrastruktury`, `InfrastrukturaBezWarstwWyzszych`, `HostyNieZalezaOdSiebie`, referencje = tabela 6.4), Roslyn-owy strażnik zakazanych synonimów w deklaracjach, nagłówek Living Documentation w każdym `.cs`, ASCII nazw plików (`git ls-files`). Brak hostów z endpointami, bazy, frontendu.
 
-**Ostatnia zmiana: TASK-001** (pliki: `TASKS.md` pod TASK-001). Decyzje developera:
+**Ostatnia zmiana: TASK-002** (pliki: `TASKS.md` pod TASK-002). Zrobiono: `backend/tests` z 7 projektami (xUnit v3 3.2.2, Shouldly, NSubstitute, FsCheck.Xunit.v3, Testcontainers.PostgreSql 4.16.0, WireMock.Net 2.18.0 z `NoWarn NU1608` w Models.Tests, Mvc.Testing, NetArchTest.Rules 1.3.2, Roslyn 5.0.0) w `Directory.Packages.props` i `Lemat.slnx`; `backend/tests/Directory.Build.props` (OutputType Exe, CA1707 wyłączone). Weryfikacja: build `-warnaserror` OK, `dotnet test` zielone, format OK. Decyzje: testy architektury opierają się na referencjach/zespołach, więc działają na pustych projektach; testy negatywne używają syntetycznego grafu/typu (`Layers/Synthetic`); `RepositoryLocator` woła `git ls-files`.
+
+**Wytyczne dla TASK-003 (następne):** (1) pierwsza linia KAŻDEGO `.cs` (także testów) to nagłówek `// @Role: … | @DependsOn: … | @UsedBy: … | @Task: TASK-003` — inaczej padnie `NaglowekLivingDocumentation`; (2) identyfikatory bez tokenów `student/task/submission/grade/score/difficulty/topic/skill/lesson/review` (dzielone na granicach wielkości liter) — uwaga na nazwy z szablonów ASP.NET i `Task` w kodzie asynchronicznym (typ `Task` to użycie, nie deklaracja, ale nie nazywaj własnych członków `Task*`); (3) namespace = katalog (IDE0130); (4) `public partial class Program` w `Lemat.Api` dla `WebApplicationFactory`; (5) `KontenerDiTests` (`ValidateOnBuild`, `ValidateScopes`) w `Lemat.Api.Tests` lub `Lemat.Architecture.Tests` — dla 3 procesów; (6) reguła `EndpointyTylkoPrzezAplikacje`: `Lemat.Api.Endpoints*` bez Infrastructure/EF — rejestrację DI umieść w osobnej przestrzeni (np. `Configuration`), nie w `Endpoints`; (7) nie zmieniaj reguł warstw w testach, by przechodziły — to sygnał błędu w referencjach; (8) nazwy plików ASCII; (9) `backend/openapi/lemat-v1.json` generowany deterministycznie i dodany do repo.
+
+**Poprzednia zmiana: TASK-001.** Decyzje developera:
 - `backend/BannedSymbols.txt` (zakaz `DateTime.Now/UtcNow`, `DateTimeOffset.Now/UtcNow`) dotyczy całego `backend/src`; `backend/BannedSymbols.Sdk.txt` (typy SDK dostawców modeli: `OpenAI.*`, `Azure.AI.*`, `Anthropic.*`) dołączany do wszystkich projektów `src` poza `Lemat.Models` (przez `backend/src/Directory.Build.props`, który dodaje też `Microsoft.CodeAnalysis.BannedApiAnalyzers` z `PrivateAssets=all`).
 - Konsekwencja: `Lemat.Domain` ma w grafie ukryty `PackageReference` analizatora (`PrivateAssets=all`, nie trafia do zależności wynikowych) — test `ProjektDomenyBezPakietow` (TASK-002) ma to uwzględnić (ignorować pakiety analizatorów / sprawdzać zależności assembly, nie `PackageReference` w pliku).
 - Podniesione wersje pakietów z powodu ostrzeżeń NU1901–NU1903 (przy `-warnaserror`): MailKit 4.18.2, AWSSDK.S3 4.0.104.8, OpenTelemetry.Extensions.Hosting 1.20.1, FluentValidation 12.2.0, Microsoft.IdentityModel.JsonWebTokens 8.23.0; ponadto Cronos 0.13.0, Microsoft.ML/LightGbm 4.0.2 (wszystkie w `backend/Directory.Packages.props`).
 - Nagłówki Living Documentation sprawdzone w 4 plikach `Program.cs` — poprawne.
 
-**Wytyczne dla TASK-002:** testy architektury oprzeć na referencjach assembly i przestrzeniach nazw (biblioteki są puste — nie na typach); pakiety testowe (xUnit v3, Shouldly, NSubstitute, FsCheck.Xunit.v3, Testcontainers.PostgreSql, WireMock.Net, Mvc.Testing, NetArchTest.Rules, Microsoft.CodeAnalysis.CSharp) dopisać do `backend/Directory.Packages.props` (sprawdzić NU1901–1903); katalog `backend/tests` poza `backend/src/Directory.Build.props` (analizator banned nie obejmuje testów); `NaglowekLivingDocumentation` zadziała na obecnych `Program.cs`. Nie edytuj kodu `src` poza koniecznością.
 `handoff-guardian` po każdym TASK dopisuje tu: co zostało zrobione, jak uruchomić, zmienione zmienne środowiskowe, nowe U-xx, otwarte pytania i wskazówki dla następnego TASK.
 
 ---
@@ -233,25 +238,29 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ## 10. Gotowy prompt dla kolejnego dewelopera
 
-### 10.1 Pierwsze TASK (kopiuj do agenta `developer`)
+### 10.1 Następne TASK: TASK-003 (kopiuj do agenta `developer`)
 
 ```text
 Jesteś Senior Developerem .NET i Next.js w projekcie Lemat (repozytorium: /home/user/lemat).
-Zrealizuj dokładnie jedno zadanie planu: TASK-001 z TASKS.md ("Solucja .NET: pliki globalne i projekty src").
+Zrealizuj dokładnie jedno zadanie planu: TASK-003 z TASKS.md ("Hosty Api / Worker / Scheduler / Tools (szkielet), zdrowie, OpenAPI").
 
 Najpierw przeczytaj: CLAUDE.md (reguły: słownik pojęć, nagłówki Living Documentation, mocki, komendy weryfikacji),
-HANDOFF.md (uproszczenia MVP U-xx, otwarte pytania), docs/CODEBASE_MAP.md oraz opis TASK-001 w TASKS.md.
-Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/ARCHITECTURE_DETAILED.md ma ~10 000 linii): 5.2, 6.4, 6.5, 6.7, 6.11.3.
+HANDOFF.md (uproszczenia MVP U-xx, otwarte pytania, wytyczne dla TASK-003 w sekcji 7), docs/CODEBASE_MAP.md oraz opis TASK-003 w TASKS.md.
+Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/ARCHITECTURE_DETAILED.md ma ~10 000 linii): 5.2, 5.3, 12.1, ADR-048, ADR-061.
 
 Wymagania:
 - Kod w backend/ (nazwy plików i katalogów po angielsku, identyfikatory ze słownika po polsku ASCII).
-- Na samej górze KAŻDEGO pliku .cs/.ts/.tsx:
-  // @Role: ... | @DependsOn: ... | @UsedBy: ... | @Task: TASK-001
+- Na samej górze KAŻDEGO pliku .cs/.ts/.tsx (także testów):
+  // @Role: ... | @DependsOn: ... | @UsedBy: ... | @Task: TASK-003
+- Testy architektury z TASK-002 (backend/tests/Lemat.Architecture.Tests) muszą pozostać zielone bez luzowania reguł: nagłówki, zakazane synonimy
+  (student/task/submission/grade/score/difficulty/topic/skill/lesson/review w identyfikatorach), ASCII w nazwach plików, namespace = katalog,
+  Api.Endpoints* bez Infrastructure/EF. `public partial class Program` w Lemat.Api dla WebApplicationFactory.
 - Zewnętrzne zależności (AI, magazyn, e-mail) tylko za interfejsem; domyślnie Mock — aplikacja ma działać bez kluczy.
-- Weryfikacja przed zakończeniem: dotnet build backend/Lemat.slnx -warnaserror oraz dotnet test; napraw wszystkie błędy, nie wyłączaj testów.
+- Weryfikacja przed zakończeniem: dotnet build backend/Lemat.slnx -warnaserror, dotnet test backend/Lemat.slnx, dotnet format backend/Lemat.slnx --verify-no-changes;
+  napraw wszystkie błędy, nie wyłączaj testów. Sprawdź ręcznie GET /api/v1/zdrowie i obecność backend/openapi/lemat-v1.json.
 - Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj.
-- Nie wychodź poza zakres TASK-001 (bez kodu domenowego).
-Zwróć raport: lista utworzonych/zmienionych plików, wyniki build/test, decyzje i odstępstwa, mocki, wskazówki dla TASK-002.
+- Nie wychodź poza zakres TASK-003 (bez kodu domenowego, bez LematOpcje — to TASK-004).
+Zwróć raport: lista utworzonych/zmienionych plików, wyniki build/test, decyzje i odstępstwa, mocki, wskazówki dla TASK-004.
 ```
 
 ### 10.2 Szablon pętli dla orkiestratora (jedno TASK = jedna iteracja)

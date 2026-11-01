@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Domain\Lemat.Domain.csproj" />
+    <PackageReference Include="FsCheck.Xunit.v3" />
+  </ItemGroup>
+</Project>

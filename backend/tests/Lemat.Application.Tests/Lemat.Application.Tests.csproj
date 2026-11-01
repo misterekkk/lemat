@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Application\Lemat.Application.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Models\Lemat.Models.csproj" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
+</Project>
