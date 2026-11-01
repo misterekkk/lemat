@@ -4,12 +4,83 @@
 |---|---|
 | Dokument | `docs/ARCHITECTURE_CHANGELOG.md` |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](ARCHITECTURE_DETAILED.md) |
-| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.1) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
+| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.2) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
 
 Numery sekcji w tabelach mapowania odnoszą się do wersji dokumentu
 głównego obowiązującej w danej iteracji. Od wersji 3.0 rejestr ADR jest w
 `docs/adr/`, a decyzje właściciela produktu D-1 … D-17 pozostają w sekcji
 23.4 dokumentu głównego.
+
+## Pętla 3.x, iteracja 3 (2026-11-01, wersja 3.2) — kontrakty REST/SSE Next.js ↔ .NET, obsługa błędów, współbieżność, przypadki brzegowe; zamknięcie uwag C7
+
+Kontekst: iteracja 3 z 4 pętli „.NET 10 + Next.js” (ADR-048). Zakres:
+przepisanie sekcji 12, 14 i 15 na ASP.NET Core 10 + Next.js oraz wszystkie
+15 uwag iteracji 7 krytyka. Reguły domenowe wersji 2.4 i zasada Z-1 bez
+zmian. Poprawki API C#/EF/SQL/TS sprawdzono w scratchpadzie (poza
+repozytorium): .NET SDK 10.0.114 z `Microsoft.SemanticKernel.Core` 1.81.0,
+`Microsoft.Extensions.AI` 10.11.0, `Npgsql.EntityFrameworkCore.PostgreSQL`
+10.0.3, `Microsoft.AspNetCore.OpenApi` 10.0.14; PostgreSQL 16.15;
+TypeScript 5.9.3 z `openapi-typescript` 7.13, `openapi-fetch` 0.14.1,
+`eventsource-parser` 3.
+
+**Zmiany struktury dokumentów:**
+
+- Nowy plik `docs/spec/api.md`: konwencje serializacji, model błędu,
+  rekordy C# wszystkich kontraktów, przykład grupy endpointów z filtrami,
+  kontrakty SSE, moduły klienta Next.js (`klient.ts`, `odswiezanie.ts`,
+  `strumien.ts`), mapowanie stron App Router na endpointy.
+- Nowe ADR: ADR-060 (ProblemDetails z kodem domenowym), ADR-061 (OpenAPI z
+  kodu, klient TS z `openapi-typescript`), ADR-062 (wersjonowanie,
+  polityki, idempotencja, ETag, kursor, limity), ADR-063 (DDL jako jedyne
+  źródło schematu), ADR-064 (kontrakt SSE, migawka przy wznowieniu),
+  ADR-065 (scenariusze Mock, dane deweloperskie poza migracjami), ADR-066
+  (odporność pętli prac i harmonogramu).
+- Uzupełnienia 3.2: ADR-049 (p. 13–15), ADR-051, ADR-053, ADR-055, ADR-056,
+  ADR-057 (p. 5 zastąpiony), ADR-058 (p. 1–10).
+- `ddl.md`, `ef-core.md`, `prompty.md` w wersji 3.2.
+
+**Zmiany treści dokumentu głównego:**
+
+- Sekcja 12 przepisana: diagram komunikacji, konwencje .NET (OpenAPI 3.1,
+  polityki autoryzacji, silny ETag, idempotencja dla 16 operacji, kursor
+  HMAC, limity), model błędu RFC 9457 z kolumnami E-xx i `szczegoly`
+  (+ 14 kodów), katalog 104 endpointów z polityką, ETag, idempotencją i
+  kodami błędów (+ 4 strumienie SSE i `GET /admin/harmonogram`), typy DTO
+  jako referencja wygenerowanych typów, 12.10 strumienie SSE, 12.11 klient
+  Next.js, 12.12 testy kontraktu. Notka „do przepisania” usunięta.
+- Sekcja 14 przepisana: hierarchia wyjątków C#, tłumaczenie wyjątków
+  infrastruktury, błędy prac w tle, granice błędów i komunikaty Next.js,
+  macierz E-01 … E-47 z wykryciem .NET i komunikatem pl-PL (nowe E-39 …
+  E-47), terminy T-6, tabela przypadków brzegowych (sieć mobilna, duże
+  zdjęcia, HEIC, przerwane przesyłanie, wygasła sesja, podwójne kliknięcie,
+  wiele kart, przeładowanie karty, zegar, utrata uprawnień, wdrożenie)
+  z obsługą na każdej warstwie i testem.
+- Sekcja 15 przepisana: tokeny `version`/`xmin` w EF Core,
+  `DbUpdateConcurrencyException` → `412`/`409`, polecenia SQL obok
+  śledzenia, blokady pesymistyczne i ich kolejność, mapowanie mechanizmów
+  C-xx na realizację .NET, scenariusze C-47 … C-54.
+- 7.2, 7.3, 7.6, 7.7, 10.0.3 … 10.0.7, 10.2.4, 10.2.5, 13.1 … 13.5, 22 —
+  poprawki C7 (tabela niżej).
+
+**Mapowanie uwag iteracji 7:**
+
+| Uwaga | Rozwiązanie (miejsce) |
+|---|---|
+| C7-01 | ADR-058 uzup. 3.2 p. 1, 2, 4: `MaximumIterationsPerRequest = limit + 1`, `MaximumConsecutiveErrorsPerRequest = 0`, `TerminateOnUnknownCalls = true` + `NIEZNANE_NARZEDZIE`, nazwy `sympy_sprawdz_rownowaznosc`/`sympy_postac_liniowa` w prompcie, Mock, śladzie i metryce, budżet 45 s na żądanie i 150 s na wywołanie agenta (zmierzone: 8 wykonań i `LIMIT_WYWOLAN_FUNKCJI` przy 9. żądaniu wywołania); 10.0.4, 10.2.4, 10.2.5, `prompty.md` 2, 4.3, 6; 22 |
+| C7-02 | ADR-058 uzup. 3.2 p. 3: potok w postaci kompilowalnej (`.Use(w => new …(w, …))`), `UseFunctionInvocation` zewnętrzne, telemetria, klasyfikacja, limit czasu, koszt i ogranicznik per żądanie do dostawcy (zmierzone: 3 × `chat`, 2 × `execute_tool`, 1 × `orchestrate_tools`, 3 zapisy kosztu); rozróżnienie anulowania w `KlasyfikacjaBledowChatClient`; 10.0.4, 10.0.5 |
+| C7-03 | ADR-066 p. 3; `ddl.md` `0006_prace_w_tle.sql` (`ponow_prace`, `odzyskaj_dzierzawy` — per wiersz, `unique_violation` → `ZASTAPIONA_NOWSZA`, sprawdzone na PostgreSQL 16.15); 13.4.2; 15.4 C-47, C-48; testy (g), (h) |
+| C7-04 | ADR-066 p. 1, 2, 4, 6: klasyfikacja anulowania (`DzierzawaPracy.UtraconaAt`), `catch (Exception)` z wynikiem, `PonawiajInfrastrukture`, `StopHost` + restart + health check, `TerminMinalException` zamiast ujemnego `CancelAfter`, praca `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA`; 13.3, 13.4.1 (kod `PetlaAsync`/`Klasyfikuj` — logika sprawdzona kompilacją i uruchomieniem), 13.5, 14.3, C-52 |
+| C7-05 | ADR-063 (wariant A): DDL jedynym źródłem, migracje wyłącznie SQL, EF bez `HasCheckConstraint`/`HasMaxLength`/`HasTrigger`/`HasIndex`, nazwy domyślne PostgreSQL utrwalone w `ograniczenia.txt`, test `ModelEfZgodnyZKatalogiem` (szkic sprawdzony: wykrył rozbieżność `NULL`); 7.2, 7.6, 7.7, `ef-core.md` 1, 6, 8, `ddl.md` nagłówek |
+| C7-06 | p. 1 — FK kont `DEFERRABLE INITIALLY DEFERRED`, brak relacji EF dla `UczenId`/`NauczycielId` → `uzytkownik`, relacje bez nawigacji dla pozostałych FK (ADR-063 p. 3; sprawdzone: bez relacji `23503`, z relacją zapis poprawny); p. 2 — `List<OpanowanieUmiejetnosci>` + słownik w pamięci; p. 3 — cienie PascalCase + `HasColumnName`, jedyny konstruktor; p. 4 — `Include(s => EF.Property<List<…>>(s, "_aktywne").Where(…))`; p. 5–6 — `SqlQuery<T>(UPDATE/INSERT … RETURNING).ToListAsync()`, reguła `ReloadAsync`; p. 7 — `maks_prob` w DDL, `HasColumnName("oswiadczenie_wieku_16")`, rekord `PracaWTle` z kompletem kolumn; p. 8 — `WersjaAgregatuInterceptor` po korzeniu (sprawdzone: zmiana wyłącznie `theta` podnosi `profil_ucznia.version`); `ef-core.md` 4, 6.1, 6.4, 6.5, 7; 13.4.1; 15.2; C-50 |
+| C7-07 | ADR-065: nagłówek `X-Lemat-Mock-Scenariusz` (tylko `Development`/`E2E`) przenoszony w ładunku prac, katalog scenariuszy, tryb ścisły, odpowiedzi domyślne trasy automatycznej (masa 0,995), `PrzesunietyTimeProvider` (`LEMAT_CZAS_TESTOWY`), macierz 15 scenariuszy E2E; 10.0.6, `prompty.md` 6 |
+| C7-08 | ADR-058 uzup. 3.2 p. 5: `ZapasowyLlmAdapter.WykonajPlanAsync(…, KontekstDecyzji, …)`, prompt `plan-pytan-walidacji-v1` (`prompty.md` 4.9), port `IWywolanieUstrukturyzowane` z jedną implementacją w `Lemat.Modele` (`JsonSchema.Net` w `Lemat.Modele`), test `WalidacjaPrzyObwodzieOtwartym`; 6.4, 10.0.3, 10.0.4, 13.2 |
+| C7-09 | ADR-058 uzup. 3.2 p. 6: schematy generowane z rekordów z `TransformOptions` (zmierzone: `additionalProperties: false`, komplet `required`), migawki `Schematy/*.json`, porównanie semantyczne z `prompty.md`, mapy → tablice `[{opcja, p}]`/`[{id, prawda}]`, `AdditionalProperties["strict"] = true` (sprawdzone na serwerze testowym: `json_schema.strict = true`), test kontraktu WireMock; `prompty.md` 1, 4.4, 4.8, 4.9; 10.0.3; 12.4 (`DecyzjaModeluWyjscie.rozklad`) |
+| C7-10 | ADR-058 uzup. 3.2 p. 7: `PamiecKonfiguracjiModeli` (Singleton, odświeżanie `NOTIFY` i co 30 s), porty agentów przez `NpgsqlDataSource`/`IDbContextFactory`, testy `AgenciIPortyAgentowNieZalezaOdLematDbContext` i `WalidacjaRownoleglaBezBledowKontekstu`; 10.0.7, 10.2.5, `ef-core.md` 1, C-51 |
+| C7-11 | ADR-064 p. 2–4: strumienie stanu ze skrótem stanu jako `id:`, strumień powiadomień z migawką nieprzeczytanych przy każdym połączeniu (bez kursora UUIDv7), scalanie po `id` w kliencie, test „dwa powiadomienia w odwróconej kolejności”; ADR-057 uzup. 3.2 (p. 5 zastąpiony), ADR-051 uzup. 3.2; 12.10, C-42, C-49 |
+| C7-12 | ADR-065 p. 6: migracje bez danych `mock`, polecenie `Lemat.Narzedzia seed-dev` (usługa `seed`, profil `dev`, odmowa w `Production`), test `MigracjeNaPustejBazieNieTworzaKonfiguracjiMock`; 7.7 p. 5, 10.0.6 |
+| C7-13 | ADR-066 p. 5: tabela `przebieg_harmonogramu` (`ddl.md`), nadrabianie wystąpień z 24 h przy objęciu roli i co 1 s, kolumna „Nadr.” w tabeli cykli, alert `HARMONOGRAM_ZALEGLY`, test „przejęcie roli o 03:00:05”; 13.5, `GET /admin/harmonogram`, C-53 |
+| C7-14 | ADR-058 uzup. 3.2 p. 8: `new KernelPromptTemplateFactory { AllowDangerouslySetContent = true }` (zmierzone: flaga w `PromptTemplateConfig` nie działa, flaga fabryki i `InputVariable` działają), test `RenderowanieNazwUmiejetnosci`; `prompty.md` 1 p. 2 |
+| C7-15 | p. 1 — 43 typy (7.3, 7.6, 7.7, `ef-core.md` 3.2); p. 2 — definicje 12 enumów w `ef-core.md` 3.2 (wartości z katalogu); p. 3 — `HasTrigger` nie jest używane, `KatalogTriggerow` 15 pozycji z poprawną tabelą `trg_suma_kryteriow` (`ef-core.md` 8 p. 5, ADR-063 p. 5); p. 4 — blok `DO` tworzący role `NOLOGIN` (sprawdzone na czystej bazie); p. 5 — aliasy `global using` (ADR-049 p. 13); p. 6 — zapis w 6.4 (zakaz metapakietu SK, `OpenAI` 2.14 vs `Azure.AI.OpenAI` 2.1) i test `KontraktWywolaniaOpenAiTests`; p. 7 — 13.1 i ADR-058 uzup. p. 9 (`dostawca_llm`, `gen_ai.system`); p. 8 — 10.0.3 i `ef-core.md` 3.3 (sekwencje `\u003C`, uzasadnienie dla `jsonb` vs tekst wiadomości i kolumn `text`); dodatkowo liczba tabel 60 (wersja 3.1 podawała 58 przy 59 tabelach) |
 
 ## Pętla 3.x, iteracja 2 (2026-11-01, wersja 3.1) — agenci AI w .NET, model danych EF Core, porty i prace w tle; zamknięcie uwag C6
 

@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.1, 2026-11-01) |
+| Status | Przyjęta (wersja 3.1, 2026-11-01); uzupełnienie 3.2 (C7-03, C7-06) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 2, wersja 3.1) |
 | Bramka G-0 | nie |
 | Realizuje | C6-01, C6-09 p. 4, C6-15 p. 1; doprecyzowuje ADR-051 p. 2 i ADR-053 p. 2e, p. 3 |
@@ -137,3 +137,16 @@ był chroniony warunkiem dzierżawy (C6-15 p. 1), a lista encji wysyłających
   porównuje typy zdarzeń SSE z ADR-051 z listą triggerów w migracjach.
 - Zapis wyników prac w tle kosztuje jedno dodatkowe `SELECT … FOR UPDATE`
   na transakcję (< 1 ms).
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.2 (C7-03, C7-06 p. 5–6).** (1) Polecenia
+„Błąd przejściowy” i „Odzyskiwanie porzuconych dzierżaw” z 13.4.2 są
+funkcjami `ponow_prace` i `odzyskaj_dzierzawy` (`0006_prace_w_tle.sql`,
+ADR-066 p. 3). (2) `Database.SqlQuery<T>($"INSERT … ON CONFLICT … RETURNING …")`
+jest niekomponowalne: wynik czyta się wyłącznie `ToListAsync()` (potem
+`Single()`/`SingleOrDefault()` w pamięci); `FirstOrDefaultAsync()` rzuca
+`InvalidOperationException` (sprawdzone na Npgsql EF 10.0.3). To samo dotyczy
+`UPDATE … RETURNING` podjęcia Weryfikacji (`ef-core.md` 6.4).
+(3) `ZlecaniePracSql` kopiuje `mock_scenariusz` z kontekstu do ładunku
+(ADR-065 p. 1) — wyłącznie poza `Production`.

@@ -3,9 +3,9 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ddl.md` |
-| Wersja | 3.1 (pętla 3.x, iteracja 2) |
+| Wersja | 3.2 (pętla 3.x, iteracja 3) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — sekcja 7 (decyzje, ERD, konwencje, schematy JSONB), mapowanie EF Core: [`docs/spec/ef-core.md`](ef-core.md) |
-| Status | Schemat docelowy; migracje EF Core (`Lemat.Infrastructure/Persistence/Migrations`) muszą dawać schemat identyczny z tym plikiem (test `SchematZgodnyZDdlTest`, 7.6) |
+| Status | Jedyne źródło schematu (ADR-063): migracje są klasami EF Core wykonującymi wyłącznie pliki SQL wycięte z tego dokumentu; model EF Core nie generuje schematu i jest sprawdzany z katalogiem testem `ModelEfZgodnyZKatalogiem` (`ef-core.md` 8) |
 
 Plik zawiera dwa bloki SQL: **(A) tabele, typy, ograniczenia, indeksy**
 (przeniesione z 7.3 wersji 3.0 z poprawkami wersji 3.1) i **(B) triggery,
@@ -13,6 +13,22 @@ funkcje i uprawnienia** (w wersji 3.0 opisane komentarzami; od wersji 3.1
 pełna treść, z której powstają pliki `Persistence/Migrations/Sql/*.sql`).
 Skrypt CI `backend/narzedzia/wyodrebnij-ddl.sh` wycina oba bloki do
 `backend/src/Lemat.Infrastructure/Persistence/Schemat/ddl.sql`.
+
+## Zmiany wersji 3.2
+
+| Obiekt | Zmiana | Uwaga krytyka / ADR |
+|---|---|---|
+| `praca_w_tle` | kolumna `max_prob` → `maks_prob` (ADR-049; konwencja `snake_case` z `MaksProb`) | C7-06 p. 7 |
+| `uczen`, `nauczyciel` | klucz obcy `uzytkownik_id → uzytkownik(id)` `DEFERRABLE INITIALLY DEFERRED` | C7-06 p. 1, ADR-063 p. 3 |
+| `przebieg_harmonogramu` | nowa tabela (trwały znacznik ostatniego wystąpienia wpisu harmonogramu) | C7-13, ADR-066 p. 5 |
+| `0005_uprawnienia.sql` | blok `DO` tworzy role `NOLOGIN`, gdy nie istnieją; `ALTER DEFAULT PRIVILEGES` dla roli wykonującej migrację | C7-15 p. 4 |
+| `0006_prace_w_tle.sql` | nowe funkcje `ponow_prace` i `odzyskaj_dzierzawy` (konflikt `ux_praca_dedup_oczekujace` → `ZASTAPIONA_NOWSZA`, odzyskiwanie per wiersz) | C7-03, ADR-066 p. 3 |
+| `powiadomienie.id` | bez zmian schematu; wznowienie strumienia nie zależy od kolejności UUIDv7 (migawka nieprzeczytanych) | C7-11, ADR-064 p. 4 |
+
+Stan katalogu po załadowaniu bloków A i B na czystej bazie PostgreSQL
+16.15 (sprawdzone w wersji 3.2): 60 tabel (+ 4 partycje `decyzja_modelu`),
+43 typy wyliczeniowe, 15 triggerów, 0 błędów (także bez wcześniej
+utworzonych ról).
 
 ## Zmiany wersji 3.1 względem 7.3 wersji 3.0
 
@@ -120,7 +136,8 @@ CREATE TABLE uzytkownik (
 );
 
 CREATE TABLE uczen (
-    uzytkownik_id         uuid PRIMARY KEY REFERENCES uzytkownik(id) ON DELETE CASCADE,
+    uzytkownik_id         uuid PRIMARY KEY REFERENCES uzytkownik(id) ON DELETE CASCADE
+                          DEFERRABLE INITIALLY DEFERRED,       -- 3.2 (ADR-063 p. 3): UczenId ≠ UzytkownikId, brak relacji EF
     poziom_matury         poziom_matury,              -- NULL do czasu FR-02
     termin_egzaminu       date,
     wybrany_dzial_id      integer,                    -- FR-09; NULL = wszystkie działy (FK niżej)
@@ -133,7 +150,8 @@ CREATE TABLE uczen (
 );
 
 CREATE TABLE nauczyciel (
-    uzytkownik_id        uuid PRIMARY KEY REFERENCES uzytkownik(id) ON DELETE CASCADE,
+    uzytkownik_id        uuid PRIMARY KEY REFERENCES uzytkownik(id) ON DELETE CASCADE
+                         DEFERRABLE INITIALLY DEFERRED,        -- 3.2 (ADR-063 p. 3): NauczycielId ≠ UzytkownikId
     weryfikator_globalny boolean NOT NULL DEFAULT false,  -- obsługuje kolejkę GLOBALNA (ADR-021)
     recenzent_tresci     boolean NOT NULL DEFAULT false,  -- Przegląd Zadań/Wkładek globalnych (ADR-028)
     deklarowane_minuty_weryfikacji smallint NOT NULL DEFAULT 0
@@ -1062,7 +1080,7 @@ CREATE TABLE praca_w_tle (
     status            status_pracy NOT NULL DEFAULT 'OCZEKUJE',
     priorytet         smallint NOT NULL DEFAULT 5,    -- 1 = najwyższy (w obrębie puli)
     proby             smallint NOT NULL DEFAULT 0,
-    max_prob          smallint NOT NULL,
+    maks_prob         smallint NOT NULL,              -- 3.2 (C7-06 p. 7): dawniej max_prob (ADR-049)
     dostepna_od       timestamptz NOT NULL DEFAULT now(),
     dzierzawa_do      timestamptz,             -- dzierżawa pracy (13.4); do wersji 2.4: zablokowana_do (C5-04)
     wykonawca         text,
@@ -1082,6 +1100,14 @@ CREATE UNIQUE INDEX ux_praca_dedup_oczekujace ON praca_w_tle (typ, klucz_dedupli
 CREATE INDEX ix_praca_pobieranie ON praca_w_tle (pula, priorytet, dostepna_od) WHERE status = 'OCZEKUJE';
 CREATE INDEX ix_praca_dzierzawa ON praca_w_tle (dzierzawa_do) WHERE status = 'W_TOKU';
 -- NOTIFY praca_w_tle: wyłącznie trigger trg_praca_w_tle_powiadom (część „Triggery i funkcje”, ADR-056)
+
+-- 3.2 (C7-13): trwały znacznik ostatniego zleconego wystąpienia wpisu harmonogramu (13.5); nadrabianie ≤ 24 h
+CREATE TABLE przebieg_harmonogramu (
+    nazwa                 text PRIMARY KEY,               -- nazwa wpisu tabeli 13.5 (= typ pracy, np. 'KALIBRUJ')
+    ostatnie_wystapienie  timestamptz NOT NULL,           -- wystąpienie cron (czas planowy, nie czas wykonania)
+    zlecono_at            timestamptz NOT NULL DEFAULT now(),
+    instancja             text NOT NULL                   -- identyfikator procesu scheduler, który zlecił
+);
 
 CREATE TABLE klucz_idempotencji (
     uzytkownik_id     uuid NOT NULL REFERENCES uzytkownik(id) ON DELETE CASCADE,
@@ -1125,7 +1151,7 @@ CREATE TABLE dziennik_audytu (
 
 Pliki migracji SQL (kolejność wykonywania przez `migrationBuilder.Sql`):
 `0001_funkcje.sql` (funkcje czyste), `0002_triggery_niezmiennikow.sql`,
-`0003_powiadomienia.sql`, `0004_partycje.sql`, `0005_uprawnienia.sql`.
+`0003_powiadomienia.sql`, `0004_partycje.sql`, `0005_uprawnienia.sql`, `0006_prace_w_tle.sql` (3.2, C7-03).
 
 ```sql
 -- ===================== 0001_funkcje.sql =====================
@@ -1345,6 +1371,18 @@ FROM generate_series(0, 3) AS m;
 
 -- ===================== 0005_uprawnienia.sql =====================
 -- Właścicielem schematu jest lemat_migracje (jedyny użytkownik z DDL, 5.4).
+-- 3.2 (C7-15 p. 4): role aplikacji tworzy infrastruktura (Terraform, docker compose: init-db.sh) jako role z LOGIN
+-- przed pierwszą migracją; na czystej bazie (Testcontainers, CI) blok DO tworzy je jako role NOLOGIN,
+-- więc migracja nie zależy od środowiska. Istniejących ról blok nie zmienia.
+DO $$
+DECLARE r text;
+BEGIN
+    FOREACH r IN ARRAY ARRAY['lemat_api','lemat_worker','lemat_scheduler'] LOOP
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
+            EXECUTE format('CREATE ROLE %I NOLOGIN', r);
+        END IF;
+    END LOOP;
+END $$;
 GRANT USAGE ON SCHEMA public TO lemat_api, lemat_worker, lemat_scheduler;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lemat_api, lemat_worker, lemat_scheduler;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO lemat_api, lemat_worker, lemat_scheduler;
@@ -1352,6 +1390,57 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO lemat_api, lemat_worker, lemat_
 REVOKE UPDATE, DELETE ON dziennik_audytu FROM lemat_api, lemat_worker, lemat_scheduler;
 REVOKE UPDATE, DELETE ON zdarzenie_rodo FROM lemat_api, lemat_scheduler;
 REVOKE UPDATE ON zdarzenie_rodo FROM lemat_worker;     -- DELETE po 2 latach wykonuje WYCZYSC_DANE_TECHNICZNE (worker)
-ALTER DEFAULT PRIVILEGES FOR ROLE lemat_migracje IN SCHEMA public
+ALTER DEFAULT PRIVILEGES IN SCHEMA public                -- 3.2: dla roli wykonującej migrację (lemat_migracje w produkcji)
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO lemat_api, lemat_worker, lemat_scheduler;
+
+-- ===================== 0006_prace_w_tle.sql (3.2, C7-03) =====================
+-- Ponowienie i odzyskiwanie dzierżaw bez naruszenia ux_praca_dedup_oczekujace: przy typach TrybDeduplikacji.TylkoOczekujace*
+-- może istnieć praca A W_TOKU i praca B OCZEKUJE z tym samym kluczem. Powrót A do OCZEKUJE łamałby indeks, więc
+-- A kończy się jako ZAKONCZONA z ostatni_blad = 'ZASTAPIONA_NOWSZA' (B ma nowszy ładunek albo przetworzy wszystkie
+-- niezastosowane Wyniki zadania). Każdy wiersz jest zmieniany w osobnym bloku EXCEPTION (podtransakcja), więc konflikt
+-- jednej pracy nie wycofuje odzyskania pozostałych; wyścig z równoległym INSERT B (zatwierdzonym po odczycie) też trafia
+-- w gałąź unique_violation.
+CREATE FUNCTION ponow_prace(p_id bigint, p_wykonawca text, p_blad text, p_odstep interval)
+RETURNS status_pracy LANGUAGE plpgsql AS $$
+DECLARE v_status status_pracy;
+BEGIN
+    BEGIN
+        UPDATE praca_w_tle p
+        SET status = CASE WHEN p.proby >= p.maks_prob THEN 'MARTWA' ELSE 'OCZEKUJE' END::status_pracy,
+            dostepna_od = now() + p_odstep, ostatni_blad = p_blad, wykonawca = NULL, dzierzawa_do = NULL, updated_at = now()
+        WHERE p.id = p_id AND p.wykonawca = p_wykonawca AND p.status = 'W_TOKU'
+        RETURNING p.status INTO v_status;
+    EXCEPTION WHEN unique_violation THEN
+        UPDATE praca_w_tle p
+        SET status = 'ZAKONCZONA', ostatni_blad = 'ZASTAPIONA_NOWSZA', wykonawca = NULL, dzierzawa_do = NULL, updated_at = now()
+        WHERE p.id = p_id AND p.wykonawca = p_wykonawca AND p.status = 'W_TOKU'
+        RETURNING p.status INTO v_status;
+    END;
+    RETURN v_status;                                    -- NULL = utrata dzierżawy (ADR-056 p. 4)
+END $$;
+
+CREATE FUNCTION odzyskaj_dzierzawy(p_limit integer DEFAULT 500)
+RETURNS TABLE (praca_id bigint, praca_typ text, praca_status status_pracy) LANGUAGE plpgsql AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT p.id FROM praca_w_tle p
+             WHERE p.status = 'W_TOKU' AND p.dzierzawa_do < now()
+             ORDER BY p.dzierzawa_do LIMIT p_limit
+             FOR UPDATE SKIP LOCKED                     -- wiersz potwierdzany przez jednostkę pracy (FOR UPDATE) jest pomijany
+    LOOP
+        BEGIN
+            UPDATE praca_w_tle p
+            SET status = CASE WHEN p.proby >= p.maks_prob THEN 'MARTWA' ELSE 'OCZEKUJE' END::status_pracy,
+                wykonawca = NULL, dzierzawa_do = NULL, ostatni_blad = 'DZIERZAWA_WYGASLA', updated_at = now()
+            WHERE p.id = r.id
+            RETURNING p.id, p.typ, p.status INTO praca_id, praca_typ, praca_status;
+        EXCEPTION WHEN unique_violation THEN
+            UPDATE praca_w_tle p
+            SET status = 'ZAKONCZONA', wykonawca = NULL, dzierzawa_do = NULL, ostatni_blad = 'ZASTAPIONA_NOWSZA', updated_at = now()
+            WHERE p.id = r.id
+            RETURNING p.id, p.typ, p.status INTO praca_id, praca_typ, praca_status;
+        END;
+        RETURN NEXT;
+    END LOOP;
+END $$;
 ```

@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (p. 13–15) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie — rozszerza ADR-016, nie zmienia słownika |
 | Rozszerza | ADR-016 (identyfikatory domenowe po polsku), 3.1 dokumentu głównego |
@@ -178,3 +178,31 @@ nazwy parametrów ścieżek (C5-05 p. 2) i wieloznaczność słowa „blokada”
     prozie trzecie znaczenie ma zawsze kwalifikator „konta”. Przemianowanie
     na „zawieszenie” odrzucono, bo koliduje z pojęciem Zawieszenie Wyniku
     zadania (3.5 #80).
+
+**Uzupełnienie wersji 3.2 (C7-15 p. 5, C7-06 p. 7, ADR-061).**
+
+13. **Aliasy dla kolizji nazw typów z pakietów zewnętrznych.** W plikach,
+    które importują jednocześnie `Microsoft.Extensions.AI` i
+    `Microsoft.SemanticKernel` (kolizje `FunctionCallContent`,
+    `FunctionResultContent`, `ChatMessageContent`) albo `ImageMagick` i
+    `Microsoft.SemanticKernel` (`Kernel`), obowiązują aliasy w
+    `GlobalUsings.cs` projektu: `global using FunctionCallContent =
+    Microsoft.Extensions.AI.FunctionCallContent;`, `global using
+    FunctionResultContent = Microsoft.Extensions.AI.FunctionResultContent;`,
+    `global using SkKernel = Microsoft.SemanticKernel.Kernel;` (w
+    `Lemat.Agenci`; typy SK o tych nazwach nie są używane). W
+    `Lemat.ImageSandbox` nie ma Semantic Kernel, więc kolizja `Kernel` tam
+    nie występuje. Sprawdzone kompilacją (.NET SDK 10.0.114).
+14. **Liczby w nazwach.** Cyfra po słowie jest osobnym segmentem
+    `snake_case`: `OswiadczenieWieku16` ↔ `oswiadczenie_wieku_16`; ponieważ
+    `EFCore.NamingConventions` daje `oswiadczenie_wieku16`, każda taka
+    właściwość ma `HasColumnName` (test `KolumnyZCyframiMajaHasColumnName`).
+    Skróty z innych języków (`max`, `min`) są zakazane w identyfikatorach
+    (`maks_prob`, nie `max_prob`); wyjątek: nazwy pól protokołów
+    zewnętrznych (`max_tokens` w `konfiguracja_modelu.parametry`).
+15. **Nazwy w kontraktach HTTP.** Identyfikator operacji OpenAPI
+    (`WithName`) = `<Czasownik><Zasob>` w PascalCase po polsku
+    (`PobierzRozwiazanie`, `ZatwierdzTranskrypcje`); nazwy schematów =
+    nazwy rekordów C#; nazwy zdarzeń SSE — małe litery bez polskich znaków
+    (`stan`, `koniec`, `migawka`, `powiadomienie`, `ping`, `wznow`,
+    `blad`); nagłówki własne `X-Lemat-*` w PascalCase z łącznikami.

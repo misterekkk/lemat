@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (ADR-066) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; realizacja ADR-002 w .NET |
@@ -97,3 +97,12 @@ wykonuje `INSERT … ON CONFLICT … RETURNING` poleceniem SQL na transakcji
 bieżącej jednostki pracy (nie `Add` encji), a `NOTIFY praca_w_tle` wysyła
 trigger `trg_praca_w_tle_powiadom`; `ZlecaniePracInterceptor` nie
 istnieje. Kontrakt `IZlecaniePrac` jest w `Lemat.Application.Wspolne.PraceWTle`.
+
+**Uzupełnienie wersji 3.2 (C7-03, C7-04, C7-13, ADR-066).** Klasyfikacja
+anulowania (utrata dzierżawy wyłącznie przez pętlę odnawiania; każde inne
+anulowanie = przekroczenie czasu → `Ponow`/`Trwaly`), obsługa każdego
+wyjątku w pętli bez jej kończenia, `BackgroundServiceExceptionBehavior =
+StopHost` z restartem kontenera, funkcje SQL `ponow_prace` i
+`odzyskaj_dzierzawy` (konflikt deduplikacji → `ZASTAPIONA_NOWSZA`) oraz
+nadrabianie wystąpień harmonogramu z tabeli `przebieg_harmonogramu` —
+ADR-066, kod w 13.4.1.

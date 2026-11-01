@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.1, 2026-11-01) |
+| Status | Przyjęta (wersja 3.1, 2026-11-01); p. 5 zastąpiony przez ADR-064 (wersja 3.2) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 2, wersja 3.1) |
 | Bramka G-0 | nie |
 | Realizuje | C6-02, C6-09 p. 1–3, p. 5; uzupełnia ADR-020, ADR-051, ADR-054 |
@@ -118,3 +118,12 @@ limit 3 strumieni i wpadał w pętlę „zamknij najstarszy” (C6-09).
   5 razy; ryzyko opisane w 21 (R-26).
 - Jeden strumień powiadomień na przeglądarkę zmniejsza liczbę połączeń
   `api` (17.4).
+
+## Uzupełnienia
+
+**Uzupełnienie wersji 3.2 (C7-11).** Punkt 5 („po `Last-Event-ID` serwer
+wysyła powiadomienia z `id > Last-Event-ID`”) jest zastąpiony przez ADR-064
+p. 3–4: UUIDv7 nie jest monotoniczny w obrębie milisekundy ani między
+procesami i jest nadawany przed `COMMIT`, więc nie może być kursorem.
+Karta-lider przejmująca strumień (p. 3) dostaje migawkę nieprzeczytanych
+powiadomień i scala ją z rozgłoszonymi zdarzeniami po `id`.

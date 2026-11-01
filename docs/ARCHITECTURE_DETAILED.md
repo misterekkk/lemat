@@ -3,15 +3,15 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/ARCHITECTURE_DETAILED.md` |
-| Wersja | 3.1 (iteracja 2 z 4 pętli „stos .NET 10 + Next.js”: architektura agentów AI w .NET, model danych EF Core, porty i prace w tle; zamknięcie uwag C6-01 … C6-15) |
+| Wersja | 3.2 (iteracja 3 z 4 pętli „stos .NET 10 + Next.js”: kontrakty REST/SSE Next.js ↔ .NET, obsługa błędów, współbieżność i przypadki brzegowe; zamknięcie uwag C7-01 … C7-15) |
 | Data | 2026-11-01 |
 | Dokumenty źródłowe | `docs/vision.md`, `docs/glossary.md`, `docs/requirements.md`, `docs/architecture.md` |
 | Stos technologiczny | .NET 10 (ASP.NET Core, EF Core + Npgsql, PostgreSQL 16) w `backend/`; warstwa agentów AI w .NET (Microsoft.Extensions.AI + Semantic Kernel); Next.js (App Router, TypeScript) w `frontend/`; REST + SSE — ADR-048 … ADR-055. Wersja 2.4 (Python/FastAPI, React + Vite) jest zastąpiona w zakresie realizacji technicznej; reguły domenowe, liczby i decyzje biznesowe wersji 2.4 obowiązują bez zmian |
-| Plan pętli 3.x | iteracja 1 (wersja 3.0): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2 (ta wersja, 3.1): agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13; `docs/spec/`); iteracja 3: kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15); iteracja 4: audyt i macierz RTM (18) |
+| Plan pętli 3.x | iteracja 1 (wersja 3.0): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2 (wersja 3.1): agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13; `docs/spec/`); iteracja 3 (ta wersja, 3.2): kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15; `docs/spec/api.md`) oraz poprawki C7 w 7, 10, 13; iteracja 4: audyt i macierz RTM (18) |
 | Rejestr ADR | [`docs/adr/`](adr/) — jeden plik na ADR, indeks w sekcji 19 |
-| Specyfikacje szczegółowe | [`docs/spec/ddl.md`](spec/ddl.md) (pełne DDL, triggery, funkcje), [`docs/spec/ef-core.md`](spec/ef-core.md) (mapowanie EF Core 10), [`docs/spec/prompty.md`](spec/prompty.md) (prompty systemowe, szablony stanów, schematy odpowiedzi modeli) |
+| Specyfikacje szczegółowe | [`docs/spec/ddl.md`](spec/ddl.md) (pełne DDL, triggery, funkcje), [`docs/spec/ef-core.md`](spec/ef-core.md) (mapowanie EF Core 10), [`docs/spec/prompty.md`](spec/prompty.md) (prompty systemowe, szablony stanów, schematy odpowiedzi modeli), [`docs/spec/api.md`](spec/api.md) (rekordy C# kontraktów, klient Next.js, kontrakty SSE, mapowanie stron na endpointy; od 3.2) |
 | Historia zmian | [`docs/ARCHITECTURE_CHANGELOG.md`](ARCHITECTURE_CHANGELOG.md) |
-| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 6 (wersja 3.1) — C6-01 … C6-15, wszystkie 15; iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.4); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C6) |
+| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 7 (wersja 3.2) — C7-01 … C7-15, wszystkie 15; iteracja 6 (wersja 3.1) — C6-01 … C6-15, wszystkie 15; iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.4); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C7) |
 | Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-17 w 23.4 |
 | Status | Do przeglądu przez krytyka (`docs/CRITIQUE_LOG.md`) |
 
@@ -23,16 +23,17 @@ które zmieniają lub doprecyzowują wymagania albo słownik pojęć, są zebran
 bramce **G-0** (sekcja 17.6) i wymagają akceptacji właściciela produktu przed
 startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
 
-**Konwencja odczytu wersji 3.1.** Stos techniczny opisują sekcje 5 i 6
-(.NET 10 + Next.js, ADR-048 … ADR-059), a mapowanie pojęć na identyfikatory
+**Konwencja odczytu wersji 3.2.** Stos techniczny opisują sekcje 5 i 6
+(.NET 10 + Next.js, ADR-048 … ADR-066), a mapowanie pojęć na identyfikatory
 — 3.5. Sekcje 7 (model danych), 10 (agenci) i 13 (porty i prace w tle) są
-od wersji 3.1 przepisane na .NET (C#, EF Core, Microsoft.Extensions.AI,
-Semantic Kernel); długie listingi są w `docs/spec/`. Sekcje 8, 9, 11, 16–18
-zachowują treść domenową wersji 2.4 z nazwami .NET tam, gdzie opisują
-realizację. Sekcje 12, 14 i 15 z kodem w Pythonie mają na początku notkę o
-iteracji 3; tam, gdzie odwołują się do modułów `lemat.*`, plików `*.py`,
-Pydantic, `asyncio`, Pillow lub odpytywania, obowiązują odpowiedniki z 5.5
-(zależności) i 6.10 (moduły).
+od wersji 3.1 przepisane na .NET, a sekcje 12 (kontrakty REST i SSE), 14
+(obsługa błędów) i 15 (współbieżność) — od wersji 3.2; długie listingi są w
+`docs/spec/`. Sekcje 8, 9, 11, 16–18 zachowują treść domenową wersji 2.4 z
+nazwami .NET tam, gdzie opisują realizację; odwołania do modułów
+`lemat.*` w tych sekcjach tłumaczy 6.10, a zależności pythonowe — 5.5.
+Fragmenty kodu oznaczone jako „sprawdzone” zostały skompilowane albo
+uruchomione w projekcie .NET 10 / TypeScript 5.9 albo na PostgreSQL 16.15
+(wersje pakietów w 6.4 i w ADR-058 uzup. 3.2).
 
 ## Spis treści
 
@@ -47,7 +48,7 @@ Pydantic, `asyncio`, Pillow lub odpytywania, obowiązują odpowiedniki z 5.5
 9. Przepływy (diagramy sekwencji)
 10. Agenci — architektura .NET (10.0), kontrakty C#, algorytmy, pytania do Jev; prompty w `docs/spec/prompty.md`
 11. Reguły decyzyjne oceniania i kierowania do Weryfikacji
-12. Kontrakty API (REST)
+12. Kontrakty API (REST + SSE; listingi w `docs/spec/api.md`)
 13. Kontrakty wewnętrzne (porty C#) i prace w tle (`BackgroundService`, SQL sklepu prac)
 14. Obsługa błędów
 15. Współbieżność i spójność
@@ -1787,7 +1788,7 @@ Pozostałe agregaty z 3.5 (np. `WkladkaTeoretyczna`, `ArkuszCke`,
 `DecyzjaModelu`, `ZdarzenieRodo`, `ZestawZadan`, `Przypisanie`,
 `SzkicRozstrzygniecia`) stosują ten sam wzorzec: właściwości z kolumn 7.3
 w PascalCase (ADR-049), niezmienniki z CHECK-ów 7.3 i maszyn stanów 8.x w
-metodach. Mapowanie każdej z 58 tabel na typ, rodzaj DDD, konfigurację i
+metodach. Mapowanie każdej z 60 tabel na typ, rodzaj DDD, konfigurację i
 moduł podaje tabela pokrycia `docs/spec/ef-core.md` sekcja 7; metody
 agregatów spoza listy powyżej wynikają z maszyn stanów 8.2–8.6 i operacji
 12.3 (iteracja 3 dopisuje do 12.3 kod błędu każdej metody).
@@ -1904,7 +1905,7 @@ Zmiana wersji głównej wymaga nowego ADR.
 | Postęp operacji | SSE (`text/event-stream`) przez `TypedResults.ServerSentEvents`, zasilane `LISTEN lemat_zdarzenia`; odpytywanie `GET /rozwiazania/{id}` jako ścieżka zapasowa | NFR-01 (bez opóźnienia odpytywania), NFR-08 (jedno połączenie HTTP/2 zamiast żądań co 1 s). | ADR-051 |
 | Walidacja wejścia | FluentValidation 12 dla DTO (reguły 12.5) w `Lemat.Api`; niezmienniki w agregatach `Lemat.Domain` (3.6) | Reguły wejścia oddzielone od niezmienników domeny; komunikaty po polsku (NFR-10). | ADR-048 |
 | Dostęp do danych | EF Core 10 + `Npgsql.EntityFrameworkCore.PostgreSQL` 10 + `EFCore.NamingConventions`: typy wyliczeniowe PostgreSQL przez `MapEnum` z translatorem `UPPER_SNAKE`, kolumny `jsonb` o schemacie 7.5 jako `OwnsOne/OwnsMany(…).ToJson()`, kolumny `jsonb` bez schematu (`dane`, `ladunek`) jako `JsonDocument`; jawna transakcja `IJednostkaPracy` (ADR-056); Npgsql 10 bezpośrednio (`NpgsqlDataSource`) dla `FOR UPDATE SKIP LOCKED`, `LISTEN` i blokad doradczych | EF Core dla agregatów i optymistycznej współbieżności (`version`/`xmin`); surowy SQL tam, gdzie semantyka PostgreSQL jest istotą mechanizmu (13.4, 7.6). | ADR-048, ADR-053, ADR-056 |
-| Migracje | EF Core Migrations w `Lemat.Infrastructure/Persistence/Migrations`, wydawane jako `efbundle` uruchamiany przez kontener `migracje` przed wdrożeniem (nigdy przy starcie aplikacji); obiekty spoza modelu EF (triggery `trg_*`, funkcja `dodaj_dni_robocze`, partycje `decyzja_modelu`, tabela `UNLOGGED`) przez `migrationBuilder.Sql` z plików `Persistence/Migrations/Sql/*.sql`; test `SchematZgodnyZDdlTest` porównuje schemat po migracjach (`pg_dump --schema-only`, znormalizowany) z DDL 7.3 | DDL 7.3 pozostaje schematem docelowym; migracje są jedyną drogą zmian schematu (zastępują Alembic). | ADR-048 |
+| Migracje | klasy EF Core `Migration` wykonujące wyłącznie pliki SQL wycięte z `docs/spec/ddl.md` (`migrationBuilder.Sql`), wydawane jako `efbundle` uruchamiany przez kontener `migracje` przed wdrożeniem (nigdy przy starcie aplikacji); model EF Core nie generuje schematu; test `ModelEfZgodnyZKatalogiem` porównuje model z katalogiem bazy (wersja 3.2, ADR-063) | DDL jest jedynym źródłem schematu; migracje są jedyną drogą zmian schematu (zastępują Alembic). | ADR-048, ADR-063 |
 | Baza danych | PostgreSQL 16 (rozszerzenia `citext`, `pg_trgm`) | Jedno źródło prawdy + prace w tle (ADR-002). | ADR-002 |
 | Prace w tle | Tabela `praca_w_tle` (kolumny `pula`, `dzierzawa_do`) + `SELECT … FOR UPDATE SKIP LOCKED` + `LISTEN/NOTIFY`; `BackgroundService` na pulę w `Lemat.Worker`; bez Hangfire, Quartz.NET i brokerów | Transakcyjne zlecanie prac razem ze zmianą stanu (ADR-002); rozłączne pule (13.4). | ADR-053 |
 | Harmonogram | `Lemat.Scheduler`: `BackgroundService` z wyrażeniami cron (biblioteka Cronos 0.11), jedna aktywna instancja przez `pg_try_advisory_lock` | Harmonogram 13.5 bez zmian; Cronos jest wyłącznie parserem wyrażeń, bez własnego magazynu. | ADR-053 |
@@ -2213,8 +2214,8 @@ Solucja `backend/Lemat.slnx` (format XML solucji, domyślny w .NET 10):
 |---|---|---|---|---|
 | `Lemat.Domain` | biblioteka (`Microsoft.NET.Sdk`) | Agregaty, encje, value objects, enumy, zdarzenia domenowe, reguły czyste (11.1–11.3, Filtr danych osobowych, limity Poprawek, Zgodność Oceny) | — | brak (tylko BCL) |
 | `Lemat.Application` | biblioteka | Przypadki użycia (komendy i zapytania z handlerami), fasady modułów, porty repozytoriów i modeli, Orkiestrator i handlery prac w tle, `IJednostkaPracy`, `IZlecaniePrac`, `LematOpcje` | `Lemat.Domain` | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Microsoft.Extensions.Logging.Abstractions`, `Microsoft.Extensions.Options`, `Microsoft.Extensions.AI.Abstractions` (od 3.1, ADR-058: `IChatClient`, `AIFunction`, `AIJsonUtilities` w kontraktach portów) |
-| `Lemat.Agenci` | biblioteka | Pięciu Agentów (10.1–10.5), szablony promptów systemowych (`SzablonyPromptow : ISzablonyPromptow`), budowniczowie stanów i wiadomości, plugin Semantic Kernel, predyktor Elo | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml` (od 3.1, C6-10; bez `PromptTemplates.Handlebars`), `JsonSchema.Net` (walidacja odpowiedzi) |
-| `Lemat.Modele` | biblioteka | Adaptery portów modeli: `FabrykaKlientowCzatu : IModelGeneratywny` (potok `ChatClientBuilder`, ADR-058), `JevAdapter`, `ZapasowyLlmAdapter`, `CircuitBreakerModeluDecyzyjnego`, `PredyktorSukcesuGbm`, rejestr adapterów, implementacje Mock | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI`, `Azure.AI.OpenAI`, `Microsoft.Extensions.Http`, `Microsoft.ML`, `Microsoft.ML.LightGbm` (od 3.1, C6-12 p. 7) |
+| `Lemat.Agenci` | biblioteka | Pięciu Agentów (10.1–10.5), szablony promptów systemowych (`SzablonyPromptow : ISzablonyPromptow`), budowniczowie stanów i wiadomości, plugin Semantic Kernel, predyktor Elo | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml` 1.81 (od 3.1, C6-10; bez `PromptTemplates.Handlebars`; metapakiet `Microsoft.SemanticKernel` jest zakazany w `Directory.Packages.props`, bo wciąga `Azure.AI.OpenAI` 2.9.0-beta.1 i daje NU1605 przy `Azure.AI.OpenAI` 2.1.0 — C7-15 p. 6); walidacja odpowiedzi przez port `IWywolanieUstrukturyzowane` (3.2) |
+| `Lemat.Modele` | biblioteka | Adaptery portów modeli: `FabrykaKlientowCzatu : IModelGeneratywny` (potok `ChatClientBuilder`, ADR-058), `WywolanieUstrukturyzowane : IWywolanieUstrukturyzowane` (schemat, walidacja, naprawa — 3.2, C7-08), `JevAdapter`, `ZapasowyLlmAdapter`, `CircuitBreakerModeluDecyzyjnego`, `PredyktorSukcesuGbm`, rejestr adapterów, implementacje Mock | `Lemat.Application`, `Lemat.Domain` | `JsonSchema.Net` (od 3.2), `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI` 10.11 (wymusza `OpenAI` 2.14.0), `Azure.AI.OpenAI` 2.1.0 (zbudowany na `OpenAI` 2.1.0 — zgodność chroni test kontraktu `KontraktWywolaniaOpenAiTests` na WireMock.Net, ADR-058 uzup. 3.2 p. 6), `Microsoft.Extensions.Http`, `Microsoft.ML`, `Microsoft.ML.LightGbm` (od 3.1, C6-12 p. 7) |
 | `Lemat.Infrastructure` | biblioteka | `LematDbContext`, konfiguracje encji, migracje, `JednostkaPracyEf`, `ZlecaniePracSql`, repozytoria i zapytania, sklep prac w tle (Npgsql), ogranicznik szybkości, magazyn S3, rejestr Zdarzeń RODO, klienci sidecarów, e-mail, tokeny JWT, haszowanie haseł | `Lemat.Application`, `Lemat.Domain` | `Microsoft.EntityFrameworkCore`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `EFCore.NamingConventions`, `Microsoft.EntityFrameworkCore.Design` (`PrivateAssets=all`), `AWSSDK.S3`, `MailKit`, `Konscious.Security.Cryptography.Argon2`, `Microsoft.IdentityModel.JsonWebTokens`, `Microsoft.Extensions.Http.Resilience` (S3, SMTP) |
 | `Lemat.Api` | aplikacja web (`Microsoft.NET.Sdk.Web`) | Punkt kompozycji procesu `api`: endpointy, DTO, walidatory, uwierzytelnianie, idempotencja, SSE, OpenAPI | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | `Microsoft.AspNetCore.OpenApi`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `FluentValidation`, `OpenTelemetry.Extensions.Hosting` |
 | `Lemat.Worker` | usługa robocza (`Microsoft.NET.Sdk.Worker`) | Punkt kompozycji procesu `worker`: hosty pul prac w tle | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | `OpenTelemetry.Extensions.Hosting` |
@@ -2282,7 +2283,7 @@ telemetria, Mock) — sekcja 10; prompty systemowe i schematy odpowiedzi —
 | Agent (słownik) | Interfejs (`Lemat.Application.Agenci.<Obszar>`) | Implementacja (`Lemat.Agenci`) | Porty | Role `konfiguracja_modelu` | Semantic Kernel | Wywołuje |
 |---|---|---|---|---|---|---|
 | Agent rekomendujący | `Rekomendacje.IAgentRekomendujacy` | `Rekomendacje.AgentRekomendujacy` (+ `PredyktorSukcesuElo : IPredyktorSukcesu`) | `IDaneDoboru`, `IPredyktorSukcesu`, `IModelDecyzyjny` (wyłącznie Q-RE-01) | `DECYZYJNY_GLOWNY` | brak — uzasadnienie z szablonów (ADR-011) | `IRekomendacjaSynchroniczna` (6.3) |
-| Agent generujący | `Generowanie.IAgentGenerujacy` | `Generowanie.AgentGenerujacy` | `IModelGeneratywny`, `IModelDecyzyjny` (Q-WA-*), `ISprawdzanieSymboliczne` | `GENERATYWNY_ZADANIA`, `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE`, `GENERATYWNY_WKLADKI`, `DECYZYJNY_GLOWNY` | szablony promptów systemowych; plugin `SprawdzanieSymbolicznePlugin` (`[KernelFunction] sprawdz_rownowaznosc`, `postac_liniowa`) przekazywany jako `AIFunction` do `ChatOptions.Tools`, pętla w `FunctionInvokingChatClient`, limit 8 wywołań (`FunkcjaZLimitem`, 10.2.4) | handlery `GENERUJ_ZADANIE`, `WALIDUJ_ZADANIE`, `GENERUJ_SZKIC_WKLADKI` |
+| Agent generujący | `Generowanie.IAgentGenerujacy` | `Generowanie.AgentGenerujacy` | `IModelGeneratywny`, `IModelDecyzyjny` (Q-WA-*), `ISprawdzanieSymboliczne` | `GENERATYWNY_ZADANIA`, `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE`, `GENERATYWNY_WKLADKI`, `DECYZYJNY_GLOWNY` | szablony promptów systemowych; plugin `SprawdzanieSymbolicznePlugin` (`[KernelFunction] sprawdz_rownowaznosc`, `postac_liniowa`, rejestrowany jako plugin `sympy` → narzędzia `sympy_sprawdz_rownowaznosc`, `sympy_postac_liniowa`) przekazywany jako `AIFunction` do `ChatOptions.Tools`, pętla w `FunctionInvokingChatClient`, limit 8 wywołań (`FunkcjaZLimitem`, 10.2.4, ADR-058 uzup. 3.2) | handlery `GENERUJ_ZADANIE`, `WALIDUJ_ZADANIE`, `GENERUJ_SZKIC_WKLADKI` |
 | Agent rozpoznający | `Rozpoznawanie.IAgentRozpoznajacy` | `Rozpoznawanie.AgentRozpoznajacy` | `IModelGeneratywny`, `IMagazynObiektow`, `IObrobkaObrazow`, `ISprawdzanieSymboliczne` (poprawność LaTeX) | `ROZPOZNAWANIE_PISMA` | szablony promptów systemowych; bez pluginów (ustrukturyzowane wyjście) | handlery `ROZPOZNAJ_PISMO`, `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`; Filtr danych osobowych i maskowanie stosuje handler po powrocie agenta |
 | Agent oceniający | `Ocenianie.IAgentOceniajacy` | `Ocenianie.AgentOceniajacy` | `IModelDecyzyjny` (`PlanPytan`), `ISprawdzanieSymboliczne`, `IModelGeneratywny` (Opinia pomocnicza, 10.4.5) | `DECYZYJNY_GLOWNY`, `DECYZYJNY_ZAPASOWY`, `GENERATYWNY_OPINIA_POMOCNICZA` | szablon promptu systemowego wyłącznie dla Opinii pomocniczej; stan dla Modelu decyzyjnego (10.4.2) buduje kod C# `BudowniczyStanuOceny` bez SK (C6-10 p. 4); reguły 11 w `Lemat.Domain.Ocenianie` | handlery `OCEN_ROZWIAZANIE`, `PONOW_OCENE`, `OPINIA_POMOCNICZA` |
 | Agent wyjaśniający | `Wyjasnianie.IAgentWyjasniajacy` | `Wyjasnianie.AgentWyjasniajacy` | `IModelGeneratywny`, `ISprawdzanieSymboliczne` (strażnik wycieku) | `GENERATYWNY_WSKAZOWKI` | szablon promptu systemowego; bez pluginów | handler `NAPISZ_WSKAZOWKE` |
@@ -2593,7 +2594,7 @@ w [`docs/spec/ddl.md`](spec/ddl.md), mapowanie EF Core 10 — w
 [`docs/spec/ef-core.md`](spec/ef-core.md). Ta sekcja zawiera ERD, konwencje,
 decyzje mapowania, schematy pól JSONB i strategię migracji. Agregaty C#
 (3.6) odpowiadają tabelom 1:1 albo tabeli z tabelami encji wewnętrznych
-(tabela pokrycia 58 tabel: `ef-core.md` sekcja 7).
+(tabela pokrycia 60 tabel: `ef-core.md` sekcja 7).
 
 ### 7.1 Diagram ERD (encje rdzenia domeny)
 
@@ -2656,7 +2657,7 @@ erDiagram
   identyfikator z `Guid.CreateVersion7()` w fabryce agregatu (uporządkowany
   w czasie, lepsza lokalność indeksu B-drzewa), a `DEFAULT
   gen_random_uuid()` obsługuje wstawienia poleceniami SQL; `powiadomienie.id`
-  nie ma wartości domyślnej (UUIDv7 jest identyfikatorem zdarzenia SSE,
+  nie ma wartości domyślnej (UUIDv7 jest `id:` zdarzenia SSE i kluczem scalania w kliencie, nie kursorem wznowienia — ADR-064,
   ADR-057). Wyjątki: `dzial.id`, `umiejetnosc.id` (`integer`, stabilne dane
   referencyjne), `praca_w_tle.id`, `proba_logowania.id`, `dziennik_audytu.id`
   (`bigint identity`).
@@ -2688,12 +2689,22 @@ erDiagram
   `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji`)
   nie mają tokenu (`ef-core.md` sekcja 4).
 - Nazwy: tabele, kolumny, typy, indeksy i ograniczenia w `snake_case`
-  (ADR-049); prefiksy `ux_`, `ix_`, `fk_`, `trg_`, `ck_` (CHECK nazwany w
-  konfiguracji EF Core), `f_` (funkcja triggera).
+  (ADR-049). Jawne nazwy z prefiksem mają indeksy (`ux_`, `ix_`), triggery
+  (`trg_`), funkcje triggerów (`f_`) i dwa klucze obce dodawane `ALTER
+  TABLE` (`fk_zadanie_aktualna_wersja`, `fk_rozwiazanie_najnowsza_transkrypcja`).
+  Klucze główne, pozostałe klucze obce, UNIQUE i CHECK mają nazwy domyślne
+  PostgreSQL (`<tabela>_pkey`, `<tabela>_<kolumna>_fkey`,
+  `<tabela>_<kolumny>_key`, `<tabela>_<kolumna>_check`,
+  `<tabela>_check[N]`), utrwalone w `Persistence/Schemat/ograniczenia.txt`
+  i porównywane w CI (wersja 3.2, ADR-063 p. 4; prefiks `ck_` z wersji 3.1
+  nie obowiązuje, bo model EF Core nie tworzy CHECK-ów).
+- Klucze obce `uczen.uzytkownik_id` i `nauczyciel.uzytkownik_id` są
+  `DEFERRABLE INITIALLY DEFERRED` (ADR-063 p. 3); pozostałe klucze obce mają
+  w modelu EF Core relację bez nawigacji, która ustala kolejność poleceń.
 
 ### 7.3 DDL (PostgreSQL 16) — źródło prawdy
 
-Pełne DDL: [`docs/spec/ddl.md`](spec/ddl.md) — blok (A) 58 tabel, 42 typy
+Pełne DDL: [`docs/spec/ddl.md`](spec/ddl.md) — jedyne źródło schematu (ADR-063) — blok (A) 60 tabel, 43 typy
 wyliczeniowe, ograniczenia i indeksy; blok (B) funkcje
 (`dodaj_dni_robocze`, `poziom_z_b`, `utworz_partycje_decyzji`), triggery
 niezmienników (`trg_suma_kryteriow`, `trg_umiejetnosc_glowna_w_dziale`,
@@ -2714,6 +2725,18 @@ w tej sekcji; od wersji 3.1 sekcja zawiera wyłącznie zmiany i decyzje.
 | `id` bez wartości domyślnej (UUIDv7) | `powiadomienie` | C6-09, ADR-057 |
 | `trg_praca_w_tle_powiadom`, `trg_rozwiazanie_powiadom`, `trg_ocena_powiadom`, `trg_weryfikacja_powiadom`, `trg_powiadomienie_powiadom`, `trg_import_arkusza_powiadom`, `trg_zlecenie_generowania_powiadom`, `trg_konfiguracja_modelu_powiadom` | triggery | C6-01, C6-09, ADR-056 |
 | pełna treść PL/pgSQL triggerów i funkcji wersji 2.4 | triggery, funkcje | bez zmiany semantyki |
+
+| Zmiana wersji 3.2 | Obiekt | Uwaga / ADR |
+|---|---|---|
+| `max_prob` → `maks_prob` | `praca_w_tle` | C7-06 p. 7, ADR-049 p. 14 |
+| klucz obcy do `uzytkownik` `DEFERRABLE INITIALLY DEFERRED` | `uczen`, `nauczyciel` | C7-06 p. 1, ADR-063 |
+| nowa tabela | `przebieg_harmonogramu` | C7-13, ADR-066 |
+| `ponow_prace`, `odzyskaj_dzierzawy` (`0006_prace_w_tle.sql`) | funkcje | C7-03, ADR-066 |
+| blok `DO` tworzący role `NOLOGIN` | `0005_uprawnienia.sql` | C7-15 p. 4 |
+
+Sprawdzenie wersji 3.2: bloki A i B ładują się bez błędów na czystej bazie
+PostgreSQL 16.15 (60 tabel + 4 partycje, 43 typy wyliczeniowe, 15
+triggerów, 142 CHECK, 124 FK, 21 UNIQUE).
 
 Typ wyliczeniowy `kontekst_decyzji` ma odpowiednik
 `Lemat.Domain.Modele.KontekstDecyzji { Ocena, Rekomendacja, WalidacjaZadania }`
@@ -2804,9 +2827,9 @@ samym numerze wariantu. `kroki[].nr` to numer kroku Rozwiązania wzorcowego
 #### 7.5.5 `zlecenie_generowania.wywolania_narzedzi` (ADR-058 p. 6)
 
 ```json
-[ { "cykl": 1, "nr": 1, "funkcja": "postac_liniowa", "argumenty": {"latex": "x \\in \\{-1, 3\\}"},
+[ { "cykl": 1, "nr": 1, "funkcja": "sympy_postac_liniowa", "argumenty": {"latex": "x \\in \\{-1, 3\\}"},
     "argumenty_sha256": "9f2c…", "rezultat": "FiniteSet(-1, 3)", "czas_ms": 140 },
-  { "cykl": 1, "nr": 2, "funkcja": "sprawdz_rownowaznosc", "argumenty": {"latex_a": "x^2 - 2x - 3 = 0", "latex_b": "(x-3)(x+1) = 0"},
+  { "cykl": 1, "nr": 2, "funkcja": "sympy_sprawdz_rownowaznosc", "argumenty": {"latex_a": "x^2 - 2x - 3 = 0", "latex_b": "(x-3)(x+1) = 0"},
     "argumenty_sha256": "41d0…", "rezultat": "ROWNOWAZNE", "czas_ms": 210 } ]
 ```
 
@@ -2820,42 +2843,56 @@ Szczegóły i kod konfiguracji: [`docs/spec/ef-core.md`](spec/ef-core.md).
 | Zagadnienie | Decyzja |
 |---|---|
 | Kontekst | jeden `LematDbContext` dla wszystkich modułów (modularny monolit, jedna baza); konfiguracje `<Encja>EntityTypeConfiguration` w `Persistence/Konfiguracje/<Modul>/` ładowane `ApplyConfigurationsFromAssembly`; `DbSet<T>` niepubliczne |
-| Nazwy kolumn | `EFCore.NamingConventions` (`UseSnakeCaseNamingConvention`), nazwy tabel i indeksów jawne |
+| Źródło schematu | DDL (ADR-063): model EF Core jest mapowaniem, nie generuje migracji; bez `HasCheckConstraint`, `HasMaxLength`, `HasTrigger`; test `ModelEfZgodnyZKatalogiem` |
+| Nazwy kolumn | `EFCore.NamingConventions` (`UseSnakeCaseNamingConvention`), nazwy tabel jawne, `HasColumnName` dla nazw z cyframi (`oswiadczenie_wieku_16`, ADR-049 p. 14) i kluczy współdzielonych z PK (`uzytkownik_id`, `uczen_id`) |
+| Relacje | wewnątrz agregatu — `OwnsMany`/`HasMany` z nawigacją po polu prywatnym; między agregatami — relacja bez nawigacji (`HasOne<T>().WithMany().HasForeignKey(…)`) dla porządku poleceń; klucze kont o różnych typach identyfikatorów — bez relacji, FK odroczony w DDL (ADR-063 p. 3) |
 | Identyfikatory silnie typowane | konwerter `IdentyfikatorConverter<TId, TWartosc>` rejestrowany konwencją dla każdego `*Id` z `Lemat.Domain` |
-| Typy wyliczeniowe PostgreSQL | `MapEnum` (42 typy) z translatorem `TlumaczNazwUpperSnake` (`OtwarteZDowodem` ↔ `OTWARTE_Z_DOWODEM`) na `NpgsqlDataSourceBuilder` i w modelu EF; wartości z CHECK tekstowym — `UpperSnakeEnumConverter<T>`; tablice enumów — `List<T>` |
+| Typy wyliczeniowe PostgreSQL | `MapEnum` (43 typy) z translatorem `TlumaczNazwUpperSnake` (`OtwarteZDowodem` ↔ `OTWARTE_Z_DOWODEM`) na `NpgsqlDataSourceBuilder` i w modelu EF; wartości z CHECK tekstowym — `UpperSnakeEnumConverter<T>`; tablice enumów — `List<T>` |
 | Value objects | VO z kilku kolumn tabeli właściciela (`OkresKarencji`, `BlokadaWeryfikacji`, `Wskazowka`, `Seria`, `KodZaproszenia`) — `OwnsOne` z jawnymi nazwami kolumn; VO jednokolumnowe (`PoziomTrudnosci`, `PewnoscOceny`, `PewnoscSurowa`, `PoziomOpanowania`, `WariantRozwiazania`) — konwertery konwencji |
 | `jsonb` ze schematem 7.5 | `OwnsOne/OwnsMany(…).ToJson()` (obiekty używane przez domenę) albo `JsonbConverter<T>` (migawki i raporty); `UnsafeRelaxedJsonEscaping` |
 | `jsonb` bez schematu | `JsonDocument` |
-| Encje wewnętrzne agregatu | `OwnsMany(…).ToTable(…)` (`kryterium_oceniania`, `krok_transkrypcji`, `opanowanie_umiejetnosci`, `czlonkostwo_klasy`, `pozycja_zestawu`, `przypisanie_uczen`) albo `HasMany` z polem prywatnym (`zdjecie_rozwiazania`, `ocena_kryterium`, `zadanie_wersja`, `element_sciezki` — wyłącznie aktywne) |
-| Współbieżność | 7.2; `DbUpdateConcurrencyException` → `412 KONFLIKT_WERSJI` albo `rezultat_przestarzaly` |
-| Triggery | utrzymywane w plikach SQL migracji; w modelu deklarowane `ToTable(t => t.HasTrigger(…))` (dokumentacja w modelu, testy) |
-| Operacje atomowe | `ExecuteUpdateAsync`/SQL zamiast śledzenia zmian: podjęcie, przedłużenie i zwolnienie Weryfikacji, kalibracja Poziomu trudności, zapis `zgodnosc_poprawek`, rotacja refresh tokenu, zlecanie i wynik prac w tle, ogranicznik szybkości |
-| Partycje | `decyzja_modelu` — tabela nadrzędna i partycje w SQL; encja `ExcludeFromMigrations()` |
+| Encje wewnętrzne agregatu | `OwnsMany(…).ToTable(…)` (`kryterium_oceniania`, `krok_transkrypcji`, `opanowanie_umiejetnosci` — lista `List<OpanowanieUmiejetnosci>` ze słownikiem budowanym w pamięci, C7-06 p. 2, `czlonkostwo_klasy`, `pozycja_zestawu`, `przypisanie_uczen`) albo `HasMany` z polem prywatnym (`zdjecie_rozwiazania`, `ocena_kryterium`, `zadanie_wersja`, `element_sciezki` — wyłącznie aktywne, `Include(s => EF.Property<List<ElementSciezki>>(s, "_aktywne").Where(…))`) |
+| Współbieżność | 15.2; `WersjaAgregatuInterceptor` podnosi `version` korzenia przy zmianie dowolnego wiersza agregatu (C7-06 p. 8); `DbUpdateConcurrencyException` → `412 KONFLIKT_WERSJI` (z `If-Match`), `409 KONFLIKT_WSPOLBIEZNOSCI` (bez) albo `rezultat_przestarzaly` (worker) |
+| Triggery | wyłącznie w plikach SQL migracji; lista 15 triggerów w `KatalogTriggerow` porównywana z `pg_trigger` (`KazdyTriggerWKatalogu`); `HasTrigger` nie jest używane (Npgsql nie zmienia SQL zapisu, ADR-063 p. 5) |
+| Operacje atomowe | `ExecuteUpdateAsync`/SQL zamiast śledzenia zmian (wyniki `RETURNING` przez `SqlQuery<T>(…).ToListAsync()`, polecenie przed wczytaniem agregatu z `AsTracking()` albo `ReloadAsync()` po nim, 15.2): podjęcie, przedłużenie i zwolnienie Weryfikacji, kalibracja Poziomu trudności, zapis `zgodnosc_poprawek`, rotacja refresh tokenu, zlecanie i wynik prac w tle, ogranicznik szybkości |
+| Partycje | `decyzja_modelu` — tabela nadrzędna i partycje w SQL (`0004_partycje.sql`) |
 | Transakcje | wyłącznie przez `IJednostkaPracy` (jawna transakcja, ADR-056); bez `EnableRetryOnFailure` |
 
-### 7.7 Strategia migracji
+### 7.7 Strategia migracji (wersja 3.2, ADR-063)
 
-1. DDL `docs/spec/ddl.md` → `Persistence/Schemat/ddl.sql` (skrypt
-   `wyodrebnij-ddl.sh`, CI sprawdza brak różnic).
-2. Migracja `0001_SchematPoczatkowy` z modelu EF Core + pliki
-   `Persistence/Migrations/Sql/0001_funkcje.sql` … `0005_uprawnienia.sql`
-   (`migrationBuilder.Sql`); obiekty spoza modelu EF: triggery, funkcje,
-   partycje, tabela `UNLOGGED`, CHECK na tablicach, indeks GIN, FK
-   `DEFERRABLE`.
-3. Każda zmiana schematu = zmiana `ddl.md` + jedna migracja EF Core (+ plik
-   SQL dla triggerów i funkcji, `CREATE OR REPLACE`); migracje wyłącznie
-   „w przód” w produkcji.
-4. Zmiany bez przestoju w dwóch fazach (kolumna `NULL` → kod → `NOT
+1. **Jedno źródło:** `docs/spec/ddl.md` → skrypt `wyodrebnij-ddl.sh` →
+   `Persistence/Migrations/Sql/0000_schemat.sql` (blok A) i
+   `0001_funkcje.sql` … `0006_prace_w_tle.sql` (blok B); CI sprawdza brak
+   różnic po ponownym wycięciu.
+2. **Migracje** są klasami EF Core `Migration` zawierającymi wyłącznie
+   `migrationBuilder.Sql(ZasobSql.Wczytaj(…))`: `0001_SchematPoczatkowy`
+   wykonuje pliki `0000` … `0006` w kolejności; kolejne migracje —
+   `NNNN_<opis>` z jednym plikiem SQL. `dotnet ef migrations add` nie jest
+   używane; migawki modelu (`*ModelSnapshot.cs`) nie ma (test
+   `ZadnaMigracjaNieGenerujeSchematu` odrzuca pliki migracji z
+   `CreateTable`/`AddColumn`).
+3. **Zmiana schematu** = zmiana `ddl.md` + nowy plik SQL (`ALTER …`,
+   `CREATE OR REPLACE FUNCTION`) + klasa migracji + ewentualna zmiana
+   konfiguracji EF Core; migracje wyłącznie „w przód” w produkcji.
+4. **Zmiany bez przestoju** w dwóch fazach (kolumna `NULL` → kod → `NOT
    NULL`/CHECK; usunięcie po wdrożeniu kodu, który jej nie czyta); bez
-   `RENAME` przy działających replikach.
-5. Wykonanie przez `efbundle` w kontenerze `migracje` (użytkownik
+   `RENAME` przy działających replikach (zmiana `max_prob` → `maks_prob` w
+   wersji 3.2 dotyczy schematu przed pierwszym wdrożeniem).
+5. **Wykonanie** przez `efbundle` w kontenerze `migracje` (użytkownik
    `lemat_migracje`) przed wdrożeniem; procesy aplikacji odmawiają startu
    przy bazie starszej niż migracja w obrazie (`BazaNieaktualnaException`).
-6. Test `SchematZgodnyZDdlTest` (Testcontainers): baza z `ddl.sql` vs baza
-   z `efbundle` — znormalizowany `pg_dump --schema-only` i zapytania
-   katalogowe (`pg_constraint`, `pg_index`, `pg_trigger`, `pg_enum`); test
-   `KazdaTabelaDdlMaWlasciciela` (58 tabel) i `KazdyTypWyliczeniowyDdlJestZmapowany`
-   (42 typy).
+   Migracje nie wstawiają danych deweloperskich ani konfiguracji `mock`
+   (ADR-065 p. 6).
+6. **Testy** (Testcontainers PostgreSQL 16, każdy PR):
+   `ModelEfZgodnyZKatalogiem` (model EF vs `information_schema` i `pg_index`:
+   tabele, kolumny, typy, `NULL`, klucze główne, indeksy celów `ON
+   CONFLICT`; sprawdzony na fragmencie schematu — wykrył rozbieżność
+   `NULL` i dał 0 różnic po poprawce), `KazdyKluczObcyMaRelacjeAlboJestOdroczony`,
+   `KazdyTriggerWKatalogu` (15), `OgraniczeniaZgodneZMigawka`
+   (`ograniczenia.txt`), `KazdaTabelaDdlMaWlasciciela` (60 tabel),
+   `KazdyTypWyliczeniowyDdlJestZmapowany` (43 typy),
+   `MigracjeNaPustejBazieBezRolIBezMock` (czysta baza bez ról → migracje
+   kończą się sukcesem, brak konfiguracji `mock`).
 
 ---
 
@@ -3964,19 +4001,27 @@ public sealed class BudowniczyWiadomosci
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,                // <, >, & bez zamiany na < (ADR-058 p. 4)
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,                // `<`, `>`, `&` bez sekwencji \u003C, \u003E, \u0026 (ADR-058 p. 4)
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
     };
     public IReadOnlyList<ChatMessage> Zbuduj<TDane>(string systemowy, TDane dane, IReadOnlyList<ObrazWejsciowy> obrazy);
     // [ChatMessage(System, systemowy), ChatMessage(User, [TextContent(JsonSerializer.Serialize(dane, Json)), DataContent(jpeg, "image/jpeg") …])]
 }
 
-public sealed class WywolanieCzatu(BudowniczyWiadomosci budowniczy, TimeProvider czas, ILogger<WywolanieCzatu> log)
+public sealed class WywolanieCzatu(IWywolanieUstrukturyzowane ustrukturyzowane, TimeProvider czas, ILogger<WywolanieCzatu> log)
 {
-    /// Ustrukturyzowane wyjście: schemat z AIJsonUtilities.CreateJsonSchema(typeof(T)), walidacja, 1 próba naprawy.
+    /// Nakładka agenta (3.2, ADR-058 uzup. p. 5): termin całego wywołania agenta, wykrycie nieznanego narzędzia;
+    /// schemat, walidacja i 1 próba naprawy — port IWywolanieUstrukturyzowane (implementacja w Lemat.Modele.Llm).
     public Task<RezultatWywolaniaModelu<T>> GenerujJsonAsync<T>(
         KlientCzatuRoli klient, IReadOnlyList<ChatMessage> wiadomosci, DateTimeOffset termin,
         IReadOnlyList<AIFunction>? narzedzia, CancellationToken ct) where T : class;
+}
+
+// ----- Lemat.Application.Modele (port, 3.2, C7-08) -----
+public interface IWywolanieUstrukturyzowane
+{
+    Task<RezultatWywolaniaModelu<T>> WykonajAsync<T>(KlientCzatuRoli klient, IReadOnlyList<ChatMessage> wiadomosci,
+        ChatOptions opcje, CancellationToken ct) where T : class;   // schemat z SchematyOdpowiedzi.Dla<T>(), walidacja, naprawa
 }
 ```
 
@@ -3984,10 +4029,21 @@ public sealed class WywolanieCzatu(BudowniczyWiadomosci budowniczy, TimeProvider
 Temperature = (float)klient.Parametry.Temperatura, MaxOutputTokens =
 klient.Parametry.MaxTokens, ResponseFormat = ChatResponseFormat.ForJsonSchema(schemat,
 typeof(T).Name), Tools = narzedzia, ToolMode = narzedzia is null ? null :
-ChatToolMode.Auto, AllowMultipleToolCalls = false }`, ogranicza czas
-`CancellationTokenSource.CancelAfter(min(timeout_s, termin − teraz))`,
-deserializuje odpowiedź opcjami `BudowniczyWiadomosci.Json` i waliduje ją
-walidatorem schematu (`JsonSchema.Net`) oraz atrybutami rekordu. Przy
+ChatToolMode.Auto, AllowMultipleToolCalls = false, AdditionalProperties =
+{ ["strict"] = true } }` (tryb ścisły dostawców OpenAI/Azure, ADR-058 uzup.
+p. 6), ogranicza czas całego wywołania agenta własnym
+`CancellationTokenSource.CancelAfter(termin − teraz)` (gdy `termin ≤ teraz`
+— `TerminMinalException` przed wywołaniem; limit per żądanie do dostawcy
+`timeout_s` stosuje `LimitCzasuChatClient` w potoku), po odpowiedzi
+sprawdza brak `FunctionCallContent` (nieznane narzędzie →
+`BladModeluTrwalyException("NIEZNANE_NARZEDZIE")`) i przekazuje odpowiedź do
+`IWywolanieUstrukturyzowane`, który deserializuje ją opcjami
+`BudowniczyWiadomosci.Json` i waliduje walidatorem schematu (`JsonSchema.Net`)
+oraz atrybutami rekordu. Schemat pochodzi z
+`AIJsonUtilities.CreateJsonSchema(typeof(T), BudowniczyWiadomosci.Json,
+inferenceOptions: new() { TransformOptions = new() { DisallowAdditionalProperties = true,
+RequireAllProperties = true } })` i jest migawką w `Lemat.Modele/Schematy/`
+(C7-09). Przy
 niezgodności dopisuje do rozmowy odpowiedź modelu i wiadomość naprawczą
 (`docs/spec/prompty.md`, 1 p. 3) i ponawia raz; drugie niepowodzenie →
 `BladModeluTrwalyException("ODPOWIEDZ_NIEZGODNA_ZE_SCHEMATEM")`.
@@ -4003,19 +4059,23 @@ zapasowy są decyzją agenta albo handlera, bo zależą od terminu pracy:
 | Agent oceniający — Opinia pomocnicza | 30 s | brak | `OPINIA_POMOCNICZA`: 3 | brak | brak opinii |
 | Agent rozpoznający — rozpoznanie | początek próby pracy + 14 s (S-7) | brak (czas w budżecie NFR-01) | `ROZPOZNAJ_PISMO`: 3 | brak (jeden dostawca rozpoznawania, A-08) | `BLAD_ROZPOZNAWANIA` (`BLAD_DOSTAWCY` / `PRZEKROCZONY_CZAS`) |
 | Agent rozpoznający — Sprawdzenie zgodności poprawek | początek próby + 8 s | brak | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`: 2 | brak | T-7 w Ocenie (Z-3) |
-| Agent generujący — generowanie | 60 s | brak; limit 8 wywołań funkcji | `GENERUJ_ZADANIE`: 3 | brak | zlecenie `NIEUDANE` |
-| Agent generujący — Walidacja | 120 s na cały zestaw W-1 … W-10 | Jev: jak Ocena; W-3: brak | `WALIDUJ_ZADANIE`: 3 | Q-WA przez ten sam circuit breaker | `ODRZUCONE_W_WALIDACJI` |
+| Agent generujący — generowanie | 150 s na całe wywołanie agenta (≤ 9 żądań do dostawcy, `timeout_s` = 45 s na żądanie; wersja 3.2, C7-01 p. 4) | brak; limit 8 wywołań funkcji (`LIMIT_WYWOLAN_FUNKCJI`), nieznane narzędzie → `NIEZNANE_NARZEDZIE` | `GENERUJ_ZADANIE`: 3 | brak | zlecenie `NIEUDANE` |
+| Agent generujący — Walidacja | 120 s na cały zestaw W-1 … W-10 | Jev: jak Ocena; W-3: brak | `WALIDUJ_ZADANIE`: 3 | Q-WA przez ten sam circuit breaker — prompt `plan-pytan-walidacji-v1` (`KontekstDecyzji.WalidacjaZadania`, C7-08) | `ODRZUCONE_W_WALIDACJI` |
 | Agent rekomendujący — Q-RE-01 | 1,5 s (ADR-023) | brak | — (synchronicznie) | **brak** — `POLITYKA_ELO` | `POLITYKA_ELO` z `powrot_do_polityki` |
 | Agent wyjaśniający | 8 s | 1 ponowienie po wycieku lub przekroczeniu długości (10.5.3) | `NAPISZ_WSKAZOWKE`: 2 | brak | szablon (`zrodlo = SZABLON`) |
 
-Klasyfikacja błędów (`KlasyfikacjaBledowChatClient`, 13.1): timeout,
+Klasyfikacja błędów (`KlasyfikacjaBledowChatClient`, 13.1, per żądanie
+do dostawcy — ADR-058 uzup. 3.2 p. 3): przekroczenie `timeout_s` żądania
+(anulowanie, gdy token wywołującego nie jest anulowany),
 `429`, `5xx`, zerwane połączenie → `BladModeluPrzejsciowyException`
 (praca w tle ponawia z odstępem z 13.3); `4xx` poza `429`, odmowa
 treści (`finish_reason = content_filter`), odpowiedź niezgodna ze schematem
 po naprawie → `BladModeluTrwalyException` (bez ponowień pracy: handler
 kończy pracę ścieżką „po wyczerpaniu”); brak aktywnej Konfiguracji modelu
 roli → `ModelNiedostepnyException` (alert operacyjny, praca ponawiana co
-13.3). Polly (`Microsoft.Extensions.Http.Resilience`, standardowy potok
+13.3). Anulowanie tokenem wywołującego (termin agenta, zatrzymanie,
+utrata dzierżawy) przechodzi jako `OperationCanceledException` i klasyfikuje
+je pętla prac (ADR-066 p. 1). Polly (`Microsoft.Extensions.Http.Resilience`, standardowy potok
 odporności) jest używane wyłącznie dla klientów HTTP magazynu S3 i SMTP;
 nie dla modeli (ADR-055 p. 7).
 
@@ -4023,7 +4083,7 @@ nie dla modeli (ADR-055 p. 7).
 
 | Źródło | Spany | Atrybuty (bez treści, `EnableSensitiveData = false`) | Metryki |
 |---|---|---|---|
-| `Microsoft.Extensions.AI` (`UseOpenTelemetry`, nazwa źródła `Lemat.Modele`) | `chat {model}`, `execute_tool {funkcja}` | `gen_ai.operation.name`, `gen_ai.system` (= `dostawca`), `gen_ai.request.model`, `gen_ai.response.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.finish_reasons` + własne `lemat.rola_modelu`, `lemat.konfiguracja_modelu_id`, `lemat.wersja_promptu` | `gen_ai.client.operation.duration`, `gen_ai.client.token.usage` |
+| `Microsoft.Extensions.AI` (`UseOpenTelemetry` wewnątrz `UseFunctionInvocation`, nazwa źródła `Lemat.Modele`) | `chat {model}` per żądanie do dostawcy, `execute_tool {funkcja}` (np. `execute_tool sympy_sprawdz_rownowaznosc`), `orchestrate_tools` (pętla wywołań) — zmierzone: 2 wywołania funkcji → 3 × `chat`, 2 × `execute_tool`, 1 × `orchestrate_tools` | `gen_ai.operation.name`, `gen_ai.system` (= `dostawca`), `gen_ai.request.model`, `gen_ai.response.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.finish_reasons` + własne `lemat.rola_modelu`, `lemat.konfiguracja_modelu_id`, `lemat.wersja_promptu` | `gen_ai.client.operation.duration`, `gen_ai.client.token.usage` |
 | `Lemat.Agenci` (`ActivitySource`) | `invoke_agent {agent}` (np. `invoke_agent agent_oceniajacy`) jako rodzic wywołań modeli | `gen_ai.operation.name = invoke_agent`, `gen_ai.agent.name`, `lemat.praca_w_tle.typ`, `lemat.trasa` (Ocena), `lemat.wynik` (`SUKCES`, `BLAD_PRZEJSCIOWY`, `BLAD_TRWALY`, `SZABLON`, `POLITYKA_ELO`) | `agent_czas_sekundy{agent,wynik}`, `wywolania_funkcji_total{funkcja,wynik}`, `koszt_modeli_pln_total{rola}` |
 | `Lemat.Modele.Jev` (`ActivitySource`) | `jev.decisions` (runda albo wywołanie fali) | `gen_ai.system = typesafe-jev`, `lemat.tryb_jev`, `lemat.runda`, `lemat.liczba_pytan` | nazwy z 17.3 (`jev_wywolania_http_total`, `jev_czas_sekundy`, `jev_ograniczenie_lokalne_total`, `obwod_stan{konfiguracja}`) |
 
@@ -4032,33 +4092,53 @@ trafiają do atrybutów ani logów (16.3); `trace_id` łączy span z pracą w tl
 (`praca_w_tle.id` w atrybucie `lemat.praca_w_tle.id`) i z wierszami
 `decyzja_modelu`.
 
-#### 10.0.6 Implementacje Mock (praca offline, testy, E2E)
+#### 10.0.6 Implementacje Mock (praca offline, testy, E2E) — wersja 3.2 (ADR-065)
 
 Dostawca `mock` w `konfiguracja_modelu` (zakazany w `Production`, ADR-055
 p. 6) wybiera implementacje z `Lemat.Modele.Mock`. Wszystkie są
-deterministyczne: ten sam stan wejściowy daje ten sam wynik w każdym
-uruchomieniu i na każdej maszynie.
+deterministyczne, a odpowiedź wybiera **jawny scenariusz**, nie skrót
+treści (C7-07).
 
 | Mock | Zastępuje | Zachowanie |
 |---|---|---|
-| `MockChatClient : IChatClient` | adapter dostawcy LLM w potoku `FabrykaKlientowCzatu` (potok — telemetria, koszt, limit czasu, wywoływanie funkcji — pozostaje prawdziwy) | Odpowiedź z pliku danych (`docs/spec/prompty.md`, sekcja 6) wybranego po roli, wersji promptu i SHA-256 wiadomości `user`. Brak pliku → JSON generowany ze schematu odpowiedzi: liczby = środek przedziału `minimum…maximum` zaokrąglony w dół, napisy = `"mock:" + nazwa pola`, tablice = `minItems` elementów, `enum` = pierwsza wartość, `boolean` = `true`, z wyjątkami ról: `rozpoznanie-v1` — jeden krok na każdą linię pola `tekst_alternatywny_rysunkow` albo 3 kroki `x = 1`, `pewnosc_odczytu = 0.95`; `sprawdzenie-poprawek-v2` — `p_zgodna_z_poprawka = 0.90`; `wskazowka-v1` — „Sprawdź jeszcze raz krok {n}.”. Opóźnienie odpowiedzi: `LEMAT_MOCK_OPOZNIENIE_MS` (domyślnie 0; E2E: 300). Scenariusze błędów wymuszane plikiem danych z polem `"blad": "PRZEJSCIOWY" \| "TRWALY" \| "TIMEOUT"`. |
-| `MockModelDecyzyjny : IModelDecyzyjny` | `JevAdapter` (rola `DECYZYJNY_GLOWNY`) i `ZapasowyLlmAdapter` (gdy ta rola też ma `mock`) | Dla każdego pytania planu: plik `Mock/Dane/DECYZYJNY_GLOWNY/<kod_pytania>/<skrot_stanu>.json` z rozkładem; brak pliku → rozkład z generatora `Random(seed)` o ziarnie = pierwsze 4 bajty SHA-256(stan + kod pytania): masa 0,90 na opcji o indeksie `seed mod liczba_opcji`, reszta po równo; pytania warunkowe według reguł ADR-026. Rozkłady sumują się do 1. Czas wykonania planu = `LEMAT_MOCK_OPOZNIENIE_MS`. |
+| `MockChatClient : IChatClient` | adapter dostawcy LLM w potoku `FabrykaKlientowCzatu` (potok — wywoływanie funkcji, telemetria, klasyfikacja, limit czasu, koszt — pozostaje prawdziwy) | Scenariusz z `IKontekstScenariuszaMock` (nagłówek `X-Lemat-Mock-Scenariusz` przeniesiony przez `praca_w_tle.ladunek.mock_scenariusz`, ADR-065 p. 1) → plik `Mock/Scenariusze/<nazwa>/<ROLA_MODELU>.json` (odpowiedź; dla `GENERATYWNY_ZADANIA` — sekwencja żądań wywołań `sympy_*`, potem odpowiedź końcowa; pole `"blad": "PRZEJSCIOWY" \| "TRWALY" \| "TIMEOUT"` wymusza błąd). Bez scenariusza — **odpowiedź domyślna roli** prowadząca trasą automatyczną: rozpoznanie `czytelne = true`, `przekroczono_limit_krokow = false`, `zgodnosc_z_zadaniem = 0.95`, kroki z `tekst_alternatywny_rysunkow` albo 3 kroki `x = 1` z `pewnosc_odczytu = 0.95`, ramki = całe zdjęcie; `sprawdzenie-poprawek-v2` — `p_zgodna_z_poprawka = 0.97`; `wskazowka-v1` — „Sprawdź jeszcze raz krok {n}.”; pozostałe pola z generatora ADR-065 p. 3 (liczby = `minimum` albo 0, napisy z `[PrzykladMock]`, tablice = `minItems`, unie z `null` = `null`, `boolean` = `false`). Tryb ścisły (`Lemat:Mock:TrybScisly`, środowisko `E2E`): nieznany scenariusz albo brak pliku roli → `BladModeluTrwalyException("MOCK_SCENARIUSZ_NIEZNANY")`. Opóźnienie: `LEMAT_MOCK_OPOZNIENIE_MS` (domyślnie 0; E2E 300). |
+| `MockModelDecyzyjny : IModelDecyzyjny` | `JevAdapter` (`DECYZYJNY_GLOWNY`) i `ZapasowyLlmAdapter` (gdy ta rola też ma `mock`) | Scenariusz → `Mock/Scenariusze/<nazwa>/DECYZYJNY_GLOWNY.json` (rozkład per `kod_pytania`, wzorce `Q-OC-05.*`); bez scenariusza — masa **0,995** na opcji wzorcowej (`KatalogPytan.OpcjaWzorcowa`: Q-OC-01 `tak`, Q-OC-02 maks. punktów, Q-OC-03 `BRAK_BLEDU`, Q-OC-05 `tak`, Q-OC-06 `nie`, Q-WA — opcja „poprawne”, Q-RE-01 — pierwsza akcja polityki Elo), reszta po równo; pytania warunkowe według ADR-026. Przy progu 0,95 i kalibratorze tożsamościowym domyślna Ocena jest automatyczna. Rozkład nie zależy od daty ani od treści stanu. |
 | `FalszyweSprawdzanieSymboliczne : ISprawdzanieSymboliczne` | `SympySidecarKlient` w testach jednostkowych (w E2E działa prawdziwy sidecar) | Porównanie tekstowe po normalizacji (usunięte spacje, `\cdot` → `*`, `\frac{a}{b}` → `(a)/(b)`): równe → `ROWNOWAZNE`, w przeciwnym razie `NIEROZSTRZYGNIETE`; `PostacLiniowaAsync` zwraca znormalizowany tekst. |
-| `PredyktorSukcesuElo` | — (jest implementacją domyślną i deterministyczną) | 10.1.3 |
+| `PredyktorSukcesuElo` | — (implementacja domyślna i deterministyczna) | 10.1.3 |
 | `MockObrobkaObrazow : IObrobkaObrazow` | `ImageSandboxKlient` w testach jednostkowych | Zwraca wejście bez zmian; wycinki = całe zdjęcie. |
 
-Start procesu w środowisku `Development` z pustą bazą tworzy (migracja
-danych `Dane/0001_konfiguracje_mock.sql`, wyłącznie gdy
-`ASPNETCORE_ENVIRONMENT != Production`) aktywne Konfiguracje modelu `mock`
-dla wszystkich 8 ról, próg 0,95 i kalibrator tożsamościowy, więc cały
-przepływ „przesłanie → rozpoznanie → zatwierdzenie → Ocena → Wskazówka →
-Profil” działa offline (`docker compose up` bez kluczy dostawców).
+**Czas testowy:** `LEMAT_CZAS_TESTOWY` (poza `Production`) rejestruje
+`PrzesunietyTimeProvider` w `api`, `worker` i `scheduler`, więc stan
+Q-RE-01 (`dni_do_egzaminu`, „dni temu”) i terminy SLA są w E2E stałe.
+
+**Dane deweloperskie (C7-12):** migracje nie wstawiają konfiguracji
+`mock`. `docker compose --profile dev up` uruchamia po kontenerze
+`migracje` usługę `seed` (`dotnet Lemat.Narzedzia.dll seed-dev`), która
+tworzy aktywne Konfiguracje modelu `mock` dla 8 ról, próg 0,95, kalibrator
+tożsamościowy i dane demonstracyjne; polecenie odmawia działania przy
+`LEMAT_SRODOWISKO = Production`. Cały przepływ „przesłanie → rozpoznanie →
+zatwierdzenie → Ocena automatyczna → Wskazówka → Profil” działa wtedy
+offline bez kluczy dostawców. Macierz 15 scenariuszy E2E (trasa
+automatyczna, każdy powód Weryfikacji, Kontrola losowa, T-6, T-7, błąd
+przejściowy, timeout, generowanie z narzędziami i limit wywołań) — ADR-065
+p. 7, dane w `docs/spec/prompty.md` 6.
 
 #### 10.0.7 Rejestracja i testy agentów
 
 `Lemat.Agenci.RejestracjaAgentow.DodajAgentow(IServiceCollection)` rejestruje
-agentów jako `Scoped` (jeden na jednostkę pracy), `SzablonyPromptow` i
-`BudowniczyWiadomosci` jako `Singleton`. Testy `Lemat.Agenci.Tests` używają
+agentów jako `Scoped` (jeden na pracę w tle albo żądanie), `SzablonyPromptow` i
+`BudowniczyWiadomosci` jako `Singleton`; `FabrykaKlientowCzatu`,
+`CircuitBreakerModeluDecyzyjnego`, `PamiecKonfiguracjiModeli` i
+`WywolanieUstrukturyzowane` są `Singleton` (`Lemat.Modele`). **Współbieżność
+(C7-10):** agenci wykonują sprawdzenia równolegle (`Task.WhenAll` w
+Walidacji, równoległe pobranie zdjęć), więc ani agenci, ani porty
+wywoływane z agentów nie używają `LematDbContext` z zakresu: odczyty idą
+przez `NpgsqlDataSource` (nowe połączenie z puli na zapytanie) albo
+`IDbContextFactory<LematDbContext>` (kontekst na wywołanie), a
+`DlaRoliAsync` czyta wyłącznie pamięć `PamiecKonfiguracjiModeli`
+(odświeżaną `NOTIFY konfiguracja_modelu` i co 30 s przez hosta w tle).
+Test architektury `AgenciIPortyAgentowNieZalezaOdLematDbContext` i test
+`WalidacjaRownoleglaBezBledowKontekstu` (ADR-058 uzup. 3.2 p. 7). Testy `Lemat.Agenci.Tests` używają
 prawdziwego potoku `FabrykaKlientowCzatu` z `MockChatClient` (bez sieci):
 każdy agent ma testy kontraktu (wejście → wyjście z danych Mock), ścieżki
 naprawy odpowiedzi, błędów przejściowych i trwałych, terminu (sztuczny
@@ -4577,20 +4657,42 @@ public sealed class SprawdzanieSymbolicznePlugin(ISprawdzanieSymboliczne sympy)
 // Lemat.Agenci.Generowanie — przygotowanie narzędzi dla jednego generowania
 var kernel = new Kernel(uslugi);                                             // lekki Kernel: wyłącznie logowanie i ISprawdzanieSymboliczne
 var plugin = KernelPluginFactory.CreateFromObject(new SprawdzanieSymbolicznePlugin(sympy), "sympy");
-var licznik = new LicznikWywolanFunkcji(limit: 8);
+var licznik = new LicznikWywolanFunkcji(limit: klient.Parametry.MaksIteracjiFunkcji ?? 8);
 IReadOnlyList<AIFunction> narzedzia = plugin
     .Select(f => (AIFunction)new FunkcjaZLimitem(f.WithKernel(kernel), licznik, slad))   // slad: List<WywolanieNarzedzia>
     .ToList();
+// nazwy widziane przez model (FullyQualifiedAIFunction): "sympy_sprawdz_rownowaznosc", "sympy_postac_liniowa"
+
+public sealed class FunkcjaZLimitem(AIFunction wewn, LicznikWywolanFunkcji licznik, List<WywolanieNarzedzia> slad)
+    : DelegatingAIFunction(wewn)
+{
+    protected override async ValueTask<object?> InvokeCoreAsync(AIFunctionArguments argumenty, CancellationToken ct)
+    {
+        var nr = Interlocked.Increment(ref licznik.Wartosc);
+        if (nr > licznik.Limit) throw new BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI");   // MaximumConsecutiveErrorsPerRequest = 0 → wyjątek wychodzi z pętli
+        var start = Stopwatch.GetTimestamp();
+        var wynik = await base.InvokeCoreAsync(argumenty, ct);
+        slad.Add(WywolanieNarzedzia.Z(nr, Name, argumenty, wynik, Stopwatch.GetElapsedTime(start)));
+        return wynik;
+    }
+}
 ```
 
-`FunkcjaZLimitem : DelegatingAIFunction` przy każdym `InvokeAsync`
+`FunkcjaZLimitem : DelegatingAIFunction` przy każdym wywołaniu
 zwiększa licznik (`Interlocked.Increment`), przy wartości > 8 rzuca
 `BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`, a po wykonaniu
-dopisuje `WywolanieNarzedzia` (nr, nazwa, argumenty JSON ≤ 2 000 znaków i
+dopisuje `WywolanieNarzedzia` (nr, nazwa `sympy_*`, argumenty JSON ≤ 2 000 znaków i
 SHA-256, rezultat, czas) i metrykę `wywolania_funkcji_total{funkcja,wynik}`.
 `FunctionInvokingChatClient` w potoku roli `GENERATYWNY_ZADANIA` ma
-`MaximumIterationsPerRequest = 8` (parametr `maks_iteracji_funkcji`),
-`AllowConcurrentInvocation = false`.
+(wersja 3.2, ADR-058 uzup. p. 1) `MaximumIterationsPerRequest = limit + 1 = 9`,
+`MaximumConsecutiveErrorsPerRequest = 0`, `AllowConcurrentInvocation = false`,
+`TerminateOnUnknownCalls = true`. Zmierzono (MEAI 10.11, SK 1.81, fałszywy
+model żądający wywołań bez końca): 8 wykonań i wyjątek
+`LIMIT_WYWOLAN_FUNKCJI` przy 9. żądaniu wywołania; model żądający
+dokładnie 8 wywołań — 8 wykonań i odpowiedź końcowa; wywołanie nazwy spoza
+listy (`sprawdz_rownowaznosc` bez prefiksu) — 0 wykonań i odpowiedź z
+`FunctionCallContent`, którą `WywolanieCzatu` zamienia na
+`NIEZNANE_NARZEDZIE`.
 
 #### 10.2.5 Orkiestracja generowania i Walidacji
 
@@ -4608,7 +4710,7 @@ sequenceDiagram
     A->>M: DlaRoliAsync → GetResponseAsync (system: zadanie-v1, user: przykłady JSON, Tools: 2 funkcje)
     loop ≤ 8 wywołań funkcji
         M-->>A: żądanie wywołania funkcji (FunctionInvokingChatClient)
-        A->>S: sprawdz_rownowaznosc / postac_liniowa
+        A->>S: sympy_sprawdz_rownowaznosc / sympy_postac_liniowa
         S-->>A: ROWNOWAZNE | NIEROWNOWAZNE | NIEROZSTRZYGNIETE
     end
     M-->>A: ZadanieWygenerowaneModelu (JSON)
@@ -4627,7 +4729,7 @@ sequenceDiagram
 ```
 
 Sprawdzenia W-2, W-3 i plan Q-WA są wykonywane równolegle
-(`Task.WhenAll`), a W-1 przed nimi (negatywne W-1 kończy Walidację bez
+(`Task.WhenAll`; porty bez `LematDbContext` zakresu, 10.0.7), a W-1 przed nimi (negatywne W-1 kończy Walidację bez
 wywołań modeli). Pytania Q-WA-04 (wynikanie kroków) są zadawane tylko dla
 par kroków z rezultatem SymPy `NIEROWNOWAZNE`/`NIEROZSTRZYGNIETE`, maks. 12
 par (jak Q-OC-05). Koszt wszystkich wywołań (raport potoku, 10.0.2) jest
@@ -4635,13 +4737,19 @@ sumowany do `zlecenie_generowania.koszt_pln` i budżetu 12.7.
 
 - **Mock:** `MockChatClient` z danymi `Mock/Dane/GENERATYWNY_ZADANIA/zadanie-v1/*.json`
   (z sekwencją wywołań funkcji) i `MockModelDecyzyjny` dla Q-WA dają
-  deterministyczne Zadanie i Walidację; test
-  `LimitWywolanFunkcjiTests` — 9 żądań wywołań → zlecenie z przyczyną
-  `LIMIT_WYWOLAN_FUNKCJI`.
+  deterministyczne Zadanie i Walidację (scenariusze
+  `generowanie-z-narzedziami`, `generowanie-limit-wywolan`, ADR-065); test
+  `LimitWywolanFunkcjiTests` — model żądający 9 wywołań
+  `sympy_sprawdz_rownowaznosc` → 8 wykonań, zlecenie z przyczyną
+  `LIMIT_WYWOLAN_FUNKCJI`; `NazwyNarzedziZgodneZPromptemIMock`;
+  `WalidacjaPrzyObwodzieOtwartym` (C7-08).
 - **Telemetria:** span `invoke_agent agent_generujacy` z
   `lemat.zlecenie_generowania_id`, `lemat.nr_cyklu`; spany
-  `execute_tool sprawdz_rownowaznosc` / `execute_tool postac_liniowa` z
-  `Microsoft.Extensions.AI`.
+  `chat {model}` per żądanie, `execute_tool sympy_sprawdz_rownowaznosc` /
+  `execute_tool sympy_postac_liniowa` i `orchestrate_tools` z
+  `Microsoft.Extensions.AI` (kolejność potoku ADR-058 uzup. 3.2 p. 3; test
+  `Lemat.Modele.Tests/SpanyPotokuGenerowania`: 2 wywołania → 3 spany `chat`
+  i 2 `execute_tool`).
 
 ### 10.3 Agent rozpoznający
 
@@ -5942,26 +6050,62 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
 
 ---
 
-## 12. Kontrakty API (REST)
+## 12. Kontrakty API (REST + SSE)
 
-> **Do przepisania na .NET w iteracji 3 — treść domenowa obowiązuje.** Iteracja 3 przepisuje konwencje 12.1 (OpenAPI z `Microsoft.AspNetCore.OpenApi`, SSE zamiast odpytywania — ADR-051), typy DTO 12.4 jako rekordy C# z typami TypeScript generowanymi z OpenAPI oraz dodaje kontrakty strumieni SSE. Parametry ścieżek są od wersji 3.0 ujednolicone według ADR-049 p. 5. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+Kontrakt komunikacji między frontendem Next.js (przeglądarka, ADR-054: bez
+BFF) a procesem `api` (ASP.NET Core 10, Minimal API). Źródłem kontraktu są
+rekordy C# i metadane endpointów; dokument OpenAPI 3.1 i typy TypeScript są
+z nich generowane (ADR-061). Decyzje: ADR-060 (błędy), ADR-061 (OpenAPI i
+klient TS), ADR-062 (semantyka HTTP), ADR-064 (SSE), ADR-057 (sesja w wielu
+kartach). Długie listingi (rekordy C# wszystkich kontraktów, przykład grupy
+endpointów, kod klienta, kontrakty zdarzeń, mapowanie stron) są w
+[`docs/spec/api.md`](spec/api.md).
 
+```mermaid
+flowchart LR
+    subgraph przegladarka["Przeglądarka (Next.js, komponenty klienckie)"]
+        Q["TanStack Query<br/>features/*"] --> K["lib/api/klient.ts<br/>openapi-fetch + schema.d.ts"]
+        S["lib/sse/strumien.ts<br/>fetch + eventsource-parser"]
+        T["lib/auth/odswiezanie.ts<br/>Web Locks + BroadcastChannel"]
+        K --> T
+        S --> T
+    end
+    CD["Caddy<br/>(TLS, HTTP/2, flush_interval -1 dla */strumien)"]
+    subgraph api["Proces api (ASP.NET Core 10)"]
+        MW["UseExceptionHandler → UseRateLimiter →<br/>UseAuthentication → UseAuthorization"]
+        F["Filtry endpointów: FiltrWalidacji,<br/>FiltrIdempotencji, FiltrWersji"]
+        E["Endpointy Minimal API<br/>(MapGroup /api/v1/…)"]
+        UC["Przypadki użycia<br/>Lemat.Application"]
+        KZ["KoncentratorZdarzen<br/>(LISTEN lemat_zdarzenia)"]
+        MW --> F --> E --> UC
+        E -. "SSE" .-> KZ
+    end
+    K -- "REST JSON" --> CD
+    CD --> MW
+    S -- "text/event-stream" --> CD
+    T -- "POST /auth/odswiezenie (cookie lemat_rt)" --> CD
+    UC --> DB[("PostgreSQL 16")]
+    DB -- "NOTIFY po COMMIT" --> KZ
+```
 
 ### 12.1 Konwencje
 
 | Element | Ustalenie |
 |---|---|
-| Bazowa ścieżka | `/api/v1`; zmiana niekompatybilna → `/api/v2`, `v1` utrzymywane 6 miesięcy |
-| Format | JSON UTF-8; czasy ISO-8601 w UTC (`2026-10-31T18:00:00Z`); identyfikatory UUID v4 |
-| Specyfikacja | OpenAPI 3.1 generowane z FastAPI, publikowane pod `/api/v1/openapi.json`; test kontraktowy w CI porównuje z wersją w repozytorium |
-| Uwierzytelnianie | `Authorization: Bearer <JWT>` (EdDSA, 15 min, claims: `sub`, `rola`, `exp`, `jti`); refresh token w cookie `lemat_rt` (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`) |
-| Optymistyczna blokada | Odpowiedź z zasobem wersjonowanym zawiera `ETag: "<version>"` (dla Weryfikacji — wersja treści, ADR-037); operacje modyfikujące wymagają `If-Match` (brak → `428 WYMAGANY_IF_MATCH`, niezgodność → `412 KONFLIKT_WERSJI`). **Zasób `If-Match`** jest podany w kolumnie „ETag” katalogu 12.3: `R` — Rozwiązanie, `W` — Weryfikacja, `Z` — Zadanie, `U` — Uczeń/Użytkownik, `S` — Zestaw zadań, `K` — Klasa, `WT` — Wkładka teoretyczna |
-| Idempotencja | `Idempotency-Key: <uuid>` wymagany dla `POST /rozwiazania`, `POST /zadania/{id}/odpowiedzi`, `POST /zadania/generowanie`, `POST /przypisania`, `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu`, `POST /zadania/{id}/zgloszenia-bledu`, `DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`; zapisane są `kod_statusu_http` i `cialo_http`; powtórka z tym samym kluczem i ciałem zwraca zapisaną odpowiedź; inne ciało → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`; ważność 24 h; właściciel: `lemat.http` |
-| Stronicowanie | `?limit=1..100` (domyślnie 50) i `?kursor=<nieprzezroczysty>`; odpowiedź `{ "elementy": [...], "nastepny_kursor": string \| null }` |
-| Język | Komunikaty `title`/`detail` po polsku (NFR-10) |
-| Odpytywanie | `GET /rozwiazania/{id}` zwraca `nastepne_odpytanie_ms`: 1000 w stanach `PRZESLANE`, `ROZPOZNAWANIE`, `ZATWIERDZONE`, `OCENIANIE` oraz gdy `ocena.wskazowka_w_przygotowaniu`; `null` w pozostałych (ADR-014) |
+| Bazowa ścieżka i wersja | `/api/v1`; w obrębie `v1` wyłącznie zmiany zgodne wstecz (nowy endpoint, nowe pole odpowiedzi, nowe pole opcjonalne żądania); zmiana niekompatybilna → `/api/v2`, `v1` utrzymywane 6 miesięcy z nagłówkami `Deprecation`/`Sunset`; `X-Lemat-Wersja-Api: 1.N.M` w każdej odpowiedzi (ADR-062 p. 1); CI `oasdiff breaking` blokuje zmianę niekompatybilną |
+| Format | JSON UTF-8, `snake_case` (ADR-049), `NumberHandling.Strict`, enumy `UPPER_SNAKE`, pola `null` wysyłane jawnie; czasy ISO-8601 UTC; identyfikatory UUID (`powiadomienie.id` — UUIDv7); opcje `JsonApi.Konfiguruj` (api.md 1) |
+| Specyfikacja | OpenAPI 3.1.1 z `Microsoft.AspNetCore.OpenApi` 10 generowane przy budowie do `backend/openapi/lemat-v1.json` (w repozytorium) i publikowane pod `/api/v1/openapi.json` (tylko poza `Production` oraz dla roli `Administrator` w `Production`); typy TS: `openapi-typescript` 7 → `frontend/src/lib/api/schema.d.ts`; CI sprawdza brak różnic obu plików (ADR-061) |
+| Uwierzytelnianie | `Authorization: Bearer <JWT>` (ES256, 15 min, claims `sub`, `rola`, `status`, `weryfikator_globalny`, `recenzent_tresci`, `exp`, `jti`); refresh token w cookie `lemat_rt` (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`), rotacja z oknem tolerancji 30 s (ADR-020, ADR-057); cookie `lemat_rola` wyłącznie do przekierowań `proxy.ts` |
+| Polityki autoryzacji | `Anonimowy` (`AllowAnonymous`), `Zalogowany`, `Uczen`, `Nauczyciel`, `RecenzentTresci`, `WeryfikatorGlobalny`, `Administrator`, `UczenLubNauczyciel`, `NauczycielLubAdministrator`, `RecenzentLubAdministrator` — przypisane grupom endpointów; każda z wyjątkiem `Anonimowy` wymaga `status = AKTYWNE` (inaczej `403 KONTO_NIEAKTYWNE`); uprawnienia obiektowe 12.8 sprawdza przypadek użycia na obiekcie `Aktor` (ADR-062 p. 2) |
+| Optymistyczna blokada | Zasób wersjonowany zwraca silny `ETag: "<version>"` (Weryfikacja — wersja treści, ADR-037); operacje z kolumną „ETag” ≠ — wymagają `If-Match` (brak → `428 WYMAGANY_IF_MATCH`, niezgodność → `412 KONFLIKT_WERSJI` z aktualnym zasobem w `szczegoly.aktualny`); `If-None-Match` na `GET` → `304`. Zasoby: `R` — Rozwiązanie, `W` — Weryfikacja, `Z` — Zadanie, `U` — Uczeń/Użytkownik, `S` — Zestaw zadań, `K` — Klasa, `WT` — Wkładka teoretyczna, `B` — Stan bezpiecznika (3.2, C-44). Realizacja: `FiltrWersji` + token współbieżności EF Core (15.3) |
+| Idempotencja | `Idempotency-Key: <uuid>` wymagany w operacjach z kolumną „Idem.” = tak (16 operacji tworzących zasób albo wywołujących skutek zewnętrzny); zapis w `klucz_idempotencji` (24 h); powtórka z tym samym kluczem i ciałem → zapisana odpowiedź + `Idempotent-Replayed: true`; w toku → `409 IDEMPOTENCJA_W_TOKU`; inne ciało → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`; brak → `428 WYMAGANY_IDEMPOTENCY_KEY`; odpowiedzi `5xx` nie są zapisywane (ADR-062 p. 3) |
+| Stronicowanie | `?limit=1..100` (domyślnie 50) i `?kursor=<base64url, podpis HMAC>`; odpowiedź `Strona<T> { elementy, nastepny_kursor }`; sortowanie zawsze zakończone `id` (ADR-062 p. 5) |
+| Limity | biznesowe 12.7 (`429 LIMIT_PRZEKROCZONY` z `Retry-After`), techniczne: `RateLimiter` 20 żądań/s na użytkownika, 5/min logowań na IP, 600/min na IP w Caddy; rozmiar ciała 1 MB (zdjęcia 52 MB, plik ≤ 10 MB); czas żądania 30 s (`RequestTimeouts`), SSE bez limitu (zamknięcie po 10 min, ADR-064) |
+| Język | `title`/`detail` po polsku (NFR-10); komunikaty UI z `messages/pl-PL.json` po `kod` (14.4) |
+| Postęp operacji | SSE (12.10); odpytywanie `GET` zasobu wyłącznie jako ścieżka zapasowa (`nastepne_odpytanie_ms` = 1000 w stanach `PRZESLANE`, `ROZPOZNAWANIE`, `ZATWIERDZONE`, `OCENIANIE` i przy `ocena.wskazowka_w_przygotowaniu`, w pozostałych `null`) |
+| CORS i CSRF | ten sam origin przez Caddy, bez CORS; brak cookie z poświadczeniem dla `/api/v1/*` poza `/auth/*` (`SameSite=Strict`), więc antyforgery jest wyłączone (`DisableAntiforgery` dla multipart) |
 
-### 12.2 Model błędu (RFC 9457)
+### 12.2 Model błędu (RFC 9457, ADR-060)
 
 ```json
 {
@@ -5969,167 +6113,212 @@ z dopiskiem komentarza Nauczyciela (≤ 500 znaków, opcjonalny).
   "title": "Nieprawidłowy stan rozwiązania",
   "status": 409,
   "detail": "Transkrypcji nie można zmienić po zatwierdzeniu.",
-  "kod": "ROZWIAZANIE_NIEPRAWIDLOWY_STAN",
   "instance": "/api/v1/rozwiazania/7c1e…/transkrypcja",
-  "bledy_pol": [ { "pole": "kroki[3].latex", "komunikat": "Maksymalnie 2000 znaków." } ]
+  "kod": "ROZWIAZANIE_NIEPRAWIDLOWY_STAN",
+  "trace_id": "937cc0277c3834f55269f5cd2e927c23",
+  "szczegoly": { "status": "ZATWIERDZONE" }
 }
 ```
 
-| Kod | HTTP | Znaczenie |
-|---|---|---|
-| `WALIDACJA` | 422 | Błędne dane wejściowe (`bledy_pol`) |
-| `NIEUWIERZYTELNIONY` | 401 | Brak/nieważny token |
-| `BRAK_UPRAWNIEN` | 403 | Rola lub relacja (np. Uczeń spoza Klasy, Nauczyciel bez uprawnienia Przeglądu) nie pozwala |
-| `KONTO_NIEAKTYWNE` | 403 | Konto `OCZEKUJE_NA_ZATWIERDZENIE`/`ZABLOKOWANE`/`USUWANE` |
-| `NIE_ZNALEZIONO` | 404 | Zasób nie istnieje lub nie jest widoczny dla użytkownika |
-| `ROZWIAZANIE_NIEPRAWIDLOWY_STAN` | 409 | Operacja niedozwolona w stanie Rozwiązania (8.1) |
-| `ELEMENT_SCIEZKI_NIEAKTYWNY` | 409 | Element nie jest `PROPONOWANY`/`ROZPOCZETY` lub dotyczy innego Zadania |
-| `WERSJA_ZADANIA_NIEAKTUALNA` | 409 | `zadanie_wersja_id` nie jest wersją akceptowaną (12.5) — Uczeń musi odświeżyć treść |
-| `ZADANIE_NIEDOSTEPNE` | 409 | Zadanie `WYCOFANE`/`ODRZUCONE` i element nie jest `ROZPOCZETY` |
-| `WERYFIKACJA_ZAJETA` | 409 | Weryfikację z ważną blokadą trzyma inny Nauczyciel |
-| `WERYFIKACJA_NIE_PODJETA` | 409 | Rozstrzygnięcie, przedłużenie lub szkic bez aktualnej blokady |
-| `BLOKADA_MAKS_CZAS` | 409 | Przedłużenie przekroczyłoby 2 h od podjęcia |
-| `OCENA_ZMIENIONA` | 409 | Ocena weryfikowana została zastąpiona w międzyczasie (korekta) |
-| `PRZYPISANIE_PO_TERMINIE` | 409 | Odpowiedź w kontekście Przypisania (także z elementu `R-PRZYPISANIE`) po terminie albo Rozwiązanie po terminie + 7 dni (12.5) |
-| `TEST_NIEDOSTEPNY` | 409 | Pula Zadań diagnostycznych pokrywa < 50% planowanych pozycji Testu diagnostycznego (9.1) |
-| `PULA_DIAGNOSTYCZNA_ZA_MALA` | 409 | Wyłączenie flagi `diagnostyczne` obniżyłoby pulę (Dział, poziom matury, Poziom trudności) poniżej 3 (bez `?wymus=true`) |
-| `ZGLOSZENIE_ZADANIA_ISTNIEJE` | 409 | Nauczyciel ma już otwarte Zgłoszenie błędu w tym Zadaniu |
-| `OSTATNI_ADMINISTRATOR` | 409 | Usunięcie lub blokada ostatniego aktywnego konta Administratora |
-| `LIMIT_PRZESLAN` | 409 | Wyczerpane 3 przesłania zdjęć |
-| `LIMIT_PONOWIEN_ROZPOZNANIA` | 409 | Wyczerpane 5 ponowień rozpoznania |
-| `ZGLOSZENIE_NIEDOSTEPNE` | 409 | Zgłoszenie błędu odczytu poza warunkami 11.6 |
-| `TEST_ZAKONCZONY` | 409 | Odpowiedź do zakończonego Testu diagnostycznego |
-| `TEST_JUZ_WYKONANY` | 409 | Test diagnostyczny dla tego poziomu matury już wykonano |
-| `ZESTAW_UZYWANY` | 409 | Usunięcie Zestawu zadań użytego w Przypisaniu |
-| `KONTO_NIE_DO_PRZYWROCENIA` | 409 | Konto nie jest `USUWANE` albo minęło 30 dni |
-| `KONTO_UCZNIA_NIEAKTYWNE` | 409 | Rozstrzygnięcie lub korekta dla Ucznia w okresie karencji usunięcia konta (ADR-040, C3-08); szkic rozstrzygnięcia pozostaje zapisany |
-| `BEZPIECZNIK_NIEAKTYWNY` | 409 | Dezaktywacja bezpiecznika, który nie jest aktywny (ADR-046, C4-04) |
-| `BRAK_PROGU_DLA_KONFIGURACJI` | 409 | Aktywacja konfiguracji decyzyjnej bez Progu pewności z ZT-1 |
-| `BRAK_RETENCJI_DOSTAWCY` | 409 | Aktywacja konfiguracji bez potwierdzonej retencji dostawcy (A-07) |
-| `KONFLIKT_WERSJI` | 412 | `If-Match` niezgodny |
-| `ZDJECIE_ZA_DUZE` | 413 | Plik > 10 MB |
-| `NIEOBSLUGIWANY_FORMAT` | 415 | Inny niż JPEG/PNG/HEIC/WEBP |
-| `KLUCZ_IDEMPOTENCJI_KONFLIKT` | 422 | Ten sam klucz, inne ciało |
-| `ZA_DUZO_ZDJEC` | 422 | Więcej niż 5 zdjęć w jednym przesłaniu lub 0 zdjęć |
-| `ZDJECIE_NIEPRAWIDLOWE` | 422 | Plik nie dekoduje się albo przekracza 12 000 px w jednym wymiarze lub 40 mln pikseli (ADR-045) |
-| `POPRAWKI_ZBYT_ROZLEGLE` | 422 | Poprawka Transkrypcji przekracza limit twardy ADR-036 (usunięcie kroku, > 2 kroki wstawione, krok wstawiony dłuższy niż limit 9.4, zbyt wiele zmienionych kroków lub znaków — kroki wstawione wliczone); `detail` podaje limit i wartość |
-| `WYMAGANY_KOD_ZAPROSZENIA` | 422 | Rejestracja Ucznia bez kodu zaproszenia, gdy `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) |
-| `LIMIT_OBCIAZENIA_WERYFIKATORA` | 422 | Nadanie flagi `weryfikator_globalny` Nauczycielowi, którego prognoza kolejki `KLASA` na dzień roboczy (17.7, 7/5 obciążenia dobowego) + `deklarowane_minuty_weryfikacji` > 180 min na dzień roboczy (A-14) |
-| `WYMAGANY_IF_MATCH` | 428 | Brak `If-Match` |
-| `LIMIT_PRZEKROCZONY` | 429 | Limit szybkości (nagłówek `Retry-After`) |
-| `BLAD_WEWNETRZNY` | 500 | Nieobsłużony wyjątek; `instance` zawiera `trace_id`, bez szczegółów technicznych |
-| `USLUGA_NIEDOSTEPNA` | 503 | Baza, magazyn obiektów lub bucket `rejestr-zdarzen-rodo` niedostępne, albo piaskownica normalizacji zdjęć zajęta > 5 s (`Retry-After: 5`) |
+Kształt sprawdzony na ASP.NET Core 10.0.14 (`IExceptionHandler` +
+`IProblemDetailsService`): `Content-Type: application/problem+json`, pola
+`type`, `title`, `status`, `detail`, `instance`, `kod`, `trace_id`. Rekord
+C# `ProblemDetailsLemat` i katalog `katalog-bledow.yaml` — api.md 2.
+Wspólne kody każdego endpointu (niepowtarzane w 12.3): `401
+NIEUWIERZYTELNIONY`, `403 BRAK_UPRAWNIEN`/`KONTO_NIEAKTYWNE`, `429
+LIMIT_PRZEKROCZONY` (RateLimiter), `500 BLAD_WEWNETRZNY`, `503
+BAZA_NIEDOSTEPNA`/`USLUGA_NIEDOSTEPNA`; ścieżka z `{id}` — `404
+NIE_ZNALEZIONO`; ciało — `422 WALIDACJA`, `413 ZAPYTANIE_ZA_DUZE`; ETag —
+`412`/`428`; „Idem.” — `409 IDEMPOTENCJA_W_TOKU`, `422
+KLUCZ_IDEMPOTENCJI_KONFLIKT`, `428 WYMAGANY_IDEMPOTENCY_KEY`; strona —
+`400 KURSOR_NIEPRAWIDLOWY`.
+
+| Kod (`kod`) | HTTP | E-xx (14.1) | Znaczenie | `szczegoly` |
+|---|---|---|---|---|
+| `KURSOR_NIEPRAWIDLOWY` | 400 | — | Kursor stronicowania zmieniony, sfałszowany albo z innego zapytania (ADR-062 p. 5) | — |
+| `NAGLOWEK_NIEPRAWIDLOWY` | 400 | — | `If-Match` niebędący liczbą w cudzysłowie, `Idempotency-Key` niebędący UUID | — |
+| `NIEUWIERZYTELNIONY` | 401 | E-39 | Brak/nieważny token | — |
+| `SESJA_UNIEWAZNIONA` | 401 | E-40 | Refresh token unieważniony, wygasły albo użyty ponownie poza oknem tolerancji (ADR-057); klient wylogowuje wszystkie karty | — |
+| `BRAK_UPRAWNIEN` | 403 | — | Rola lub relacja (np. Uczeń spoza Klasy, Nauczyciel bez uprawnienia Przeglądu) nie pozwala | — |
+| `KONTO_NIEAKTYWNE` | 403 | — | Konto `OCZEKUJE_NA_ZATWIERDZENIE`/`ZABLOKOWANE`/`USUWANE` | — |
+| `KOD_ZAPROSZENIA_NIEWAZNY` | 404 | — | Kod zaproszenia nie istnieje, wygasł albo Klasa jest zarchiwizowana (6.8) | — |
+| `NIE_ZNALEZIONO` | 404 | — | Zasób nie istnieje lub nie jest widoczny dla użytkownika | — |
+| `METODA_NIEDOZWOLONA` | 405 | — | Metoda HTTP nieobsługiwana dla ścieżki | — |
+| `BEZPIECZNIK_NIEAKTYWNY` | 409 | — | Dezaktywacja bezpiecznika, który nie jest aktywny (ADR-046, C4-04) | — |
+| `BLOKADA_MAKS_CZAS` | 409 | — | Przedłużenie przekroczyłoby 2 h od podjęcia | — |
+| `BRAK_PROGU_DLA_KONFIGURACJI` | 409 | — | Aktywacja konfiguracji decyzyjnej bez Progu pewności z ZT-1 | — |
+| `BRAK_RETENCJI_DOSTAWCY` | 409 | — | Aktywacja konfiguracji bez potwierdzonej retencji dostawcy (A-07) | — |
+| `DOSTAWCA_NIEDOZWOLONY` | 409 | — | Aktywacja konfiguracji `mock` w środowisku `Production` (13.1) | — |
+| `ELEMENT_SCIEZKI_NIEAKTYWNY` | 409 | — | Element nie jest `PROPONOWANY`/`ROZPOCZETY` lub dotyczy innego Zadania | — |
+| `KONFLIKT_WSPOLBIEZNOSCI` | 409 | E-47 | Zakleszczenie, konflikt serializacji albo konflikt tokenu współbieżności bez `If-Match` (15.2); klient ponawia z tym samym `Idempotency-Key` po `Retry-After: 1` | — |
+| `IDEMPOTENCJA_W_TOKU` | 409 | E-41 | Żądanie z tym samym `Idempotency-Key` jest jeszcze wykonywane (`Retry-After: 1`, ADR-062 p. 3) | — |
+| `KONTO_NIE_DO_PRZYWROCENIA` | 409 | — | Konto nie jest `USUWANE` albo minęło 30 dni | — |
+| `KONTO_UCZNIA_NIEAKTYWNE` | 409 | — | Rozstrzygnięcie lub korekta dla Ucznia w okresie karencji usunięcia konta (ADR-040, C3-08); szkic rozstrzygnięcia pozostaje zapisany | — |
+| `LIMIT_PONOWIEN_ROZPOZNANIA` | 409 | E-03 | Wyczerpane 5 ponowień rozpoznania | — |
+| `LIMIT_PRZESLAN` | 409 | E-04 | Wyczerpane 3 przesłania zdjęć | — |
+| `OCENA_ZMIENIONA` | 409 | — | Ocena weryfikowana została zastąpiona w międzyczasie (korekta) | `{aktualna_ocena_id}` |
+| `OSTATNI_ADMINISTRATOR` | 409 | — | Usunięcie lub blokada ostatniego aktywnego konta Administratora | — |
+| `PRZYPISANIE_PO_TERMINIE` | 409 | — | Odpowiedź w kontekście Przypisania (także z elementu `R-PRZYPISANIE`) po terminie albo Rozwiązanie po terminie + 7 dni (12.5) | — |
+| `PULA_DIAGNOSTYCZNA_ZA_MALA` | 409 | — | Wyłączenie flagi `diagnostyczne` obniżyłoby pulę (Dział, poziom matury, Poziom trudności) poniżej 3 (bez `?wymus=true`) | `{pula_po: number}` |
+| `ROZWIAZANIE_NIEPRAWIDLOWY_STAN` | 409 | E-13 (UI), C-01, C-02 | Operacja niedozwolona w stanie Rozwiązania (8.1) | `{istniejace_rozwiazanie_id?, status}` |
+| `TEST_JUZ_WYKONANY` | 409 | — | Test diagnostyczny dla tego poziomu matury już wykonano | — |
+| `TEST_NIEDOSTEPNY` | 409 | E-34 | Pula Zadań diagnostycznych pokrywa < 50% planowanych pozycji Testu diagnostycznego (9.1) | — |
+| `TEST_ZAKONCZONY` | 409 | — | Odpowiedź do zakończonego Testu diagnostycznego | — |
+| `EMAIL_ZAJETY` | 409 | — | Rejestracja na adres, który ma już konto (komunikat nie potwierdza istnienia konta innej osobie: „Nie udało się założyć konta na ten adres — zaloguj się albo zresetuj hasło”) | — |
+| `TRANSKRYPCJA_NIEAKTUALNA` | 409 | — | Zatwierdzana Transkrypcja nie jest najnowszą wersją (C6-04) | — |
+| `WERSJA_ZADANIA_NIEAKTUALNA` | 409 | — | `zadanie_wersja_id` nie jest wersją akceptowaną (12.5) — Uczeń musi odświeżyć treść | `{aktualna_zadanie_wersja_id}` |
+| `WERYFIKACJA_NIE_PODJETA` | 409 | — | Rozstrzygnięcie, przedłużenie lub szkic bez aktualnej blokady | — |
+| `WERYFIKACJA_ZAJETA` | 409 | E-16 | Weryfikację z ważną blokadą trzyma inny Nauczyciel | `{podjeta_przez: OsobaSkrot, zablokowana_do}` |
+| `ZADANIE_NIEDOSTEPNE` | 409 | — | Zadanie `WYCOFANE`/`ODRZUCONE` i element nie jest `ROZPOCZETY` | — |
+| `ZESTAW_UZYWANY` | 409 | — | Usunięcie Zestawu zadań użytego w Przypisaniu | — |
+| `ZGLOSZENIE_NIEDOSTEPNE` | 409 | — | Zgłoszenie błędu odczytu poza warunkami 11.6 | — |
+| `ZGLOSZENIE_ZADANIA_ISTNIEJE` | 409 | — | Nauczyciel ma już otwarte Zgłoszenie błędu w tym Zadaniu | — |
+| `KONFLIKT_WERSJI` | 412 | E-15 | `If-Match` niezgodny | `{aktualny: <zasób>, zmiany_tresci?: string[]}` + nagłówek `ETag` |
+| `ZAPYTANIE_ZA_DUZE` | 413 | E-01 | Ciało żądania ponad limit endpointu (1 MB; 52 MB dla przesłania zdjęć, ADR-062 p. 7) | — |
+| `ZDJECIE_ZA_DUZE` | 413 | E-01 | Plik > 10 MB | — |
+| `NIEOBSLUGIWANY_FORMAT` | 415 | E-01 | Inny niż JPEG/PNG/HEIC/WEBP | — |
+| `KLUCZ_IDEMPOTENCJI_KONFLIKT` | 422 | E-41 | Ten sam klucz, inne ciało | — |
+| `LIMIT_OBCIAZENIA_WERYFIKATORA` | 422 | — | Nadanie flagi `weryfikator_globalny` Nauczycielowi, którego prognoza kolejki `KLASA` na dzień roboczy (17.7, 7/5 obciążenia dobowego) + `deklarowane_minuty_weryfikacji` > 180 min na dzień roboczy (A-14) | `{prognoza_min, limit_min}` |
+| `POPRAWKI_ZBYT_ROZLEGLE` | 422 | E-31 | Poprawka Transkrypcji przekracza limit twardy ADR-036 (usunięcie kroku, > 2 kroki wstawione, krok wstawiony dłuższy niż limit 9.4, zbyt wiele zmienionych kroków lub znaków — kroki wstawione wliczone); `detail` podaje limit i wartość | `{limit, wartosc, rodzaj}` |
+| `WALIDACJA` | 422 | — | Błędne dane wejściowe (`bledy_pol`) | `bledy_pol` |
+| `WYMAGANY_KOD_ZAPROSZENIA` | 422 | — | Rejestracja Ucznia bez kodu zaproszenia, gdy `LEMAT_REJESTRACJA_BEZ_KLASY = false` (A-14) | — |
+| `ZA_DUZO_ZDJEC` | 422 | E-01 | Więcej niż 5 zdjęć w jednym przesłaniu lub 0 zdjęć | — |
+| `ZDJECIE_NIEPRAWIDLOWE` | 422 | E-35 | Plik nie dekoduje się albo przekracza 12 000 px w jednym wymiarze lub 40 mln pikseli (ADR-045) | — |
+| `WYMAGANY_IDEMPOTENCY_KEY` | 428 | — | Brak nagłówka `Idempotency-Key` w operacji z kolumną „Idem.” 12.3 | — |
+| `WYMAGANY_IF_MATCH` | 428 | — | Brak `If-Match` | — |
+| `LIMIT_PRZEKROCZONY` | 429 | E-30 (generowanie) | Limit szybkości (nagłówek `Retry-After`) | `{zakres, limit, okno_s}` + `Retry-After` |
+| `ZA_DUZO_STRUMIENI` | 429 | E-42 | Limit strumieni SSE repliki (≤ 4 na użytkownika i zasób, ≤ 12 na użytkownika, ADR-057 p. 4), `Retry-After: 30` | — |
+| `BLAD_WEWNETRZNY` | 500 | E-25, E-45 | Nieobsłużony wyjątek; `instance` zawiera `trace_id`, bez szczegółów technicznych | — |
+| `BAZA_NIEDOSTEPNA` | 503 | E-14 | Błąd połączenia z PostgreSQL albo przekroczony czas oczekiwania na połączenie z puli (ADR-056 p. 1, ADR-059), `Retry-After: 2` | — |
+| `USLUGA_NIEDOSTEPNA` | 503 | E-02, E-36 | Baza, magazyn obiektów lub bucket `rejestr-zdarzen-rodo` niedostępne, albo piaskownica normalizacji zdjęć zajęta > 5 s (`Retry-After: 5`) | — |
 
 ### 12.3 Katalog endpointów
 
-Kolumna „Rola”: `U` — Uczeń, `N` — Nauczyciel, `NR` — Nauczyciel z
-uprawnieniem `recenzent_tresci`, `A` — Administrator, `*` — każdy
-zalogowany, `—` — publiczny. Kolumna „ETag” — zasób, którego `version`
-sprawdza `If-Match` (12.1); `—` = bez `If-Match`.
+Kolumna „Polityka (rola)”: polityka ASP.NET Core (12.1) i — w nawiasie —
+rola z wersji 2.4 z warunkiem obiektowym (12.8); `U` — Uczeń, `N` —
+Nauczyciel, `NR` — Nauczyciel z uprawnieniem `recenzent_tresci`, `A` —
+Administrator. „ETag” — zasób `If-Match` (12.1). „Idem.” — wymagany
+`Idempotency-Key`. Typy wejścia i wyjścia to rekordy C# z api.md 3 i
+schematy OpenAPI o tych samych nazwach (`components["schemas"]["<Nazwa>"]`
+w TS). Identyfikator operacji OpenAPI = `WithName` według ADR-049 p. 15.
+„Kody błędów specyficzne” — poza wspólnymi z 12.2.
 
-| Metoda | Ścieżka | Rola | ETag | Wymagania | Wejście → Wyjście |
-|---|---|---|---|---|---|
-| POST | `/auth/rejestracja` | — | — | FR-01 | `RejestracjaWejscie` → `201 SesjaWyjscie` (Nauczyciel: konto `OCZEKUJE_NA_ZATWIERDZENIE`, `201` bez tokenu) |
-| POST | `/auth/logowanie` | — | — | FR-01 | `{email, haslo}` → `200 SesjaWyjscie` |
-| POST | `/auth/odswiezenie` | cookie | — | FR-01 | — → `200 SesjaWyjscie` (rotacja refresh tokenu) |
-| POST | `/auth/wylogowanie` | * | — | FR-01 | — → `204` |
-| POST | `/auth/reset-hasla` | — | — | FR-01 | `{email}` → `202` (zawsze, bez ujawniania istnienia konta) |
-| POST | `/auth/reset-hasla/potwierdzenie` | — | — | FR-01 | `{token, nowe_haslo}` → `204` |
-| GET | `/uczniowie/ja` | U | — | FR-02 | → `UczenWyjscie` + ETag |
-| PATCH | `/uczniowie/ja` | U | U | FR-02, FR-09, NFR-09 | `{poziom_matury?, termin_egzaminu?, wybrany_dzial_id?, zgoda_na_trening?}` → `UczenWyjscie` (skutki zmiany poziomu: 9.1; odwołanie zgody `zgoda_na_trening = false` → `kopia_treningowa.usun_po := now()` w tej samej transakcji, 16.4) |
-| DELETE | `/uczniowie/ja` | U | — | NFR-09 | `{haslo}` + Idempotency-Key → `202` (Zdarzenie RODO `WNIOSEK_O_USUNIECIE` w rejestrze przed zmianą w bazie; okres karencji 30 dni, ADR-040, ADR-041, 16.4) |
-| DELETE | `/nauczyciele/ja` | N | — | NFR-09 | `{haslo}` + Idempotency-Key → `202` (usunięcie konta Nauczyciela po 30 dniach, ADR-044; Administratorzy dostają `KLASA_DO_PRZEKAZANIA` dla każdej niezarchiwizowanej Klasy) |
-| GET | `/uczniowie/ja/eksport-danych` | U | — | NFR-09 | → `200 application/zip` (dane osobowe, Rozwiązania, Oceny) |
-| DELETE | `/uczniowie/ja/klasy/{id}` | U | — | FR-30 | → `204` (opuszczenie Klasy; otwarte Weryfikacje tej Klasy pozostają u Nauczyciela docelowego) |
-| POST | `/uczniowie/ja/test-diagnostyczny` | U | — | FR-03 | — → `201 TestDiagnostycznyWyjscie` (lub `200` istniejący `W_TOKU`; `409 TEST_JUZ_WYKONANY`; `409 TEST_NIEDOSTEPNY`, 9.1) |
-| GET | `/testy-diagnostyczne/{id}` | U | — | FR-03 | → `TestDiagnostycznyWyjscie` |
-| POST | `/testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` | U | — | FR-03 | `{wybor}` → `201 {czy_zapisano: true}` (bez ujawniania poprawności do końca testu) |
-| POST | `/testy-diagnostyczne/{id}/zakonczenie` | U | — | FR-03 | — → `202 TestDiagnostycznyWyjscie` (Profil aktualizuje `AKTUALIZUJ_PROFIL`, 9.1) |
-| POST | `/testy-diagnostyczne/{id}/pominiecie` | U | — | FR-03 | — → `204` (D-14; Odpowiedzi bez Wyników zadania) |
-| GET | `/uczniowie/{id}/profil` | U (`ja`), N (Uczeń swojej Klasy) | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` |
-| GET | `/uczniowie/ja/rekomendacje/nastepna` | U | — | FR-05…FR-10 | → `200 RekomendacjaWyjscie` |
-| GET | `/uczniowie/ja/sciezka-nauki` | U | — | FR-05 | `?kursor` → strona `ElementSciezkiWyjscie` |
-| POST | `/elementy-sciezki/{id}/rozpoczecie` | U | — | FR-05, FR-16 | — → `200 ElementSciezkiWyjscie` (idempotentne; ustala `zadanie_wersja_id`) |
-| POST | `/elementy-sciezki/{id}/pominiecie` | U | — | FR-05 | — → `204` |
-| POST | `/elementy-sciezki/{id}/przeczytanie` | U | — | FR-06 | — → `204` (tylko `WKLADKA_TEORETYCZNA`) |
-| GET | `/wkladki-teoretyczne` | NR, A | — | FR-06 | `?status=DO_PRZEGLADU&umiejetnosc_id` → strona |
-| GET | `/wkladki-teoretyczne/{id}` | * | — | FR-06 | → `WkladkaWyjscie` + ETag (U: tylko `OPUBLIKOWANA`) |
-| PUT | `/wkladki-teoretyczne/{id}` | NR, A | WT | FR-06 | `{tytul, tresc_md, szacowany_czas_min, status}` → `200` |
-| GET | `/dzialy`, `/umiejetnosci` | * | — | FR-04, FR-36 | → listy referencyjne |
-| GET | `/zadania/{id}` | U, N, A | — | FR-15, FR-16 | U → `ZadanieUczniaWyjscie` (bez Rozwiązania wzorcowego i klucza); N/A → `ZadaniePelneWyjscie` + ETag |
-| POST | `/zadania/{id}/odpowiedzi` | U | — | FR-15, FR-29 | `OdpowiedzWejscie` + Idempotency-Key → `201 OdpowiedzWyjscie` |
-| POST | `/rozwiazania` | U | — | FR-16 | multipart `RozwiazanieWejscie` + Idempotency-Key → `202 RozwiazanieWyjscie` |
-| GET | `/rozwiazania` | U | — | FR-24 | `?status&kursor` → strona `RozwiazanieWyjscie` (własne) |
-| GET | `/rozwiazania/{id}` | U (własne), N (Uczeń Klasy / Weryfikacja) | — | FR-17, FR-24 | → `RozwiazanieWyjscie` + ETag |
-| GET | `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | U (własne), N | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINALNA\|MASKOWANA` (domyślnie `ORYGINALNA`; wersja 3.1, C6-12 p. 1, C6-14 p. 2 — zastępuje `302` na podpisany URL) → `200 AdresZdjeciaWyjscie { url, wygasa_at }` (podpisany URL ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) |
-| PUT | `/rozwiazania/{id}/transkrypcja` | U | R | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` (z `transkrypcja.zakres_poprawek`) / `422 POPRAWKI_ZBYT_ROZLEGLE` (ADR-036) |
-| POST | `/rozwiazania/{id}/zatwierdzenie` | U | R | FR-18, FR-19 | `{transkrypcja_id, wersja}` (wersja 3.1, C6-04: zatwierdzana Transkrypcja musi być najnowszą) → `202 RozwiazanieWyjscie` / `409 TRANSKRYPCJA_NIEAKTUALNA` / `412 KONFLIKT_WERSJI` |
-| POST | `/rozwiazania/{id}/zdjecia` | U | R | FR-16 | multipart `zdjecia[]` → `202` (nowe przesłanie; `409 LIMIT_PRZESLAN`) |
-| POST | `/rozwiazania/{id}/ponowienie-rozpoznania` | U | R | FR-17 | — → `202` (te same zdjęcia; `409 LIMIT_PONOWIEN_ROZPOZNANIA`) |
-| POST | `/rozwiazania/{id}/porzucenie` | U | R | FR-16 | — → `204` (element pozostaje aktywny do `wygasa_at`) |
-| POST | `/rozwiazania/{id}/zgloszenie-bledu-odczytu` | U | R | FR-28 | `ZgloszenieBleduOdczytuWejscie` + Idempotency-Key → `201 {weryfikacja: WeryfikacjaUcznia}` |
-| GET | `/rozwiazania/{id}/ocena` | U, N | — | FR-24, FR-27 | `?historia=true` → `OcenaWyjscie` lub lista wersji |
-| POST | `/rozwiazania/{id}/korekty` | N | R | FR-34 | `RozstrzygniecieWejscie` → `201 OcenaWyjscie` (9.6.3) / `409 KONTO_UCZNIA_NIEAKTYWNE` |
-| POST | `/klasy` | N | — | FR-30 | `{nazwa, poziom_matury}` → `201 KlasaWyjscie` (z `kod_zaproszenia`) |
-| GET | `/klasy` | N | — | FR-30 | `?zarchiwizowane=false` → lista `KlasaWyjscie` |
-| GET | `/klasy/{id}` | N | — | FR-30 | → `KlasaWyjscie` + członkowie + ETag |
-| POST | `/klasy/{id}/kod-zaproszenia` | N | K | FR-30 | — → `200 {kod_zaproszenia, kod_wazny_do, link}` (stary kod unieważniony) |
-| POST | `/klasy/{id}/archiwizacja` | N | K | FR-30 | — → `200 KlasaWyjscie` (kod zaproszenia unieważniony; Klasa nie uczestniczy w przydziale 11.4.1 p. 2; Przypisania i Weryfikacje pozostają) |
-| POST | `/klasy/dolaczenie` | U | — | FR-30 | `{kod_zaproszenia}` → `200 KlasaSkrot` (Klasa niezarchiwizowana, kod ważny) |
-| DELETE | `/klasy/{id}/uczniowie/{uczen_id}` | N | — | FR-30 | → `204` |
-| GET | `/klasy/{id}/postepy` | N | — | FR-31 | → `PostepyKlasyWyjscie` |
-| GET | `/klasy/{id}/uczniowie/{uczen_id}/rozwiazania` | N | — | FR-31 | `?kursor` → strona `RozwiazanieWyjscie` |
-| POST | `/zestawy-zadan` | N | — | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `201 ZestawZadanWyjscie` |
-| GET | `/zestawy-zadan` | N | — | FR-32 | → lista `ZestawZadanWyjscie` (własne) |
-| GET | `/zestawy-zadan/{id}` | N | — | FR-32 | → `ZestawZadanWyjscie` + ETag |
-| PUT | `/zestawy-zadan/{id}` | N | S | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `200` (zmiana nie wpływa na istniejące Przypisania — pozycje są czytane w chwili rekomendacji; usunięte pozycje znikają z otwartych Przypisań) |
-| DELETE | `/zestawy-zadan/{id}` | N | S | FR-32 | → `204` / `409 ZESTAW_UZYWANY` |
-| POST | `/przypisania` | N | — | FR-32 | `{zestaw_zadan_id, klasa_id?, uczen_ids?, termin}` + Idempotency-Key → `201` |
-| GET | `/przypisania` | N | — | FR-32 | `?klasa_id&aktywne=true&kursor` → strona `PrzypisanieWyjscie` (własne) |
-| GET | `/przypisania/{id}/postep` | N | — | FR-31, FR-32 | → `PostepPrzypisaniaWyjscie` |
-| GET | `/uczniowie/ja/przypisania` | U | — | FR-32 | → lista otwartych Przypisań z pozycjami |
-| GET | `/zadania` | N, A | — | FR-14, FR-32, FR-36 | `?dzial_id&umiejetnosc_id&rodzaj&poziom_trudnosci&pochodzenie&zasieg&status&kursor` → strona `ZadaniePelneWyjscie` (widoczność 12.8) |
-| POST | `/zadania` | N | — | FR-36 | `ZadanieWejscie` → `201` (Zadanie bazowe `BAZOWE_NAUCZYCIEL`, `PRYWATNY`, `OPUBLIKOWANE` po walidacji W-1, W-2, W-8) |
-| POST | `/zadania/generowanie` | N, A | — | FR-11 | `{umiejetnosc_id, poziom_trudnosci, poziom_matury, rodzaj}` + Idempotency-Key → `202 {zlecenie_generowania_id}` |
-| GET | `/zlecenia-generowania/{id}` | N, A | — | FR-11 | → `{status, liczba_cykli, zadanie_id, walidacja}` |
-| POST | `/zadania/{id}/przeglad` | N (zlecający lub autor wg 8.4), NR, A | Z | FR-14 | `PrzegladWejscie` → `200 ZadaniePelneWyjscie` |
-| POST | `/zadania/{id}/wycofanie` | N (autor lub zlecający, `PRYWATNY`), NR, A | Z | FR-14 | `{powod}` → `200 ZadaniePelneWyjscie` |
-| POST | `/zadania/{id}/zgloszenia-bledu` | N | — | FR-14 | `ZgloszenieBleduZadaniaWejscie` + Idempotency-Key → `201 ZgloszenieBleduZadaniaWyjscie` (tylko `GLOBALNY` i `OPUBLIKOWANE`; `409 ZGLOSZENIE_ZADANIA_ISTNIEJE`; 3 otwarte od różnych Nauczycieli → wiersz `wstrzymanie_w_doborze`, bez zmiany `zadanie.version`, ADR-038) |
-| GET | `/zgloszenia-bledu-zadan` | N (własne), NR, A | — | FR-14 | `?status=OTWARTE&zadanie_id&kursor` → strona `ZgloszenieBleduZadaniaWyjscie` (sortowanie: `created_at`) |
-| POST | `/zgloszenia-bledu-zadan/{id}/rozpatrzenie` | NR, A | Z | FR-14 | `RozpatrzenieZgloszeniaWejscie` → `200 ZgloszenieBleduZadaniaWyjscie` (`UWZGLEDNIONE` wymaga `przeglad` albo `wycofanie` w tej samej transakcji; powiadomienie zgłaszającego) |
-| GET | `/weryfikacje` | N | — | FR-33 | `?dostepnosc=DOSTEPNE\|MOJE_W_TRAKCIE\|WSZYSTKIE&powod&klasa_id&typ_kolejki&kursor` → strona `WeryfikacjaNaLiscie` (sortowanie: priorytet, termin_at) |
-| GET | `/weryfikacje/{id}` | N | — | FR-33 | → `WeryfikacjaSzczegoly` + ETag |
-| POST | `/weryfikacje/{id}/podjecie` | N | — | FR-33 | — → `200 WeryfikacjaSzczegoly` + ETag / `409 WERYFIKACJA_ZAJETA` |
-| POST | `/weryfikacje/{id}/przedluzenie` | N | — | FR-33 | — → `200 {zablokowana_do, version}` + ETag (wersja treści, niezmieniona przez przedłużenie, ADR-037) / `409 WERYFIKACJA_NIE_PODJETA` / `409 BLOKADA_MAKS_CZAS` |
-| PUT | `/weryfikacje/{id}/szkic` | N | — | FR-33 | `SzkicRozstrzygnieciaWejscie` → `204` (tylko właściciel blokady) |
-| POST | `/weryfikacje/{id}/zwolnienie` | N | — | FR-33 | — → `204` (szkic zachowany) |
-| POST | `/weryfikacje/{id}/rozstrzygniecie` | N | W | FR-34 | `RozstrzygniecieWejscie` → `200 OcenaWyjscie` / `412 KONFLIKT_WERSJI` tylko po zmianie treści (ciało: aktualny zasób + `zmiany_tresci`, 8.3) / `409 KONTO_UCZNIA_NIEAKTYWNE` (karencja, C3-08) |
-| GET | `/powiadomienia` | * | — | FR-24, FR-33 | `?nieprzeczytane=true` → lista |
-| POST | `/powiadomienia/{id}/przeczytanie` | * | — | — | → `204` |
-| POST | `/admin/arkusze-cke/importy` | A | — | FR-35 | multipart ZIP (`ArkuszImportV1`) → `202 {import_id}` |
-| GET | `/admin/arkusze-cke/importy/{id}` | A | — | FR-35 | → `{status, raport}` |
-| PUT | `/admin/zadania/{id}/diagnostyczne` | A | Z | FR-03 | `{diagnostyczne: boolean}`, `?wymus=true` → `200` (tylko `ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`; pula 9.1; `409 PULA_DIAGNOSTYCZNA_ZA_MALA`) |
-| GET | `/admin/pula-diagnostyczna` | A | — | FR-03 | → `[{dzial_id, poziom_matury, poziom_trudnosci_nominalny, liczba}]` (G-5) |
-| GET | `/admin/uzytkownicy` | A | — | — | `?rola&status&kursor` → strona |
-| PATCH | `/admin/uzytkownicy/{id}` | A | U | — | `{status?, weryfikator_globalny?, recenzent_tresci?, deklarowane_minuty_weryfikacji?}` → `200` / `422 LIMIT_OBCIAZENIA_WERYFIKATORA` (A-14) |
-| POST | `/admin/uzytkownicy/{id}/przywrocenie` | A | U | NFR-09 | — → `200` (konto dowolnej roli w stanie `USUWANE`, < 30 dni; Zdarzenie RODO `ANULOWANIE_USUNIECIA`; wznowienie procesów wg tabel przywrócenia 16.4 — osobno dla Ucznia oraz dla Nauczyciela i Administratora, C3-08; `409 KONTO_NIE_DO_PRZYWROCENIA`) |
-| POST | `/admin/uzytkownicy/{id}/usuniecie` | A | U | NFR-09 | `{powod}` → `202` (konto Nauczyciela lub innego Administratora; okres karencji 30 dni, ADR-044; `409 OSTATNI_ADMINISTRATOR`) |
-| POST | `/admin/klasy/{id}/przekazanie` | A | K | FR-30 | `{nauczyciel_id}` → `200 KlasaWyjscie` (nowy Nauczyciel prowadzący: Klasa, jej otwarte Przypisania, Zadania `PRYWATNY` użyte w tych Przypisaniach, Weryfikacje `KLASA` z `nauczyciel_docelowy_id` = poprzedni; ADR-044) |
-| GET | `/admin/konfiguracje-modeli` | A | — | NFR-06 | → lista |
-| POST | `/admin/konfiguracje-modeli` | A | — | NFR-06 | `KonfiguracjaModeluWejscie` → `201` (nieaktywna) |
-| POST | `/admin/konfiguracje-modeli/{id}/aktywacja` | A | — | NFR-06 | — → `200` / `409 BRAK_PROGU_DLA_KONFIGURACJI` / `409 BRAK_RETENCJI_DOSTAWCY` |
-| POST | `/admin/konfiguracje-modeli/{id}/ewaluacja-zt1` | A | — | NFR-02, NFR-04 | — → `202` (praca `EWALUUJ_ZT1`: kalibrator + `prog_pewnosci` `EWALUACJA_ZT1`, raport G-1/G-2) |
-| GET | `/admin/progi-pewnosci` | A | — | FR-34 | → lista z historią (z kalibratorem) |
-| POST | `/admin/progi-pewnosci` | A | — | FR-34 | `{konfiguracja_modelu_id, rodzaj_zadania, wartosc, uzasadnienie}` → `201` (ręczne ustawienie, zawsze ≥ wartości wyznaczonej przez 11.5.3 i bezpiecznik; audyt) |
-| GET | `/admin/kalibracja` | A | — | NFR-02…NFR-04 | → `MetrykiKalibracjiWyjscie` |
-| GET | `/admin/bezpieczniki` | A | — | NFR-03 | → `StanBezpiecznikaWyjscie[]` (ADR-046) |
-| POST | `/admin/bezpieczniki/dezaktywacja` | A | — | NFR-03 | `DezaktywacjaBezpiecznikaWejscie {konfiguracja_modelu_id, rodzaj_zadania, typ: "POPRAWKI" \| "TRAFNOSC", uzasadnienie (10–1000 znaków)}` → `200 StanBezpiecznikaWyjscie` (`aktywny = false`, `okno_od = dezaktywowano_at = now()`; audyt `BEZPIECZNIK_DEZAKTYWOWANY`) / `409 BEZPIECZNIK_NIEAKTYWNY` / `422 WALIDACJA` (C4-04; ścieżka `/admin/bezpieczniki/zdjecie` z wersji 2.3 nie istnieje) |
-| GET | `/admin/obciazenie-weryfikacji` | A | — | FR-33 | → `ObciazenieWeryfikacjiWyjscie` (model 17.7, G-7) |
-| POST | `/admin/wkladki-teoretyczne/szkice` | A | — | FR-06 | `{umiejetnosc_id}` → `202` (szkic Agenta generującego) |
-| GET | `/admin/praca-w-tle` | A | — | — | `?status=MARTWA&typ` → strona |
-| POST | `/admin/praca-w-tle/{id}/ponowienie` | A | — | — | — → `202` |
+| Metoda | Ścieżka | Polityka (rola) | ETag | Idem. | Wymagania | Wejście → Wyjście | Kody błędów specyficzne |
+|---|---|---|---|---|---|---|---|
+| POST | `/auth/rejestracja` | `Anonimowy` | — | — | FR-01 | `RejestracjaWejscie` → `201 SesjaWyjscie` (Nauczyciel: konto `OCZEKUJE_NA_ZATWIERDZENIE`, `201` bez tokenu) | `409 EMAIL_ZAJETY`, `422 WYMAGANY_KOD_ZAPROSZENIA`, `404 KOD_ZAPROSZENIA_NIEWAZNY` |
+| POST | `/auth/logowanie` | `Anonimowy` | — | — | FR-01 | `LogowanieWejscie` → `200 SesjaWyjscie` | `401 NIEUWIERZYTELNIONY` (zły e-mail albo hasło, jeden komunikat), `403 KONTO_NIEAKTYWNE`, `429 LIMIT_PRZEKROCZONY` (12.7) |
+| POST | `/auth/odswiezenie` | `Anonimowy` | — | — | FR-01 | — → `200 SesjaWyjscie` (rotacja refresh tokenu) | `401 SESJA_UNIEWAZNIONA` |
+| POST | `/auth/wylogowanie` | `Zalogowany` | — | — | FR-01 | — → `204` | — |
+| POST | `/auth/reset-hasla` | `Anonimowy` | — | — | FR-01 | `ResetHaslaWejscie` → `202` (zawsze, bez ujawniania istnienia konta) | — |
+| POST | `/auth/reset-hasla/potwierdzenie` | `Anonimowy` | — | — | FR-01 | `PotwierdzenieResetuWejscie` → `204` | — |
+| GET | `/uczniowie/ja` | `Uczen` | — | — | FR-02 | → `UczenWyjscie` + ETag | — |
+| PATCH | `/uczniowie/ja` | `Uczen` | U | — | FR-02, FR-09, NFR-09 | `{poziom_matury?, termin_egzaminu?, wybrany_dzial_id?, zgoda_na_trening?}` → `UczenWyjscie` (skutki zmiany poziomu: 9.1; odwołanie zgody `zgoda_na_trening = false` → `kopia_treningowa.usun_po := now()` w tej samej transakcji, 16.4) | — |
+| DELETE | `/uczniowie/ja` | `Uczen` | — | tak | NFR-09 | `{haslo}` → `202` (Zdarzenie RODO `WNIOSEK_O_USUNIECIE` w rejestrze przed zmianą w bazie; okres karencji 30 dni, ADR-040, ADR-041, 16.4) | — |
+| DELETE | `/nauczyciele/ja` | `Nauczyciel` | — | tak | NFR-09 | `{haslo}` → `202` (usunięcie konta Nauczyciela po 30 dniach, ADR-044; Administratorzy dostają `KLASA_DO_PRZEKAZANIA` dla każdej niezarchiwizowanej Klasy) | — |
+| GET | `/uczniowie/ja/eksport-danych` | `Uczen` | — | — | NFR-09 | → `200 application/zip` (dane osobowe, Rozwiązania, Oceny) | — |
+| DELETE | `/uczniowie/ja/klasy/{id}` | `Uczen` | — | — | FR-30 | → `204` (opuszczenie Klasy; otwarte Weryfikacje tej Klasy pozostają u Nauczyciela docelowego) | — |
+| POST | `/uczniowie/ja/test-diagnostyczny` | `Uczen` | — | — | FR-03 | — → `201 TestDiagnostycznyWyjscie` (lub `200` istniejący `W_TOKU`; `409 TEST_JUZ_WYKONANY`; `409 TEST_NIEDOSTEPNY`, 9.1) | `409 TEST_JUZ_WYKONANY`, `409 TEST_NIEDOSTEPNY` |
+| GET | `/testy-diagnostyczne/{id}` | `Uczen` | — | — | FR-03 | → `TestDiagnostycznyWyjscie` | — |
+| POST | `/testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` | `Uczen` | — | — | FR-03 | `{wybor}` → `201 {czy_zapisano: true}` (bez ujawniania poprawności do końca testu) | — |
+| POST | `/testy-diagnostyczne/{id}/zakonczenie` | `Uczen` | — | — | FR-03 | — → `202 TestDiagnostycznyWyjscie` (Profil aktualizuje `AKTUALIZUJ_PROFIL`, 9.1) | — |
+| POST | `/testy-diagnostyczne/{id}/pominiecie` | `Uczen` | — | — | FR-03 | — → `204` (D-14; Odpowiedzi bez Wyników zadania) | — |
+| GET | `/uczniowie/{id}/profil` | `UczenLubNauczyciel` (U (`ja`), N (Uczeń swojej Klasy)) | — | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` | — |
+| GET | `/uczniowie/ja/rekomendacje/nastepna` | `Uczen` | — | — | FR-05…FR-10 | → `200 RekomendacjaWyjscie` | — |
+| GET | `/uczniowie/ja/sciezka-nauki` | `Uczen` | — | — | FR-05 | `?kursor` → strona `ElementSciezkiWyjscie` | — |
+| POST | `/elementy-sciezki/{id}/rozpoczecie` | `Uczen` | — | — | FR-05, FR-16 | — → `200 ElementSciezkiWyjscie` (idempotentne; ustala `zadanie_wersja_id`) | — |
+| POST | `/elementy-sciezki/{id}/pominiecie` | `Uczen` | — | — | FR-05 | — → `204` | — |
+| POST | `/elementy-sciezki/{id}/przeczytanie` | `Uczen` | — | — | FR-06 | — → `204` (tylko `WKLADKA_TEORETYCZNA`) | — |
+| GET | `/wkladki-teoretyczne` | `RecenzentLubAdministrator` (NR, A) | — | — | FR-06 | `?status=DO_PRZEGLADU&umiejetnosc_id` → strona | — |
+| GET | `/wkladki-teoretyczne/{id}` | `Zalogowany` | — | — | FR-06 | → `WkladkaWyjscie` + ETag (U: tylko `OPUBLIKOWANA`) | — |
+| PUT | `/wkladki-teoretyczne/{id}` | `RecenzentLubAdministrator` (NR, A) | WT | — | FR-06 | `{tytul, tresc_md, szacowany_czas_min, status}` → `200` | — |
+| GET | `/dzialy`, `/umiejetnosci` | `Zalogowany` | — | — | FR-04, FR-36 | → listy referencyjne | — |
+| GET | `/zadania/{id}` | `Zalogowany` (U, N, A) | — | — | FR-15, FR-16 | U → `ZadanieUczniaWyjscie` (bez Rozwiązania wzorcowego i klucza); N/A → `ZadaniePelneWyjscie` + ETag | — |
+| POST | `/zadania/{id}/odpowiedzi` | `Uczen` | — | tak | FR-15, FR-29 | `OdpowiedzWejscie` → `201 OdpowiedzWyjscie` | `409 ELEMENT_SCIEZKI_NIEAKTYWNY`, `409 WERSJA_ZADANIA_NIEAKTUALNA`, `409 ZADANIE_NIEDOSTEPNE`, `409 PRZYPISANIE_PO_TERMINIE` |
+| POST | `/rozwiazania` | `Uczen` | — | tak | FR-16 | multipart `RozwiazanieWejscie` → `202 RozwiazanieWyjscie` | `409 ELEMENT_SCIEZKI_NIEAKTYWNY`, `409 WERSJA_ZADANIA_NIEAKTUALNA`, `409 ZADANIE_NIEDOSTEPNE`, `409 PRZYPISANIE_PO_TERMINIE`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `413 ZDJECIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`, `422 ZA_DUZO_ZDJEC`, `422 ZDJECIE_NIEPRAWIDLOWE`, `429 LIMIT_PRZEKROCZONY`, `503 USLUGA_NIEDOSTEPNA` |
+| GET | `/rozwiazania` | `Uczen` | — | — | FR-24 | `?status&kursor` → strona `RozwiazanieWyjscie` (własne) | — |
+| GET | `/rozwiazania/{id}` | `UczenLubNauczyciel` (U (własne), N (Uczeń Klasy / Weryfikacja)) | — | — | FR-17, FR-24 | → `RozwiazanieWyjscie` + ETag | — |
+| GET | `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `UczenLubNauczyciel` (U (własne), N) | — | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINALNA\|MASKOWANA` (domyślnie `ORYGINALNA`; wersja 3.1, C6-12 p. 1, C6-14 p. 2 — zastępuje `302` na podpisany URL) → `200 AdresZdjeciaWyjscie { url, wygasa_at }` (podpisany URL ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) | — |
+| PUT | `/rozwiazania/{id}/transkrypcja` | `Uczen` | R | — | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` (z `transkrypcja.zakres_poprawek`) / `422 POPRAWKI_ZBYT_ROZLEGLE` (ADR-036) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `422 POPRAWKI_ZBYT_ROZLEGLE` |
+| POST | `/rozwiazania/{id}/zatwierdzenie` | `Uczen` | R | — | FR-18, FR-19 | `{transkrypcja_id, wersja}` (wersja 3.1, C6-04: zatwierdzana Transkrypcja musi być najnowszą) → `202 RozwiazanieWyjscie` / `409 TRANSKRYPCJA_NIEAKTUALNA` / `412 KONFLIKT_WERSJI` | `409 TRANSKRYPCJA_NIEAKTUALNA`, `412 KONFLIKT_WERSJI` |
+| POST | `/rozwiazania/{id}/zdjecia` | `Uczen` | R | tak | FR-16 | multipart `zdjecia[]` → `202` (nowe przesłanie; `409 LIMIT_PRZESLAN`) | `409 LIMIT_PRZESLAN`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `413 ZDJECIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`, `422 ZA_DUZO_ZDJEC`, `422 ZDJECIE_NIEPRAWIDLOWE` |
+| POST | `/rozwiazania/{id}/ponowienie-rozpoznania` | `Uczen` | R | — | FR-17 | — → `202` (te same zdjęcia; `409 LIMIT_PONOWIEN_ROZPOZNANIA`) | `409 LIMIT_PONOWIEN_ROZPOZNANIA`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` |
+| POST | `/rozwiazania/{id}/porzucenie` | `Uczen` | R | — | FR-16 | — → `204` (element pozostaje aktywny do `wygasa_at`) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` |
+| POST | `/rozwiazania/{id}/zgloszenie-bledu-odczytu` | `Uczen` | R | tak | FR-28 | `ZgloszenieBleduOdczytuWejscie` → `201 {weryfikacja: WeryfikacjaUcznia}` | `409 ZGLOSZENIE_NIEDOSTEPNE`, `429 LIMIT_PRZEKROCZONY` |
+| GET | `/rozwiazania/{id}/ocena` | `UczenLubNauczyciel` (U, N) | — | — | FR-24, FR-27 | `?historia=true` → `OcenaWyjscie` lub lista wersji | — |
+| POST | `/rozwiazania/{id}/korekty` | `Nauczyciel` | R | — | FR-34 | `RozstrzygniecieWejscie` → `201 OcenaWyjscie` (9.6.3) / `409 KONTO_UCZNIA_NIEAKTYWNE` | `409 KONTO_UCZNIA_NIEAKTYWNE`, `409 WERYFIKACJA_ZAJETA` |
+| POST | `/klasy` | `Nauczyciel` | — | tak | FR-30 | `{nazwa, poziom_matury}` → `201 KlasaWyjscie` (z `kod_zaproszenia`) | — |
+| GET | `/klasy` | `Nauczyciel` | — | — | FR-30 | `?zarchiwizowane=false` → lista `KlasaWyjscie` | — |
+| GET | `/klasy/{id}` | `Nauczyciel` | — | — | FR-30 | → `KlasaWyjscie` + członkowie + ETag | — |
+| POST | `/klasy/{id}/kod-zaproszenia` | `Nauczyciel` | K | — | FR-30 | — → `200 {kod_zaproszenia, kod_wazny_do, link}` (stary kod unieważniony) | — |
+| POST | `/klasy/{id}/archiwizacja` | `Nauczyciel` | K | — | FR-30 | — → `200 KlasaWyjscie` (kod zaproszenia unieważniony; Klasa nie uczestniczy w przydziale 11.4.1 p. 2; Przypisania i Weryfikacje pozostają) | — |
+| POST | `/klasy/dolaczenie` | `Uczen` | — | — | FR-30 | `{kod_zaproszenia}` → `200 KlasaSkrot` (Klasa niezarchiwizowana, kod ważny) | `404 KOD_ZAPROSZENIA_NIEWAZNY` |
+| DELETE | `/klasy/{id}/uczniowie/{uczen_id}` | `Nauczyciel` | — | — | FR-30 | → `204` | — |
+| GET | `/klasy/{id}/postepy` | `Nauczyciel` | — | — | FR-31 | → `PostepyKlasyWyjscie` | — |
+| GET | `/klasy/{id}/uczniowie/{uczen_id}/rozwiazania` | `Nauczyciel` | — | — | FR-31 | `?kursor` → strona `RozwiazanieWyjscie` | — |
+| POST | `/zestawy-zadan` | `Nauczyciel` | — | tak | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `201 ZestawZadanWyjscie` | — |
+| GET | `/zestawy-zadan` | `Nauczyciel` | — | — | FR-32 | → lista `ZestawZadanWyjscie` (własne) | — |
+| GET | `/zestawy-zadan/{id}` | `Nauczyciel` | — | — | FR-32 | → `ZestawZadanWyjscie` + ETag | — |
+| PUT | `/zestawy-zadan/{id}` | `Nauczyciel` | S | — | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `200` (zmiana nie wpływa na istniejące Przypisania — pozycje są czytane w chwili rekomendacji; usunięte pozycje znikają z otwartych Przypisań) | — |
+| DELETE | `/zestawy-zadan/{id}` | `Nauczyciel` | S | — | FR-32 | → `204` / `409 ZESTAW_UZYWANY` | `409 ZESTAW_UZYWANY` |
+| POST | `/przypisania` | `Nauczyciel` | — | tak | FR-32 | `{zestaw_zadan_id, klasa_id?, uczen_ids?, termin}` → `201` | — |
+| GET | `/przypisania` | `Nauczyciel` | — | — | FR-32 | `?klasa_id&aktywne=true&kursor` → strona `PrzypisanieWyjscie` (własne) | — |
+| GET | `/przypisania/{id}/postep` | `Nauczyciel` | — | — | FR-31, FR-32 | → `PostepPrzypisaniaWyjscie` | — |
+| GET | `/uczniowie/ja/przypisania` | `Uczen` | — | — | FR-32 | → lista otwartych Przypisań z pozycjami | — |
+| GET | `/zadania` | `NauczycielLubAdministrator` (N, A) | — | — | FR-14, FR-32, FR-36 | `?dzial_id&umiejetnosc_id&rodzaj&poziom_trudnosci&pochodzenie&zasieg&status&kursor` → strona `ZadaniePelneWyjscie` (widoczność 12.8) | — |
+| POST | `/zadania` | `Nauczyciel` | — | tak | FR-36 | `ZadanieWejscie` → `201` (Zadanie bazowe `BAZOWE_NAUCZYCIEL`, `PRYWATNY`, `OPUBLIKOWANE` po walidacji W-1, W-2, W-8) | — |
+| POST | `/zadania/generowanie` | `NauczycielLubAdministrator` (N, A) | — | tak | FR-11 | `{umiejetnosc_id, poziom_trudnosci, poziom_matury, rodzaj}` → `202 {zlecenie_generowania_id}` | `429 LIMIT_PRZEKROCZONY` (20 / dobę) |
+| GET | `/zlecenia-generowania/{id}` | `NauczycielLubAdministrator` (N, A) | — | — | FR-11 | → `{status, liczba_cykli, zadanie_id, walidacja}` | — |
+| POST | `/zadania/{id}/przeglad` | `NauczycielLubAdministrator` (N (zlecający lub autor wg 8.4), NR, A) | Z | — | FR-14 | `PrzegladWejscie` → `200 ZadaniePelneWyjscie` | — |
+| POST | `/zadania/{id}/wycofanie` | `NauczycielLubAdministrator` (N (autor lub zlecający, `PRYWATNY`), NR, A) | Z | — | FR-14 | `{powod}` → `200 ZadaniePelneWyjscie` | — |
+| POST | `/zadania/{id}/zgloszenia-bledu` | `Nauczyciel` | — | tak | FR-14 | `ZgloszenieBleduZadaniaWejscie` → `201 ZgloszenieBleduZadaniaWyjscie` (tylko `GLOBALNY` i `OPUBLIKOWANE`; `409 ZGLOSZENIE_ZADANIA_ISTNIEJE`; 3 otwarte od różnych Nauczycieli → wiersz `wstrzymanie_w_doborze`, bez zmiany `zadanie.version`, ADR-038) | `409 ZGLOSZENIE_ZADANIA_ISTNIEJE` |
+| GET | `/zgloszenia-bledu-zadan` | `NauczycielLubAdministrator` (N (własne), NR, A) | — | — | FR-14 | `?status=OTWARTE&zadanie_id&kursor` → strona `ZgloszenieBleduZadaniaWyjscie` (sortowanie: `created_at`) | — |
+| POST | `/zgloszenia-bledu-zadan/{id}/rozpatrzenie` | `RecenzentLubAdministrator` (NR, A) | Z | — | FR-14 | `RozpatrzenieZgloszeniaWejscie` → `200 ZgloszenieBleduZadaniaWyjscie` (`UWZGLEDNIONE` wymaga `przeglad` albo `wycofanie` w tej samej transakcji; powiadomienie zgłaszającego) | — |
+| GET | `/weryfikacje` | `Nauczyciel` | — | — | FR-33 | `?dostepnosc=DOSTEPNE\|MOJE_W_TRAKCIE\|WSZYSTKIE&powod&klasa_id&typ_kolejki&kursor` → strona `WeryfikacjaNaLiscie` (sortowanie: priorytet, termin_at) | — |
+| GET | `/weryfikacje/{id}` | `Nauczyciel` | — | — | FR-33 | → `WeryfikacjaSzczegoly` + ETag | — |
+| POST | `/weryfikacje/{id}/podjecie` | `Nauczyciel` | — | — | FR-33 | — → `200 WeryfikacjaSzczegoly` + ETag / `409 WERYFIKACJA_ZAJETA` | `409 WERYFIKACJA_ZAJETA` |
+| POST | `/weryfikacje/{id}/przedluzenie` | `Nauczyciel` | — | — | FR-33 | — → `200 {zablokowana_do, version}` + ETag (wersja treści, niezmieniona przez przedłużenie, ADR-037) / `409 WERYFIKACJA_NIE_PODJETA` / `409 BLOKADA_MAKS_CZAS` | `409 BLOKADA_MAKS_CZAS`, `409 WERYFIKACJA_NIE_PODJETA` |
+| PUT | `/weryfikacje/{id}/szkic` | `Nauczyciel` | — | — | FR-33 | `SzkicRozstrzygnieciaWejscie` → `204` (tylko właściciel blokady) | — |
+| POST | `/weryfikacje/{id}/zwolnienie` | `Nauczyciel` | — | — | FR-33 | — → `204` (szkic zachowany) | — |
+| POST | `/weryfikacje/{id}/rozstrzygniecie` | `Nauczyciel` | W | — | FR-34 | `RozstrzygniecieWejscie` → `200 OcenaWyjscie` / `412 KONFLIKT_WERSJI` tylko po zmianie treści (ciało: aktualny zasób + `zmiany_tresci`, 8.3) / `409 KONTO_UCZNIA_NIEAKTYWNE` (karencja, C3-08) | `409 WERYFIKACJA_NIE_PODJETA`, `409 OCENA_ZMIENIONA`, `409 KONTO_UCZNIA_NIEAKTYWNE`, `412 KONFLIKT_WERSJI` (`szczegoly.zmiany_tresci`) |
+| GET | `/powiadomienia` | `Zalogowany` | — | — | FR-24, FR-33 | `?nieprzeczytane=true&kursor` → strona `PowiadomienieWyjscie` (sortowanie `created_at DESC, id`) | — |
+| POST | `/powiadomienia/{id}/przeczytanie` | `Zalogowany` | — | — | — | → `204` | — |
+| POST | `/admin/arkusze-cke/importy` | `Administrator` | — | tak | FR-35 | multipart ZIP (`ArkuszImportV1`) → `202 {import_id}` | — |
+| GET | `/admin/arkusze-cke/importy/{id}` | `Administrator` | — | — | FR-35 | → `{status, raport}` | — |
+| PUT | `/admin/zadania/{id}/diagnostyczne` | `Administrator` | Z | — | FR-03 | `{diagnostyczne: boolean}`, `?wymus=true` → `200` (tylko `ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`; pula 9.1; `409 PULA_DIAGNOSTYCZNA_ZA_MALA`) | `409 PULA_DIAGNOSTYCZNA_ZA_MALA` |
+| GET | `/admin/pula-diagnostyczna` | `Administrator` | — | — | FR-03 | → `[{dzial_id, poziom_matury, poziom_trudnosci_nominalny, liczba}]` (G-5) | — |
+| GET | `/admin/uzytkownicy` | `Administrator` | — | — | — | `?rola&status&kursor` → strona | — |
+| PATCH | `/admin/uzytkownicy/{id}` | `Administrator` | U | — | — | `{status?, weryfikator_globalny?, recenzent_tresci?, deklarowane_minuty_weryfikacji?}` → `200` / `422 LIMIT_OBCIAZENIA_WERYFIKATORA` (A-14) | `422 LIMIT_OBCIAZENIA_WERYFIKATORA` |
+| POST | `/admin/uzytkownicy/{id}/przywrocenie` | `Administrator` | U | — | NFR-09 | — → `200` (konto dowolnej roli w stanie `USUWANE`, < 30 dni; Zdarzenie RODO `ANULOWANIE_USUNIECIA`; wznowienie procesów wg tabel przywrócenia 16.4 — osobno dla Ucznia oraz dla Nauczyciela i Administratora, C3-08; `409 KONTO_NIE_DO_PRZYWROCENIA`) | `409 KONTO_NIE_DO_PRZYWROCENIA` |
+| POST | `/admin/uzytkownicy/{id}/usuniecie` | `Administrator` | U | — | NFR-09 | `{powod}` → `202` (konto Nauczyciela lub innego Administratora; okres karencji 30 dni, ADR-044; `409 OSTATNI_ADMINISTRATOR`) | `409 OSTATNI_ADMINISTRATOR` |
+| POST | `/admin/klasy/{id}/przekazanie` | `Administrator` | K | — | FR-30 | `{nauczyciel_id}` → `200 KlasaWyjscie` (nowy Nauczyciel prowadzący: Klasa, jej otwarte Przypisania, Zadania `PRYWATNY` użyte w tych Przypisaniach, Weryfikacje `KLASA` z `nauczyciel_docelowy_id` = poprzedni; ADR-044) | — |
+| GET | `/admin/konfiguracje-modeli` | `Administrator` | — | — | NFR-06 | → lista | — |
+| POST | `/admin/konfiguracje-modeli` | `Administrator` | — | tak | NFR-06 | `KonfiguracjaModeluWejscie` → `201` (nieaktywna) | — |
+| POST | `/admin/konfiguracje-modeli/{id}/aktywacja` | `Administrator` | — | — | NFR-06 | — → `200` / `409 BRAK_PROGU_DLA_KONFIGURACJI` / `409 BRAK_RETENCJI_DOSTAWCY` | `409 BRAK_PROGU_DLA_KONFIGURACJI`, `409 BRAK_RETENCJI_DOSTAWCY`, `409 DOSTAWCA_NIEDOZWOLONY` |
+| POST | `/admin/konfiguracje-modeli/{id}/ewaluacja-zt1` | `Administrator` | — | — | NFR-02, NFR-04 | — → `202` (praca `EWALUUJ_ZT1`: kalibrator + `prog_pewnosci` `EWALUACJA_ZT1`, raport G-1/G-2) | — |
+| GET | `/admin/progi-pewnosci` | `Administrator` | — | — | FR-34 | → lista z historią (z kalibratorem) | — |
+| POST | `/admin/progi-pewnosci` | `Administrator` | — | tak | FR-34 | `{konfiguracja_modelu_id, rodzaj_zadania, wartosc, uzasadnienie}` → `201` (ręczne ustawienie, zawsze ≥ wartości wyznaczonej przez 11.5.3 i bezpiecznik; audyt) | — |
+| GET | `/admin/kalibracja` | `Administrator` | — | — | NFR-02…NFR-04 | → `MetrykiKalibracjiWyjscie` | — |
+| GET | `/admin/bezpieczniki` | `Administrator` | — | — | NFR-03 | → `StanBezpiecznikaWyjscie[]` (ADR-046) | — |
+| POST | `/admin/bezpieczniki/dezaktywacja` | `Administrator` | B | — | NFR-03 | `DezaktywacjaBezpiecznikaWejscie {konfiguracja_modelu_id, rodzaj_zadania, typ: "POPRAWKI" \|"TRAFNOSC", uzasadnienie (10–1000 znaków)}` → `200 StanBezpiecznikaWyjscie` (`aktywny = false`, `okno_od = dezaktywowano_at = now()`; audyt `BEZPIECZNIK_DEZAKTYWOWANY`) / `409 BEZPIECZNIK_NIEAKTYWNY` / `422 WALIDACJA` (C4-04; ścieżka `/admin/bezpieczniki/zdjecie` z wersji 2.3 nie istnieje) | `409 BEZPIECZNIK_NIEAKTYWNY`, `422 WALIDACJA` |
+| GET | `/admin/obciazenie-weryfikacji` | `Administrator` | — | — | FR-33 | → `ObciazenieWeryfikacjiWyjscie` (model 17.7, G-7) | — |
+| POST | `/admin/wkladki-teoretyczne/szkice` | `Administrator` | — | tak | FR-06 | `{umiejetnosc_id}` → `202` (szkic Agenta generującego) | — |
+| GET | `/admin/praca-w-tle` | `Administrator` | — | — | — | `?status=MARTWA&typ` → strona | — |
+| POST | `/admin/praca-w-tle/{id}/ponowienie` | `Administrator` | — | — | — | — → `202` | — |
+| GET | `/rozwiazania/{id}/strumien` | `Uczen` (właściciel) | — | — | FR-17, FR-24, NFR-01 | SSE: `stan`, `koniec` (`RozwiazanieWyjscie`), `ping`, `wznow`, `blad` — 12.10 | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
+| GET | `/powiadomienia/strumien` | `Zalogowany` | — | — | FR-24, FR-33 | SSE: `migawka` (`MigawkaPowiadomien`), `powiadomienie` (`PowiadomienieWyjscie`), `ping`, `wznow` — 12.10 | `429 ZA_DUZO_STRUMIENI` |
+| GET | `/zlecenia-generowania/{id}/strumien` | `NauczycielLubAdministrator` (zlecający, A) | — | — | FR-11 | SSE: `stan`, `koniec` (`ZlecenieGenerowaniaWyjscie`), `ping`, `wznow` | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
+| GET | `/admin/arkusze-cke/importy/{id}/strumien` | `Administrator` | — | — | FR-35 | SSE: `stan`, `koniec` (`ImportArkuszaWyjscie`), `ping`, `wznow` | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
+| GET | `/admin/harmonogram` | `Administrator` | — | — | — | → `PrzebiegHarmonogramuWyjscie[]` (ADR-066 p. 5) | — |
+### 12.4 Typy DTO (rekordy C# → OpenAPI → TypeScript)
 
-### 12.4 Typy DTO (TypeScript, źródło: modele Pydantic)
+Rekordy C# wszystkich kontraktów są w api.md 3 (`Lemat.Api.Kontrakty.<Modul>`),
+a typy TypeScript są generowane (`schema.d.ts`), więc ręcznie pisanych DTO
+nie ma. Listing niżej jest **referencją semantyki pól** (komentarze reguł
+domenowych) w postaci, jaką daje generator (pola `snake_case`, `null`
+jawne); test `TypyReferencyjneZgodneZSchematem` (Vitest + `tsd`) sprawdza
+przypisywalność listingu do wygenerowanych typów. Aliasy w
+`frontend/src/lib/api/typy.ts` (`export type RozwiazanieWyjscie =
+components["schemas"]["RozwiazanieWyjscie"];`).
 
 ```ts
 type Uuid = string;
@@ -6250,13 +6439,13 @@ interface OdpowiedzWejscie {
   zadanie_wersja_id: Uuid;
   element_sciezki_id?: Uuid; przypisanie_id?: Uuid;           // klient podaje dokładnie jedno (ADR-032); przypisanie_id
                                                               // elementu R-PRZYPISANIE serwer dziedziczy (trg_kontekst_proby)
-  wybor: { opcja: string } | { stwierdzenia: Record<string, boolean> };
+  wybor: { rodzaj: "OPCJA"; opcja: string } | { rodzaj: "STWIERDZENIA"; stwierdzenia: { id: string; prawda: boolean }[] };   // 3.2: unia z dyskryminatorem (api.md 3)
 }
 interface OdpowiedzWyjscie {
   id: Uuid; element_sciezki_id: Uuid | null; przypisanie_id: Uuid | null;   // przypisanie_id także odziedziczone
   rezultat_ujawniony_od: Czas;
   rezultat: { czy_poprawna: boolean; punkty: number; punkty_max: number;
-              poprawna: { opcja: string } | { stwierdzenia: Record<string, boolean> } } | null;  // null przed terminem Przypisania
+              poprawna: OdpowiedzWejscie["wybor"] } | null;                                  // null przed terminem Przypisania
 }
 
 // multipart/form-data
@@ -6283,6 +6472,7 @@ interface StanBezpiecznikaWyjscie {     // ADR-046
   ostatnie_wyzwolenie_at: Czas | null; wyjscie_z_blokady_at: Czas | null;   // TRAFNOSC: aktywny = Blokada obniżania progu (C4-02)
   dezaktywowano_at: Czas | null; uzasadnienie_dezaktywacji: string | null;   // nazwy od 2.4 (C4-04)
   prog_aktywny: number | null;                                              // wartość aktywnego progu pary (1.000 = tryb pełnej weryfikacji)
+  version: number;                                                          // 3.2: ETag `B` dezaktywacji (C-44)
 }
 interface DezaktywacjaBezpiecznikaWejscie {   // POST /admin/bezpieczniki/dezaktywacja (C4-04)
   konfiguracja_modelu_id: Uuid; rodzaj_zadania: "OTWARTE_OBLICZENIOWE"; typ: "TRAFNOSC" | "POPRAWKI";
@@ -6353,14 +6543,14 @@ interface WeryfikacjaNaLiscie {
   ocena_weryfikowana: { punkty: number; punkty_max: number; pewnosc_oceny: number | null } | null;
   created_at: Czas;
 }
-interface WeryfikacjaSzczegoly extends WeryfikacjaNaLiscie {
+interface WeryfikacjaSzczegoly extends WeryfikacjaNaLiscie {   // w C# pola listy powtórzone jawnie (api.md 3)
   powody_poczatkowe: PowodWeryfikacji[];                  // 11.5.2
   zadanie_pelne: ZadaniePelneWyjscie;
   zdjecia: { id: Uuid; url: string; wygasa_at: Czas; maskowane: boolean }[];   // puste po usunięciu (NFR-09)
   transkrypcje: TranskrypcjaWyjscie[];                    // wszystkie wersje: agent + poprawki Ucznia
   ocena: OcenaWyjscie | null;                             // Ocena weryfikowana (null przy T-6 przed PONOW_OCENE)
   decyzje_modelu: { kod_pytania: string; typ_pytania: "NOUL" | "SCORE" | "CHOICE";
-                    wybor: unknown; rozklad: Record<string, number> }[];
+                    wybor: unknown; rozklad: { opcja: string; p: number }[] }[];   // 3.2: tablica par (C7-09)
   opinia_pomocnicza: object | null;                       // 10.4.5
   zgloszenie: { kroki: number[]; opis: string | null; zgloszono_at: Czas } | null;
   szkic: Partial<RozstrzygniecieWejscie> | null;          // tylko szkic wywołującego
@@ -6436,7 +6626,10 @@ interface ObciazenieWeryfikacjiWyjscie {
 }
 ```
 
+
 ### 12.5 Reguły walidacji wejścia (wybrane)
+
+Reguły są walidatorami FluentValidation 12 (`<Rekord>Walidator`, filtr `FiltrWalidacji<T>`, błąd `422 WALIDACJA` z `bledy_pol`) dla reguł bez stanu i metodami agregatów albo przypadków użycia dla reguł zależnych od stanu (kody 409). Ten sam zestaw reguł bezstanowych frontend odwzorowuje schematami zod 4 (`features/<modul>/schematy.ts`); serwer pozostaje źródłem prawdy.
 
 | Endpoint | Reguła | Błąd |
 |---|---|---|
@@ -6508,13 +6701,18 @@ prawdopodobieństwami.
 | Zakres | Limit | Mechanizm |
 |---|---|---|
 | Nieudane logowania | 5 / 15 min na e-mail, 20 / 15 min na IP | zapytanie do `proba_logowania` |
-| `POST /rozwiazania` | 30 / h na Ucznia | `count(*)` po `ix_rozwiazanie_uczen` |
+| `POST /rozwiazania` | 30 / h na Ucznia | `count(*)` po `ix_rozwiazanie_uczen` w transakcji przypadku użycia; `Retry-After` = czas do wypadnięcia najstarszego z okna |
 | `POST …/zgloszenie-bledu-odczytu` | 5 / 30 dni na Ucznia, 1 na Rozwiązanie | `count(*)` po `weryfikacja.zgloszenie` |
 | `POST /zadania/generowanie` | 20 / dobę na Nauczyciela | `count(*)` po `zlecenie_generowania` |
 | `POST /zadania/{id}/zgloszenia-bledu` | 10 / dobę na Nauczyciela | `count(*)` po `zgloszenie_bledu_zadania` |
 | Generowanie systemowe (`UZUPELNIJ_PULE` i `GENERUJ_SZKIC_WKLADKI`) | 200 zleceń i szkiców / dobę i 150 PLN / dobę (`Σ koszt_pln` zleceń `systemowe` + `Σ koszt_generowania_pln` Wkładek `wygenerowana_automatycznie`), w tym ≤ 20 szkiców Wkładek | sprawdzenie w handlerze `UZUPELNIJ_PULE` (13.3); po przekroczeniu praca przesunięta na 00:00 UTC następnego dnia, alert przy 80% |
 | `POST /auth/reset-hasla` | 3 / h na e-mail | `count(*)` po `praca_w_tle` typu `WYSLIJ_EMAIL` |
 | Globalnie na IP | 600 żądań / min | Caddy `rate_limit` |
+
+
+Limity techniczne repliki (ADR-062 p. 6) są realizowane przez
+`AddRateLimiter` (polityki `NaUzytkownika`, `Logowanie`) z odpowiedzią
+ProblemDetails `429 LIMIT_PRZEKROCZONY` (`szczegoly.zakres = "TECHNICZNY"`).
 
 ### 12.8 Uprawnienia na poziomie obiektów
 
@@ -6530,7 +6728,7 @@ prawdopodobieństwami.
 | Wkładki `DO_PRZEGLADU` | brak | NR | wszystkie |
 | Konfiguracja modeli, progi, importy, obciążenie | brak | brak | pełny |
 
-Realizacja: każde zapytanie repozytorium przyjmuje obiekt `Aktor` i dokłada
+Realizacja (.NET): `Aktor` (rekord z `UzytkownikId`, `RolaUzytkownika`, flagami i `WygasaAt`, wiązany z JWT przez `IBindableFromHttpContext<Aktor>`) jest parametrem każdego przypadku użycia; każde zapytanie repozytorium przyjmuje `Aktor` i dokłada
 warunek widoczności w SQL (nie filtrowanie po pobraniu). Brak widoczności →
 `404 NIE_ZNALEZIONO` (nie `403`), aby nie ujawniać istnienia zasobu.
 
@@ -6570,6 +6768,87 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
 `kalibracja_trudnosci` (`trudnosc_b = 0.8 × (poziom − 3)`,
 `poziom_trudnosci` = nominalny). Import jest transakcyjny per arkusz
 (wszystko albo nic); ponowny import tego samego `kod` → `422` z raportem.
+
+### 12.10 Strumienie SSE (ADR-064)
+
+| Strumień | Zdarzenia | Dane | `id:` | Zamknięcie |
+|---|---|---|---|---|
+| `GET /api/v1/rozwiazania/{id}/strumien` | `stan`, `koniec`, `ping`, `wznow`, `blad` | `RozwiazanieWyjscie` | skrót SHA-256 danych | `koniec` w stanie terminalnym; `wznow` po `min(exp, 10 min)` |
+| `GET /api/v1/powiadomienia/strumien` | `migawka`, `powiadomienie`, `ping`, `wznow`, `blad` | `MigawkaPowiadomien`, `PowiadomienieWyjscie` | `m` / `powiadomienie.id` | `wznow` po `min(exp, 10 min)` |
+| `GET /api/v1/zlecenia-generowania/{id}/strumien` | `stan`, `koniec`, `ping`, `wznow`, `blad` | `ZlecenieGenerowaniaWyjscie` | skrót | `koniec` przy `ZAKONCZONE`/`NIEUDANE` |
+| `GET /api/v1/admin/arkusze-cke/importy/{id}/strumien` | `stan`, `koniec`, `ping`, `wznow`, `blad` | `ImportArkuszaWyjscie` | skrót | `koniec` przy `ZAKONCZONY`/`ODRZUCONY` |
+
+- **Źródło:** triggery `trg_*_powiadom` → `NOTIFY lemat_zdarzenia` po
+  `COMMIT` (ADR-056) → `NasluchPowiadomien` (jedno połączenie `LISTEN` na
+  replikę) → `KoncentratorZdarzen` (kanał 16 na subskrybenta) → odczyt
+  stanu z bazy z uprawnieniami `Aktor` → `SseItem<T>`.
+- **Wznowienie:** strumienie stanu porównują skrót z `Last-Event-ID` i
+  zawsze wysyłają bieżący stan, gdy się różni; strumień powiadomień zaczyna
+  każde połączenie migawką nieprzeczytanych i nie używa `Last-Event-ID`
+  (C7-11). Klient scala po `id`.
+- **Heartbeat:** `ping` co 15 s; klient bez zdarzenia przez 45 s łączy się
+  ponownie. Pierwsze zdarzenie ma `retry: 3000`.
+- **Autoryzacja:** `Authorization: Bearer` (fetch, nie `EventSource`);
+  uprawnienie sprawdzane przy otwarciu i przy każdym odczycie stanu; błąd po
+  rozpoczęciu → `blad` z ProblemDetails.
+- **Ponowne łączenie i ścieżka zapasowa:** odstęp 1 … 30 s z rozrzutem,
+  `wznow` → natychmiast, `401` → odświeżenie tokenu i jedno ponowienie,
+  `403`/`404` → koniec, `429`/2 porażki w 10 s/brak pierwszego zdarzenia w
+  5 s → odpytywanie `GET` co `nastepne_odpytanie_ms` (powiadomienia co 30 s)
+  i próba SSE co 60 s (api.md 6.3).
+- **Proxy:** Caddy `flush_interval -1`, brak `read_timeout` dla
+  `*/strumien`; serwer wysyła `Cache-Control: no-cache, no-store`,
+  `X-Accel-Buffering: no` i nie kompresuje (`Content-Encoding: identity`,
+  sprawdzone w 10.0.14).
+- **Limity:** ≤ 4 strumienie na (użytkownik, zasób) i ≤ 12 na użytkownika na
+  replikę (`429 ZA_DUZO_STRUMIENI`); jeden strumień powiadomień na
+  przeglądarkę (karta-lider, ADR-057 p. 3).
+
+### 12.11 Klient Next.js
+
+- **`lib/api/klient.ts`** — `openapi-fetch` z middleware: nagłówek
+  `Authorization` z `pobierzToken()` (odświeżenie 60 s przed `exp`),
+  zamiana odpowiedzi `!ok` na `BladApi { status, kod, problem, retryAfterS }`,
+  błędy sieci → `kod = "BLAD_SIECI"`, przerwanie → `"PRZERWANO"`;
+  `wywolaj(operacja)` ponawia raz po `401 NIEUWIERZYTELNIONY` po
+  odświeżeniu tokenu (operacja jest wywoływana ponownie, więc ciało
+  multipart jest budowane od nowa); `cache: "no-store"` (api.md 6.1).
+- **`lib/auth/odswiezanie.ts`** — single-flight w Web Locks
+  `lemat-odswiezenie` i `BroadcastChannel("lemat-sesja")`; `401
+  SESJA_UNIEWAZNIONA` albo nieudane odświeżenie → komunikat `WYLOGOWANIE`
+  do wszystkich kart (api.md 6.2, ADR-057).
+- **Idempotencja w UI:** klucz tworzony raz na intencję (kliknięcie
+  „Wyślij”), trzymany w stanie formularza do odpowiedzi `2xx`/`4xx`;
+  ponowienie po błędzie sieci albo `503` używa tego samego klucza; przycisk
+  zablokowany w trakcie żądania.
+- **`If-Match`:** komponent przekazuje `version` z ostatnio pobranego
+  zasobu (`ifMatch(version)`); `412` → odświeżenie zapytania i dialog
+  „Dane zmieniły się w międzyczasie” z aktualną wersją
+  (`szczegoly.aktualny`).
+- **Granice błędów:** `app/error.tsx` (globalna), `(uczen)/error.tsx`,
+  `(nauczyciel)/nauczyciel/error.tsx`, `(administrator)/admin/error.tsx`
+  dla `5xx` i błędów sieci; `app/not-found.tsx` dla `404`; `4xx` —
+  obsługa lokalna (`obsluzBlad`, 14.4).
+- **Generowanie typów:** `npm run api:typy` (`openapi-typescript
+  ../backend/openapi/lemat-v1.json -o src/lib/api/schema.d.ts`) i `npm run
+  api:zdarzenia` (typy zdarzeń SSE z `x-lemat-zdarzenia`); sprawdzone:
+  wygenerowany `schema.d.ts` i moduły `klient.ts`, `odswiezanie.ts`,
+  `strumien.ts` z api.md przechodzą `tsc --strict` (TypeScript 5.9.3,
+  `openapi-fetch` 0.14.1, `eventsource-parser` 3).
+- **Mapowanie stron App Router na endpointy** — api.md 7.
+
+### 12.12 Testy kontraktu
+
+| Test | Projekt | Sprawdza |
+|---|---|---|
+| `OpenApiBezDryfu` | CI (krok budowy) | wygenerowany `lemat-v1.json` = plik w repozytorium; `schema.d.ts` = wynik `openapi-typescript` |
+| `oasdiff breaking main..HEAD` | CI | brak zmian niekompatybilnych w `v1` (ADR-062 p. 1) |
+| `KazdyEndpointMaPolitykeIKody` | `Lemat.Api.Tests` | każdy endpoint z `EndpointDataSource` jest w katalogu 12.3 z tą samą polityką, metadanymi `Idempotentny`/`WymagaIfMatch` i `x-lemat-kody-bledow` ⊇ kody specyficzne z 12.3 |
+| `KatalogBledowKompletny` | `Lemat.Api.Tests` + Vitest | `KodBledu` = `katalog-bledow.yaml` = klucze `bledy.*` w `messages/pl-PL.json` |
+| `ProblemDetailsDlaKazdegoKodu` | `Lemat.Api.Tests` (`WebApplicationFactory`) | dla każdego `KodBledu` wyjątek domenowy daje odpowiedź z właściwym `status`, `type`, `kod`, `trace_id` |
+| `IdempotencjaPodwojneZadanie` | `Lemat.Api.Tests` | dwa równoległe `POST /rozwiazania` z tym samym kluczem → jedno Rozwiązanie, druga odpowiedź `409 IDEMPOTENCJA_W_TOKU` albo powtórka z `Idempotent-Replayed` |
+| `StrumienieSse*` | `Lemat.Api.Tests/Strumienie` | ADR-064 p. 9 |
+| `kontrakt-api.spec.ts` | Playwright (E2E) | przepływ FR-16 … FR-27 przez `klient.ts` na Docker Compose z Mock (ADR-065), w tym zerwanie SSE i powrót odpytywaniem |
 
 ---
 
@@ -6734,8 +7013,11 @@ DOSTAWCA_NIEDOZWOLONY`.
 
 **Rejestr adapterów** (`Lemat.Modele.RejestrAdapterow`) mapuje
 `konfiguracja_modelu.dostawca` na fabrykę adaptera: `typesafe-jev` →
-`JevAdapter`; `zapasowy-llm` → `ZapasowyLlmAdapter` (z `dostawca_llm` dla
-klienta czatu); `azure-openai` → `AzureOpenAIClient(...).GetChatClient(model).AsIChatClient()`;
+`JevAdapter`; `zapasowy-llm` → `ZapasowyLlmAdapter`, którego klient czatu
+roli `DECYZYJNY_ZAPASOWY` buduje `FabrykaKlientowCzatu` z
+`parametry.dostawca_llm` (`azure-openai`, `openai-zgodny` albo `mock`), nie z
+`dostawca`; `KlientCzatuRoli.Dostawca` = `dostawca_llm` (atrybut
+`gen_ai.system`), a `lemat.dostawca_konfiguracji = zapasowy-llm` (C7-15 p. 7); `azure-openai` → `AzureOpenAIClient(...).GetChatClient(model).AsIChatClient()`;
 `openai-zgodny` → `OpenAIClient(klucz, new OpenAIClientOptions { Endpoint
 = url }).GetChatClient(model).AsIChatClient()`; `mock` → `MockChatClient` /
 `MockModelDecyzyjny`. Aktywna konfiguracja roli jest czytana z bazy
@@ -6944,14 +7226,19 @@ public sealed class JevAdapter(HttpClient http, KonfiguracjaModelu konfiguracja,
     // HttpClient: BaseAddress = parametry url, Authorization: Bearer (sekret LEMAT_JEV_KLUCZ_API), Timeout = Infinite (limit per żądanie:
     // CancelAfter(min(2 s, termin − teraz))); bez Polly — ponowienia według reguły 13.2; odpowiedzi 429 → ZmniejszPrzydzial, bez obwodu
 }
-public sealed class ZapasowyLlmAdapter(IModelGeneratywny modele, ISzablonyPromptow szablony, TimeProvider czas)
+public sealed class ZapasowyLlmAdapter(IModelGeneratywny modele, ISzablonyPromptow szablony, IWywolanieUstrukturyzowane wywolanie, TimeProvider czas)
 {
-    public Task<RezultatPytan> WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, CancellationToken ct);
-    // modele.DlaRoliAsync(RolaModelu.DecyzyjnyZapasowy): prompt plan-pytan-v1, schemat OdpowiedzPlanuModelu, zwijanie Q-OC-04 (p. 1–3)
+    public Task<RezultatPytan> WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, KontekstDecyzji kontekst, CancellationToken ct);
+    // 3.2 (C7-08): modele.DlaRoliAsync(RolaModelu.DecyzyjnyZapasowy); prompt wg kontekstu:
+    //   Ocena → plan-pytan-v1 (OdpowiedzPlanuModelu, zwijanie Q-OC-04, p. 1–3);
+    //   WalidacjaZadania → plan-pytan-walidacji-v1 (OdpowiedzPlanuWalidacjiModelu, bez Q-OC-04, stan-walidacji-v1);
+    //   Rekomendacja → ArgumentException (Q-RE-01 bez modelu zapasowego, ADR-023)
 }
+// CircuitBreakerModeluDecyzyjnego.WykonajPlanAsync(stan, plan, termin, kontekst, ct) przekazuje kontekst do obu adapterów.
 ```
 
 `ZapasowyLlmAdapter` renderuje prompt `Prompty/DECYZYJNY_ZAPASOWY/plan-pytan-v1.yaml`
+(albo `plan-pytan-walidacji-v1.yaml` dla Walidacji)
 przez port `ISzablonyPromptow` (`Lemat.Application.Modele`), którego
 implementacją jest `SzablonyPromptow` z `Lemat.Agenci` (10.0.3,
 rejestrowana w punkcie kompozycji), więc `Lemat.Modele` nie zależy od
@@ -6991,6 +7278,7 @@ Pule (13.4): `R` — ROZPOZNAWANIE, `S` — SPRAWDZANIE (od wersji 2.3, C3-05), 
 | `KOPIUJ_DO_ZBIORU_TRENINGOWEGO` | W | `{rozwiazanie_id}` | `rozwiazanie_id` | 8 | 3 | 10 min, 1 h | zlecana w każdej transakcji, po której Rozwiązanie jest `OCENIONE` bez otwartej Weryfikacji (zapis Oceny automatycznej bez Kontroli, rozstrzygnięcie, korekta, zamknięcie ostatniej Weryfikacji, `PONOW_OCENE`; C2-16); warunki: `uczen.zgoda_na_trening = true`, konto `AKTYWNE`, zdjęcia nieusunięte, brak otwartej Weryfikacji, brak `kopia_treningowa` dla Rozwiązania **albo** `kopia_treningowa.ocena_id ≠` id Oceny aktualnej (wtedy nadpisanie `.json`); kopia: zdjęcie maskowane (ADR-031; brak maskowanego → brak kopii) + Transkrypcja zatwierdzona po ponownym Filtrze danych osobowych (ADR-042) + Ocena aktualna | brak kopii (alert informacyjny) |
 | `USUN_KOPIE_TRENINGOWE` | W | `{}` | `cykl` | 3 | 5 | 1 min | `kopia_treningowa.usun_po < now() AND usunieto_at IS NULL`: `DELETE` obiektów, `usunieto_at = now()` | alert RODO |
 | `SPRZATAJ_OSIEROCONE_OBIEKTY` | W | `{tryb: "CODZIENNY" \| "ODTWORZENIE", od?}` | data | 3 | 3 | 10 min | (ADR-047, C3-06) lista obiektów w `zbior-treningowy/`, `zdjecia/`, `zdjecia-maskowane/` (paginacja po 1 000 kluczy); obiekt jest osierocony, gdy jego klucz nie występuje w `kopia_treningowa.klucz_obiektu` (także dla `.json` — porównanie po kluczu bez rozszerzenia) albo w `zdjecie_rozwiazania.klucz_obiektu` / `klucz_obiektu_maskowany`; tryb `CODZIENNY`: tylko obiekty z `LastModified < now() − 1 h` (ochrona zapisów w toku przed zatwierdzeniem transakcji); tryb `ODTWORZENIE`: obiekty z `LastModified > od` (= punkt odtworzenia `T` − 5 min), bez okna 1 h, bo `worker` nie działa; osierocone → `DELETE`, metryka `obiekty_osierocone_usuniete_total{bucket,tryb}` | `ALERT_RODO` |
+| `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` | W | `{}` | `cykl` (data i godzina wystąpienia) | 2 | 1 | — | (3.2, C7-04, ADR-066 p. 6) Rozwiązania `ROZPOZNAWANIE` z `ostatnie_rozpoznanie_od_at < now() − 5 min` albo `OCENIANIE` z `zatwierdzono_at < now() − 5 min`, bez pracy `OCZEKUJE`/`W_TOKU` z kluczem tego Rozwiązania → ponowne zlecenie `ROZPOZNAJ_PISMO`/`OCEN_ROZWIAZANIE`, gdy termin pracy nie minął (rozpoznanie: liczba prób < 3; Ocena: przed terminem twardym), w przeciwnym razie ścieżka „po wyczerpaniu prób” właściwego typu (`BLAD_ROZPOZNAWANIA` `PRZEKROCZONY_CZAS` / T-6) w jednostce pracy; metryka `rozwiazania_zawieszone_total{stan}` | alert operacyjny |
 
 Każdy handler przetwarzający dane Ucznia (oznaczone „konto `AKTYWNE`”, a
 także `NAPISZ_WSKAZOWKE`, `OPINIA_POMOCNICZA`, `PONOW_OCENE`) w okresie
@@ -7040,7 +7328,9 @@ public interface IJednostkaPracy                                            // A
 }
 
 public sealed record PracaWTle(long Id, TypPracy Typ, PulaPracy Pula, string? KluczDeduplikacji, JsonDocument Ladunek,
-                               short Proby, short MaksProb, string Wykonawca, DateTimeOffset DzierzawaDo, DateTimeOffset CreatedAt);
+                               StatusPracy Status, short Priorytet, short Proby, short MaksProb, DateTimeOffset DostepnaOd,
+                               string? Wykonawca, DateTimeOffset? DzierzawaDo, string? OstatniBlad,
+                               DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);   // 3.2 (C7-06 p. 7): komplet kolumn, MaksProb → maks_prob
 
 public abstract record RezultatPracy
 {
@@ -7049,6 +7339,7 @@ public abstract record RezultatPracy
     public sealed record RezultatPrzestarzaly(string Powod) : RezultatPracy;                     // zapis warunkowy odrzucony (6.3 p. 3)
     public sealed record Ponow(string Blad, TimeSpan? Odstep = null) : RezultatPracy;            // błąd przejściowy
     public sealed record Trwaly(string Blad) : RezultatPracy;                                    // od razu „po wyczerpaniu prób”
+    public sealed record Przerwana : RezultatPracy;                                              // 3.2: zatrzymanie procesu — wynik nie jest zapisywany
 }
 
 public interface IHandlerPracy
@@ -7056,6 +7347,7 @@ public interface IHandlerPracy
     TypPracy Typ { get; }
     Task<RezultatPracy> WykonajAsync(PracaWTle praca, CancellationToken ct);
     Task PoWyczerpaniuAsync(PracaWTle praca, string ostatniBlad, CancellationToken ct);         // w jednostce pracy przejścia do MARTWA
+    DateTimeOffset? TerminTwardy(PracaWTle praca) => null;                                       // 3.2 (ADR-066 p. 1): np. zatwierdzono_at + 120 s
 }
 
 public interface IKontekstPracy                                             // ustawiany przez PulaPracHostedService (AsyncLocal)
@@ -7077,37 +7369,83 @@ public interface ISklepPracWTle
 
 public sealed class PulaPracHostedService(PulaPracy pula, int liczbaPetli, ISklepPracWTle sklep, NasluchPowiadomien nasluch,
                                           IServiceScopeFactory zakresy, KatalogPrac katalog, TimeProvider czas,
-                                          ILogger<PulaPracHostedService> log) : BackgroundService
+                                          MetrykiPrac metryki, ILogger<PulaPracHostedService> log) : BackgroundService
 {
     protected override Task ExecuteAsync(CancellationToken zatrzymanie) =>
         Task.WhenAll(Enumerable.Range(1, liczbaPetli).Select(nr => PetlaAsync(nr, zatrzymanie)));
 
+    // 3.2 (C7-04, ADR-066): pętla kończy się wyłącznie przy zatrzymaniu procesu; każdy wyjątek ma wynik.
     private async Task PetlaAsync(int nr, CancellationToken zatrzymanie)
     {
         var wykonawca = $"{Environment.MachineName}#{pula}#{nr}";
         while (!zatrzymanie.IsCancellationRequested)
         {
-            var praca = await sklep.PobierzAsync(pula, wykonawca, zatrzymanie);
+            metryki.OstatniaIteracjaPetli(pula, czas.GetUtcNow());                        // health check /zdrowie/gotowosc (ADR-066 p. 4)
+            var praca = await PonawiajInfrastrukture(ct => sklep.PobierzAsync(pula, wykonawca, ct), zatrzymanie);
             if (praca is null) { await nasluch.CzekajAsync(pula, TimeSpan.FromSeconds(5), zatrzymanie); continue; }
-            using var dzierzawa = CancellationTokenSource.CreateLinkedTokenSource(zatrzymanie);
-            var odnawianie = OdnawiajAsync(praca, wykonawca, dzierzawa);                // PeriodicTimer 15 s; false → dzierzawa.Cancel()
-            await using var zakres = zakresy.CreateAsyncScope();
-            KontekstPracy.Ustaw(praca);
+
+            using var dzierzawa = new DzierzawaPracy(CancellationTokenSource.CreateLinkedTokenSource(zatrzymanie));
+            var odnawianie = OdnawiajAsync(praca, wykonawca, dzierzawa);   // PeriodicTimer 15 s; false → dzierzawa.Utracona(czas) + Cancel
             RezultatPracy wynik;
-            try { wynik = await zakres.ServiceProvider.GetRequiredKeyedService<IHandlerPracy>(praca.Typ).WykonajAsync(praca, dzierzawa.Token); }
-            catch (BladModeluPrzejsciowyException e) { wynik = new RezultatPracy.Ponow(e.Message); }
-            catch (BladModeluTrwalyException e) { wynik = new RezultatPracy.Trwaly(e.Message); }
-            catch (UtrataDzierzawyException) { wynik = new RezultatPracy.RezultatPrzestarzaly("DZIERZAWA_UTRACONA"); }
-            catch (OperationCanceledException) when (!zatrzymanie.IsCancellationRequested) { wynik = new RezultatPracy.RezultatPrzestarzaly("DZIERZAWA_UTRACONA"); }
-            finally { KontekstPracy.Wyczysc(); dzierzawa.Cancel(); await odnawianie; }
-            await ZapiszWynikAsync(praca, wykonawca, wynik, zakres.ServiceProvider, zatrzymanie);   // warunek wykonawca + W_TOKU (ADR-056 p. 4)
+            await using (var zakres = zakresy.CreateAsyncScope())
+            {
+                var handler = zakres.ServiceProvider.GetRequiredKeyedService<IHandlerPracy>(praca.Typ);
+                KontekstPracy.Ustaw(praca);                                   // także IKontekstScenariuszaMock z ładunku (ADR-065)
+                try { wynik = await handler.WykonajAsync(praca, dzierzawa.Token); }
+                catch (Exception e) { wynik = Klasyfikuj(e, praca, handler, dzierzawa, zatrzymanie); }
+                finally { KontekstPracy.Wyczysc(); dzierzawa.Zakoncz(); await odnawianie; }
+                if (zatrzymanie.IsCancellationRequested && wynik is RezultatPracy.Przerwana) return;   // praca wróci po wygaśnięciu dzierżawy
+                await PonawiajInfrastrukture(ct => ZapiszWynikAsync(praca, wykonawca, wynik, zakres.ServiceProvider, ct), zatrzymanie);
+            }
         }
     }
+
+    private RezultatPracy Klasyfikuj(Exception e, PracaWTle praca, IHandlerPracy handler, DzierzawaPracy dzierzawa, CancellationToken zatrzymanie)
+    {
+        var poTerminie = handler.TerminTwardy(praca) is { } t && czas.GetUtcNow() >= t;
+        RezultatPracy PonowAlboTrwaly(string kod) => poTerminie || praca.Proby >= praca.MaksProb ? new RezultatPracy.Trwaly(kod) : new RezultatPracy.Ponow(kod);
+        switch (e)
+        {
+            case OperationCanceledException when zatrzymanie.IsCancellationRequested:
+                return new RezultatPracy.Przerwana();                                          // zatrzymanie procesu: bez zapisu
+            case UtrataDzierzawyException:
+            case OperationCanceledException when dzierzawa.UtraconaAt is not null:
+                return new RezultatPracy.RezultatPrzestarzaly("DZIERZAWA_UTRACONA");          // ZapiszWynikAsync: bez zapisu (wiersz nie jest nasz)
+            case OperationCanceledException or TimeoutException or TerminMinalException:
+                return PonowAlboTrwaly("PRZEKROCZONY_CZAS");                                  // limit czasu wywołania, termin agenta, HttpClient
+            case BladModeluPrzejsciowyException b: return PonowAlboTrwaly(b.Message);
+            case BladModeluTrwalyException b: return new RezultatPracy.Trwaly(b.Message);
+            case NiezmiennikNaruszonyException n: return new RezultatPracy.Trwaly(n.Kod.ToString());
+            case NpgsqlException { IsTransient: true } or DbUpdateException { InnerException: NpgsqlException { IsTransient: true } }:
+                return PonowAlboTrwaly("BLAD_INFRASTRUKTURY");
+            default:
+                log.LogError(e, "Nieoczekiwany wyjątek pracy {Typ} {Id}", praca.Typ, praca.Id);   // E-24, trace_id w zakresie logu
+                return PonowAlboTrwaly("BLAD_NIEOCZEKIWANY");
+        }
+    }
+
+    /// Ponawia operację sklepu prac przy błędzie infrastruktury: 0,5 s, 1 s, 2 s … 30 s, bez limitu prób (ADR-066 p. 2).
+    private async Task<T> PonawiajInfrastrukture<T>(Func<CancellationToken, Task<T>> operacja, CancellationToken zatrzymanie) { /* … */ }
 }
 ```
 
-`ZapiszWynikAsync`: `Zakonczona`/`KontoUsuwane`/`RezultatPrzestarzaly` →
-`ZakonczAsync`; `Ponow` → `PonowAsync` z odstępem z `KatalogPrac` (indeks =
+```csharp
+public sealed class DzierzawaPracy(CancellationTokenSource zrodlo) : IDisposable
+{
+    public CancellationToken Token => zrodlo.Token;
+    public DateTimeOffset? UtraconaAt { get; private set; }           // ustawia wyłącznie pętla odnawiania (OdnowDzierzaweAsync = false)
+    public void Utracona(TimeProvider czas) { UtraconaAt = czas.GetUtcNow(); zrodlo.Cancel(); }
+    public void Zakoncz() => zrodlo.Cancel();                          // zatrzymanie pętli odnawiania po zakończeniu handlera
+    public void Dispose() => zrodlo.Dispose();
+}
+// Lemat.Worker/Program.cs: builder.Services.Configure<HostOptions>(h => { h.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost;
+//                                                                       h.ShutdownTimeout = TimeSpan.FromSeconds(30); });   // ADR-066 p. 4
+```
+
+`ZapiszWynikAsync`: `Zakonczona`/`KontoUsuwane` → `ZakonczAsync`;
+`RezultatPrzestarzaly("DZIERZAWA_UTRACONA")` → bez zapisu (licznik
+`praca_zapis_po_utracie_dzierzawy_total`), inny `RezultatPrzestarzaly` →
+`ZakonczAsync`; `Przerwana` → bez zapisu; `Ponow` → `PonowAsync` z odstępem z `KatalogPrac` (indeks =
 `proby − 1`); `Trwaly` albo `PonowAsync` zwracające `Martwa` →
 `PoWyczerpaniuAsync` handlera w jednostce pracy, która w tej samej
 transakcji ustawia `status = 'MARTWA'` (warunek dzierżawy jak wyżej).
@@ -7141,26 +7479,19 @@ WHERE id = @id AND wykonawca = @wykonawca AND status = 'W_TOKU';
 UPDATE praca_w_tle SET status = 'ZAKONCZONA', dzierzawa_do = NULL, updated_at = now()
 WHERE id = @id AND wykonawca = @wykonawca AND status = 'W_TOKU';
 
--- Błąd przejściowy (3.1: warunek status = 'W_TOKU')
-UPDATE praca_w_tle
-SET status = CASE WHEN proby >= max_prob THEN 'MARTWA' ELSE 'OCZEKUJE' END::status_pracy,
-    dostepna_od = now() + @odstep, ostatni_blad = @blad, wykonawca = NULL, dzierzawa_do = NULL, updated_at = now()
-WHERE id = @id AND wykonawca = @wykonawca AND status = 'W_TOKU'
-RETURNING status;
+-- Błąd przejściowy (3.2, C7-03): funkcja z ddl.md 0006 — konflikt ux_praca_dedup_oczekujace → ZAKONCZONA / ZASTAPIONA_NOWSZA
+SELECT ponow_prace(@id, @wykonawca, @blad, @odstep);          -- OCZEKUJE | MARTWA | ZAKONCZONA | NULL (utrata dzierżawy)
 
 -- Potwierdzenie dzierżawy w jednostce pracy handlera (ADR-056 p. 4)
 SELECT 1 FROM praca_w_tle WHERE id = @id AND wykonawca = @wykonawca AND status = 'W_TOKU' FOR UPDATE;
 
--- Odzyskiwanie porzuconych dzierżaw (scheduler co 30 s)
-UPDATE praca_w_tle
-SET status = CASE WHEN proby >= max_prob THEN 'MARTWA' ELSE 'OCZEKUJE' END::status_pracy,
-    wykonawca = NULL, dzierzawa_do = NULL, ostatni_blad = 'DZIERZAWA_WYGASLA', updated_at = now()
-WHERE status = 'W_TOKU' AND dzierzawa_do < now()
-RETURNING id, typ, status;
+-- Odzyskiwanie porzuconych dzierżaw (scheduler co 30 s; 3.2, C7-03): per wiersz w podtransakcji, ≤ 500 na przebieg
+SELECT praca_id, praca_typ, praca_status FROM odzyskaj_dzierzawy(500);
+-- praca_status = MARTWA → scheduler wywołuje PoWyczerpaniuAsync handlera w jednostce pracy (jak worker)
 
 -- Zlecenie (ZlecaniePracSql, ADR-056 p. 2) — predykat konfliktu wg TrybDeduplikacji typu:
-INSERT INTO praca_w_tle (typ, pula, klucz_deduplikacji, ladunek, priorytet, max_prob, dostepna_od)
-VALUES (@typ, @pula, @klucz, @ladunek, @priorytet, @max_prob, coalesce(@dostepna_od, now()))
+INSERT INTO praca_w_tle (typ, pula, klucz_deduplikacji, ladunek, priorytet, maks_prob, dostepna_od)
+VALUES (@typ, @pula, @klucz, @ladunek, @priorytet, @maks_prob, coalesce(@dostepna_od, now()))
 ON CONFLICT (typ, klucz_deduplikacji)
     WHERE status IN ('OCZEKUJE','W_TOKU') AND klucz_deduplikacji IS NOT NULL
       AND typ NOT IN ('AKTUALIZUJ_PROFIL','SPRAWDZ_POPRAWKI_TRANSKRYPCJI')
@@ -7173,6 +7504,10 @@ RETURNING id, (xmax = 0) AS wstawiona;
 --   brak wiersza w RETURNING (DO NOTHING) → SELECT id … WHERE typ = @typ AND klucz_deduplikacji = @klucz AND status IN (…) → Zdeduplikowana
 ```
 
+- Funkcje `ponow_prace` i `odzyskaj_dzierzawy` sprawdzono na PostgreSQL
+  16.15 z DDL (ADR-066 p. 3): odzyskiwanie z jedną pracą kolidującą z
+  pracą `OCZEKUJE` odzyskuje pozostałe, a kolidująca kończy się
+  `ZASTAPIONA_NOWSZA`.
 - Przejście do `MARTWA` wywołuje `PoWyczerpaniuAsync` handlera danego typu
   (kolumna „Po wyczerpaniu prób” 13.3) w tej samej transakcji.
 - `NOTIFY praca_w_tle, '<pula>'` wysyła wyłącznie trigger
@@ -7216,7 +7551,7 @@ druga instancja czeka w trybie gotowości i ponawia próbę co 5 s, więc
 przejmuje rolę w ≤ 10 s po utracie sesji przez pierwszą.
 
 ```csharp
-public sealed record WpisHarmonogramu(string Nazwa, CronExpression Cron, TimeZoneInfo Strefa,
+public sealed record WpisHarmonogramu(string Nazwa, CronExpression Cron, TimeZoneInfo Strefa, bool Nadrabiany,
                                       Func<DateTimeOffset, ZleceniePracy?> Zlecenie,       // null = akcja wykonywana bezpośrednio
                                       Func<IServiceProvider, CancellationToken, Task>? Bezposrednio = null);
 
@@ -7224,28 +7559,38 @@ public sealed class HarmonogramHostedService(IEnumerable<WpisHarmonogramu> wpisy
                                              IServiceScopeFactory zakresy, TimeProvider czas) : BackgroundService
 {
     // 1. Otwiera połączenie dedykowane i wykonuje SELECT pg_try_advisory_lock(7420001); false → czeka 5 s i ponawia.
-    // 2. Co 1 s sprawdza wpisy: następne wystąpienie Cron.GetNextOccurrence(ostatnie, Strefa) ≤ teraz →
-    //    w jednostce pracy ZlecAsync(Zlecenie(chwila)) z kluczem deduplikacji z 13.3 (np. data, godzina, "cykl")
-    //    albo wywołanie Bezposrednio (odzyskiwanie dzierżaw, ZWOLNIJ_BLOKADY_WERYFIKACJI).
-    // 3. Utrata połączenia blokady (NpgsqlException, broken) → koniec roli aktywnej, powrót do kroku 1.
+    // 2. Po objęciu roli (3.2, C7-13, ADR-066 p. 5) czyta przebieg_harmonogramu; dla wpisu bez wiersza ostatnie = teraz − 24 h.
+    // 3. Co 1 s dla każdego wpisu: wystąpienia w = Cron.GetOccurrences(max(ostatnie, teraz − 24 h), teraz, Strefa, fromInclusive: false)
+    //    — dla wpisów Nadrabiany = true wszystkie po kolei, dla pozostałych tylko ostatnie; każde w jednostce pracy:
+    //    ZlecAsync(Zlecenie(w)) z kluczem deduplikacji z datą wystąpienia (13.3) albo Bezposrednio, oraz
+    //    INSERT INTO przebieg_harmonogramu (nazwa, ostatnie_wystapienie, instancja) VALUES (@n, @w, @ja)
+    //    ON CONFLICT (nazwa) DO UPDATE SET ostatnie_wystapienie = EXCLUDED.ostatnie_wystapienie, zlecono_at = now(), instancja = EXCLUDED.instancja
+    //    WHERE przebieg_harmonogramu.ostatnie_wystapienie < EXCLUDED.ostatnie_wystapienie;
+    // 4. Utrata połączenia blokady (NpgsqlException, broken) → koniec roli aktywnej, powrót do kroku 1 (z odstępem 0,5 … 10 s).
 }
 ```
 
-Wyrażenia cron (Cronos 0.11, `CronFormat.IncludeSeconds` dla cyklu 30 s),
-strefa `UTC`:
+Wyrażenia cron (Cronos 0.13, `CronFormat.IncludeSeconds` dla cyklu 30 s),
+strefa `UTC`. Kolumna „Nadr.” — nadrabianie wszystkich wystąpień z
+ostatnich 24 h po przerwie (wpisy dzienne i miesięczne); wpisy krótszych
+cykli nadrabiają tylko ostatnie wystąpienie (są stanowe).
 
-| Cykl | Cron | Praca |
-|---|---|---|
-| co 30 s | `*/30 * * * * *` | odzyskiwanie dzierżaw (13.4.2), bezpośrednio |
-| co 1 min | `0 * * * * *` | `ZWOLNIJ_BLOKADY_WERYFIKACJI` (SQL 11.4.2, bezpośrednio), `WYGAS_ELEMENTY` |
-| co 5 min | `0 */5 * * * *` | `ZAMIATAJ_PROFILE` (C2-04), `UZGODNIJ_REJESTR_RODO` (ADR-041; okno unieważniania ≤ 10 min, C4-06 p. 2) |
-| co 1 h | `0 0 * * * *` | `USUN_ZDJECIA`, `USUN_KOPIE_TRENINGOWE`, `ESKALUJ_WERYFIKACJE` |
-| codziennie 02:00 UTC | `0 0 2 * * *` | `PORZUC_NIEZATWIERDZONE`, `USUN_KONTO` (dla zaplanowanych), `WYCZYSC_DANE_TECHNICZNE` |
-| codziennie 03:00 UTC | `0 0 3 * * *` | `KALIBRUJ` |
-| codziennie 04:00 UTC | `0 0 4 * * *` | `SPRAWDZ_PULE_DIAGNOSTYCZNA` |
-| codziennie 04:30 UTC | `0 30 4 * * *` | `SPRZATAJ_OSIEROCONE_OBIEKTY` (tryb `CODZIENNY`, ADR-047) |
-| codziennie 05:00 UTC | `0 0 5 * * *` | podsumowanie dla Nauczycieli (w ramach `ESKALUJ_WERYFIKACJE`: liczba oczekujących, najbliższe terminy SLA) |
-| 1. dnia miesiąca | `0 0 1 1 * *` | `UTRZYMAJ_PARTYCJE` (wywołuje `utworz_partycje_decyzji`, ddl.md blok B) |
+| Cykl | Cron | Nadr. | Praca |
+|---|---|---|---|
+| co 30 s | `*/30 * * * * *` | — | odzyskiwanie dzierżaw (`odzyskaj_dzierzawy`, 13.4.2), bezpośrednio |
+| co 1 min | `0 * * * * *` | — | `ZWOLNIJ_BLOKADY_WERYFIKACJI` (SQL 11.4.2, bezpośrednio), `WYGAS_ELEMENTY` |
+| co 5 min | `0 */5 * * * *` | — | `ZAMIATAJ_PROFILE` (C2-04), `UZGODNIJ_REJESTR_RODO` (ADR-041; okno unieważniania ≤ 10 min, C4-06 p. 2), `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` (3.2, ADR-066 p. 6) |
+| co 1 h | `0 0 * * * *` | tak | `USUN_ZDJECIA`, `USUN_KOPIE_TRENINGOWE`, `ESKALUJ_WERYFIKACJE` |
+| codziennie 02:00 UTC | `0 0 2 * * *` | tak | `PORZUC_NIEZATWIERDZONE`, `USUN_KONTO` (dla zaplanowanych), `WYCZYSC_DANE_TECHNICZNE` |
+| codziennie 03:00 UTC | `0 0 3 * * *` | tak | `KALIBRUJ` |
+| codziennie 04:00 UTC | `0 0 4 * * *` | tak | `SPRAWDZ_PULE_DIAGNOSTYCZNA` |
+| codziennie 04:30 UTC | `0 30 4 * * *` | tak | `SPRZATAJ_OSIEROCONE_OBIEKTY` (tryb `CODZIENNY`, ADR-047) |
+| codziennie 05:00 UTC | `0 0 5 * * *` | tak | podsumowanie dla Nauczycieli (w ramach `ESKALUJ_WERYFIKACJE`: liczba oczekujących, najbliższe terminy SLA) |
+| 1. dnia miesiąca | `0 0 1 1 * *` | tak (z wierszem z poprzedniego miesiąca: wystąpienie do 24 h wstecz; dłuższa przerwa → alert `PARTYCJE_ZALEGLE`, bo bufor partycji wynosi 3 miesiące) | `UTRZYMAJ_PARTYCJE` (wywołuje `utworz_partycje_decyzji`, ddl.md blok B) |
+
+Panel `/admin/praca-w-tle` pokazuje `przebieg_harmonogramu`
+(`GET /admin/harmonogram`); alert `HARMONOGRAM_ZALEGLY`, gdy dla wpisu
+dziennego `ostatnie_wystapienie < now() − 26 h`.
 
 ### 13.6 Zdarzenia domenowe (w procesie, zapis w tej samej transakcji)
 
@@ -7292,53 +7637,179 @@ public interface IObslugaZdarzenia<in TZdarzenie> where TZdarzenie : IZdarzenieD
 
 ## 14. Obsługa błędów
 
-> **Do przepisania na .NET w iteracji 3 — treść domenowa obowiązuje.** Iteracja 3 mapuje macierz błędów na wyjątki domenowe C# (`NiezmiennikNaruszonyException`, wyjątki adapterów) i ProblemDetails. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
+Błędy są obsługiwane w czterech warstwach: domena (wyjątki domenowe z
+kodem), infrastruktura (tłumaczenie wyjątków bibliotek na wyjątki domenowe),
+`api` (ProblemDetails, ADR-060) i `worker` (rezultat pracy, ADR-066) oraz
+frontend (BladApi, granice błędów, komunikaty pl-PL). Macierz awarii E-01 …
+E-47 (14.5) przypisuje każdej awarii wykrycie, reakcję i komunikat.
 
+```mermaid
+flowchart LR
+    D["Agregat / przypadek użycia<br/>throw WyjatekDomenowy(KodBledu)"] --> H
+    I["Npgsql / EF Core / S3 / Polly<br/>PostgresException, DbUpdateConcurrencyException, …"] --> T["TlumaczBledowInfrastruktury"]
+    T --> H["ObslugaWyjatkowDomenowych : IExceptionHandler"]
+    X["inny wyjątek"] --> N["ObslugaWyjatkowNieoczekiwanych<br/>500 BLAD_WEWNETRZNY + log Error"]
+    H --> PD["IProblemDetailsService<br/>application/problem+json {kod, trace_id}"]
+    N --> PD
+    PD --> K["klient.ts: BladApi {status, kod}"]
+    K --> O["obsluzBlad(kod): akcja lokalna / toast<br/>bledy.KOD (next-intl)"]
+    K --> EB["error.tsx (5xx, BLAD_SIECI)"]
+    W["worker: wyjątek w handlerze"] --> R["PulaPracHostedService.Klasyfikuj<br/>Ponow / Trwaly / RezultatPrzestarzaly"]
+```
 
-### 14.1 Macierz błędów
+### 14.1 Hierarchia wyjątków domenowych (C#)
 
-| # | Awaria | Wykrycie | Reakcja systemu | Skutek dla użytkownika |
-|---|---|---|---|---|
-| E-01 | Zdjęcie > 10 MB, > 5 zdjęć, zły format | walidacja `api` przed zapisem | `413` / `422 ZA_DUZO_ZDJEC` / `415`; nic nie zapisano | komunikat i możliwość ponowienia; kompresja w kliencie zapobiega większości przypadków |
-| E-02 | Magazyn obiektów niedostępny przy przesyłaniu | wyjątek klienta S3 | rollback transakcji; obiekty już zapisane usuwa `SPRZATAJ_OSIEROCONE_OBIEKTY` (codziennie, buckety `zdjecia/`, `zdjecia-maskowane/`, `zbior-treningowy/` porównywane z `zdjecie_rozwiazania` i `kopia_treningowa`, ADR-047) | `503 USLUGA_NIEDOSTEPNA`, `Retry-After: 5`; klient ponawia z tym samym `Idempotency-Key` |
-| E-03 | Dostawca rozpoznawania: timeout (14 s), 429, 5xx | `BladModeluPrzejsciowy` | ponowienia pracy po 1 s i 3 s; po 3. próbie `BLAD_ROZPOZNAWANIA` (`PRZEKROCZONY_CZAS`/`BLAD_DOSTAWCY`); naruszenie NFR-01 liczone w metryce | „Nie udało się odczytać zdjęcia z powodu awarii usługi” + akcje: „Spróbuj ponownie” (te same zdjęcia, ≤ 5 razy, bez zużycia przesłania) lub „Porzuć i zacznij od nowa” |
-| E-04 | Zdjęcie nieczytelne | `czytelne = false` | `BLAD_ROZPOZNAWANIA` (`NIECZYTELNE`) bez ponowień | wskazówki fotograficzne (światło, kadr, czytelne pismo) + „Wyślij nowe zdjęcia” (łącznie ≤ 3 przesłania) lub „Porzuć i zacznij od nowa” (nowe Rozwiązanie dla tego samego elementu do `wygasa_at`) |
-| E-05 | Odpowiedź modelu niezgodna ze schematem | walidacja Pydantic | 1 ponowienie z komunikatem błędu walidacji w promptcie; potem jak E-03 | jak E-03 |
-| E-06 | > 40 kroków | walidacja wyniku | `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`) | prośba o zwięźlejsze zapisanie rozwiązania i nowe zdjęcia (wpis ręczny nie istnieje, ADR-024) |
-| E-07 | Kartka dotyczy innego Zadania | `zgodnosc_z_zadaniem < 0.5` | ostrzeżenie, bez blokady | baner „Kartka może dotyczyć innego zadania” na ekranie Transkrypcji |
-| E-08 | Jev: timeout (2 s), 429, 5xx, błędny format | adapter + circuit breaker | ponowienie tylko przy zapasie czasu (9.9), potem model zapasowy dla całego planu jednym wywołaniem; metryka `jev_bledy_total` | brak (dłuższy czas oceny; budżet 17.2) |
-| E-09 | Model zapasowy niedostępny lub błędny | wyjątek po ponowieniu | ponowienia pracy `OCEN_ROZWIAZANIE` do terminu twardego 120 s; po nim T-6: Weryfikacja `BLAD_PRZETWARZANIA` + `PONOW_OCENE` | „Rozwiązanie zostanie ocenione przez nauczyciela” (brak Oceny wstępnej); przy udanym `PONOW_OCENE` Ocena pojawia się później |
-| E-10 | SymPy: błąd parsowania, przekroczenie 2 s CPU / 512 MB | wyjątek / sygnał w procesie potomnym | wynik `NIEROZSTRZYGNIETE`; proces potomny zastępowany | brak |
-| E-11 | Agent wyjaśniający: błąd, timeout 8 s, wyciek rozwiązania | wyjątek / strażnik 10.5.3 | ponowienie pracy `NAPISZ_WSKAZOWKE` (raz), potem szablon | Ocena widoczna od razu; Wskazówka dochodzi (z szablonu) w ≤ 20 s |
-| E-12 | Awaria workera w trakcie pracy | wygaśnięcie dzierżawy (60 s) | odzyskanie pracy; handler idempotentny (warunki 13.3) | opóźnienie ≤ 60 s; dla `OCEN_ROZWIAZANIE` ponowienie do terminu twardego, po nim T-6 |
-| E-13 | Rezultat obliczeń przestarzały (stan zmienił się w trakcie) | `UPDATE … WHERE status = :s AND version = :v` zwraca 0 wierszy | rezultat odrzucony, log `rezultat_przestarzaly` | brak |
-| E-14 | PostgreSQL niedostępny / przełączenie | błąd połączenia | `api`: `503`; worker: wstrzymanie pobierania, ponawianie połączenia co 2 s (maks. 60 s backoff) | komunikat „Spróbuj za chwilę”; PWA ponawia `GET` automatycznie |
-| E-15 | Konflikt edycji (dwa urządzenia) | `If-Match` | `412 KONFLIKT_WERSJI` + aktualny zasób w ciele | UI pokazuje aktualną wersję i pyta, czy nadpisać |
-| E-16 | Weryfikacja podjęta przez innego Nauczyciela | `UPDATE … RETURNING` = 0 | `409 WERYFIKACJA_ZAJETA` z danymi blokującego | komunikat „Sprawdza: {imię nazwisko} do {godzina}” |
-| E-17 | Walidacja Zadania wygenerowanego negatywna | sprawdzenia W-x | do 3 cykli generowania z listą niespełnionych sprawdzeń; potem zlecenie `NIEUDANE` | Nauczyciel (zlecający) widzi `NIEUDANE` i przyczynę; dla puli — metryka |
-| E-18 | Import arkusza z błędami | walidacja schematu | import `ODRZUCONY`, raport per numer Zadania, nic nie zapisano | Administrator poprawia ZIP i ponawia |
-| E-19 | Brak Zadań w strefie rozwoju | dobór 10.1.2 krok 7 | Zadanie najbliższe + `UZUPELNIJ_PULE` | uzasadnienie z faktycznym P(sukces) |
-| E-20 | Brak opublikowanej Wkładki teoretycznej | dobór 10.1.2 krok 6 | Zadanie zamiast Wkładki, Seria rozpoczęta, praca `GENERUJ_SZKIC_WKLADKI` (szkic → `DO_PRZEGLADU` → powiadomienie recenzentów), metryka `brak_wkladki_total{umiejetnosc}` | Zadanie zamiast Wkładki do czasu publikacji szkicu |
-| E-21 | Trwałe pogorszenie trafności auto-ocen | bezpiecznik trafności 11.5.3: dolna granica Wilsona 95% błędu Kontroli losowych powyżej bieżącego progu > 2% przy `n_eff ≥ 50` (ADR-046; przy 0 błędach nigdy) | podniesienie progu o 0.02 względem progu sprzed przebiegu i Blokada obniżania progu do UB ≤ 2% przy `n_eff ≥ 189` (kroki 1–6 11.5.3, C4-02); wyzwolenie przy progu 0,990 → tryb pełnej weryfikacji (1.000, D-16), wyjście przez dezaktywację; przy UB > 2% i LB ≤ 2% (`n_eff ≥ 189`) — tylko blokada obniżania | więcej Ocen wstępnych |
-| E-22 | Zaległe usuwanie zdjęć > 24 h | metryka `zdjecia_zalegle` | alert krytyczny dla Administratora | brak |
-| E-23 | Niepowodzenie wysyłki e-mail | błąd SMTP | 5 ponowień (1–60 min) | e-mail resetu dociera z opóźnieniem |
-| E-24 | Nieznany wyjątek w handlerze | catch-all w pętli workera | log z `trace_id`, traktowany jak błąd przejściowy (ponowienia), potem `po_wyczerpaniu` | jak dla danego typu pracy |
-| E-25 | Nieznany wyjątek w `api` | handler globalny FastAPI | `500` z `kod = BLAD_WEWNETRZNY` i `instance` = `trace_id`, bez szczegółów | komunikat ogólny |
-| E-26 | Brak jakiegokolwiek Zadania w zakresie Ucznia | dobór 10.1.2 krok 8 | `200` z `brak_elementu`, `UZUPELNIJ_PULE` dla Poziomów trudności 2–4 | komunikat 10.1.5 i sugerowane Działy |
-| E-27 | Q-RE-01 (rekomendacja): timeout 1,5 s, błąd, obwód otwarty | wyjątek w fasadzie | polityka `POLITYKA_ELO`, `powrot_do_polityki = MODEL_NIEDOSTEPNY` | brak (rekomendacja bez strategii eksperymentalnej) |
-| E-28 | Pusta lub niewystarczająca pula weryfikatorów globalnych | `weryfikatorzy_globalni_aktywni_7d < wymagani` (17.7) lub `zaleglosc_globalna_min > 2 × pojemnosc` | alert `ALERT_WERYFIKACJE`; kontrola przyjęć 11.4.3 | Uczniowie bez Klasy dostają więcej zadań zamkniętych; po SLA status „opóźniona” |
-| E-29 | Kontrole losowe niewykonywane | `wykonanie_kontroli_30d < 0.90` | reguły nadzoru 11.5.3 (alert → blokada obniżania progu → bezpiecznik) | więcej Ocen wstępnych |
-| E-30 | Budżet generowania systemowego wyczerpany | licznik 12.7 | `UZUPELNIJ_PULE` i `GENERUJ_SZKIC_WKLADKI` przesunięte na następną dobę, alert przy 80% | dobór Zadań spoza strefy rozwoju (E-19); Zadanie zamiast Wkładki (E-20) |
-| E-31 | Poprawka Transkrypcji przekracza limit twardy | walidacja `PUT …/transkrypcja` (9.4) | `422 POPRAWKI_ZBYT_ROZLEGLE`, nic nie zapisano | komunikat „Zmieniono zbyt dużą część odczytu — wyślij nowe zdjęcia kartki” + akcja „Wyślij nowe zdjęcia” |
-| E-32 | Sprawdzenie zgodności poprawek: błąd, timeout 8 s lub brak rezultatu przed zapisem Oceny | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` po wyczerpaniu prób / brak `zgodnosc_poprawek` | T-7: Ocena wstępna, Weryfikacja z powodem `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (Z-3); metryka `sprawdzenie_poprawek_brak_total` | Ocena wstępna z komunikatem T-7 |
-| E-33 | Plan Jev nieprzyjęty przez globalny ogranicznik, brak tokenu przed terminem fali (13.2) lub `429` od Jev | `przyjmij_plan` = `None` / `zarezerwuj_wywolanie` = `False` / HTTP 429 | Ocena modelem zapasowym (`OGRANICZENIE_LOKALNE`), przydział × 0,5 na 30 s po 429; obwód nie jest otwierany | dłuższy czas oceny w granicach budżetu S-4 |
-| E-34 | Pula Zadań diagnostycznych niepełna | `SPRAWDZ_PULE_DIAGNOSTYCZNA`, dobór 9.1 | test częściowy (`pominiete_dzialy`) albo `409 TEST_NIEDOSTEPNY` przy < 50%; `ALERT_PULA_DIAGNOSTYCZNA` | Uczeń zaczyna z Profilem `DOMYSLNA` i może wykonać test później |
-| E-35 | Zdjęcie o nadmiernych wymiarach (bomba dekompresyjna) lub nieprawidłowy plik | odczyt nagłówka w piaskownicy `api`, `MAX_IMAGE_PIXELS`, `RLIMIT_AS` | `422 ZDJECIE_NIEPRAWIDLOWE`; proces piaskownicy zastępowany po przekroczeniu limitu | komunikat „Nie udało się odczytać zdjęcia — zrób je ponownie aparatem w aplikacji” |
-| E-36 | Bucket `rejestr-zdarzen-rodo` niedostępny przy Zdarzeniu RODO | wyjątek klienta S3 przed transakcją | `503 USLUGA_NIEDOSTEPNA`, nic nie zapisano w bazie (ADR-041); w `USUN_KONTO` — błąd przejściowy pracy, ponowienie co 1 h, żaden krok w bazie nie startuje przed zapisem obiektu | „Spróbuj za chwilę”; PWA ponawia z tym samym `Idempotency-Key` |
-| E-37 | Filtr danych osobowych: krok z treścią matematyczną (po wyłączeniu tokenów imienia, nazwiska, inicjałów i oznaczenia klasy, C4-03) w ramce danych osobowych (`konflikt_filtra`) | Filtr 10.3.1 p. 3a | treść kroku zachowana (poza zastąpieniami b1/b2/c), T-3 (`PODEJRZENIE_BLEDU_ODCZYTU`) — Ocena wstępna wstrzymana do Weryfikacji (11.1 p. 7d); metryka `konflikt_filtra_total` | „Ocena wstrzymana — możliwy błąd odczytu…” (komunikat T-3) |
-| E-38 | Obiekty magazynu bez wiersza w bazie (awaria między zapisem obiektu a transakcją albo odtworzenie PITR) | `SPRZATAJ_OSIEROCONE_OBIEKTY` | usunięcie obiektu (tryb `CODZIENNY` po 1 h; tryb `ODTWORZENIE` przed startem workerów), metryka; przyrost > 100 obiektów na dobę w trybie `CODZIENNY` → `ALERT_RODO` (ADR-047) | brak |
+```csharp
+namespace Lemat.Domain.Wspolne.Bledy;
 
-### 14.2 Terminy oceny i reguła T-6
+public abstract class WyjatekDomenowy(KodBledu kod, string? szczegolyTekst = null, object? szczegoly = null)
+    : Exception(szczegolyTekst ?? kod.ToString())
+{
+    public KodBledu Kod { get; } = kod;
+    public object? Szczegoly { get; } = szczegoly;                          // serializowane do ProblemDetails.szczegoly
+}
+public sealed class NieprawidlowyStanException(KodBledu kod, string szczegolyTekst, object? szczegoly = null)
+    : WyjatekDomenowy(kod, szczegolyTekst, szczegoly);                      // 409: ROZWIAZANIE_NIEPRAWIDLOWY_STAN, ELEMENT_SCIEZKI_NIEAKTYWNY …
+public sealed class NiezmiennikNaruszonyException(KodBledu kod, string szczegolyTekst) : WyjatekDomenowy(kod, szczegolyTekst);   // 409; z triggera P0001
+public sealed class KonfliktWersjiException(object aktualny, IReadOnlyList<string>? zmianyTresci = null)
+    : WyjatekDomenowy(KodBledu.KonfliktWersji, null, new { aktualny, zmiany_tresci = zmianyTresci });              // 412
+public sealed class BrakUprawnienException(KodBledu kod = KodBledu.BrakUprawnien) : WyjatekDomenowy(kod);                       // 403
+public sealed class NieZnalezionoException() : WyjatekDomenowy(KodBledu.NieZnaleziono);                                       // 404 (także brak widoczności, 12.8)
+public sealed class WalidacjaException(IReadOnlyList<BladPola> bledy, KodBledu kod = KodBledu.Walidacja) : WyjatekDomenowy(kod)
+{ public IReadOnlyList<BladPola> Bledy { get; } = bledy; }                                                                // 422
+public sealed class LimitPrzekroczonyException(KodBledu kod, TimeSpan retryAfter, object? szczegoly = null)
+    : WyjatekDomenowy(kod, null, szczegoly) { public TimeSpan RetryAfter { get; } = retryAfter; }                          // 429
+public sealed class UslugaNiedostepnaException(KodBledu kod, TimeSpan retryAfter) : WyjatekDomenowy(kod)
+{ public TimeSpan RetryAfter { get; } = retryAfter; }                                                                     // 503
+
+// Lemat.Application.Modele — błędy modeli (nie trafiają do HTTP; klasyfikuje je pętla prac, 14.3)
+public sealed class BladModeluPrzejsciowyException(string kod, Exception? przyczyna = null) : Exception(kod, przyczyna);
+public sealed class BladModeluTrwalyException(string kod, Exception? przyczyna = null) : Exception(kod, przyczyna);
+public sealed class ModelNiedostepnyException(RolaModelu rola) : Exception($"BRAK_AKTYWNEJ_KONFIGURACJI:{rola}");
+// Lemat.Application.Wspolne.PraceWTle
+public sealed class UtrataDzierzawyException() : Exception("DZIERZAWA_UTRACONA");
+public sealed class TerminMinalException(string termin) : Exception(termin);
+```
+
+Kod HTTP pochodzi z atrybutu `[Http(n)]` członka `KodBledu` (api.md 2);
+`ObslugaWyjatkowDomenowych` ustawia `Retry-After` dla wyjątków 429/503,
+nagłówek `ETag` dla `KonfliktWersjiException` (wersja z `aktualny`), a
+`bledy_pol` dla `WalidacjaException`.
+
+### 14.2 Tłumaczenie wyjątków infrastruktury
+
+| Wyjątek (warunek) | Wynik w `api` | Wynik w `worker` |
+|---|---|---|
+| `DbUpdateConcurrencyException` przy żądaniu z `If-Match` | `KonfliktWersjiException` → `412 KONFLIKT_WERSJI` z aktualnym zasobem | — |
+| `DbUpdateConcurrencyException` bez `If-Match` (zapis wewnętrzny, np. `ProfilUcznia`) | `409 KONFLIKT_WSPOLBIEZNOSCI` (`Retry-After: 1`) | `RezultatPrzestarzaly("KONFLIKT_WERSJI")` (E-13) |
+| `PostgresException` `23505` na indeksie z `KatalogOgraniczenUnikalnych` (np. `ux_rozwiazanie_element` → `ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `istniejace_rozwiazanie_id`, `ux_zgloszenie_zadania_otwarte` → `ZGLOSZENIE_ZADANIA_ISTNIEJE`, `uzytkownik_email_key` → `EMAIL_ZAJETY`) | kod z katalogu (409) | `RezultatPrzestarzaly` |
+| `PostgresException` `23505` na indeksie spoza katalogu, `23514`, `23503` | `500 BLAD_WEWNETRZNY` + log `NARUSZENIE_SCHEMATU` (E-45) | `Ponow("BLAD_NIEOCZEKIWANY")` |
+| `PostgresException` `P0001` (trigger, `RAISE EXCEPTION '<KOD>'`) | `NiezmiennikNaruszonyException(kod)` → kod z 12.2 | `Trwaly(kod)` |
+| `PostgresException` `40P01`, `40001` | `409 KONFLIKT_WSPOLBIEZNOSCI` (E-47) | `Ponow` |
+| `NpgsqlException { IsTransient: true }`, `InvalidOperationException` „timeout while getting a connection” (pula, `Timeout = 5 s`) | `503 BAZA_NIEDOSTEPNA`, `Retry-After: 2` (E-14) | `Ponow("BLAD_INFRASTRUKTURY")` |
+| `AmazonS3Exception`, `HttpRequestException` S3 po potoku Polly, `BrokenCircuitException` S3 | `503 USLUGA_NIEDOSTEPNA`, `Retry-After: 5` (E-02, E-36) | `Ponow` |
+| `ImageSandboxZajetyException` (piaskownica normalizacji zajęta > 5 s) | `503 USLUGA_NIEDOSTEPNA`, `Retry-After: 5` | — |
+| `MagickException` / odrzucenie przez piaskownicę | `422 ZDJECIE_NIEPRAWIDLOWE` (E-35) | — |
+| `BadHttpRequestException` (ciało przerwane, za duże) | `400`/`413 ZAPYTANIE_ZA_DUZE` (E-43, E-01) | — |
+| `OperationCanceledException` z `HttpContext.RequestAborted` | brak odpowiedzi (klient rozłączony), log `Debug` | — |
+
+### 14.3 Błędy w pracach w tle i agentach
+
+Klasyfikacja wyniku pracy (ADR-066 p. 1–2): `BladModeluPrzejsciowyException`,
+przekroczenie czasu wywołania (anulowanie inne niż utrata dzierżawy i
+zatrzymanie), błędy przejściowe bazy i S3 → `Ponow` z odstępem z 13.3;
+`BladModeluTrwalyException`, `NiezmiennikNaruszonyException`, termin twardy
+minął → `Trwaly` → `PoWyczerpaniuAsync`; utrata dzierżawy →
+`RezultatPrzestarzaly` bez zapisu; inny wyjątek → `Ponow("BLAD_NIEOCZEKIWANY")`
+z logiem `Error`. Agenci nie przechwytują wyjątków modeli poza regułami z
+10.0.4 (naprawa odpowiedzi, ponowienie Jev przy zapasie czasu, szablon
+Wskazówki). Kody przyczyn w `praca_w_tle.ostatni_blad`:
+`PRZEKROCZONY_CZAS`, `BLAD_DOSTAWCY`, `ODPOWIEDZ_NIEZGODNA_ZE_SCHEMATEM`,
+`LIMIT_WYWOLAN_FUNKCJI`, `NIEZNANE_NARZEDZIE`, `MOCK_SCENARIUSZ_NIEZNANY`,
+`BLAD_INFRASTRUKTURY`, `BLAD_NIEOCZEKIWANY`, `DZIERZAWA_WYGASLA`,
+`ZASTAPIONA_NOWSZA`, `KONTO_USUWANE`.
+
+### 14.4 Frontend: granice błędów i komunikaty
+
+- **Komunikaty** — `messages/pl-PL.json`: `bledy.<KOD>.tytul`,
+  `bledy.<KOD>.akcja` (dla każdego kodu 12.2, generowane z
+  `katalog-bledow.yaml`) i `bledy.E-xx` (kolumna „Komunikat pl-PL” 14.5);
+  `BLAD_SIECI` — „Brak połączenia z internetem. Sprawdź sieć — spróbujemy
+  ponownie.”, `PRZERWANO` — bez komunikatu.
+- **`obsluzBlad(e, reakcje)`** — reakcja lokalna dla kodów obsługiwanych
+  przez ekran (np. `KONFLIKT_WERSJI` → dialog z aktualną wersją,
+  `WERYFIKACJA_ZAJETA` → komunikat E-16 z `szczegoly.podjeta_przez`,
+  `ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `istniejace_rozwiazanie_id` →
+  przejście do istniejącego Rozwiązania, `LIMIT_PRZEKROCZONY` → licznik
+  `Retry-After`, `WALIDACJA` → `setError` react-hook-form dla każdego
+  `bledy_pol[].pole`); pozostałe kody → toast z `tytul` + `akcja`.
+- **Granice błędów App Router** — `error.tsx` w `app/` i w każdej grupie
+  ról (komponent kliencki z `reset()` i `trace_id`), `global-error.tsx` dla
+  błędów układu głównego, `not-found.tsx`; TanStack Query `throwOnError`
+  tylko dla `status ≥ 500` i `BLAD_SIECI` w zapytaniach odczytu; mutacje
+  nigdy nie rzucają do granicy (formularz zachowuje dane).
+- **Ponowienia automatyczne** — TanStack Query `retry: (n, e) => n < 3 &&
+  (e.kod === "BLAD_SIECI" || e.status === 503 || e.kod === "KONFLIKT_WSPOLBIEZNOSCI")`,
+  odstęp `min(1000 × 2^n, 15 000)` lub `Retry-After`; mutacje z
+  `Idempotency-Key` ponawiane tym samym kluczem, bez klucza — wyłącznie po
+  decyzji użytkownika.
+- **Tryb offline** (PWA) — `navigator.onLine = false` → pasek „Brak
+  połączenia”, mutacje wstrzymane (`onlineManager` TanStack Query), strona
+  `/offline` dla nawigacji bez sieci (ADR-054 p. 6).
+
+### 14.5 Macierz błędów
+
+| # | Awaria | Wykrycie (.NET) | Reakcja systemu | Skutek dla użytkownika | Komunikat pl-PL (`bledy.E-xx`) |
+|---|---|---|---|---|---|
+| E-01 | Zdjęcie > 10 MB, > 5 zdjęć, zły format | `FiltrWalidacji` + `IFormFile.Length`/sygnatura pliku przed zapisem | `413` / `422 ZA_DUZO_ZDJEC` / `415`; nic nie zapisano | komunikat i możliwość ponowienia; kompresja w kliencie zapobiega większości przypadków | „Zdjęcie jest za duże albo ma nieobsługiwany format. Zrób zdjęcie aparatem w aplikacji (do 5 zdjęć, każde do 10 MB).” |
+| E-02 | Magazyn obiektów niedostępny przy przesyłaniu | `AmazonS3Exception` / `HttpRequestException` klienta S3 (po potoku Polly) | rollback transakcji; obiekty już zapisane usuwa `SPRZATAJ_OSIEROCONE_OBIEKTY` (codziennie, buckety `zdjecia/`, `zdjecia-maskowane/`, `zbior-treningowy/` porównywane z `zdjecie_rozwiazania` i `kopia_treningowa`, ADR-047) | `503 USLUGA_NIEDOSTEPNA`, `Retry-After: 5`; klient ponawia z tym samym `Idempotency-Key` | „Nie udało się zapisać zdjęć. Spróbuj ponownie za chwilę — nic nie zostało utracone.” |
+| E-03 | Dostawca rozpoznawania: timeout (14 s), 429, 5xx | `BladModeluPrzejsciowyException` (`KlasyfikacjaBledowChatClient`) | ponowienia pracy po 1 s i 3 s; po 3. próbie `BLAD_ROZPOZNAWANIA` (`PRZEKROCZONY_CZAS`/`BLAD_DOSTAWCY`); naruszenie NFR-01 liczone w metryce | „Nie udało się odczytać zdjęcia z powodu awarii usługi” + akcje: „Spróbuj ponownie” (te same zdjęcia, ≤ 5 razy, bez zużycia przesłania) lub „Porzuć i zacznij od nowa” | „Nie udało się odczytać zdjęcia z powodu awarii usługi.” + „Spróbuj ponownie” / „Porzuć i zacznij od nowa” |
+| E-04 | Zdjęcie nieczytelne | `czytelne = false` | `BLAD_ROZPOZNAWANIA` (`NIECZYTELNE`) bez ponowień | wskazówki fotograficzne (światło, kadr, czytelne pismo) + „Wyślij nowe zdjęcia” (łącznie ≤ 3 przesłania) lub „Porzuć i zacznij od nowa” (nowe Rozwiązanie dla tego samego elementu do `wygasa_at`) | „Nie udało się odczytać kartki. Zrób zdjęcie w dobrym świetle, całej kartki, pismem wyraźnym.” |
+| E-05 | Odpowiedź modelu niezgodna ze schematem | `IWywolanieUstrukturyzowane`: `JsonSchema.Net` + atrybuty rekordu | 1 ponowienie z komunikatem błędu walidacji w promptcie; potem jak E-03 | jak E-03 | jak E-03 |
+| E-06 | > 40 kroków | walidacja wyniku | `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`) | prośba o zwięźlejsze zapisanie rozwiązania i nowe zdjęcia (wpis ręczny nie istnieje, ADR-024) | „Rozwiązanie ma zbyt wiele kroków do odczytania (ponad 40). Zapisz je zwięźlej i wyślij nowe zdjęcia.” |
+| E-07 | Kartka dotyczy innego Zadania | `zgodnosc_z_zadaniem < 0.5` | ostrzeżenie, bez blokady | baner „Kartka może dotyczyć innego zadania” na ekranie Transkrypcji | „Kartka może dotyczyć innego zadania. Sprawdź, czy wysłano właściwe zdjęcia.” |
+| E-08 | Jev: timeout (2 s), 429, 5xx, błędny format | adapter + circuit breaker | ponowienie tylko przy zapasie czasu (9.9), potem model zapasowy dla całego planu jednym wywołaniem; metryka `jev_bledy_total` | brak (dłuższy czas oceny; budżet 17.2) | brak komunikatu |
+| E-09 | Model zapasowy niedostępny lub błędny | wyjątek po ponowieniu | ponowienia pracy `OCEN_ROZWIAZANIE` do terminu twardego 120 s; po nim T-6: Weryfikacja `BLAD_PRZETWARZANIA` + `PONOW_OCENE` | „Rozwiązanie zostanie ocenione przez nauczyciela” (brak Oceny wstępnej); przy udanym `PONOW_OCENE` Ocena pojawia się później | „Rozwiązanie zostanie ocenione przez nauczyciela.” |
+| E-10 | SymPy: błąd parsowania, przekroczenie 2 s CPU / 512 MB | HTTP 422/504 sidecara `lemat-sympy` (`SympySidecarKlient`) | wynik `NIEROZSTRZYGNIETE`; proces potomny zastępowany | brak | brak komunikatu |
+| E-11 | Agent wyjaśniający: błąd, timeout 8 s, wyciek rozwiązania | wyjątek / strażnik 10.5.3 | ponowienie pracy `NAPISZ_WSKAZOWKE` (raz), potem szablon | Ocena widoczna od razu; Wskazówka dochodzi (z szablonu) w ≤ 20 s | brak komunikatu (Wskazówka pojawi się za chwilę) |
+| E-12 | Awaria workera w trakcie pracy | wygaśnięcie dzierżawy (60 s) | odzyskanie pracy; handler idempotentny (warunki 13.3) | opóźnienie ≤ 60 s; dla `OCEN_ROZWIAZANIE` ponowienie do terminu twardego, po nim T-6 | brak komunikatu |
+| E-13 | Rezultat obliczeń przestarzały (stan zmienił się w trakcie) | `ExecuteUpdateAsync` z warunkiem `status`/`version` zwraca 0 albo `DbUpdateConcurrencyException` | rezultat odrzucony, log `rezultat_przestarzaly` | brak | brak komunikatu |
+| E-14 | PostgreSQL niedostępny / przełączenie | `NpgsqlException` (`IsTransient`) / `TimeoutException` puli | `api`: `503 BAZA_NIEDOSTEPNA` (`Retry-After: 2`); worker: wstrzymanie pobierania, ponawianie połączenia co 2 s (maks. 60 s backoff) | komunikat „Spróbuj za chwilę”; PWA ponawia `GET` automatycznie | „Serwis jest chwilowo niedostępny. Spróbuj za chwilę.” |
+| E-15 | Konflikt edycji (dwa urządzenia) | `If-Match` | `412 KONFLIKT_WERSJI` + aktualny zasób w ciele | UI pokazuje aktualną wersję i pyta, czy nadpisać | „Dane zmieniły się w międzyczasie (np. na innym urządzeniu). Pokazujemy aktualną wersję.” |
+| E-16 | Weryfikacja podjęta przez innego Nauczyciela | `SqlQuery<WierszPodjecia>(UPDATE … RETURNING).ToListAsync()` = 0 wierszy | `409 WERYFIKACJA_ZAJETA` z danymi blokującego | komunikat „Sprawdza: {imię nazwisko} do {godzina}” | „Sprawdza: {imię nazwisko} do {godzina}.” |
+| E-17 | Walidacja Zadania wygenerowanego negatywna | sprawdzenia W-x | do 3 cykli generowania z listą niespełnionych sprawdzeń; potem zlecenie `NIEUDANE` | Nauczyciel (zlecający) widzi `NIEUDANE` i przyczynę; dla puli — metryka | „Nie udało się wygenerować poprawnego zadania: {przyczyna}.” |
+| E-18 | Import arkusza z błędami | walidacja schematu | import `ODRZUCONY`, raport per numer Zadania, nic nie zapisano | Administrator poprawia ZIP i ponawia | „Import odrzucony — szczegóły w raporcie.” |
+| E-19 | Brak Zadań w strefie rozwoju | dobór 10.1.2 krok 7 | Zadanie najbliższe + `UZUPELNIJ_PULE` | uzasadnienie z faktycznym P(sukces) | brak komunikatu (uzasadnienie rekomendacji) |
+| E-20 | Brak opublikowanej Wkładki teoretycznej | dobór 10.1.2 krok 6 | Zadanie zamiast Wkładki, Seria rozpoczęta, praca `GENERUJ_SZKIC_WKLADKI` (szkic → `DO_PRZEGLADU` → powiadomienie recenzentów), metryka `brak_wkladki_total{umiejetnosc}` | Zadanie zamiast Wkładki do czasu publikacji szkicu | brak komunikatu |
+| E-21 | Trwałe pogorszenie trafności auto-ocen | bezpiecznik trafności 11.5.3: dolna granica Wilsona 95% błędu Kontroli losowych powyżej bieżącego progu > 2% przy `n_eff ≥ 50` (ADR-046; przy 0 błędach nigdy) | podniesienie progu o 0.02 względem progu sprzed przebiegu i Blokada obniżania progu do UB ≤ 2% przy `n_eff ≥ 189` (kroki 1–6 11.5.3, C4-02); wyzwolenie przy progu 0,990 → tryb pełnej weryfikacji (1.000, D-16), wyjście przez dezaktywację; przy UB > 2% i LB ≤ 2% (`n_eff ≥ 189`) — tylko blokada obniżania | więcej Ocen wstępnych | brak komunikatu |
+| E-22 | Zaległe usuwanie zdjęć > 24 h | metryka `zdjecia_zalegle` | alert krytyczny dla Administratora | brak | (Administrator) „Zaległe usuwanie zdjęć ponad 24 h.” |
+| E-23 | Niepowodzenie wysyłki e-mail | błąd SMTP | 5 ponowień (1–60 min) | e-mail resetu dociera z opóźnieniem | brak komunikatu |
+| E-24 | Nieznany wyjątek w handlerze | `catch (Exception)` w `PetlaAsync` (ADR-066 p. 2) | log z `trace_id`, traktowany jak błąd przejściowy (ponowienia), potem `po_wyczerpaniu` | jak dla danego typu pracy | jak dla danego typu pracy |
+| E-25 | Nieznany wyjątek w `api` | `ObslugaWyjatkowNieoczekiwanych : IExceptionHandler` | `500` z `kod = BLAD_WEWNETRZNY` i `instance` = `trace_id`, bez szczegółów | komunikat ogólny | „Coś poszło nie tak. Spróbuj ponownie. Kod zgłoszenia: {trace_id}.” |
+| E-26 | Brak jakiegokolwiek Zadania w zakresie Ucznia | dobór 10.1.2 krok 8 | `200` z `brak_elementu`, `UZUPELNIJ_PULE` dla Poziomów trudności 2–4 | komunikat 10.1.5 i sugerowane Działy | komunikat 10.1.5 i sugerowane Działy |
+| E-27 | Q-RE-01 (rekomendacja): timeout 1,5 s, błąd, obwód otwarty | wyjątek w fasadzie | polityka `POLITYKA_ELO`, `powrot_do_polityki = MODEL_NIEDOSTEPNY` | brak (rekomendacja bez strategii eksperymentalnej) | brak komunikatu |
+| E-28 | Pusta lub niewystarczająca pula weryfikatorów globalnych | `weryfikatorzy_globalni_aktywni_7d < wymagani` (17.7) lub `zaleglosc_globalna_min > 2 × pojemnosc` | alert `ALERT_WERYFIKACJE`; kontrola przyjęć 11.4.3 | Uczniowie bez Klasy dostają więcej zadań zamkniętych; po SLA status „opóźniona” | (Uczeń) status „opóźniona” przy Weryfikacji; (Administrator) alert |
+| E-29 | Kontrole losowe niewykonywane | `wykonanie_kontroli_30d < 0.90` | reguły nadzoru 11.5.3 (alert → blokada obniżania progu → bezpiecznik) | więcej Ocen wstępnych | brak komunikatu |
+| E-30 | Budżet generowania systemowego wyczerpany | licznik 12.7 | `UZUPELNIJ_PULE` i `GENERUJ_SZKIC_WKLADKI` przesunięte na następną dobę, alert przy 80% | dobór Zadań spoza strefy rozwoju (E-19); Zadanie zamiast Wkładki (E-20) | brak komunikatu |
+| E-31 | Poprawka Transkrypcji przekracza limit twardy | walidacja `PUT …/transkrypcja` (9.4) | `422 POPRAWKI_ZBYT_ROZLEGLE`, nic nie zapisano | komunikat „Zmieniono zbyt dużą część odczytu — wyślij nowe zdjęcia kartki” + akcja „Wyślij nowe zdjęcia” | „Zmieniono zbyt dużą część odczytu — wyślij nowe zdjęcia kartki.” |
+| E-32 | Sprawdzenie zgodności poprawek: błąd, timeout 8 s lub brak rezultatu przed zapisem Oceny | `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` po wyczerpaniu prób / brak `zgodnosc_poprawek` | T-7: Ocena wstępna, Weryfikacja z powodem `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (Z-3); metryka `sprawdzenie_poprawek_brak_total` | Ocena wstępna z komunikatem T-7 | komunikat T-7 |
+| E-33 | Plan Jev nieprzyjęty przez globalny ogranicznik, brak tokenu przed terminem fali (13.2) lub `429` od Jev | `PrzyjmijPlanAsync` = `null` / `ZarezerwujWywolanieAsync` = `false` / HTTP 429 | Ocena modelem zapasowym (`OGRANICZENIE_LOKALNE`), przydział × 0,5 na 30 s po 429; obwód nie jest otwierany | dłuższy czas oceny w granicach budżetu S-4 | brak komunikatu |
+| E-34 | Pula Zadań diagnostycznych niepełna | `SPRAWDZ_PULE_DIAGNOSTYCZNA`, dobór 9.1 | test częściowy (`pominiete_dzialy`) albo `409 TEST_NIEDOSTEPNY` przy < 50%; `ALERT_PULA_DIAGNOSTYCZNA` | Uczeń zaczyna z Profilem `DOMYSLNA` i może wykonać test później | „Test diagnostyczny jest chwilowo niedostępny. Możesz zacząć naukę i wykonać test później.” |
+| E-35 | Zdjęcie o nadmiernych wymiarach (bomba dekompresyjna) lub nieprawidłowy plik | `MagickImageInfo` w `Lemat.ImageSandbox` (`ResourceLimits.Width/Height/Area`, limit pamięci procesu, ADR-052) | `422 ZDJECIE_NIEPRAWIDLOWE`; proces piaskownicy zastępowany po przekroczeniu limitu | komunikat „Nie udało się odczytać zdjęcia — zrób je ponownie aparatem w aplikacji” | „Nie udało się odczytać zdjęcia — zrób je ponownie aparatem w aplikacji.” |
+| E-36 | Bucket `rejestr-zdarzen-rodo` niedostępny przy Zdarzeniu RODO | `AmazonS3Exception` / `HttpRequestException` klienta S3 (po potoku Polly) przed transakcją | `503 USLUGA_NIEDOSTEPNA`, nic nie zapisano w bazie (ADR-041); w `USUN_KONTO` — błąd przejściowy pracy, ponowienie co 1 h, żaden krok w bazie nie startuje przed zapisem obiektu | „Spróbuj za chwilę”; PWA ponawia z tym samym `Idempotency-Key` | „Spróbuj za chwilę.” |
+| E-37 | Filtr danych osobowych: krok z treścią matematyczną (po wyłączeniu tokenów imienia, nazwiska, inicjałów i oznaczenia klasy, C4-03) w ramce danych osobowych (`konflikt_filtra`) | Filtr 10.3.1 p. 3a | treść kroku zachowana (poza zastąpieniami b1/b2/c), T-3 (`PODEJRZENIE_BLEDU_ODCZYTU`) — Ocena wstępna wstrzymana do Weryfikacji (11.1 p. 7d); metryka `konflikt_filtra_total` | „Ocena wstrzymana — możliwy błąd odczytu…” (komunikat T-3) | komunikat T-3 |
+| E-38 | Obiekty magazynu bez wiersza w bazie (awaria między zapisem obiektu a transakcją albo odtworzenie PITR) | `SPRZATAJ_OSIEROCONE_OBIEKTY` | usunięcie obiektu (tryb `CODZIENNY` po 1 h; tryb `ODTWORZENIE` przed startem workerów), metryka; przyrost > 100 obiektów na dobę w trybie `CODZIENNY` → `ALERT_RODO` (ADR-047) | brak | brak komunikatu |
+| E-39 | Access token wygasł w trakcie pracy (karta w tle, uśpiony telefon) | `401 NIEUWIERZYTELNIONY` z `JwtBearer` | klient: `odswiezToken()` (single-flight) i jedno ponowienie operacji (`wywolaj`) | brak (operacja kończy się po odświeżeniu) | brak komunikatu |
+| E-40 | Sesja unieważniona albo wygasła (30 dni, ponowne użycie tokenu, blokada konta) | `401 SESJA_UNIEWAZNIONA` z `POST /auth/odswiezenie` | `BroadcastChannel` `WYLOGOWANIE` do wszystkich kart; `lemat_rola` usuwane; powrót po zalogowaniu na tę samą trasę (`?powrot=`) | przejście do logowania; Poprawki Transkrypcji zapisane autozapisem (≤ 1,5 s) nie giną | „Sesja wygasła. Zaloguj się ponownie — Twoje zapisane zmiany są bezpieczne.” |
+| E-41 | Podwójne kliknięcie albo ponowienie żądania w toku z tym samym `Idempotency-Key`; ten sam klucz z innym ciałem | `FiltrIdempotencji` | `409 IDEMPOTENCJA_W_TOKU` (`Retry-After: 1`) → klient czeka i ponawia tym samym kluczem (dostaje zapisaną odpowiedź); `422 KLUCZ_IDEMPOTENCJI_KONFLIKT` → nowy klucz tylko po decyzji użytkownika | jedno Rozwiązanie / jedna Odpowiedź | brak komunikatu (409); „Ta operacja została już wysłana z innymi danymi. Odśwież stronę.” (422) |
+| E-42 | Strumień SSE niedostępny (proxy buforujące, sieć komórkowa, `429 ZA_DUZO_STRUMIENI`) | `strumien.ts`: 2 porażki w 10 s, brak pierwszego zdarzenia w 5 s, `429` | odpytywanie `GET` co `nastepne_odpytanie_ms`, próba SSE co 60 s (ADR-064 p. 8) | postęp aktualizowany co 1 s zamiast natychmiast | brak komunikatu |
+| E-43 | Przerwane przesyłanie zdjęć (utrata sieci w trakcie `multipart`) | `IOException`/`BadHttpRequestException` przy odczycie ciała w Kestrel; klient: `TypeError` w `fetch` | żaden obiekt nie jest zapisany przed pełnym odczytem i walidacją wszystkich plików; wiersz `klucz_idempotencji` bez odpowiedzi jest usuwany przy błędzie odczytu; klient ponawia z tym samym kluczem (3 próby, 2 s, 5 s, 15 s), potem przycisk „Wyślij ponownie” | zdjęcia pozostają w pamięci strony do sukcesu (bez zapisu na urządzeniu, NFR-09) | „Przesyłanie przerwane — brak połączenia. Wyślemy zdjęcia ponownie, gdy wróci sieć.” |
+| E-44 | Frontend starszy niż API (wdrożenie w trakcie sesji) | `X-Lemat-Wersja-Api` wyższej wersji głównej niż w buildzie albo `ChunkLoadError` Next.js | baner z przyciskiem „Odśwież”; service worker aktywuje nową wersję po odświeżeniu | jedno przeładowanie strony | „Dostępna jest nowa wersja aplikacji. Odśwież stronę.” |
+| E-45 | Naruszenie ograniczenia bazy niewykryte walidacją (`23514` CHECK, `23503` FK) | `TlumaczBledowInfrastruktury` (ADR-063 p. 4) | `500 BLAD_WEWNETRZNY`, log `NARUSZENIE_SCHEMATU {ograniczenie}`, metryka; brak zapisu (rollback) | jak E-25 | jak E-25 |
+| E-46 | Rozwiązanie zawieszone w `ROZPOZNAWANIE`/`OCENIANIE` bez aktywnej pracy > 5 min | praca kontrolna `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` (ADR-066 p. 6) | ponowne zlecenie pracy przed terminem twardym albo ścieżka „po wyczerpaniu” (T-6, `BLAD_ROZPOZNAWANIA`); alert | jak E-03 / E-09 | jak E-03 / E-09 |
+| E-47 | Zakleszczenie transakcji (`40P01`) albo konflikt serializacji (`40001`) | `PostgresException.SqlState` w `TlumaczBledowInfrastruktury` | `api`: `409 KONFLIKT_WSPOLBIEZNOSCI` z `Retry-After: 1` (klient ponawia z tym samym `Idempotency-Key`); `worker`: `Ponow` | ponowienie niewidoczne albo jedno kliknięcie | „Nie udało się zapisać — spróbuj ponownie.” |
+
+### 14.6 Terminy oceny i reguła T-6
 
 - **Termin miękki** (NFR-01): `termin_miekki = zatwierdzono_at + max(10 s,
   28 s − t_R)`, gdzie `t_R = transkrypcja_gotowa_at − przeslano_at` (28 s =
@@ -7363,12 +7834,30 @@ public interface IObslugaZdarzenia<in TZdarzenie> where TZdarzenie : IZdarzenieD
   przypadkach powstaje Wynik zadania według 10.1.3, ustawiane jest
   `ocena_wystawiona_at` i wysyłane powiadomienie `OCENA_WYSTAWIONA`.
 
+Realizacja .NET: `TerminyOceny` (rekord w `Lemat.Domain.Ocenianie`) liczy
+oba terminy z `TimeProvider`; `OcenRozwiazanieHandler.TerminTwardy(praca)`
+zwraca `zatwierdzono_at + 120 s` dla klasyfikacji ADR-066 p. 1, a
+`PoWyczerpaniuAsync` wykonuje T-6 w jednostce pracy przejścia do `MARTWA`.
+
+### 14.7 Przypadki brzegowe — obsługa na każdej warstwie
+
+| Przypadek | Przeglądarka / Next.js | Sieć, Caddy | `api` (.NET) | `worker`, baza | Test |
+|---|---|---|---|---|---|
+| **Sieć komórkowa: zmiana stacji, chwilowa utrata, wysokie opóźnienie** | `strumien.ts`: ping co 15 s, cisza 45 s → ponowne połączenie, przejście na odpytywanie (E-42); TanStack Query `retry` dla `BLAD_SIECI`; `onlineManager` wstrzymuje mutacje offline | HTTP/2 z jednym połączeniem TCP; `flush_interval -1` | `RequestTimeouts` 30 s; SSE zamykane po 10 min (`wznow`) | brak wpływu | Playwright `siec-komorkowa.spec.ts` (emulacja `offline` 20 s w trakcie oceniania, potem stan końcowy bez przeładowania) |
+| **Duże zdjęcia (do 10 MB, 12 Mpx+)** | `kompresja.worker.ts`: dłuższy bok ≤ 2560 px, JPEG 0,85 (typowo 0,6–1,2 MB); plik > 10 MB po kompresji → komunikat E-01 bez wysyłki | `request_body max_size 52MB` | `MaxRequestBodySize` 52 MB, `MultipartBodyLengthLimit` 10 MB/plik, strumieniowy zapis do pliku tymczasowego (`IFormFile` > 64 kB na dysk), normalizacja w `Lemat.ImageSandbox` z limitami (E-35) | normalizacja nie w `worker` (ADR-052) | Vitest `kompresja.test.ts` (12 Mpx → ≤ 2560 px); `Lemat.Api.Tests/PrzeslanieDuzegoZdjecia` (10 MB, 5 plików) |
+| **HEIC (iPhone)** | Safari dekoduje HEIC (`createImageBitmap`) → kompresja do JPEG w przeglądarce; Chrome/Firefox bez dekodera → plik wysyłany bez kompresji (≤ 10 MB) z `Content-Type: image/heic` | — | sygnatura `ftypheic`/`ftypmif1` akceptowana; `Lemat.ImageSandbox` (Magick.NET z libheif) konwertuje do JPEG; plik HEIC > 10 MB → `413 ZDJECIE_ZA_DUZE` | — | `Lemat.ImageSandbox.Tests/HeicDoJpeg`; Playwright WebKit (iPhone 15) przesłanie HEIC |
+| **Przerwane przesyłanie zdjęć** | zdjęcia trzymane w pamięci strony do sukcesu; ponowienie z tym samym `Idempotency-Key` (3 próby, potem przycisk) — E-43 | połączenie zerwane | odczyt ciała → `IOException`; nic nie zapisano w S3 ani w bazie; wiersz `klucz_idempotencji` usunięty | obiekty zapisane częściowo (awaria po zapisie S3, przed `COMMIT`) usuwa `SPRZATAJ_OSIEROCONE_OBIEKTY` (ADR-047) | `Lemat.Api.Tests/PrzerwanePrzeslanie` (strumień ciała przerwany w połowie → brak wierszy i obiektów; ponowienie tym samym kluczem → `202`) |
+| **Wygasła sesja w trakcie pracy** | access token: odświeżenie proaktywne 60 s przed `exp` i reaktywne po `401` (E-39); refresh token nieważny → wylogowanie wszystkich kart z powrotem na trasę (E-40); autozapis Poprawek (`PUT …/transkrypcja` z debounce 1,5 s) i szkicu rozstrzygnięcia (`PUT …/szkic` z debounce 3 s) ogranicza utratę do ostatnich sekund | — | `JwtBearer` `ClockSkew` 30 s; SSE zamykane w chwili `exp` zdarzeniem `wznow` | blokada Weryfikacji trwa do `zablokowana_do`, szkic w bazie (C-08) | Playwright `sesja-wygasla.spec.ts` (zegar +16 min w trakcie edycji Transkrypcji → zapis udany po odświeżeniu; refresh token unieważniony → logowanie i powrót) |
+| **Podwójne kliknięcie** | przycisk zablokowany od kliknięcia do odpowiedzi; jeden `Idempotency-Key` na intencję | — | `FiltrIdempotencji`: drugie żądanie → `409 IDEMPOTENCJA_W_TOKU` albo zapisana odpowiedź (E-41); operacje z `If-Match` → drugie `412`/`409` | `ux_*` indeksy częściowe (C-01, C-02) | `IdempotencjaPodwojneZadanie` (12.12); Playwright `podwojne-klikniecie.spec.ts` |
+| **Wiele kart / wiele urządzeń** | single-flight odświeżania (Web Locks), jeden strumień powiadomień na przeglądarkę (karta-lider), `BroadcastChannel` dla tokenu i wylogowania (ADR-057); w drugiej karcie `412` → dialog z aktualną wersją | — | okno tolerancji rotacji 30 s; limity strumieni 4/12 bez zamykania istniejących | `If-Match` + tokeny współbieżności (15.2), C-03, C-04, C-41 … C-43 | `sesja-dwie-karty.spec.ts`, `powiadomienia-dwie-karty.spec.ts`, `Lemat.Api.Tests/Rozwiazania/PoprawkaKontraZatwierdzenieTests` |
+| **Przeładowanie karty przez system (iOS po uruchomieniu aparatu)** | stan formularza przesyłania w `sessionStorage` wyłącznie bez zdjęć i danych osobowych (identyfikator elementu, liczba zdjęć); po powrocie ekran prosi o ponowne wybranie zdjęć | — | — | — | Playwright WebKit `aparat-przeladowanie.spec.ts` |
+| **Zegar urządzenia niezgodny z serwerem** | czasy z serwera (`wygasa_at`, `termin_at`) przeliczane względem nagłówka `Date` odpowiedzi (`roznicaZegara`); odświeżenie tokenu liczone od `wygasa_at − roznicaZegara` | — | wszystkie terminy liczone w UTC na serwerze | — | Vitest `roznicaZegara.test.ts` (zegar −10 min) |
+| **Utrata uprawnień w trakcie (usunięcie z Klasy, blokada konta)** | `403`/`404` → strona „Brak dostępu”; SSE `blad` → zamknięcie strumienia | — | uprawnienie sprawdzane przy każdym odczycie stanu SSE; blokada konta unieważnia refresh tokeny | — | `Lemat.Api.Tests/Strumienie/UtrataUprawnienWTrakcie` |
+| **Wdrożenie w trakcie sesji** | `X-Lemat-Wersja-Api` / `ChunkLoadError` → baner „Odśwież” (E-44) | Caddy kieruje do nowych replik; SSE dostaje `wznow` (`ZAMYKANIE_SERWERA`) | `ShutdownTimeout` 30 s, zamykanie strumieni przy `ApplicationStopping` | dzierżawy wygasają i są odzyskiwane (ADR-066) | test dymny wdrożenia 17.5 |
+
 ---
 
 ## 15. Współbieżność i spójność
-
-> **Do przepisania na .NET w iteracji 3 — treść domenowa obowiązuje.** Iteracja 3 opisuje realizację scenariuszy w EF Core (token współbieżności `version`, `DbUpdateConcurrencyException`) i Npgsql. Nazwy modułów `lemat.*` tłumaczy 6.10, a zależności pythonowe — 5.5; reguły, liczby, stany i kontrakty domenowe tej sekcji są wiążące dla implementacji .NET bez zmian.
-
 
 ### 15.1 Zasady
 
@@ -7391,8 +7880,71 @@ public interface IObslugaZdarzenia<in TZdarzenie> where TZdarzenie : IZdarzenieD
    przez ludzi (ADR-029).
 6. Poziom izolacji: `READ COMMITTED` (domyślny); niezmienniki wymagające
    więcej są wyrażone indeksami unikalnymi lub warunkami `UPDATE … WHERE`.
+7. **Realizacja w .NET** (15.2, 15.3): każda zasada ma jeden mechanizm EF
+   Core/Npgsql; wybór mechanizmu nie należy do autora przypadku użycia.
 
-### 15.2 Scenariusze wyścigów
+### 15.2 Tokeny współbieżności w EF Core i odpowiedzi HTTP
+
+| Rodzaj tokenu | Tabele | Konfiguracja EF Core | Konflikt |
+|---|---|---|---|
+| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; `WersjaAgregatuInterceptor` zwiększa `Version` korzenia, gdy zmienił się **dowolny** wiersz agregatu (korzeń, encja własna, encja wewnętrzna — wyszukiwanie korzenia po kluczu własności albo FK encji `IEncjaWewnetrzna`, C7-06 p. 8; sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` podnosi `profil_ucznia.version`) | `UPDATE … WHERE version = @oryginalna` → 0 wierszy → `DbUpdateConcurrencyException` |
+| `version` z triggera | `weryfikacja` (`trg_weryfikacja_wersja`, ADR-037) | `IsConcurrencyToken().ValueGeneratedOnAddOrUpdate()`; interceptor pomija | jw.; nowa wartość czytana przez `RETURNING` |
+| `xmin` | `transkrypcja`, `wynik_zadania`, `zlecenie_generowania`, `import_arkusza`, `konfiguracja_modelu`, `ocena` | `Property<uint>("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken()` | jw.; konflikt zawsze wewnętrzny (te encje nie mają ETag) |
+| brak (zapis SQL warunkowy) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` | encja tylko do odczytu albo brak encji | liczba zmienionych wierszy = 0 → `RezultatPrzestarzaly` / ścieżka 13.4 |
+
+**`If-Match` → token.** `FiltrWersji` parsuje `If-Match: "<n>"` do
+`OczekiwanaWersja`; repozytorium po wczytaniu agregatu z `AsTracking()`
+ustawia `Entry(agregat).Property(a => a.Version).OriginalValue = n`, więc
+`SaveChanges` sprawdza wersję z nagłówka, nie wersję odczytaną w żądaniu
+(okno między odczytem a zapisem jest zamknięte). Gdy `n` ≠ wersja odczytana,
+przypadek użycia rzuca `KonfliktWersjiException` od razu, bez modyfikacji.
+
+**Odpowiedzi.** `DbUpdateConcurrencyException`: żądanie z `If-Match` →
+`412 KONFLIKT_WERSJI` (aktualny zasób czytany nowym zapytaniem bez
+śledzenia, nagłówek `ETag`); bez `If-Match` → `409 KONFLIKT_WSPOLBIEZNOSCI`
+z `Retry-After: 1`; w `worker` → `RezultatPrzestarzaly`. Konflikt stanu
+wykryty przed zapisem (np. stan Rozwiązania ≠ `TRANSKRYPCJA_GOTOWA`) → `409`
+z kodem stanu z 12.2 — `412` oznacza wyłącznie niezgodną wersję.
+
+**Polecenia SQL obok śledzenia.** `ExecuteUpdateAsync`/`SqlQuery` (podjęcie
+Weryfikacji, `zgodnosc_poprawek`, kalibracja) nie aktualizują śledzonych
+encji. Reguła: w jednej jednostce pracy polecenie SQL na wierszu
+poprzedza wczytanie agregatu tego wiersza z `AsTracking()`; jeśli agregat
+był już wczytany, repozytorium wywołuje `Entry(agregat).ReloadAsync()` po
+poleceniu SQL (test `PolecenieSqlPrzedSledzeniemTegoSamegoWiersza`).
+`UPDATE … RETURNING` i `INSERT … RETURNING` są czytane `ToListAsync()`
+(SQL niekomponowalny, ADR-056 uzup. 3.2).
+
+**Blokady pesymistyczne.** `FOR UPDATE` przez
+`Set<T>().FromSql($"SELECT * FROM rozwiazanie WHERE id = {id} FOR UPDATE").AsTracking().SingleAsync()`
+(zapytanie bez kompozycji poza `Include` encji własnych) albo
+`SqlQuery<int>($"SELECT 1 … FOR UPDATE")` dla blokady bez wczytania
+(C-36); kolejność blokad w jednej transakcji: `uzytkownik` (`FOR SHARE`) →
+`rozwiazanie` → `weryfikacja` → `profil_ucznia` (9.6.2) — test
+`KolejnoscBlokad` analizuje SQL przypadków użycia z listy C-09, C-25, C-28,
+C-37.
+
+**Izolacja.** `READ COMMITTED`, jawna transakcja jednostki pracy (ADR-056
+p. 1); `40P01`/`40001` → E-47.
+
+### 15.3 Scenariusze C-xx w realizacji .NET
+
+| Mechanizm | Scenariusze | Realizacja w .NET |
+|---|---|---|
+| `Idempotency-Key` | C-01, C-46 (zlecenie) | `FiltrIdempotencji` (ADR-062 p. 3); zlecenie prac — `ZlecaniePracSql` `ON CONFLICT` (ADR-056 p. 2) |
+| Indeks unikalny częściowy | C-02, C-05, C-12, C-18, C-22, C-27, C-30, C-36 | `PostgresException` `23505` → `KatalogOgraniczenUnikalnych` → kod 12.2 (14.2); dla C-12 przypadek użycia łapie `ux_jeden_proponowany` i zwraca istniejący element (odczyt po `ROLLBACK` w nowej jednostce pracy) |
+| `If-Match` + token | C-03, C-04, C-08, C-09, C-28, C-31, C-43, C-44 | `FiltrWersji` → `OriginalValue` → `DbUpdateConcurrencyException` → `412` (15.2); C-44 — token `stan_bezpiecznika.version`, ETag `B` |
+| Zapis warunkowy `WHERE status AND version` | C-05, C-06, C-10, C-23, C-35, C-38 | `ExecuteUpdateAsync(...)` = 0 → `RezultatPrzestarzaly` (E-13) |
+| Jedno polecenie `UPDATE … RETURNING` | C-07, C-41 | `Database.SqlQuery<T>($"UPDATE … RETURNING …").ToListAsync()` (sprawdzone na Npgsql EF 10.0.3) |
+| `FOR UPDATE` / `FOR SHARE` | C-09, C-11, C-25, C-28, C-29, C-32, C-36, C-37 | `FromSql`/`SqlQuery` z `FOR UPDATE`/`FOR SHARE` w jednostce pracy, kolejność blokad 15.2 |
+| Migawka konfiguracji na starcie operacji | C-14, C-15 | `PamiecKonfiguracjiModeli` (Singleton) — Ocena zapisuje `konfiguracja_modelu_id`, `prog_pewnosci_id`, `kalibrator_pewnosci_id` z odczytu na starcie handlera |
+| Blokada doradcza | C-19, C-40 | `pg_try_advisory_lock` na połączeniu dedykowanym schedulera; `pg_advisory_xact_lock` ogranicznika (zgodne z PgBouncer `transaction`, ADR-059) |
+| Okres karencji i status konta | C-20, C-33, C-37 | `SELECT status FROM uzytkownik … FOR SHARE` w przypadkach użycia rozstrzygnięcia i korekty; handlery prac → `RezultatPracy.KontoUsuwane` |
+| PITR i rejestr RODO | C-34, C-39 | `ponow_zdarzenia_rodo` przed startem `worker`/`scheduler` (16.4) |
+| Dzierżawa pracy | C-45 | potwierdzenie `FOR UPDATE` w `JednostkaPracyEf` (ADR-056 p. 4) |
+| Klient wielu kart | C-41, C-42 | Web Locks + `BroadcastChannel` (ADR-057), okno tolerancji rotacji |
+
+### 15.4 Scenariusze wyścigów
 
 | # | Scenariusz | Mechanizm | Rezultat |
 |---|---|---|---|
@@ -7437,11 +7989,19 @@ public interface IObslugaZdarzenia<in TZdarzenie> where TZdarzenie : IZdarzenieD
 | C-39 | Odtworzenie bazy z PITR do punktu `T` w trakcie `USUN_KONTO` (po kroku 1, przed krokiem 5) albo w trakcie usunięcia konta Nauczyciela (C4-01) | dla `USUNIECIE_WYKONANE` kryterium zastosowania = „wiersz `uzytkownik` nie istnieje”, a nie „wiersz `zdarzenie_rodo` istnieje”; `ponow_zdarzenia_rodo` przegląda cały prefiks `wykonane/` i wykonuje idempotentne kroki właściwe dla `dane.rola` tymi samymi funkcjami domenowymi co `USUN_KONTO` (16.4) | konto usunięte przed startem workerów, dane Nauczyciela spseudonimizowane w uzasadnieniach rekomendacji; G-6 (a3), (a4) |
 | C-40 | Start 3. repliki workera w szczycie „koniec lekcji”, gdy 2 workery i 2 `api` wykorzystują pełny przydział (C4-05) | odnowienia wierszy `limit_szybkosci_modelu` pod `pg_advisory_xact_lock` klucza; nowy wiersz: pusty kubełek, `r = min(formuła, 0,8 × limit − Σ przydziałów pozostałych)` i `B = min(formuła, B_całk − Σ pojemności pozostałych)`; zmniejszenia stosowane przed `COMMIT`, zwiększenia po | Σ przydziałów ≤ 40/s i Σ pojemności ≤ 34 w każdej chwili, ≤ 74 wywołania w dowolnym oknie 1 s; nowa replika osiąga 12,5/s po ≤ 12 s; test 13.2 (f)–(h), G-3 (c) |
 | C-41 | Dwie karty (albo React Strict Mode, ponowienie TanStack Query) jednocześnie odświeżają access token tym samym cookie `lemat_rt` (C6-02) | klient: sekcja krytyczna Web Locks `lemat-odswiezenie` + `BroadcastChannel("lemat-sesja")` — druga karta używa tokenu rozgłoszonego przez pierwszą; serwer: `UPDATE token_odswiezania … WHERE zastapiony_at IS NULL AND uniewazniony_at IS NULL RETURNING`; drugie żądanie w oknie 30 s z tym samym `skrot_klienta_http` → nowy access token bez `Set-Cookie` (ADR-057) | obie karty zalogowane; jedna rotacja; rodzina unieważniana wyłącznie poza oknem albo z innego klienta HTTP; test Playwright `sesja-dwie-karty.spec.ts`, `OknoTolerancjiTests` |
-| C-42 | Dwie karty z otwartym strumieniem powiadomień i strumieniami dwóch Rozwiązań (C6-09) | strumień powiadomień tylko w karcie-liderze (Web Locks `lemat-powiadomienia-lider`), limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar `429` bez zamykania istniejących | brak pętli ponownych połączeń; przejęcie strumienia po zamknięciu lidera z `Last-Event-ID` (UUIDv7); test `powiadomienia-dwie-karty.spec.ts` |
+| C-42 | Dwie karty z otwartym strumieniem powiadomień i strumieniami dwóch Rozwiązań (C6-09) | strumień powiadomień tylko w karcie-liderze (Web Locks `lemat-powiadomienia-lider`), limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar `429` bez zamykania istniejących | brak pętli ponownych połączeń; przejęcie strumienia po zamknięciu lidera z migawką nieprzeczytanych (ADR-064 p. 3; wersja 3.1: `Last-Event-ID` UUIDv7, C7-11); test `powiadomienia-dwie-karty.spec.ts` |
 | C-43 | Uczeń zapisuje Poprawkę w karcie A (`PUT …/transkrypcja` → wersja 2), a w karcie B zatwierdza widoczną wersję 1 (C6-04 p. 4) | `PUT` zmienia `rozwiazanie.version` (ETag); `Rozwiazanie.Zatwierdz(transkrypcja, wersjaTranskrypcji, oczekiwanaWersjaRozwiazania)` sprawdza `If-Match` i to, że zatwierdzana Transkrypcja jest `najnowsza_transkrypcja_id` | karta B: `412 KONFLIKT_WERSJI` (ETag nieaktualny) albo `409 TRANSKRYPCJA_NIEAKTUALNA`; oceniana jest wyłącznie Transkrypcja, którą Uczeń widział i zatwierdził; test `Lemat.Api.Tests/Rozwiazania/PoprawkaKontraZatwierdzenieTests` |
 | C-44 | `KALIBRUJ` liczy bezpieczniki (do 10 min), a Administrator w tym czasie dezaktywuje bezpiecznik (C6-08) | `stan_bezpiecznika.version` jako token współbieżności; dezaktywacja z `If-Match`; `KALIBRUJ` zapisuje stan z wersją odczytaną na starcie — konflikt → ponowny odczyt i ponowna ocena tylko kroku bezpieczników (maks. 3 próby); `StanBezpiecznika.DezaktywowanyPo(startPrzebiegu)` → dezaktywacja wygrywa: przebieg nie wyzwala bezpiecznika ponownie na danych sprzed `okno_od` i loguje `rezultat_przestarzaly` | decyzja Administratora nie ginie; dezaktywacja po zapisie przebiegu dostaje `412` z aktualnym stanem i jest ponawiana świadomie; test `Lemat.Infrastructure.Tests/Kalibracja/KalibrujKontraDezaktywacjaTests` |
 | C-45 | Worker po pauzie GC traci dzierżawę, inny worker przejmuje pracę, pierwszy kończy i zapisuje wynik (C6-15 p. 1) | jednostka pracy handlera: `SELECT … FROM praca_w_tle WHERE id = @id AND wykonawca = @ja AND status = 'W_TOKU' FOR UPDATE` przed `COMMIT`; zapis wyniku z tym samym warunkiem (ADR-056 p. 4) | zmiany domenowe pierwszego workera wycofane (`UtrataDzierzawyException`), wynik odrzucony, `praca_zapis_po_utracie_dzierzawy_total` + 1; praca kończy się raz |
 | C-46 | Ta sama praca zlecana dwa razy w jednej albo dwóch transakcjach (ponowiony `PUT …/transkrypcja`, dwa handlery) (C6-01) | `ZlecaniePracSql`: `INSERT … ON CONFLICT … DO NOTHING` / `DO UPDATE SET ladunek` (`SPRAWDZ_POPRAWKI_TRANSKRYPCJI`); `NOTIFY` z triggera po `COMMIT` | przypadek użycia nie jest wycofywany; jedna praca `OCZEKUJE` z ładunkiem najnowszego `PUT`; worker budzi się dopiero po `COMMIT` |
+| C-47 | Ponowienie pracy `AKTUALIZUJ_PROFIL`/`SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, gdy istnieje już praca `OCZEKUJE` z tym samym kluczem (C7-03) | `ponow_prace` (blok `EXCEPTION` na `unique_violation`) | praca ponawiana kończy się `ZAKONCZONA` z `ZASTAPIONA_NOWSZA`; praca oczekująca wykonuje się z nowszym ładunkiem; test (g) ADR-066 |
+| C-48 | Odzyskiwanie dzierżaw, gdy jedna z wygasłych prac koliduje z pracą `OCZEKUJE` (C7-03) | `odzyskaj_dzierzawy` per wiersz z podtransakcją, `FOR UPDATE SKIP LOCKED` | pozostałe prace odzyskane (sprawdzone na PostgreSQL 16.15); test (h) ADR-066 |
+| C-49 | Dwa powiadomienia zatwierdzone w odwróconej kolejności, klient rozłączony między nimi (C7-11) | migawka nieprzeczytanych przy każdym połączeniu, scalanie po `id` w kliencie (ADR-064 p. 3) | żadne nieprzeczytane powiadomienie nie ginie; test `DwaPowiadomieniaWOdwroconejKolejnosciNieGinaPoWznowieniu` |
+| C-50 | Zmiana wyłącznie encji wewnętrznej agregatu (np. `opanowanie_umiejetnosci`) równolegle z inną zmianą agregatu (C7-06 p. 8) | `WersjaAgregatuInterceptor` podnosi `version` korzenia | druga transakcja dostaje `DbUpdateConcurrencyException` zamiast cichego nadpisania niezmiennika |
+| C-51 | Równoległe sprawdzenia Walidacji (`Task.WhenAll` W-2, W-3, Q-WA, W-9) w jednej pracy (C7-10) | porty agentów bez `LematDbContext` (`NpgsqlDataSource` / `IDbContextFactory`), `PamiecKonfiguracjiModeli` bez zapytań na ścieżce | brak `InvalidOperationException` „second operation”; test `WalidacjaRownoleglaBezBledowKontekstu` |
+| C-52 | Przekroczenie czasu wywołania modelu przy ważnej dzierżawie (C7-04) | klasyfikacja anulowania ADR-066 p. 1 | `Ponow`, po terminie twardym `Trwaly` → T-6 / `BLAD_ROZPOZNAWANIA`; nigdy `ZAKONCZONA` bez efektu |
+| C-53 | Przejęcie roli harmonogramu w trakcie wystąpienia (restart o 02:59:58, nowa instancja aktywna o 03:00:07) (C7-13) | `przebieg_harmonogramu` + nadrabianie ≤ 24 h, klucz deduplikacji z datą | `KALIBRUJ` zlecona raz dla bieżącej daty; test (l) ADR-066 |
+| C-54 | Podwójne kliknięcie „Zatwierdź” (dwa żądania z tym samym `If-Match`) | pierwsze zmienia stan i `version`; drugie: `412 KONFLIKT_WERSJI` albo `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`; klient blokuje przycisk | jedna praca `OCEN_ROZWIAZANIE` (deduplikacja `OczekujaceIWToku`); UI pokazuje stan po pierwszym żądaniu |
 
 ---
 
@@ -8286,8 +8846,8 @@ API i Playwright; (g) zadanie warstwy AI tworzy `FabrykaKlientowCzatu`,
 testy z jego podsekcji „Realizacja w .NET” (10.1.8, 10.2.5, 10.3.4, 10.4.6,
 10.5.4); (h) prompty z `docs/spec/prompty.md` są plikami YAML w
 `Lemat.Agenci/Prompty` z testami `KazdaWersjaPromptuIstnieje` i
-`SzablonBezZmiennychTresci`; (i) migracja `0001_SchematPoczatkowy` i test
-`SchematZgodnyZDdlTest` są w jednym zadaniu, zależnym od wycięcia DDL z
+`SzablonBezZmiennychTresci`; (i) migracja `0001_SchematPoczatkowy` (wyłącznie SQL, ADR-063) i test
+`ModelEfZgodnyZKatalogiem` są w jednym zadaniu, zależnym od wycięcia DDL z
 `docs/spec/ddl.md`; (j) testy przejść `Rozwiazanie` (34 przypadki, 3.6) i
 `Weryfikacja` (podjęcie po wygaśnięciu, eskalacja `W_TRAKCIE`) są w DoD
 zadań agregatów; (k) `KontenerDiTests` i `BrakCykliMiedzyModulamiAplikacji`
@@ -8357,17 +8917,24 @@ produktu (23.4).
 | ADR-046 | Bezpieczniki trafności i poprawek reagujące na dowód przekroczenia | Nowa (it. 5) | — | [ADR-046-bezpieczniki-trafnosci-i-poprawek-reagujace-na-dowod.md](adr/ADR-046-bezpieczniki-trafnosci-i-poprawek-reagujace-na-dowod.md) |
 | ADR-047 | Sprzątanie osieroconych obiektów magazynu | Nowa (it. 5) | — | [ADR-047-sprzatanie-osieroconych-obiektow-magazynu.md](adr/ADR-047-sprzatanie-osieroconych-obiektow-magazynu.md) |
 | ADR-048 | Zmiana stosu na .NET 10 + Next.js | Przyjęta (wersja 3.0) | — | [ADR-048-zmiana-stosu-na-net-10-next-js.md](adr/ADR-048-zmiana-stosu-na-net-10-next-js.md) |
-| ADR-049 | Transliteracja i konwencje nazw identyfikatorów w C#, PostgreSQL, JSON, URL i TypeScript | Przyjęta (wersja 3.0); uzupełnienie 3.1 (p. 11–12) | — | [ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md](adr/ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md) |
+| ADR-049 | Transliteracja i konwencje nazw identyfikatorów w C#, PostgreSQL, JSON, URL i TypeScript | Przyjęta (wersja 3.0); uzupełnienia 3.1 (p. 11–12) i 3.2 (p. 13–15) | — | [ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md](adr/ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md) |
 | ADR-050 | Obliczenia symboliczne — sidecar SymPy w piaskownicy zamiast biblioteki .NET | Przyjęta (wersja 3.0) | — | [ADR-050-obliczenia-symboliczne-sidecar-sympy.md](adr/ADR-050-obliczenia-symboliczne-sidecar-sympy.md) |
-| ADR-051 | SSE dla postępu długotrwałych operacji; odpytywanie jako ścieżka zapasowa | Przyjęta (wersja 3.0); uzupełnienie 3.1 (ADR-056, ADR-057) | — | [ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md](adr/ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md) |
+| ADR-051 | SSE dla postępu długotrwałych operacji; odpytywanie jako ścieżka zapasowa | Przyjęta (wersja 3.0); uzupełnienia 3.1 (ADR-056, ADR-057) i 3.2 (ADR-064) | — | [ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md](adr/ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md) |
 | ADR-052 | Przetwarzanie obrazów — Magick.NET w osobnym procesie `Lemat.ImageSandbox` | Przyjęta (wersja 3.0); uzupełnienie 3.1 (C6-11) | — | [ADR-052-przetwarzanie-obrazow-magick-net-w-piaskownicy.md](adr/ADR-052-przetwarzanie-obrazow-magick-net-w-piaskownicy.md) |
-| ADR-053 | Prace w tle w .NET — `BackgroundService` na pulę i `FOR UPDATE SKIP LOCKED` | Przyjęta (wersja 3.0); uzupełnienie 3.1 (ADR-056) | — | [ADR-053-prace-w-tle-backgroundservice-skip-locked.md](adr/ADR-053-prace-w-tle-backgroundservice-skip-locked.md) |
+| ADR-053 | Prace w tle w .NET — `BackgroundService` na pulę i `FOR UPDATE SKIP LOCKED` | Przyjęta (wersja 3.0); uzupełnienia 3.1 (ADR-056) i 3.2 (ADR-066) | — | [ADR-053-prace-w-tle-backgroundservice-skip-locked.md](adr/ADR-053-prace-w-tle-backgroundservice-skip-locked.md) |
 | ADR-054 | Frontend Next.js — App Router, grupy tras per rola, PWA, bez BFF | Przyjęta (wersja 3.0); uzupełnienie 3.1 (C6-14) | — | [ADR-054-frontend-next-js-app-router-pwa.md](adr/ADR-054-frontend-next-js-app-router-pwa.md) |
-| ADR-055 | Warstwa agentów AI w .NET — Microsoft.Extensions.AI, Semantic Kernel i implementacje Mock | Przyjęta (wersja 3.0); zmieniona 3.1 (ADR-058) | — | [ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md](adr/ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md) |
-| ADR-056 | Jednostka pracy z jawną transakcją, zlecanie prac poleceniem SQL `ON CONFLICT` i `NOTIFY` z triggerów | Nowa (wersja 3.1) | — | [ADR-056-jednostka-pracy-zlecanie-prac-sql-i-notify-z-triggerow.md](adr/ADR-056-jednostka-pracy-zlecanie-prac-sql-i-notify-z-triggerow.md) |
-| ADR-057 | Sesja w wielu kartach — odświeżanie single-flight, okno tolerancji rotacji refresh tokenu i jeden strumień powiadomień na przeglądarkę | Nowa (wersja 3.1) | — | [ADR-057-sesja-w-wielu-kartach-single-flight-odswiezania-i-okno-tolerancji.md](adr/ADR-057-sesja-w-wielu-kartach-single-flight-odswiezania-i-okno-tolerancji.md) |
-| ADR-058 | Port `IModelGeneratywny` jako fabryka klientów czatu per rola; Semantic Kernel tylko do pluginów i szablonów promptów systemowych | Nowa (wersja 3.1) | — | [ADR-058-model-generatywny-jako-fabryka-klientow-czatu-per-rola.md](adr/ADR-058-model-generatywny-jako-fabryka-klientow-czatu-per-rola.md) |
+| ADR-055 | Warstwa agentów AI w .NET — Microsoft.Extensions.AI, Semantic Kernel i implementacje Mock | Przyjęta (wersja 3.0); zmieniona 3.1 (ADR-058); uzupełnienie 3.2 (ADR-065) | — | [ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md](adr/ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md) |
+| ADR-056 | Jednostka pracy z jawną transakcją, zlecanie prac poleceniem SQL `ON CONFLICT` i `NOTIFY` z triggerów | Nowa (wersja 3.1); uzupełnienie 3.2 | — | [ADR-056-jednostka-pracy-zlecanie-prac-sql-i-notify-z-triggerow.md](adr/ADR-056-jednostka-pracy-zlecanie-prac-sql-i-notify-z-triggerow.md) |
+| ADR-057 | Sesja w wielu kartach — odświeżanie single-flight, okno tolerancji rotacji refresh tokenu i jeden strumień powiadomień na przeglądarkę | Nowa (wersja 3.1); p. 5 zastąpiony przez ADR-064 (3.2) | — | [ADR-057-sesja-w-wielu-kartach-single-flight-odswiezania-i-okno-tolerancji.md](adr/ADR-057-sesja-w-wielu-kartach-single-flight-odswiezania-i-okno-tolerancji.md) |
+| ADR-058 | Port `IModelGeneratywny` jako fabryka klientów czatu per rola; Semantic Kernel tylko do pluginów i szablonów promptów systemowych | Nowa (wersja 3.1); uzupełnienie 3.2 (C7-01, C7-02, C7-08 … C7-10, C7-14, C7-15) | — | [ADR-058-model-generatywny-jako-fabryka-klientow-czatu-per-rola.md](adr/ADR-058-model-generatywny-jako-fabryka-klientow-czatu-per-rola.md) |
 | ADR-059 | Budżet połączeń PostgreSQL bez PgBouncera w pilotażu | Nowa (wersja 3.1) | — | [ADR-059-budzet-polaczen-postgresql-bez-pgbouncera.md](adr/ADR-059-budzet-polaczen-postgresql-bez-pgbouncera.md) |
+| ADR-060 | Błędy API jako ProblemDetails (RFC 9457) z kodem domenowym; hierarchia wyjątków C# i obsługa w Next.js | Nowa (wersja 3.2) | — | [ADR-060-problemdetails-rfc-9457-z-kodami-domenowymi.md](adr/ADR-060-problemdetails-rfc-9457-z-kodami-domenowymi.md) |
+| ADR-061 | Kontrakt OpenAPI generowany z kodu (`Microsoft.AspNetCore.OpenApi`) i klient TypeScript generowany przez `openapi-typescript` | Nowa (wersja 3.2) | — | [ADR-061-kontrakt-openapi-z-kodu-i-generowany-klient-typescript.md](adr/ADR-061-kontrakt-openapi-z-kodu-i-generowany-klient-typescript.md) |
+| ADR-062 | Semantyka HTTP API — wersjonowanie, polityki autoryzacji, `Idempotency-Key`, `ETag`/`If-Match`, stronicowanie kursorem i limity | Nowa (wersja 3.2) | — | [ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md](adr/ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md) |
+| ADR-063 | DDL jako jedyne źródło schematu (migracje SQL); model EF Core bez generowania schematu | Nowa (wersja 3.2) | — | [ADR-063-ddl-jako-jedyne-zrodlo-schematu-ef-core-bez-generowania.md](adr/ADR-063-ddl-jako-jedyne-zrodlo-schematu-ef-core-bez-generowania.md) |
+| ADR-064 | Kontrakt strumieni SSE — migawka stanu przy każdym połączeniu zamiast kursora UUIDv7, heartbeat, zamykanie, ścieżka zapasowa | Nowa (wersja 3.2) | — | [ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md](adr/ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md) |
+| ADR-065 | Scenariusze Mock sterowane jawnie, tryb ścisły E2E i dane deweloperskie poza migracjami | Nowa (wersja 3.2) | — | [ADR-065-scenariusze-mock-sterowane-jawnie-i-dane-deweloperskie-poza-migracjami.md](adr/ADR-065-scenariusze-mock-sterowane-jawnie-i-dane-deweloperskie-poza-migracjami.md) |
+| ADR-066 | Odporność pętli prac w tle i harmonogramu — klasyfikacja anulowania, obsługa wyjątków, ponowienie bez konfliktu deduplikacji, nadrabianie | Nowa (wersja 3.2) | — | [ADR-066-odpornosc-petli-prac-w-tle-i-harmonogramu.md](adr/ADR-066-odpornosc-petli-prac-w-tle-i-harmonogramu.md) |
 
 ---
 
@@ -8412,7 +8979,7 @@ produktu (23.4).
 | R-22 | Bezpiecznik trafności na granicy NFR-03 (e ≈ 2%) fałszywie podnosi próg i przełącza parę w tryb pełnej weryfikacji | średnie / średni | koszt nazwany i policzony (1,1 podniesienia na kwartał, 11% kwartałów w trybie pełnej weryfikacji, auto 57,5% zamiast 67%, 11.5.3, 17.7); decyzja D-16 w G-0; wyjście z trybu pełnej weryfikacji przez dezaktywację Administratora po analizie `/admin/kalibracja`; plan obciążenia „Tryb pełnej weryfikacji” (16 weryfikatorów ≤ G-7) |
 | R-23 | Sidecar Python (`lemat-sympy`) jako jedyny komponent spoza .NET: osobny obraz, łatki bezpieczeństwa i kompetencje zespołu (ADR-050) | średnie / niski | kontrakt HTTP 3 operacji z testami kontraktowymi w `Lemat.Infrastructure.Tests` (Testcontainers), obraz `python:3.12-slim-bookworm` przebudowywany co tydzień ze skanem podatności, brak sieci i bazy w kontenerze; awaria sidecara → `NIEROZSTRZYGNIETE` (SymPy jest sygnałem, ADR-013), a nie błąd Oceny |
 | R-24 | Dekoder HEVC (libde265 w Magick.NET) — licencjonowanie patentowe HEVC przy dekodowaniu HEIC po stronie serwera (ADR-052) | niskie / średni | kompresja w przeglądarce zamienia HEIC na JPEG wszędzie, gdzie przeglądarka dekoduje HEIC (Safari na iOS/macOS), więc serwer dekoduje HEIC wyłącznie przy awarii kompresji w kliencie; metryka `zdjecia_heic_po_stronie_serwera_total`; przełącznik `LEMAT_HEIC_PO_STRONIE_SERWERA = false` odrzuca HEIC kodem `422 ZDJECIE_NIEPRAWIDLOWE` z komunikatem o formacie, decyzja prawna przed startem produkcyjnym (G-6) |
-| R-25 | Zmiana stosu w trakcie projektu: nieprzeniesione reguły wersji 2.4 w sekcjach z kodem Python (wersja 3.1: przepisane 7, 10, 13; pozostają 12, 14, 15) | średnie / wysoki | notki „Do przepisania” na początku sekcji 12, 14, 15, mapowania 5.5 i 6.10, iteracja 3 przepisuje kontrakty bez zmiany reguł, iteracja 4 audytuje pokrycie (RTM), test słownika obejmuje typy C# i trasy Next.js (3.4) |
+| R-25 | Zmiana stosu w trakcie projektu: nieprzeniesione reguły wersji 2.4 w sekcjach z kodem Python (wersja 3.1: przepisane 7, 10, 13; wersja 3.2: przepisane 12, 14, 15) | średnie / wysoki | mapowania 5.5 i 6.10, iteracja 3 przepisała kontrakty bez zmiany reguł (katalog endpointów 12.3 i kody 12.2 przeniesione wiersz po wierszu), iteracja 4 audytuje pokrycie (RTM), test słownika obejmuje typy C# i trasy Next.js (3.4) |
 | R-26 | Okno tolerancji rotacji refresh tokenu (30 s, ten sam `User-Agent`, ≤ 5 użyć) osłabia wykrywanie kradzieży tokenu w tym oknie (ADR-057) | niskie / średni | okno krótkie i ograniczone liczbą użyć; access token 15 min; metryka `tokeny_ponowne_uzycie_total{wynik}` z alertem przy > 1% odświeżeń w oknie; unieważnienie rodziny przy innym kliencie HTTP |
 | R-27 | Zależność od zgodności `KernelFunction` z `AIFunction` i `FunctionInvokingChatClient` między wersjami Semantic Kernel i Microsoft.Extensions.AI (ADR-058) | średnie / średni | wersje przypięte w `Directory.Packages.props`; testy `LimitWywolanFunkcjiTests` i kontraktu pluginu na `MockChatClient` przy każdej aktualizacji; wariant awaryjny — `AIFunctionFactory.Create` z tych samych metod pluginu (bez zmian kontraktu agenta) |
 
@@ -8446,7 +9013,7 @@ progami, kalibratorami i konfiguracją modeli (baza danych).
 | Agent wyjaśniający | 8 s, ≤ 400 znaków, asynchronicznie | 10.5 |
 | SymPy | 2 s CPU / para, 3 s / Rozwiązanie, 512 MiB; sidecar `lemat-sympy`: 4 procesy na replikę workera, timeout klienta HTTP 2,2 s na parę (przekroczenie → `NIEROZSTRZYGNIETE`) | 13.1, 17.2, ADR-050 |
 | Pule workera (na replikę) | R 15 / S 4 / O 15 / P 6 / W 4 pętli asynchronicznych (`BackgroundService` na pulę; w 2.4 korutyn); 4 procesy sidecara `lemat-sympy` i 4 równoległe operacje `obrazy-worker` | 13.4, ADR-053 |
-| Strumień SSE | heartbeat (komentarz `: ping`) co 15 s; maks. czas strumienia 10 min (klient łączy się ponownie z `Last-Event-ID`); na replikę ≤ 4 strumienie na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar → `429 ZA_DUZO_STRUMIENI` bez zamykania istniejących; jeden strumień powiadomień na przeglądarkę (karta-lider); `id:` powiadomienia = UUIDv7; przejście na odpytywanie po 2 nieudanych połączeniach w 10 s albo po `429`, ponowna próba SSE co 60 s | ADR-051, ADR-057 |
+| Strumień SSE | heartbeat — zdarzenie `ping` co 15 s (3.2: `SseItem` nie obsługuje komentarzy); maks. czas strumienia `min(exp, 10 min)`, zamknięcie zdarzeniem `wznow`; na replikę ≤ 4 strumienie na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar → `429 ZA_DUZO_STRUMIENI` bez zamykania istniejących; jeden strumień powiadomień na przeglądarkę (karta-lider); wznowienie: skrót stanu (`Last-Event-ID`) dla strumieni stanu, migawka nieprzeczytanych dla powiadomień (`id:` = `powiadomienie.id`, nie kursor); przejście na odpytywanie po 2 nieudanych połączeniach w 10 s, braku pierwszego zdarzenia w 5 s albo po `429`, ponowna próba SSE co 60 s | ADR-051, ADR-057, ADR-064 |
 | Odpytywanie klienta (ścieżka zapasowa) | 1 s w stanach przejściowych | 12.1, ADR-051 |
 | Próg początkowy Jev / zapasowy (tylko środowisko testowe, przed ZT-1) | 0.95 / 0.98 | 11.2.2 |
 | Zakres progu | 0.800–0.990 (dowód i tryb pełnej weryfikacji: 1.000) | 11.5 |
@@ -8504,8 +9071,19 @@ progami, kalibratorami i konfiguracją modeli (baza danych).
 | Dzierżawa pracy / odnowienie | 60 s / 15 s | 13.4 |
 | JWT / refresh | 15 min / 30 dni; okno tolerancji rotacji 30 s, ≤ 5 użyć w oknie; odświeżenie proaktywne 60 s przed `exp`; oczekiwanie nowej karty na token z `BroadcastChannel` 150 ms | 16.1, ADR-057 |
 | Pule połączeń PostgreSQL | `api` 30 + 1, `worker` 40 + 1, `scheduler` 3 + 1 na replikę; razem 155; wymagane `max_connections ≥ 200`; `Timeout` oczekiwania na połączenie 5 s | 5.4, ADR-059 |
-| Generowanie Zadania — wywołania funkcji | ≤ 8 na generowanie (`maks_iteracji_funkcji`), 9. → `LIMIT_WYWOLAN_FUNKCJI` | 10.2.4, ADR-058 |
-| Mock modeli | `LEMAT_MOCK_OPOZNIENIE_MS` = 0 (E2E: 300); dostawca `mock` zakazany w `Production` | 10.0.6 |
+| Generowanie Zadania — wywołania funkcji | ≤ 8 na generowanie (`maks_iteracji_funkcji`), 9. → `LIMIT_WYWOLAN_FUNKCJI`; `MaximumIterationsPerRequest` = 9, `MaximumConsecutiveErrorsPerRequest` = 0, `TerminateOnUnknownCalls` = true | 10.2.4, ADR-058 uzup. 3.2 |
+| Generowanie Zadania — czas | `timeout_s` 45 s na żądanie do dostawcy, termin wywołania agenta 150 s | 10.0.4, ADR-058 uzup. 3.2 p. 4 |
+| SSE | heartbeat `ping` 15 s; cisza po stronie klienta 45 s → ponowne połączenie; zamknięcie po `min(exp, 10 min)`; `retry: 3000`; brak pierwszego zdarzenia w 5 s albo 2 porażki w 10 s → odpytywanie, próba SSE co 60 s; migawka powiadomień ≤ 100; kanał subskrybenta 16 | 12.10, ADR-064 |
+| Odstęp ponownego łączenia SSE | 1, 2, 4, 8, 16, 30 s (maks.), rozrzut ±20% | ADR-064 p. 8 |
+| Idempotencja | ważność klucza 24 h; `409 IDEMPOTENCJA_W_TOKU` z `Retry-After: 1` | 12.1, ADR-062 p. 3 |
+| Stronicowanie | `limit` 1–100, domyślnie 50; kursor z podpisem HMAC (16 B) | ADR-062 p. 5 |
+| Limity techniczne `api` | 20 żądań/s na użytkownika (pojemność 40), logowanie 5/min na IP, ciało 1 MB (zdjęcia 52 MB, plik 10 MB), czas żądania 30 s | 12.1, ADR-062 p. 6–7 |
+| Ponowienia klienta (TanStack Query) | 3 próby dla `BLAD_SIECI`, `503`, `KONFLIKT_WSPOLBIEZNOSCI`; odstęp `min(1 s × 2^n, 15 s)` albo `Retry-After`; ponowienie przesłania zdjęć: 2 s, 5 s, 15 s | 14.4, 14.7 |
+| Autozapis | Poprawki Transkrypcji: debounce 1,5 s; szkic rozstrzygnięcia: 3 s; przedłużenie blokady przy aktywności co 10 min | api.md 7 |
+| Harmonogram — nadrabianie | wystąpienia z ostatnich 24 h; alert `HARMONOGRAM_ZALEGLY` przy wpisie dziennym starszym niż 26 h | 13.5, ADR-066 p. 5 |
+| Pętla prac — ponowienia infrastruktury | 0,5 s, 1 s, 2 s … 30 s bez limitu prób; health check: brak iteracji pętli przez 60 s → `503` | ADR-066 p. 2, 4 |
+| Zawieszone Rozwiązanie | `ROZPOZNAWANIE`/`OCENIANIE` bez pracy > 5 min → `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` (co 5 min) | 13.3, ADR-066 p. 6 |
+| Mock modeli | `LEMAT_MOCK_OPOZNIENIE_MS` = 0 (E2E: 300); dostawca `mock` zakazany w `Production`; masa domyślna `MockModelDecyzyjny` 0,995; scenariusz nagłówkiem `X-Lemat-Mock-Scenariusz` tylko w `Development`/`E2E`; tryb ścisły w `E2E` | 10.0.6, ADR-065 |
 
 ---
 

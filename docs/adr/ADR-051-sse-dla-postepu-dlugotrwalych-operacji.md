@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (ADR-064) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; zastępuje ADR-014 |
@@ -116,3 +116,13 @@ zamykane); strumień powiadomień otwiera wyłącznie karta-lider przeglądarki
 (Web Locks `lemat-powiadomienia-lider`, `BroadcastChannel`). (3) `id:`
 zdarzenia `powiadomienie` = `powiadomienie.id` (UUIDv7), nie `created_at`.
 (4) Service worker nie obsługuje `/api/*` (ADR-057 p. 6).
+
+**Uzupełnienie wersji 3.2 (C7-11, ADR-064).** Pełny kontrakt strumieni
+(zdarzenia `stan`, `koniec`, `migawka`, `powiadomienie`, `ping`, `wznow`,
+`blad`, schematy `data:`, `id:`, zamykanie, heartbeat, ścieżka zapasowa) jest
+w ADR-064 i `docs/spec/api.md` 5. Zmiany względem p. 1–5: zdarzenie
+`wskazowka` scalone ze `stan`; `id:` zdarzeń stanu = skrót SHA-256 danych
+(zamiast `"<version>.<0|1>"`, bo stan „opóźniona” Weryfikacji nie zmienia
+`rozwiazanie.version`); heartbeat jako zdarzenie `ping` co 15 s; strumień
+powiadomień zaczyna każde połączenie migawką nieprzeczytanych i nie używa
+`Last-Event-ID`.

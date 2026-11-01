@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia” |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (ADR-065) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie |
 | Realizuje | ADR-048 p. 4; realizacja ADR-003, ADR-009, ADR-026 w .NET |
@@ -120,3 +120,9 @@ Handlebars); limit wywołań funkcji realizuje `FunkcjaZLimitem :
 DelegatingAIFunction`; treść od użytkownika nie przechodzi przez szablony;
 stan Modelu decyzyjnego buduje kod C# bez Semantic Kernel. Pełne prompty i
 schematy — `docs/spec/prompty.md`.
+
+**Uzupełnienie wersji 3.2 (C7-07, C7-12).** Implementacje Mock wybierają
+odpowiedź po jawnym scenariuszu (`X-Lemat-Mock-Scenariusz`, poza
+`Production`), domyślne odpowiedzi prowadzą przepływ trasą automatyczną,
+tryb ścisły w E2E, a konfiguracje `mock` wstawia polecenie `seed-dev`, nie
+migracja — ADR-065.
