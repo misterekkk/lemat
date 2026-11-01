@@ -4,8 +4,8 @@
 |---|---|
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
-| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
-| Ostatnia aktualizacja | 2026-11-01 (TASK-003) |
+| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `LematOpcje` (TASK-004); środowisko bazy: `docker-compose.yml` + `scripts/db-*.sh` (TASK-005); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
+| Ostatnia aktualizacja | 2026-11-01 (TASK-005) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -190,7 +190,7 @@ flowchart LR
         AGENTS["Lemat.Agents - 5 Agentow"]
         MODELS["Lemat.Models - Mock / LLM"]
     end
-    PG[("PostgreSQL 16 - dane, praca_w_tle, LISTEN/NOTIFY")]
+    PG[("PostgreSQL 16 - dane, praca_w_tle, LISTEN/NOTIFY; lokalnie docker-compose.yml port 5433")]
     FS[("Magazyn lokalny - zdjecia")]
     PAGES --> CLIENT
     CLIENT -->|"HTTPS JSON"| API
@@ -307,6 +307,7 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/tests/Lemat.Architecture.Tests/Support/RepositoryLocator.cs` | Lokalizacja katalogów repozytorium i plików źródłowych dla testów architektury | system plików, git | Layers, Glossary, Conventions | TASK-002 |
 
 Projekt `Lemat.Application` ma od TASK-004 `Common/` (LematOpcje); projekty `Lemat.Domain`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Pliki nie-C# (TASK-005, środowisko bazy; brak powiązań warstwowych strona/endpoint/agent, dostarcza instancję PostgreSQL 16 dla `Lemat.Infrastructure` od TASK-013): `docker-compose.yml` (usługa `postgres`, port `${LEMAT_PG_PORT:-5433}`), `docker/postgres/init-db.sh` (baza `lemat_test`, role `lemat_api/worker/scheduler`, rozszerzenia `citext`/`pg_trgm`), `.env.example` (wszystkie `LEMAT_*`), `scripts/db-up.sh`, `scripts/db-reset.sh`, `scripts/db-local-setup.sh` (PostgreSQL lokalny na 5432); `appsettings.Development.json` hostów Api/Worker/Scheduler dostały `Lemat:Baza:Polaczenie` (port 5433, `lemat_dev`).
 Pliki nie-C# (TASK-004): `backend/src/Lemat.{Api,Worker,Scheduler}/appsettings.json` i `appsettings.Development.json` (sekcja `Lemat`, domyślnie Mock/lokalne); `Lemat.Application.csproj` ma teraz pakiety Options/Configuration (graf referencji projektów bez zmian).
 Pliki nie-C# (TASK-003): `backend/openapi/lemat-v1.json` (OpenAPI 3.1.1, generowany przy buildzie `Lemat.Api`, deterministyczny, commitowany; źródło typów TS, ADR-061), `backend/Directory.Packages.props` (pakiet OpenAPI), `.csproj` Api/Worker/Scheduler.
 

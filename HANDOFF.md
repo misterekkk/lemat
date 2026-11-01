@@ -3,12 +3,12 @@
 | Pole | Wartość |
 |---|---|
 | Data | 2026-11-01 |
-| Etap | **Implementacja w toku** — ukończono TASK-001, TASK-002, TASK-003 (3 z 120 pozycji `TASKS.md`; 3 z 60 `[MVP]`) |
+| Etap | **Implementacja w toku** — ukończono TASK-001 … TASK-005 (5 z 120 pozycji `TASKS.md`; 5 z 60 `[MVP]`) |
 | Cel właściciela | **Działające MVP jak najszybciej**, kompletne end-to-end (Uczeń i Nauczyciel), całość uruchamialna lokalnie bez kluczy API (Mock) |
 | Architektura | `docs/ARCHITECTURE_DETAILED.md` v3.5; spec: `docs/spec/{ddl,ef-core,api,prompts}.md`; ADR-001 … ADR-075 w `docs/adr/` |
 | Stos | .NET 10 (`backend/`), Next.js App Router + TypeScript (`frontend/`), PostgreSQL 16, REST + SSE, Microsoft.Extensions.AI + Semantic Kernel |
-| Kod | szkielet solucji `backend/` (TASK-001) + 7 projektów testowych (TASK-002) + hosty z `/zdrowie` i OpenAPI (TASK-003); `frontend/` nie istnieje; dokumentacja i definicje agentów w `.claude/agents/` |
-| Następne TASK | **TASK-004** (Faza 1; równolegle możliwe TASK-005, 006) |
+| Kod | szkielet solucji `backend/` (TASK-001) + 7 projektów testowych (TASK-002) + hosty z `/zdrowie` i OpenAPI (TASK-003) + `LematOpcje` (TASK-004) + PostgreSQL 16 w `docker-compose.yml` i skrypty `scripts/db-*.sh` (TASK-005); `frontend/` nie istnieje; dokumentacja i definicje agentów w `.claude/agents/` |
+| Następne TASK | **TASK-006** (Faza 1; szkielet Next.js, bez zależności) |
 | Jak pracować | `CLAUDE.md` (reguły), `TASKS.md` (backlog + macierz pokrycia), `docs/CODEBASE_MAP.md` (żywa mapa), ten plik (stan, założenia, decyzje) |
 
 Poprzednia wersja `CLAUDE.md`/`TASKS.md`/`HANDOFF.md` (Python/FastAPI/React, ścieżki `src/lemat/…`) była nieaktualna i została
@@ -127,7 +127,7 @@ Kolumna „Blokuje produkcję” oznacza, że do startu produkcyjnego z prawdziw
 
 ---
 
-## 5. Jak uruchomić (stan na dziś: szkielet backendu .NET + LematOpcje + testy architektury, frontend nie istnieje)
+## 5. Jak uruchomić (stan na dziś: szkielet backendu .NET + LematOpcje + baza w Dockerze, frontend nie istnieje)
 
 Dziś działa wyłącznie (SDK .NET 10.0.100, `global.json`, `rollForward: latestPatch`; brak zmiennych środowiskowych i bazy; testy nie wymagają Dockera):
 
@@ -141,11 +141,13 @@ dotnet run --project backend/src/Lemat.Worker      # GET http://localhost:8081/z
 dotnet run --project backend/src/Lemat.Scheduler   # GET http://localhost:8082/zdrowie
 ```
 
-`Lemat.Api` ma tylko `GET /api/v1/zdrowie` (Development: adres 5080; poza Development adres z konfiguracji ASP.NET Core); `Worker`/`Scheduler` to hosty bez logiki z `/zdrowie` na 8081/8082. Logi JSON na konsoli. Zmienne środowiskowe: opcjonalne `LEMAT_*` (tabela w sekcji 6; w Development nic nie jest wymagane — hosty startują na Mockach/lokalnych). Docelowo (po TASK-005, 013, 026, 112):
+`Lemat.Api` ma tylko `GET /api/v1/zdrowie` (Development: adres 5080; poza Development adres z konfiguracji ASP.NET Core); `Worker`/`Scheduler` to hosty bez logiki z `/zdrowie` na 8081/8082. Logi JSON na konsoli. Zmienne środowiskowe: opcjonalne `LEMAT_*` (tabela w sekcji 6; w Development nic nie jest wymagane — hosty startują na Mockach/lokalnych). Baza działa już dziś (TASK-005). Docelowo (po TASK-013, 026, 112):
 
 ```bash
-# 1. Baza (Docker; domyślnie port 5433, żeby nie kolidować z lokalnym PostgreSQL na 5432)
-cp .env.example .env && docker compose up -d postgres        # albo: scripts/db-local-setup.sh dla PostgreSQL na 5432
+# 1. Baza (DZIAŁA od TASK-005; Docker, port 5433, żeby nie kolidować z lokalnym PostgreSQL na 5432)
+cp .env.example .env && docker compose up -d postgres        # albo scripts/db-up.sh; reset pustej bazy: scripts/db-reset.sh
+# alternatywa bez Dockera: scripts/db-local-setup.sh (PostgreSQL 16 na 5432; PGADMIN="sudo -u postgres" gdy nie root/postgres; wypisuje LEMAT_BAZA do ustawienia)
+# psql: psql "host=localhost port=5433 dbname=lemat_dev user=lemat password=lemat_dev"
 # 2. Schemat i dane startowe
 dotnet run --project backend/src/Lemat.Tools -- migrate
 dotnet run --project backend/src/Lemat.Tools -- seed-dev      # konta demo, konfiguracje Mock, Zadania, Wkładki
@@ -164,6 +166,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Do wykonania przez właściciela / człowieka (agent nie może tego zrobić sam):**
 
+0a. **Po TASK-005:** brak akcji obowiązkowych. Do uruchomienia bazy potrzebny Docker (`docker compose`) albo lokalny PostgreSQL 16 + `scripts/db-local-setup.sh`; port 5433 (Docker) lub 5432 (lokalnie) musi być wolny. Hasło `lemat_dev` jest wyłącznie deweloperskie (w compose rola `lemat` to superuser) — w środowiskach poza maszyną developerską ustawić własne `LEMAT_PG_HASLO`/`LEMAT_BAZA` i nie commitować `.env`. Zdecydować, czy rola `lemat_migracje` (osobna od ról aplikacji) ma powstać już w TASK-013 (rekomendacja: tak).
 0. **Po TASK-004:** brak akcji obowiązkowych (Development startuje na Mockach bez zmiennych). W Production wymagane: `LEMAT_JWT_KLUCZ`, `LEMAT_KURSOR_KLUCZ`, dostawca ≠ mock wraz z `LEMAT_MODELE_KLUCZ_API`/`LEMAT_MODELE_ENDPOINT` i `LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY=true`; mock i autozatwierdzanie nauczycieli są w Production odrzucane. Zatwierdzić rozszerzenia kluczy z OQ-06 (wprowadzone, patrz niżej).
    Wcześniej (po TASK-003): brak akcji obowiązkowych; porty 5080/8081/8082 muszą być wolne; `backend/openapi/lemat-v1.json` jest generowany przy buildzie i ma być commitowany (zmiana kontraktu = zmiana pliku w diffie).
    Wcześniej (po TASK-002): brak akcji obowiązkowych; `Testcontainers.PostgreSql` jest już w pakietach, ale żaden test go jeszcze nie używa (Docker potrzebny dopiero od testów integracyjnych, TASK-014+); `git` musi być w PATH (testy architektury wołają `git ls-files`). Zalecane: ocenić odstępstwo OQ-03 (lekki test słownika zamiast pełnego).
@@ -195,7 +198,7 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
-| 1. Szkielet i środowisko (001 … 012) | 4 / 7 | 0 / 5 | **TASK-005** |
+| 1. Szkielet i środowisko (001 … 012) | 5 / 7 | 0 / 5 | **TASK-006** |
 | 2. Model domenowy i baza (013 … 037) | 0 / 16 | 0 / 9 | po TASK-001 … 007 |
 | 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
@@ -209,13 +212,15 @@ Weryfikacja jakości: `scripts/verify-all.sh` (build `-warnaserror`, `dotnet tes
 
 **Co działa (TASK-004):** `Lemat.Application.Common.LematOpcje` (sekcja `Lemat`, wartości domyślne = tabela 22), `LematOpcjeWalidator` (`IValidateOptions` + `ValidateOnStart`), `LematKonfiguracja` (`MapowanieZmiennych` `LEMAT_*` -> `Lemat:*`, `DodajZmienneLemat`, `AddLematOpcje`), podpięte w ApiHost/WorkerHost/SchedulerHost; `appsettings.json` + `appsettings.Development.json` w trzech hostach. Walidacja startu odrzuca: mock w Production; dostawcę ≠ mock bez `PotwierdzonaRetencjaDostawcy` (A-07) lub bez klucza/endpointu; pustą `Magazyn:Sciezka`; nieznane typy/zakresy; dodatkowo w Production autozatwierdzanie nauczycieli i brak kluczy JWT/kursora. Development: autozatwierdzanie włączone, `Magazyn:Sciezka=../../storage/magazyn`. Konsumenci wstrzykują `LematOpcje` albo `IOptions<LematOpcje>`.
 
-**Ostatnia zmiana: TASK-004** (pliki: `TASKS.md` pod TASK-004). Zrobiono: j.w.; testy `LematOpcjeTests` (Application 14) i `LematOpcjeHostyTests` (Architecture 104 łącznie). Weryfikacja: build `-warnaserror`, testy zielone, format OK, `lemat-v1.json` bez zmian. Odstępstwa: pakiety Microsoft.Extensions.Options/DI.Abstractions/Logging.Abstractions -> 10.0.14 + Options.ConfigurationExtensions 10.0.14 (NU1605); `ApiHost` pomija `ValidateOnStart`, gdy entry assembly = `GetDocument.Insider` (generator OpenAPI); `Zdjecia:DozwoloneTypyMime` nie jest w JSON (binder dopisywałby do domyślnych); `Obrazy/Symbolika/Email/Magazyn:Typ` akceptują na razie tylko `prosta/prosta/log/lokalny`. Nagłówki 17 plików sprawdzone, poprawne. Rozstrzygnięte: OQ-06/P-01 (nazwy kluczy i zmiennych).
+**Ostatnia zmiana: TASK-005** (pliki: `TASKS.md` pod TASK-005). Zrobiono: `docker-compose.yml` (postgres:16, wolumen, healthcheck, port `${LEMAT_PG_PORT:-5433}`, zmienne `LEMAT_PG_UZYTKOWNIK`/`LEMAT_PG_HASLO`), `docker/postgres/init-db.sh` (baza `lemat_test`, role `lemat_api/worker/scheduler` z LOGIN wg ddl.md 0005, rozszerzenia `citext`/`pg_trgm`), `.env.example` (wszystkie 14 nazw z `MapowanieZmiennych` + `LEMAT_PG_*`, `LEMAT_TEST_BAZA`, `LEMAT_API_URL`; bez sekretów), `scripts/db-up.sh`, `db-reset.sh`, `db-local-setup.sh` (idempotentny), `Lemat:Baza:Polaczenie` w `appsettings.Development.json` trzech hostów. Weryfikacja: kontener `healthy`, `psql` na 5433 do `lemat_dev`, rozszerzenia obecne, `db-reset.sh` -> 0 tabel, `db-local-setup.sh` OK; build `-warnaserror` i testy zielone (Architecture 104, Application 14, Api 3). Brak mocków, kod `.cs` bez zmian (nagłówki: nie dotyczy).
+
+**Wytyczne dla TASK-006 (następne, frontend):** (1) `frontend/` zgodnie z opisem TASK-006 i 6.8/6.9; `LEMAT_API_URL` (domyślnie `http://localhost:5080`) czytaj w `next.config.ts` do `rewrites` `/api/:path*`; (2) brak tekstów na sztywno w JSX (`messages/pl-PL.json`); (3) `scripts/check-headers.mjs` wymusza nagłówki Living Documentation w `.ts/.tsx` — dodaj je do każdego pliku; (4) po zakończeniu `handoff-guardian` zmieni sekcję 5 (uruchamianie frontendu); (5) TASK-007 (skrypty weryfikacji/CI) zależy od 006, a TASK-013 (migracje) od 005 — `LEMAT_BAZA_MIGRACJE` puste do TASK-013.
+
+**Poprzednia zmiana: TASK-004** (pliki: `TASKS.md` pod TASK-004). Zrobiono: j.w.; testy `LematOpcjeTests` (Application 14) i `LematOpcjeHostyTests` (Architecture 104 łącznie). Weryfikacja: build `-warnaserror`, testy zielone, format OK, `lemat-v1.json` bez zmian. Odstępstwa: pakiety Microsoft.Extensions.Options/DI.Abstractions/Logging.Abstractions -> 10.0.14 + Options.ConfigurationExtensions 10.0.14 (NU1605); `ApiHost` pomija `ValidateOnStart`, gdy entry assembly = `GetDocument.Insider` (generator OpenAPI); `Zdjecia:DozwoloneTypyMime` nie jest w JSON (binder dopisywałby do domyślnych); `Obrazy/Symbolika/Email/Magazyn:Typ` akceptują na razie tylko `prosta/prosta/log/lokalny`. Nagłówki 17 plików sprawdzone, poprawne. Rozstrzygnięte: OQ-06/P-01 (nazwy kluczy i zmiennych).
 
 **Poprzednia zmiana: TASK-003** (pliki: `TASKS.md` pod TASK-003). Zrobiono: hosty przez klasy `ApiHost` (`CreateBuilder`, `MapEndpoints`), `WorkerHost`/`SchedulerHost` (`CreateBuilder`, `MapHealth`) w `Configuration/`; endpointy w `Endpoints/` mapowane z `ApiHost.MapEndpoints` (grupy `MapGroup("/api/v1/...")`), DI w `Configuration`; DTO w `Contracts/`; `CommandDispatcher` + `IPolecenie`; OpenAPI (`Microsoft.AspNetCore.OpenApi`) w `backend/openapi/lemat-v1.json`; Worker/Scheduler z `FrameworkReference Microsoft.AspNetCore.App`; testy `HealthEndpointTests`, `KontenerDiTests` (ValidateOnBuild/ValidateScopes). Weryfikacja: build `-warnaserror`, testy (Architecture 96, Api 3), format OK, ręcznie `dotnet run` Api 200. Nagłówki wszystkich 11 plików `.cs` sprawdzone, poprawne.
 
 **Poprzednia zmiana: TASK-002.** Zrobiono: `backend/tests` z 7 projektami (xUnit v3 3.2.2, Shouldly, NSubstitute, FsCheck.Xunit.v3, Testcontainers.PostgreSql 4.16.0, WireMock.Net 2.18.0 z `NoWarn NU1608` w Models.Tests, Mvc.Testing, NetArchTest.Rules 1.3.2, Roslyn 5.0.0) w `Directory.Packages.props` i `Lemat.slnx`; `backend/tests/Directory.Build.props` (OutputType Exe, CA1707 wyłączone). Weryfikacja: build `-warnaserror` OK, `dotnet test` zielone, format OK. Decyzje: testy architektury opierają się na referencjach/zespołach, więc działają na pustych projektach; testy negatywne używają syntetycznego grafu/typu (`Layers/Synthetic`); `RepositoryLocator` woła `git ls-files`.
-
-**Wytyczne dla TASK-005 (następne):** (1) `.env.example` buduj z nazw `LematKonfiguracja.MapowanieZmiennych` (14 zmiennych) bez sekretów; `LEMAT_TEST_BAZA`, `LEMAT_PG_PORT`, `LEMAT_API_URL` nie są czytane przez opcje — to zmienne compose/testów/frontendu; (2) connection string: klucz `Lemat:Baza:Polaczenie` (zmienna `LEMAT_BAZA`), wpisz do `backend/src/Lemat.Api/appsettings.Development.json` (i Worker/Scheduler); (3) `LEMAT_JWT_KLUCZ` i `LEMAT_KURSOR_KLUCZ` wymagane tylko w Production; (4) pliki `.sh` i `docker-compose.yml` nie podlegają nagłówkom `.cs`, ale ASCII nazw plików obowiązuje; (5) nie wprowadzaj sekretów do repo; (6) nie zmieniaj kodu `.cs` poza koniecznym; testy nie mogą wymagać Dockera.
 
 **Poprzednia zmiana: TASK-001.** Decyzje developera:
 - `backend/BannedSymbols.txt` (zakaz `DateTime.Now/UtcNow`, `DateTimeOffset.Now/UtcNow`) dotyczy całego `backend/src`; `backend/BannedSymbols.Sdk.txt` (typy SDK dostawców modeli: `OpenAI.*`, `Azure.AI.*`, `Anthropic.*`) dołączany do wszystkich projektów `src` poza `Lemat.Models` (przez `backend/src/Directory.Build.props`, który dodaje też `Microsoft.CodeAnalysis.BannedApiAnalyzers` z `PrivateAssets=all`).
@@ -249,24 +254,22 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ## 10. Gotowy prompt dla kolejnego dewelopera
 
-### 10.1 Następne TASK: TASK-005 (kopiuj do agenta `developer`)
+### 10.1 Następne TASK: TASK-006 (kopiuj do agenta `developer`)
 
 ```text
 Jesteś Senior Developerem .NET i Next.js w projekcie Lemat (repozytorium: /home/user/lemat).
-Zrealizuj dokładnie jedno zadanie planu: TASK-005 z TASKS.md ("docker-compose z PostgreSQL 16, .env.example, skrypty bazy").
+Zrealizuj dokładnie jedno zadanie planu: TASK-006 z TASKS.md ("Szkielet Next.js: App Router, TypeScript strict, i18n pl-PL, KaTeX, UI").
 
-Najpierw przeczytaj: CLAUDE.md (reguły: słownik pojęć, nagłówki Living Documentation, mocki, komendy weryfikacji),
-HANDOFF.md (uproszczenia MVP U-xx, wytyczne dla TASK-005 w sekcji 7), docs/CODEBASE_MAP.md oraz opis TASK-005 w TASKS.md.
-Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/ARCHITECTURE_DETAILED.md ma ~10 000 linii): 5.4, 17.5; ADR-059.
+Najpierw przeczytaj: CLAUDE.md (reguły: słownik pojęć, nagłówki Living Documentation, komendy weryfikacji),
+HANDOFF.md (uproszczenia MVP U-xx, wytyczne dla TASK-006 w sekcji 7), docs/CODEBASE_MAP.md oraz opis TASK-006 w TASKS.md.
+Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (docs/ARCHITECTURE_DETAILED.md ma ~10 000 linii): 5.2 (Frontend, i18n, LaTeX, Dane w kliencie, UI, Testy/Lint), 6.8, 6.9; ADR-054.
 
 Wymagania:
-- Pliki w korzeniu repo: docker-compose.yml (usługa postgres:16, wolumen, healthcheck, port ${LEMAT_PG_PORT:-5433}), .env.example (wszystkie nazwy z LematKonfiguracja.MapowanieZmiennych + LEMAT_PG_PORT, LEMAT_TEST_BAZA, LEMAT_API_URL; bez sekretów), scripts/db-up.sh, scripts/db-reset.sh, scripts/db-local-setup.sh.
-- Connection string developmentu (klucz Lemat:Baza:Polaczenie) dopisz do appsettings.Development.json hostów; testy dotnet muszą pozostać zielone i nie mogą wymagać Dockera.
-- Rola lemat musi móc wykonać CREATE EXTENSION citext, pg_trgm; db-reset.sh odtwarza pustą bazę; db-local-setup.sh opisany w komentarzu.
-- Nazwy plików ASCII; nagłówki Living Documentation w każdym zmienionym .cs/.ts/.tsx.
-- Weryfikacja: dotnet build backend/Lemat.slnx -warnaserror, dotnet test backend/Lemat.slnx, dotnet format backend/Lemat.slnx --verify-no-changes; jeśli Docker dostępny: docker compose up -d postgres -> healthy.
-- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-005.
-Zwróć raport: lista utworzonych/zmienionych plików, wyniki build/test, decyzje i odstępstwa, mocki, wskazówki dla TASK-005.
+- Katalog frontend/ (npm): Next.js App Router, TypeScript strict, Tailwind 4, Radix UI, ESLint 9 flat config, Prettier, Vitest + Testing Library, next-intl (tylko pl-PL, bez prefiksu w URL, messages/pl-PL.json), TanStack Query, KaTeX (Wzor, TrescMarkdown), src/ui (Button, Dialog, List, Form), next.config.ts z rewrites /api/:path* -> LEMAT_API_URL (domyślnie http://localhost:5080), skrypty dev/build/typecheck/lint/test/gen:api/e2e, scripts/check-headers.mjs, drzewo grup tras (public)/(student)/(teacher)/(administrator), <html lang="pl">.
+- Nagłówki Living Documentation w każdym .ts/.tsx; brak tekstów na sztywno w JSX; nazwy plików ASCII; brak sekretów.
+- Weryfikacja: npm --prefix frontend run typecheck, lint, test, build; node frontend/scripts/check-headers.mjs; backend nie powinien się zmienić.
+- Nie edytuj TASKS.md, HANDOFF.md, docs/ (robi to handoff-guardian). Nie commituj. Nie wychodź poza zakres TASK-006.
+Zwróć raport: lista utworzonych/zmienionych plików, wyniki weryfikacji, decyzje i odstępstwa, wskazówki dla kolejnego TASK.
 ```
 
 ### 10.2 Szablon pętli dla orkiestratora (jedno TASK = jedna iteracja)

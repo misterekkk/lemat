@@ -126,13 +126,18 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
     Odstępstwa: pakiety Microsoft.Extensions.Options/DI.Abstractions/Logging.Abstractions podbite do 10.0.14 + Options.ConfigurationExtensions 10.0.14 (NU1605); `ApiHost` pomija `ValidateOnStart`
     dla generatora OpenAPI (entry assembly `GetDocument.Insider`); `Obrazy/Symbolika/Email/Magazyn:Typ` akceptują na razie tylko `prosta/prosta/log/lokalny`.
 
-- [ ] **TASK-005 [MVP] docker-compose z PostgreSQL 16, `.env.example`, skrypty bazy**
+- [x] **TASK-005 [MVP] docker-compose z PostgreSQL 16, `.env.example`, skrypty bazy**
   - **Opis:** `docker-compose.yml` (usługa `postgres:16`, wolumen, healthcheck, port hosta `${LEMAT_PG_PORT:-5433}` — lokalny PostgreSQL zajmuje 5432), `.env.example` (wszystkie zmienne z TASK-004,
     bez sekretów), `scripts/db-up.sh`, `scripts/db-reset.sh`, `scripts/db-local-setup.sh` (alternatywa: tworzy rolę `lemat` i bazy `lemat_dev`, `lemat_test` w lokalnym PostgreSQL 16 na 5432), connection string dla developmentu w `appsettings.Development.json`.
   - **Zależności:** brak (connection string wpisywany do opcji po TASK-004).
   - **Realizuje:** 5.4, 17.5 (środowisko lokalne), ADR-059; CLAUDE.md pkt 2.
   - **DoD:** `docker compose up -d postgres` → kontener `healthy`; `psql` łączy się z `lemat_dev` na porcie z `.env`; `CREATE EXTENSION citext; CREATE EXTENSION pg_trgm;` działa dla roli `lemat` (rola ma prawa wymagane przez migrację);
     `scripts/db-reset.sh` odtwarza pustą bazę; wariant lokalny (`db-local-setup.sh`) opisany w komentarzu skryptu; brak sekretów w repo.
+  - **Pliki (TASK-005):** `docker-compose.yml`, `.env.example`, `docker/postgres/init-db.sh`, `scripts/db-up.sh`, `scripts/db-reset.sh`, `scripts/db-local-setup.sh`,
+    `backend/src/Lemat.Api/appsettings.Development.json`, `backend/src/Lemat.Worker/appsettings.Development.json`, `backend/src/Lemat.Scheduler/appsettings.Development.json`.
+  - **Weryfikacja:** `docker compose up -d postgres` -> `healthy`; `psql` na 5433 `lemat_dev`; `citext`/`pg_trgm` obecne; `db-reset.sh` odtwarza pustą bazę (0 tabel); `db-local-setup.sh` (5432) idempotentny;
+    build `-warnaserror` 0 błędów; testy zielone (Architecture 104, Application 14, Api 3). Decyzje: `init-db.sh` tworzy też `lemat_test` i role `lemat_api/worker/scheduler` z LOGIN (ddl.md 0005); w compose rola `lemat` = superuser
+    (`POSTGRES_USER`), lokalnie `CREATEDB`+`CREATEROLE` bez superusera; hasło tylko deweloperskie `lemat_dev`; `LEMAT_BAZA_MIGRACJE` puste (rola `lemat_migracje` dopiero przy migracjach, TASK-013). Nie zmieniono kodu `.cs`.
 
 - [ ] **TASK-006 [MVP] Szkielet Next.js: App Router, TypeScript strict, i18n pl-PL, KaTeX, UI**
   - **Opis:** `frontend/` (npm): Next.js (App Router), React, TypeScript `strict`, Tailwind CSS 4, Radix UI, ESLint 9 (flat config, `eslint-config-next`), Prettier, Vitest + Testing Library,
