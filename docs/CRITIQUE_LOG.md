@@ -867,7 +867,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.4. Uwagi C4-01 … C4-06, w tym
   2. Gdy Uczeń przywraca słowo („To nie są moje dane — przywróć”), krok jest „zmieniony”, a dla takiego kroku tabela Poprawek stosuje „`DOKLADNE` z warunkiem (b1)”. „Pole P” jest zastępowane ponownie, więc FR-18 dla tego kroku nie działa. Przykład z tabeli („przywrócone słowo „Pole” zostaje”) zakłada brak sąsiedztwa.
   3. Kryterium G-2 „0 zastąpień tokenów ze Słownika” na 1 050 Transkrypcjach z syntetycznymi danymi konta (w tym nazwisko Pole) jest sprzeczne z regułą (b1), która z założenia zastępuje token Słownika. Przy parze „Piotr Pole” i Transkrypcji z „pole P” bramka nie przejdzie. Gdyby przeszła, to tylko dlatego, że losowe pary nie trafiły na kolizję inicjału z oznaczeniem, czyli bez sprawdzenia tego przypadku.
 - **Oczekiwana poprawka:** w (b1) inicjał liczy się tylko z kropką w oryginalnym tekście (przed pominięciem interpunkcji) i tylko wtedy, gdy krok nie ma treści matematycznej po wyłączeniach z reguły (a). Prościej: (b1) stosować wyłącznie w krokach bez treści matematycznej, a w krokach z treścią (b1) z inicjałem ustawia `konflikt_filtra` zamiast zastępować. Dla kroku zmienionego przez Ucznia (b1) nie powinna zastępować tokenu, który Uczeń sam przywrócił w miejscu znacznika. G-2: „0 zastąpień tokenów Słownika w krokach z treścią matematyczną” oraz celowy zestaw przypadków „nazwisko-termin + oznaczenie równe inicjałowi” (np. 20 kartek „Pole P”, „prosta k”).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 10.3.1 p. 3a rozdziela (b1) — sąsiedztwo z **pełnym** drugim członem (≥ 2 litery) — od (b1-i): inicjał to litera z kropką w oryginalnym tekście i działa wyłącznie w kroku bez treści matematycznej; w kroku z treścią daje `konflikt_filtra` (T-3) bez zastąpienia, a litera bez kropki nie jest inicjałem. Tabela Poprawek wyłącza (b1-i)/(b2) dla kroku zmienionego i zakazuje ponownego zastąpienia tokenu wpisanego w miejscu znacznika (przykład „Pole P trójkąta”). G-2 (17.6) ma kryterium „0 zastąpień w krokach z treścią matematyczną” z b1 raportowaną osobno oraz celowy zestaw ≥ 20 kartek i test przywrócenia. Resztkowy przypadek „… Pole P.” na końcu zdania daje `konflikt_filtra`, czyli kierunek bezpieczny (Z-1) — akceptowalne.
 
 ### C5-02: Reguły nadzoru w kroku 4 KALIBRUJ nie mają określonej populacji ani wartości przy braku Kontroli, co może zablokować wyjście z trybu pełnej weryfikacji
 - **Waga:** ŚREDNIA
@@ -876,21 +876,21 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.4. Uwagi C4-01 … C4-06, w tym
   1. W trybie pełnej weryfikacji (`p0 = 1,000`, start D-6 albo po wyzwoleniu przy 0,990) nie ma Ocen automatycznych, więc nie ma Kontroli losowych, a `wykonanie_kontroli_30d` = 0/0. API przewiduje `null`, ale krok 4 nie określa, czy `null < 0,80`. W implementacji, która traktuje brak danych zachowawczo (`null` → zablokowane), para nigdy nie obniży progu z 1,000. Tryb pełnej weryfikacji (`M` = 5 194 min/dobę, 17.7) staje się wtedy trwały, mimo dezaktywacji przez Administratora.
   2. Mianownik „utworzone w oknie 30 dni” obejmuje Kontrole, których `termin_at` jeszcze nie minął (≈ 3 dni robocze, czyli do ≈ 14% okna). Po obniżeniu progu z 1,000 do 0,980 pojawiają się pierwsze Oceny automatyczne z odsetkiem Kontroli 0,20 (mniej niż 400 próbek). To ≈ 0,20 × 0,25 × 1 200 ≈ 60 Kontroli na dobę. Po 2 dniach jest ≥ 100 utworzonych i < 50 zakończonych, choć żadna nie jest spóźniona. Wyzwala się bezpiecznik braku nadzoru (+0,02), a krok 5 przywraca 0,990–1,000. Para oscyluje przy wyjściu z trybu pełnej weryfikacji. Ten sam efekt w łagodniejszej postaci zaniża `wykonanie_kontroli_30d` w normalnej pracy (alert przy < 0,90 przy pełnym wykonaniu w terminie).
 - **Oczekiwana poprawka:** zdefiniować populację: „Kontrole z `termin_at ≤ now()` utworzone w oknie 30 dni”, analogicznie dla progu „≥ 100 utworzonych”. Zdefiniować wartość przy pustej populacji: `null` = brak reguły nadzoru (bez blokady), skoro brak Kontroli wynika z braku Ocen automatycznych. Dodać test: „dezaktywacja przy `p0 = 1,000` → próg spada do 0,990, 0,970, … przy bezbłędnych Próbkach, bez wyzwolenia bezpiecznika braku nadzoru w pierwszych 3 dniach roboczych”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 11.5.3: populacja reguł nadzoru = Kontrole wymagalne (`termin_at ≤ now()`) utworzone w oknie 30 dni, także dla progu „≥ 100”; Kontrole przed terminem są poza licznikiem i mianownikiem; `null` przy pustej populacji = brak reguły nadzoru, a krok 4 ma jawny warunek `≠ null ∧ < 0,80`. Testy (l) (wyjście z 1,000 bez bezpiecznika braku nadzoru) i (m) (Kontrole przed terminem) dopisane. Przeliczenie scenariusza z uwagi: po obniżeniu do 0,980 przez pierwsze 3 dni robocze populacja wymagalna jest pusta, więc bezpiecznik braku nadzoru nie może się wyzwolić.
 
 ### C5-03: CHECK `pojemnosc BETWEEN 1 AND 34` jest sprzeczny z pojemnością 0 przy dołączaniu procesu i ponad limit wierszy
 - **Waga:** NISKA
 - **Lokalizacja:** 7.3 `limit_szybkosci_modelu.pojemnosc smallint NOT NULL CHECK (pojemnosc BETWEEN 1 AND 34)`; 13.2 („`B_nowy = min(formuła, B_całk − Σ pojemności pozostałych)` — przy pełnym wykorzystaniu … oba wynoszą 0”; „wiersz ponad tę liczbę dostaje `B_i = 0`”); test (g); C-40
 - **Problem:** nowy proces rejestruje się przy pełnym wykorzystaniu z `pojemnosc = 0`, czego CHECK nie dopuszcza. `INSERT` kończy się błędem, więc replika uruchomiona w szczycie (C-40, mitygacja z 17.4) nie zarejestruje się w ogóle albo implementacja obejdzie to wartością 1 i naruszy niezmiennik `Σ pojemnosc ≤ B_całk`. To samo dotyczy wiersza ponad limit 32. Dla ogranicznika rozpoznawania (`B_całk = 30`) górna granica 34 jest luźna, ale poprawna.
 - **Oczekiwana poprawka:** `CHECK (pojemnosc BETWEEN 0 AND 34)` (albo `≤ B_całk` z parametru 22), test (g) z asercją `pojemnosc = 0` po `INSERT`.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 7.3: `CHECK (pojemnosc BETWEEN 0 AND 34)` z komentarzem; test (g) z asercją `pojemnosc = 0` (13.2, ADR-039, wymaganie DoD w 18.4).
 
 ### C5-04: „Blokada” ma w modelu trzy znaczenia, a test CI tego nie wykrywa
 - **Waga:** NISKA
 - **Lokalizacja:** 3.3 („Blokada weryfikacji”, „Blokada obniżania progu”); 13.2 („blokada doradcza”); 11.5.3 skutki (1) i (4) oraz komentarz DDL `stan_bezpiecznika` („aktywny = blokada obniżania”), proza bez kwalifikatora („blokada kończy się automatycznie”, „blokady `W_TRAKCIE`”); 3.4 część 2 (`blokada` dopisana do słów ogólnych `tests/slownik_tokeny.yaml`)
 - **Problem:** od wersji 2.4 to samo słowo oznacza wyłączne prawo do rozstrzygnięcia Weryfikacji, stan pary po wyzwoleniu bezpiecznika i mechanizm PostgreSQL. Oba pojęcia domenowe mają kwalifikatory, ale proza i komentarze często ich nie mają. „Blokada” trafiła na listę słów ogólnych, więc test CI przepuści np. `blokada_aktywna` w obu znaczeniach. To ten sam rodzaj ryzyka co C4-04, w łagodniejszej postaci. Kolumna `stan_bezpiecznika.aktywny` ma przy tym dwa znaczenia zależne od `typ` (POPRAWKI: T-7 dla Poprawek; TRAFNOSC: Blokada obniżania progu).
 - **Oczekiwana poprawka:** dopisać `blokad*` do słów zarezerwowanych z listą dozwolonych użyć (`zablokowana_do`, `BlokadaWeryfikacji…`, `blokada_obnizania…`) i ujednolicić prozę 11.5.3 do pełnej nazwy. Rozważyć osobną kolumnę `blokada_obnizania_progu` zamiast przeciążonego `aktywny` dla `TRAFNOSC`.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 3.1 p. 5 i ADR-049 p. 9: dwa znaczenia domenowe z kwalifikatorem, `praca_w_tle.dzierzawa_do`, blokada doradcza PostgreSQL wyłącznie w prozie; `blokad*`/`zablokow*` są słowami zarezerwowanymi z listą dozwolonych użyć i dwoma przypadkami kontrolnymi; `stan_bezpiecznika.aktywny` ma jedno znaczenie, a skutki są właściwościami `BlokadaObnizaniaProgu` / `KazdaPoprawkaDoWeryfikacji` (3.6). Lista dozwolonych użyć zawiera jednak trzecie, niezdefiniowane znaczenie (konto zablokowane) — opisuje to C6-13.
 
 ### C5-05: Drobne niespójności wersji 2.4
 - **Waga:** NISKA
@@ -901,7 +901,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.4. Uwagi C4-01 … C4-06, w tym
   3. 23.7 (C4-06 p. 5) podaje „P(≥ 1 wyzwolenie w 90 dniach) 31–45%”, a akapit „Rozmiar testu” w 11.5.3 — „31–36%”. Rozbieżność wyjaśnia dopiero wniosek (3) symulacji dynamiki (okno pełne od dnia 1). Akapit warto doprecyzować.
   4. `UZGODNIJ_REJESTR_RODO` (1) przegląda obiekty „z ostatnich 24 h”. Przerwa schedulera > 24 h (np. awaria i odtworzenie) zostawia zdarzenia `API` bez transakcji, których żadna praca nie unieważni. Należy dopisać przebieg nadrabiający od ostatniego udanego przebiegu albo alert.
 - **Oczekiwana poprawka:** p. 1–3 redakcyjnie; p. 4 — okno od `max(ostatni_udany_przebieg − 5 min, now() − 60 dni)`.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). (1) 3.4 część 3 bez duplikatu, wyjątek `zdje*` zapisany tokenowo (`zdjecie`, `nr_zdjecia`, `{zdjecie_rozwiazania_id}`); (2) ADR-049 p. 5 — jedna reguła parametrów ścieżek, 3.2 i 12.3 ujednolicone (sprawdzone grep: brak `{uczenId}`/`{klasaId}` poza segmentami Next.js); (3) akapit „Rozmiar testu” wyjaśnia 31–36% / do 45%; (4) `UZGODNIJ_REJESTR_RODO` przegląda od `max(ostatni_udany_przebieg − 5 min, now() − 60 dni)` z `ALERT_RODO` przy przerwie > 24 h (13.3, ADR-041).
 
 ### Podsumowanie iteracji 5
 
@@ -961,14 +961,14 @@ Wynik zgadza się z macierzą plannera (775). Różnica 1 to Orkiestrator, liczo
 - **Lokalizacja:** `TASKS.md` TASK-078 („reguła (a) imię, nazwisko, inicjały i oznaczenie klasy z konta → `[DANE_OSOBOWE]`”), DoD TASK-078 i TASK-080; architektura 10.3.1 p. 3a reguły (a)/(b), tabela Poprawek, G-2 („test Poprawek: przywrócenie kroku `tylko_dane_osobowe` na 50 przypadkach”)
 - **Problem:** w architekturze reguła (a) jest regułą ramki. Inicjały i oznaczenie klasy są tylko **wyłączane** przed oceną, czy krok ma treść matematyczną. Tokenowo zastępowane są wyłącznie imię, nazwisko, część lokalna e-maila (b) oraz PESEL i e-mail (c). Opis zadania każe zastępować inicjały i oznaczenie klasy znacznikiem. Wykonawca, który go dosłownie wdroży, zamieni na `[DANE_OSOBOWE]` jednoliterowe tokeny („P.”, „k”) i ciągi typu „3b” w tekście matematycznym. Złamie tym kryterium G-2 (≤ 0,5% fałszywych zastąpień) i inwariant C3-02. DoD nie wymaga też testów tabeli „Działanie filtra na Poprawkach” (kroki niezmienione, zmienione, wstawione, przywrócony `tylko_dane_osobowe`), choć to główna treść poprawki C4-03 p. 3.
 - **Oczekiwana poprawka:** opis zgodny z 10.3.1 p. 3a: (a) ramka i wyłączenia przed oceną treści, (b) imię, nazwisko i e-mail z regułami (b1)/(b2), (c) PESEL i e-mail. DoD: testy każdego wiersza tabeli Poprawek oraz test G-2 „50 przywróceń bez ponownego maskowania i ze Sprawdzeniem zgodności”, a po decyzji w C5-01 także przypadek „Pole P”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 18.4 jest wiążącym wymaganiem dla nowego `TASKS.md`: reguły `a`, `b1`, `b1-i`, `b2`, `c` dokładnie jak 10.3.1 p. 3a (z wyłączeniami reguły a), DoD z 4 wierszami tabeli Poprawek, testem G-2 (50 przywróceń), zestawem C5-01 i testem przywrócenia, plik testów wskazany; kryterium sprawdzenia przez krytyka jest mechaniczne.
 
 ### C5-07: DoD nie wymagają testów dodanych w v2.4 dla bezpiecznika, ogranicznika i odtworzenia konta Nauczyciela
 - **Waga:** ŚREDNIA
 - **Lokalizacja:** TASK-104 DoD („`test_bezpiecznik.py` (a)–(e)”), TASK-103 DoD; TASK-041 DoD („`test_ogranicznik.py` (a)–(f)”); TASK-119 DoD („Testy C-34 i C-39 (PITR w trakcie `USUN_KONTO` po krokach 1–4)”); architektura 11.5.3 testy (a)–(k), 13.2 testy (a)–(h), G-6 (a3), (a4), (b)–(d)
 - **Problem:** testy, które v2.4 dodała jako dowód zamknięcia C4-02 i C4-05, nie występują w żadnym DoD: (f) ostrzeżenie, (g) degradacja 4% z niemalejącym progiem, (h) brak oscylacji, (i) wyjście z blokady, (j) 0,990 → 1,000 i brak wyjścia, (k) dezaktywacja `TRAFNOSC`; w ograniczniku (g) dołączenie 3. workera z przydziałem 0 i (h) dwa jednoczesne odnowienia. DoD TASK-103 („bezpiecznik nie jest cofany”) jest ogólne i nie wskazuje danych testu (g)/(h). DoD TASK-119 zawęża C-39 do kroków Ucznia 1–4. Wariant (a4), czyli konto Nauczyciela (pseudonimizacja `R-PRZYPISANIE`, skutki `KontoUsuwane`, tabela przywrócenia Nauczyciela), i scenariusze (b)–(d) G-6 są tylko w opisie TASK-142, którego DoD to „protokół podpisany”. Zadanie można więc uznać za `DONE` bez dowodu zamknięcia uwag C4.
 - **Oczekiwana poprawka:** TASK-104 DoD — (a)–(k) z 11.5.3, w tym dane deterministyczne testu (g). TASK-041 DoD — (a)–(h) z 13.2. TASK-119 DoD — G-6 (a1)–(a4) i (b)–(d) jako testy automatyczne w środowisku testowym, w tym konto Nauczyciela (0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie`).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 18.4 wymaga w DoD testów (a)–(m) bezpiecznika, (a)–(h) ogranicznika (z `pojemnosc = 0` w (g)) i G-6 (a1)–(a4), (b)–(d) jako testów automatycznych w Testcontainers, w tym konta Nauczyciela; protokół G-6 jest osobnym DoD; kryterium „każda litera w DoD dokładnie jednego zadania” jest sprawdzalne.
 
 ### C5-08: Zależności niezgodne z kolejnością implementacji
 - **Waga:** NISKA
@@ -977,14 +977,14 @@ Wynik zgadza się z macierzą plannera (775). Różnica 1 to Orkiestrator, liczo
   1. Kroki 2–3 „Wyniku dnia KALIBRUJ” (TASK-103) wymagają oceny bezpieczników i Blokady obniżania progu, które implementuje TASK-104, a TASK-104 zależy od TASK-103. DoD TASK-103 („bezpiecznik nie jest cofany przez wybór progu”) jest niewykonalne przed TASK-104. Pętla jest logiczna, nie formalna, więc test acykliczności jej nie wykrywa.
   2. TASK-018 tworzy tabele z kluczem obcym do `uzytkownik` (TASK-009), ale nie zależy od TASK-009 ani pośrednio, ani bezpośrednio. Migracja wykonana w kolejności zależności się nie powiedzie.
 - **Oczekiwana poprawka:** wydzielić ocenę bezpieczników (populacja, LB/UB, klasyfikacja 1–4) do TASK-104 zależnego od TASK-102, a TASK-103 (kroki 1–6) uzależnić od TASK-104; dodać TASK-009 do zależności TASK-018.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 18.4: ocena bezpieczników jako osobne zadanie przed „Wynikiem dnia KALIBRUJ”, reguła „FK → przodek” z przykładami `klucz_idempotencji`/`powiadomienie` → `uzytkownik`, kolejność migracji EF Core = kolejność zadań oraz test logiczny DoD → przodek.
 
 ### C5-09: Pozostałości redakcyjne w TASKS.md, CLAUDE.md i HANDOFF.md
 - **Waga:** NISKA
 - **Lokalizacja:** `TASKS.md` TASK-006 DoD („TASK „slownik-baza””), TASK-048 („TASK „rodo-kopie””), TASK-049 DoD („TASK „wer-obciazenie””); TASK-043 DoD („zgodnie z 14.1”); `HANDOFF.md` linia 36 („kolejka prac w tle”), linie 15–18 i Q-2 („v2.4 nie ma osobnego przeglądu krytyka”)
 - **Problem:** (1) trzy odwołania do zadań po roboczych nazwach zamiast identyfikatorów (powinny być TASK-024, TASK-115, TASK-099); (2) DoD TASK-043 odwołuje się do sekcji zamiast podać sprawdzalne kryterium (które błędy → `ModelNiedostepny`, które → przejściowe); (3) „kolejka prac w tle” łamie 3.1 p. 5 („prace w tle, nigdy „kolejka””); (4) po tym przeglądzie stwierdzenia HANDOFF o braku przeglądu v2.4 są nieaktualne.
 - **Oczekiwana poprawka:** zamienić nazwy robocze na identyfikatory, rozpisać DoD TASK-043 według wierszy E-09 / 14.1, poprawić sformułowanie w HANDOFF i zaktualizować Q-2 oraz linie 15–18 wynikiem iteracji 5.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 6). 18.4: wyłącznie identyfikatory `TASK-NNN`, DoD bez „zgodnie z sekcją X” (przykład dla E-09), słownictwo „prace w tle”/„dzierżawa”, aktualizacja `HANDOFF.md` po pętli 3.x; test słownika obejmie `TASKS.md`, `HANDOFF.md` i `CLAUDE.md`.
 
 ### Werdykt
 
@@ -994,5 +994,204 @@ Wersja 2.4 zamyka wszystkie 6 uwag iteracji 4 (w tym 10/10 podpunktów C4-06). N
 - opis TASK-078 sprzeczny z 10.3.1 i DoD bez testów v2.4 pozwalają oznaczyć zadania jako `DONE` bez dowodu zamknięcia uwag C4 (C5-06, C5-07).
 
 Wszystkie poprawki są lokalne: 3 akapity architektury, 1 CHECK w DDL i redakcja kilku zadań planu.
+
+## Iteracja 6 (v3.0 — moduły i słownik)
+
+Data przeglądu: 2026-11-01. Wersja dokumentu: 3.0 (iteracja 1 pętli „.NET 10 + Next.js”). Zakres: podział na moduły (Backend .NET, warstwa agentów AI, Frontend Next.js), mapowanie słownika na model domenowy (3.5), szkielety agregatów (3.6), sekcje 1–6, 18.4, 19, 22, 23.4 oraz ADR-048 … ADR-055 i ADR-y ze zmienionym statusem (001, 002, 003, 013, 014, 016, 020, 031, 045). Kod pythonowy w sekcjach 7, 10, 12–15 nie jest w tej rundzie oceniany; ich treść domenowa jest użyta tylko jako odniesienie przy sprawdzaniu sprzeczności z sekcjami nowymi.
+
+**Weryfikacja uwag iteracji 5.** C5-01 … C5-05 sprawdzono w treści (10.3.1 p. 3a, 11.5.3, 7.3, 3.1, 3.4, 13.3, 17.6 G-2), a C5-06 … C5-09 — w 18.4. Wszystkie 9 są ZAMKNIĘTE; statusy są wpisane przy uwagach iteracji 5.
+
+**Sprawdzenie mapowania słownika (skrypt w scratchpadzie, niezależnie od tabel architekta).**
+
+| Sprawdzenie | Wynik |
+|---|---|
+| Pojęcia `glossary.md` (25) w 3.5 część I | 25 / 25, ta sama pisownia, kolejność zgodna |
+| Pojęcia PZS-1 część A (tabela 3.3, 86) w 3.5 część II | 86 / 86, kolejność zgodna; razem 111 wierszy, 0 pustych komórek |
+| Enumy C# z 3.6 (30) ↔ typy wyliczeniowe DDL 7.3 (`JsonNamingPolicy.SnakeCaseUpper`) | 28 zgodnych wartość po wartości (w tym `PowodWeryfikacji` 8, `StatusRozwiazania` 10, `StatusZadania` 6); `KodBleduRozpoznawania` ↔ CHECK tekstowy 7.3 — zgodny; `WidocznoscOcenyDlaUcznia` — wyliczany, bez kolumny (zgodnie z 3.5) |
+| Typy wyliczeniowe DDL bez wpisu w 3.5/3.6 | `kontekst_decyzji`, `status_importu`, `status_testu` są w 3.5 tylko pośrednio (`StatusImportu`, `StatusTestu`); `kontekst_decyzji` — brak (C6-12) |
+| Wartości `UPPER_SNAKE` z 3.5 nieobecne w sekcjach 7–23 | `MASKOWANA` (C6-12) |
+| Typy TS z 3.5 bez definicji w 12.4 i spoza listy „nowe nazwy” | `ObszarNaZdjeciu`, `WynikZadaniaSkrot`, `ZdjecieRef` (C6-12) |
+| Reguła transliteracji ADR-049 na przypadkach brzegowych (`OtwarteZDowodem`, `WstrzymanieWDoborze`, `EwaluacjaZt1`, `IzotonicznyCv5`, `NEff`, `Sha256`) | odwracalna, zgodna z `SnakeCaseLower`/`SnakeCaseUpper` |
+
+Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i wykonalności, a nie kompletności list.
+
+### C6-01: Kontrakt zlecania prac w tle i `NOTIFY` jest niewykonalny w EF Core w opisanej postaci
+- **Waga:** WYSOKA
+- **Lokalizacja:** ADR-053 p. 3 („`IZlecaniePrac.Zlec(...)` dodaje encję `PracaWTle` do bieżącego `LematDbContext`; … konflikt indeksu deduplikacji … jest obsługiwany przez `INSERT … ON CONFLICT DO NOTHING` (dla `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`: `DO UPDATE SET ladunek = EXCLUDED.ladunek`)”); 6.3 p. 1 („`NOTIFY` … wysyłane w tej samej transakcji przez `ZlecaniePracInterceptor` (`SaveChangesInterceptor`), więc dociera do workerów dopiero po zatwierdzeniu”); ADR-051 p. 2 (to samo dla `lemat_zdarzenia`)
+- **Problem:**
+  1. EF Core (także 10) nie generuje `INSERT … ON CONFLICT` dla encji dodanej do `DbContext` — `Add` + `SaveChanges` wysyła zwykły `INSERT`. Konflikt `ux_praca_dedup` / `ux_praca_dedup_oczekujace` jest przewidzianą ścieżką (ponowne `PUT /rozwiazania/{id}/transkrypcja` → `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` z nowym ładunkiem, ponowione żądanie z innym kluczem idempotencji, dwa handlery zlecające tę samą pracę). Zgodnie z opisem kończy się `DbUpdateException` (`23505`). Cały przypadek użycia jest wtedy wycofywany: Uczeń dostaje `500` przy drugiej Poprawce, a handler pracy wpada w ponowienia aż do `MARTWA`. Semantyki `DO UPDATE SET ladunek` nie da się w ogóle wyrazić przez `Add`.
+  2. `SaveChangesInterceptor.SavingChangesAsync` działa **przed** otwarciem transakcji niejawnej `SaveChanges`. Polecenie `pg_notify` wykonane tam bez jawnej transakcji idzie w trybie autocommit, więc powiadomienie dociera, zanim wiersz `praca_w_tle` albo nowy stan Rozwiązania jest widoczny. Worker budzi się, nic nie znajduje i czeka 5 s (zabezpieczenie z ADR-053 p. 2a), co zjada budżet NFR-01 (17.2). `KoncentratorZdarzen` czyta stary stan i wysyła go jako `stan`, a kolejne powiadomienie może nie przyjść. Przy wycofaniu `SaveChanges` powiadomienie i tak jest wysłane. `SavedChangesAsync` działa z kolei **po** zatwierdzeniu transakcji niejawnej, czyli też poza nią. Gwarancja „po zatwierdzeniu” istnieje wyłącznie przy jawnej transakcji jednostki pracy, której dokument nie wymaga.
+- **Oczekiwana poprawka:** `IZlecaniePrac` jako operacja SQL (`NpgsqlCommand`/`ExecuteSqlAsync` z `INSERT … ON CONFLICT …`) na połączeniu i transakcji bieżącej jednostki pracy, a nie `Add` encji. `IJednostkaPracy` zawsze otwiera jawną transakcję (`BeginTransactionAsync`), a `pg_notify` jest wykonywane w niej przed `CommitAsync` (np. `DbTransactionInterceptor.TransactionCommittingAsync` albo jawne wywołanie w `IJednostkaPracy.ZatwierdzAsync`). Testy w `Lemat.Infrastructure.Tests`: (a) podwójne zlecenie z tym samym kluczem nie wycofuje przypadku użycia, (b) `DO UPDATE` ładunku `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, (c) `LISTEN` nie dostaje powiadomienia przed `COMMIT` ani po `ROLLBACK`.
+- **Status:** OTWARTA
+
+### C6-02: Rotacja refresh tokenu z wykrywaniem ponownego użycia + access token tylko w pamięci karty = wylogowanie przy kilku kartach i wznowieniu PWA
+- **Waga:** WYSOKA
+- **Lokalizacja:** 16.1 („refresh token … rotowany przy każdym użyciu; ponowne użycie unieważnionego tokenu unieważnia całą `rodzina_id`”); ADR-054 p. 2 (bez BFF, access token w pamięci `DostawcaSesji`, odświeżanie `POST /api/v1/auth/odswiezenie`); 6.8 `lib/auth/`; ADR-051 p. 3 (strumień zamykany przy `exp`, klient łączy się ponownie „z odświeżonym tokenem”)
+- **Problem:** bez BFF każda karta, każde przeładowanie, każde wznowienie PWA z tła i każde ponowne połączenie SSE po `exp` wywołuje odświeżenie, bo token żyje tylko w pamięci karty. Cookie `lemat_rt` jest wspólne dla kart. Dwie karty (np. Nauczyciel z kolejką weryfikacji i Rozwiązaniem w drugiej karcie; Uczeń z Zadaniem i Profilem) wysyłają odświeżenie z tym samym tokenem w odstępie milisekund. Pierwsze rotuje token, drugie jest „ponownym użyciem unieważnionego tokenu”, więc serwer unieważnia rodzinę i obie karty są wylogowane. Ten sam wyścig daje React 19 Strict Mode w dev (podwójny efekt) i ponowienia TanStack Query. Dla Nauczyciela utrata sesji w trakcie Weryfikacji oznacza utratę Blokady weryfikacji po 15 min (szkic jest autozapisywany, ale doświadczenie jest nie do przyjęcia), a dla Ucznia na telefonie — logowanie po każdym powrocie do aplikacji z dwiema kartami. Dokument nie opisuje tego scenariusza ani w 6.8, ani w 15.2.
+- **Oczekiwana poprawka:** (1) w kliencie odświeżanie typu single-flight między kartami: `navigator.locks.request("lemat-odswiezenie", …)` (Web Locks API) i `BroadcastChannel` rozgłaszający nowy access token kartom tego samego origin; (2) po stronie serwera okno tolerancji (np. 30 s): ponowne użycie tokenu rotowanego w tym oknie zwraca tego samego następcę zamiast unieważniać rodzinę (zapis `zastapiony_przez`, `zastapiony_at` w `token_odswiezania`); unieważnienie rodziny dopiero poza oknem albo przy innym User-Agent / IP (do decyzji); (3) test Playwright „2 karty, równoczesne odświeżenie, obie zalogowane” i test integracyjny okna tolerancji; (4) scenariusz w 15.2.
+- **Status:** OTWARTA
+
+### C6-03: Granica „agent ↔ port modelu generatywnego” jest sprzeczna: Semantic Kernel w `Lemat.Agenci` potrzebuje `IChatClient`, którego port nie udostępnia
+- **Waga:** WYSOKA
+- **Lokalizacja:** ADR-055 p. 1 (`IModelGeneratywny.GenerujJsonAsync<T>(Prompt …)`, `GenerujTekstAsync(Prompt …)`), p. 2 (`IChatClient` budowany wyłącznie w `Lemat.Modele` przez `RejestrAdapterow`), p. 4b (`Kernel` dostaje `IChatCompletionService` uzyskany z `IChatClient`); 6.4 (`Lemat.Agenci` → `Lemat.Application`, `Lemat.Domain`; pakiety `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`; `Lemat.Application` bez `Microsoft.Extensions.AI.Abstractions`); 6.5 (`Lemat.Agenci` nie może zależeć od `Lemat.Modele`); 3.5 #24 (`A.Modele.IModelGeneratywny` „nad `IChatClient`”); ADR-003 (konfiguracja modeli w bazie per rola)
+- **Problem:** Agent generujący ma wywoływać `SprawdzanieSymbolicznePlugin` przez `FunctionChoiceBehavior.Auto`. To wymaga `Kernel` z usługą czatu, czyli `IChatClient` skonfigurowanego dla roli `GENERATYWNY_ZADANIA`. Port `IModelGeneratywny` przyjmuje wyłącznie wyrenderowany `Prompt`, więc agent nie może przez niego wykonać pętli wywołań funkcji. `Lemat.Agenci` nie może sięgnąć do `RejestrAdapterow` (`Lemat.Modele`), a `Lemat.Application` nie ma `Microsoft.Extensions.AI.Abstractions`, więc nie może zdefiniować portu zwracającego `IChatClient`. Implementacja zostaje z dwiema złymi drogami:
+  1. wstrzyknąć „jakiś” `IChatClient` z DI do agenta — z pominięciem `konfiguracja_modelu` (wybór dostawcy i modelu dla roli, `wersja_promptu`, `parametry.timeout_s`, `retencja_dostawcy_dni` z A-07, zakaz `mock` w `Production`, metryki per rola), czyli ze złamaniem ADR-003 i NFR-06;
+  2. przenieść pętlę wywołań funkcji do adaptera w `Lemat.Modele`, który wtedy musi znać plugin agenta, co odwraca kierunek zależności.
+  
+  Nie wiadomo też, gdzie jest zapisywany ślad wywołań funkcji (NFR-05), skoro `decyzja_modelu` dotyczy Modelu decyzyjnego.
+- **Oczekiwana poprawka:** jawny port w `Lemat.Application.Modele`, np. `IFabrykaKlientowCzatu.PobierzAsync(RolaModelu rola, CancellationToken ct) → IKlientCzatuRoli` (opakowanie z `IChatClient`, konfiguracją roli i limitami), z jednoznaczną decyzją, czy `Microsoft.Extensions.AI.Abstractions` jest dozwolony w `Lemat.Application` (6.4, 6.5, BannedSymbols). Alternatywnie: port `IModelGeneratywny.GenerujZNarzedziamiAsync<T>(Prompt, IReadOnlyList<AIFunction> narzedzia, int maksWywolan, …)` z implementacją pętli w `Lemat.Modele`, a funkcje dostarcza agent jako `AIFunction`. Dopisać, gdzie są logowane wywołania narzędzi (np. `zlecenie_generowania` / `walidacja_zadania.sprawdzenia`) i test architektury „agent nie rozwiązuje `IChatClient` z DI”.
+- **Status:** OTWARTA
+
+### C6-04: Szkielet `Rozwiazanie` gubi pracę po ponowieniu rozpoznania, rzuca wyjątek przy pierwszej Ocenie i nie ma połowy przejść maszyny stanów 8.1
+- **Waga:** WYSOKA
+- **Lokalizacja:** 3.6 `Lemat.Domain.Rozwiazania.Rozwiazanie` (`PonowRozpoznanie`, `ZarejestrujPierwszaOcene`, `Zatwierdz`, `Przeslij`); 8.1; A-11; 3.5 #81
+- **Problem:**
+  1. `PonowRozpoznanie` ustawia `Status = Przeslane`, ale w przeciwieństwie do `Przeslij` i `PrzeslijPonownie` nie zgłasza `RozwiazaniePrzeslane`. Komentarze mówią, że to handler tego zdarzenia zleca `ROZPOZNAJ_PISMO`, więc po „Ponów” (E-xx, C1-28) nikt nie zleca rozpoznania i Rozwiązanie zostaje w `PRZESLANE` na zawsze (żadna praca w tle 13.3 nie zbiera osieroconych `PRZESLANE`).
+  2. `PonowRozpoznanie` nadpisuje `PrzeslanoAt`, więc `CzasSystemowy` liczy rozpoznanie od ponowienia. A-11 każe liczyć błąd rozpoznawania z winy dostawcy jako **naruszenie** NFR-01; szkielet ukrywa ten czas, więc metryka `czas_systemowy_ms` i zobowiązanie 99% są zawyżane.
+  3. `ZarejestrujPierwszaOcene` wymaga stanu `Ocenianie` i używa `TranskrypcjaGotowaAt!.Value`, ale żadna metoda nie ustawia ani `Ocenianie`, ani `TranskrypcjaGotowaAt` (brak przejść `Przeslane → Rozpoznawanie → TranskrypcjaGotowa | BladRozpoznawania`, `Zatwierdzone → Ocenianie`). Brakuje też T-6 (`OczekujeNaWeryfikacje` bez Oceny po terminie twardym), `Porzuc`, `Anuluj` (usunięcie konta) i przejścia `OczekujeNaWeryfikacje → Ocenione` po Rozstrzygnięciu. Wykonawca, który przepisze szkielet, dostanie `InvalidOperationException` przy pierwszej Ocenie.
+  4. `Zatwierdz(TranskrypcjaId)` nie sprawdza, że Transkrypcja należy do tego Rozwiązania i jest jego **najnowszą** wersją. Wyścig: Uczeń zapisuje Poprawki w karcie A (`PUT …/transkrypcja` tworzy wersję 2), a w karcie B zatwierdza widoczną wersję 1. Oceniona zostaje Transkrypcja inna niż ta, którą Uczeń poprawił (FR-18), a Sprawdzenie zgodności poprawek dotyczy wersji, która nie jest oceniana. W 3.6 brakuje też `ETag`/`version` jako warunku zatwierdzenia.
+  5. Niezmiennik „para (`ElementSciezkiId`, `PrzypisanieId`) tylko dla `R-PRZYPISANIE`” z komentarza nie jest sprawdzany, a `rodzaj` jest parametrem od wywołującego, a nie cechą `ZadanieWersja`.
+- **Oczekiwana poprawka:** komplet przejść 8.1 jako metod z niezmiennikami (każda metoda, która ustawia `Przeslane`, zgłasza zdarzenie zlecające rozpoznanie); `PrzeslanoAt` ustawiane wyłącznie przy przesłaniu, a ponowienie z `OstatnieRozpoznanieOdAt` niezależnym od pomiaru A-11; `Zatwierdz(TranskrypcjaId id, int wersjaTranskrypcji, int oczekiwanaWersjaRozwiazania)` z `409 TRANSKRYPCJA_NIEAKTUALNA`; test domeny dla każdego wiersza 8.1 i test wyścigu „Poprawka vs zatwierdzenie” (15.2).
+- **Status:** OTWARTA
+
+### C6-05: Szkielet `Weryfikacja` nie ma fabryki, `KlasaId`, `Anuluj`, `Zwolnij`, `DolaczOcene` i omija limit 2 h
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 3.6 `Lemat.Domain.Weryfikacje.Weryfikacja`; 11.4.1–11.4.2; ADR-033 (uzupełnienie it. 4: „ponowne podjęcie przez właściciela nie wydłuża blokady poza `podjeta_at + 2 h`”); 9.13 (`PONOW_OCENE`)
+- **Problem:**
+  1. Brak fabryki: `Priorytet` ma wartość domyślną 0, więc `DopiszZgloszenie` (`Math.Min(Priorytet, 2)`) zostawia 0 wbrew zakresowi 1–3; `PowodyPoczatkowe` nie ma miejsca ustalenia.
+  2. Brak `KlasaId`, choć 11.4.2 daje prawo podjęcia „Nauczycielowi prowadzącemu Klasę z `klasa_id`”. `Podejmij` nie sprawdza żadnego uprawnienia (docelowy / Klasa / `weryfikator_globalny`).
+  3. `Podejmij` przy wygasłej, ale jeszcze niezwolnionej blokadzie **własnej** (`W_TRAKCIE`, `ZablokowanaDo < teraz`, przed przebiegiem `ZWOLNIJ_BLOKADY_WERYFIKACJI`) idzie gałęzią `Nowa` i zeruje `PodjetaAt`, czyli przedłuża blokadę poza 2 h wbrew ADR-033.
+  4. Brak `Anuluj(PowodAnulowania)` (enum jest zadeklarowany), `Zwolnij` (endpoint `…/zwolnienie`, 3.5 #75) i `DolaczOcene` (`OcenaWeryfikowanaId` po `PONOW_OCENE`); `DopiszZgloszenie` nie sprawdza stanu, więc dopisuje Zgłoszenie do Weryfikacji `Zakonczona`/`Anulowana`.
+  5. `Eskaluj` w stanie `W_TRAKCIE` zeruje `NauczycielDocelowyId`, ale zostawia Blokadę weryfikacji dotychczasowego Nauczyciela, więc nie wiadomo, czy może on rozstrzygnąć Weryfikację już w kolejce `GLOBALNA` (np. bez uprawnienia `weryfikator_globalny`).
+- **Oczekiwana poprawka:** fabryka `Weryfikacja.Utworz(...)` z `PowodyPoczatkowe`, `Priorytet` i przydziałem 11.4.1; `KlasaId`; `Podejmij(nauczyciel, UprawnienieDoPodjecia, teraz)` z zachowaniem `PodjetaAt` przy ponownym podjęciu przez właściciela; metody `Anuluj`, `Zwolnij`, `DolaczOcene` ze strażnikami stanu; jawna reguła dla `Eskaluj` w stanie `W_TRAKCIE`.
+- **Status:** OTWARTA
+
+### C6-06: Szkielety kont: przywrócenie konta omija zatwierdzenie Nauczyciela, a limit 180 min dotyczy wszystkich weryfikatorów
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 3.6 `Uzytkownik.Przywroc`, `Uzytkownik.ZlozWniosekOUsuniecie`, `Nauczyciel.NadajWeryfikatoraGlobalnego`; A-14; 16.1 (konto Nauczyciela `OCZEKUJE_NA_ZATWIERDZENIE`, „bo Nauczyciel widzi dane Uczniów”); 3.3 „Weryfikator globalny” (umowa poufności)
+- **Problem:**
+  1. `ZlozWniosekOUsuniecie` nadpisuje dowolny status (`OczekujeNaZatwierdzenie`, `Zablokowane`) wartością `Usuwane`, a `Przywroc` ustawia zawsze `Aktywne`. Nauczyciel niezatwierdzony przez Administratora może złożyć wniosek o usunięcie i od razu go anulować, a wtedy jest `AKTYWNE` bez zatwierdzenia i widzi dane Uczniów. To samo dotyczy konta zablokowanego przez Administratora (odblokowanie przez użytkownika).
+  2. `NadajWeryfikatoraGlobalnego` stosuje warunek `prognoza + deklarowane ≤ 180` bezwarunkowo, a A-14 ogranicza go do Nauczyciela **prowadzącego Klasę**. Nauczyciel bez Klas albo współpracujący z umową, który deklaruje 240 min (CHECK dopuszcza do 480), dostaje `LIMIT_OBCIAZENIA_WERYFIKATORA`. To podważa pulę weryfikatorów z 17.7 i bramkę G-7.
+  3. Brak warunku umowy poufności (definicja Weryfikatora globalnego w 3.3), statusu `AKTYWNE` i metody odebrania flagi (3.1 p. 5: „flagi są odbierane w `USUN_KONTO`”).
+- **Oczekiwana poprawka:** `OkresKarencji` przechowuje `StatusPrzedWnioskiem`, a `Przywroc` go odtwarza (kolumna w 7.3); `NadajWeryfikatoraGlobalnego(int deklarowane, bool prowadziKlase, int prognozaKolejkiKlasy, bool umowaPoufnosci)` z limitem 180 wyłącznie przy `prowadziKlase`; metody `OdbierzWeryfikatoraGlobalnego` / `OdbierzRecenzentaTresci`; testy domeny dla wszystkich par (status przed wnioskiem, przywrócenie).
+- **Status:** OTWARTA
+
+### C6-07: Cykl zależności w czasie wykonania `Rekomendacje ↔ Orkiestracja`
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 6.2 reguła 3 („Orkiestracja może korzystać z fasad wszystkich modułów; żaden moduł nie korzysta z Orkiestracji poza `IZlecaniePrac` … i `IOrkiestrator.RekomendujSynchronicznieAsync` (wyłącznie Rekomendacje)”); 6.3 tryb synchroniczny; 6.1 (`REKM --> ORK`); 6.5 (NetArchTest bez reguły acykliczności)
+- **Problem:** `Orkiestrator` jest jedną klasą, która korzysta z fasad wszystkich modułów, w tym `IRekomendacjeFasada` (zapis elementu Ścieżki nauki i Rekomendacji po decyzji agenta), a fasada Rekomendacji zależy od `IOrkiestrator`. Przy wstrzykiwaniu przez konstruktor `Microsoft.Extensions.DependencyInjection` zgłasza „circular dependency” przy pierwszym rozwiązaniu usługi. Przy obejściu (`Lazy<T>`, lokator usług) przypadek użycia „następny element” wchodzi ponownie w ten sam moduł w tej samej transakcji, a reguła 6.2 p. 4 (transakcja = zmiany jednego przypadku użycia) staje się niejasna: kto zapisuje element i zlecenie uzupełnienia puli, Rekomendacje czy Orkiestrator? Reguły 6.5 sprawdzają kierunek „przez fasadę”, ale nie acykliczność między modułami.
+- **Oczekiwana poprawka:** wydzielić `RekomendacjaSynchroniczna` (osobna klasa w `Lemat.Application.Orkiestracja`, zależna wyłącznie od `IAgentRekomendujacy` i fasad odczytu Profil/Tresci), która zwraca decyzję, a zapis wykonuje przypadek użycia Rekomendacji; albo przenieść tryb synchroniczny do `Lemat.Application.Rekomendacje` bez udziału `IOrkiestrator`. Dodać test architektury „brak cykli między przestrzeniami nazw modułów `Lemat.Application.*`” (poza jawnie wymienionym `IZlecaniePrac`) i test rozwiązania kontenera DI w `Lemat.Api.Tests` (`ValidateOnBuild = true`, `ValidateScopes = true`).
+- **Status:** OTWARTA
+
+### C6-08: `StanBezpiecznika` bez tokenu współbieżności — `KALIBRUJ` nadpisuje równoległą dezaktywację
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 3.6 `StanBezpiecznika` (nie dziedziczy `Agregat<>`, brak `Version`), 3.5 #104 (rodzaj „AG”); 7.3 `stan_bezpiecznika` (brak kolumny `version`); 13.3 `KALIBRUJ` („ocena bezpieczników na stanie sprzed przebiegu … `UPSERT stan_bezpiecznika`”, czas do 10 min); `POST /admin/bezpieczniki/dezaktywacja`; 15.2 (brak scenariusza)
+- **Problem:** `KALIBRUJ` czyta stan na początku przebiegu, liczy kroki 1–6 przez kilka minut i wykonuje `UPSERT`. Administrator, który w tym czasie dezaktywuje bezpiecznik (`aktywny = false`, `okno_od = teraz`, uzasadnienie), traci tę decyzję po cichu: `UPSERT` przywraca `aktywny = true` i stare `okno_od`, a próg przy wyzwoleniu może zostać ponownie podniesiony. Odwrotny wyścig — dezaktywacja po ocenie, a przed zapisem — daje stan, którego żaden z aktorów nie zamierzał. Szkielet nie ustawia też `ostatnie_wyzwolenie_at` w `Wyzwol`, nie modeluje `wyjscie_z_blokady_at`, dopuszcza `Dezaktywuj` na nieaktywnym bezpieczniku i nie sprawdza `RodzajZadania == OtwarteObliczeniowe` (CHECK 7.3).
+- **Oczekiwana poprawka:** `StanBezpiecznika : Agregat<…>` z kolumną `version` (token współbieżności) albo `SELECT … FOR UPDATE` w obu ścieżkach i ponowna ocena w `KALIBRUJ` po konflikcie; dezaktywacja w trakcie przebiegu wygrywa (przebieg z `rezultat_przestarzaly`); metody `Wyzwol(teraz)` z `OstatnieWyzwolenieAt`, `WyjdzZBlokady(teraz)`; strażnik stanu w `Dezaktywuj`; scenariusz w 15.2 i test integracyjny.
+- **Status:** OTWARTA
+
+### C6-09: Limity strumieni SSE są liczone per replika i kolidują ze strumieniem powiadomień w każdym układzie
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** ADR-051 p. 1 (strumień `powiadomienia/strumien`, `id:` = `created_at` powiadomienia), p. 4 („≤ 3 strumienie na użytkownika i ≤ 1 na (użytkownik, Rozwiązanie) — nadmiarowe połączenie zamyka najstarsze”); 6.9 (`powiadomienia` — „układy wszystkich ról”); ADR-054 p. 6 (Serwist, `NetworkOnly` dla `/api/*`)
+- **Problem:**
+  1. Strumień powiadomień jest otwierany w układzie każdej roli, czyli w każdej karcie. Uczeń z dwiema kartami Rozwiązań ma 4 strumienie (2 powiadomień + 2 Rozwiązań) przy limicie 3. Serwer zamyka najstarszy, klient łączy się ponownie (ADR-051 p. 5), co zamyka kolejny najstarszy — pętla ponownych połączeń, a po dwóch nieudanych próbach w 10 s klient przechodzi na odpytywanie, czyli traci zysk z SSE.
+  2. Licznik jest w `KoncentratorZdarzen` jednej repliki `api`. Przy 2 replikach za Caddy limit faktyczny wynosi 6, a „zamknięcie najstarszego” nie działa między replikami.
+  3. `id:` powiadomienia = `created_at` nie jest unikalne (kilka powiadomień w tej samej mikrosekundzie z jednej transakcji), więc `Last-Event-ID` nie identyfikuje miejsca wznowienia.
+  4. Zapis Wskazówki zmienia `ocena`, a nie `rozwiazanie.version`; nie jest określone, jak interceptor mapuje zmianę encji `Ocena` (Wskazówka, Ocena po Rozstrzygnięciu) na `NOTIFY {"typ":"ROZWIAZANIE","id":…}`.
+  5. Service worker Serwist przechwytujący `fetch` strumienia (`NetworkOnly`) może buforować albo przerywać długie odpowiedzi w części przeglądarek; bezpieczniej wyłączyć `/api/*` z obsługi `fetch` w `sw.ts`.
+- **Oczekiwana poprawka:** jeden strumień powiadomień na przeglądarkę (wybór karty-lidera przez Web Locks / `BroadcastChannel`, jak w C6-02) albo powiadomienia multipleksowane w jednym strumieniu na kartę; limit liczony globalnie (wiersz w tabeli `UNLOGGED` albo licznik per użytkownik w PostgreSQL) albo limit tylko per (użytkownik, zasób); `id:` powiadomienia = `id` (UUIDv7) powiadomienia; jawna lista encji, których zmiana wysyła `NOTIFY ROZWIAZANIE`; `/api/*` poza `fetch` handlerem service workera; test Playwright „2 karty, brak pętli ponownych połączeń”.
+- **Status:** OTWARTA
+
+### C6-10: Wykonalność Semantic Kernel: brakujące pakiety, limit wywołań funkcji i kodowanie LaTeX w szablonach
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 6.4 (`Lemat.Agenci`: wyłącznie `Microsoft.SemanticKernel.Core`, `Microsoft.Extensions.AI.Abstractions`); 6.6 i ADR-055 p. 4 (szablony YAML `PromptTemplateConfig` w składni Handlebars, `FunctionChoiceBehavior.Auto` „≤ 8 wywołaniami”, szablon stanu Agenta oceniającego jako szablon SK); 10.4.2 (stan zawiera Transkrypcję z LaTeX)
+- **Problem:**
+  1. Składnia Handlebars wymaga pakietu `Microsoft.SemanticKernel.PromptTemplates.Handlebars`, a ładowanie YAML — `Microsoft.SemanticKernel.Yaml`; żadnego nie ma na liście 6.4 (Central Package Management nie przepuści budowy).
+  2. `FunctionChoiceBehavior.Auto` nie ma parametru „maksymalnie N wywołań”; limit wymaga `IAutoFunctionInvocationFilter` przerywającego pętlę (`context.Terminate = true`) albo `FunctionInvokingChatClient.MaximumIterationsPerRequest` w Microsoft.Extensions.AI. Mechanizm nie jest wskazany, więc limit ≤ 8 (koszt i czas `GENERUJ_ZADANIE`) nie ma realizacji.
+  3. Silniki szablonów SK domyślnie kodują wartości zmiennych wejściowych (ochrona przed wstrzyknięciem znaczników `<message>`), chyba że ustawiono `AllowDangerouslySetContent`. Transkrypcja i treść Zadania zawierają `<`, `>`, `&` (nierówności, `\begin{cases} … & …`). Bez jawnej polityki i testu model dostaje `&lt;` zamiast `<`, co zmienia treść kroku przed oceną (FR-19, FR-21), a `decyzja_modelu.stan` (NFR-05) nie odpowiada temu, co widział Nauczyciel.
+  4. Szablon stanu Modelu decyzyjnego (10.4.2) renderowany przez SK „bez wywołania LLM” wiąże deterministyczny kontrakt Jev (A-01, limit 32 000 znaków) z silnikiem szablonów i jego kodowaniem; prostsze i testowalne jest zwykłe budowanie tekstu w C#.
+- **Oczekiwana poprawka:** dopisać pakiety do 6.4/5.2; wskazać mechanizm limitu wywołań i test „9. wywołanie przerywa generowanie z `BladModeluTrwalyException`”; ustalić politykę kodowania (zmienne treści matematycznej z `AllowDangerouslySetContent = true` w szablonach bez znaczników ról, albo wyłącznie format tekstowy bez parsowania ról) i test zgodności bajtowej „LaTeX z `<`, `&` w stanie i w prompcie”; stan Jev budować bez SK.
+- **Status:** OTWARTA
+
+### C6-11: Sidecar Magick.NET: system plików tylko do odczytu, polityka ImageMagick i `FailFast` jako wektor DoS
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** ADR-052 p. 2–3; 5.3 (`read_only: true`, `pids_limit: 64`, `restart: always`); 5.4 (oczekiwanie na slot > 5 s → `503`)
+- **Problem:**
+  1. ImageMagick przy przekroczeniu `ResourceLimits.Memory` przenosi bufor pikseli na dysk (`ResourceLimits.Disk` nieustawiony), a dekodery delegatów korzystają z katalogu tymczasowego. Przy `read_only: true` bez `tmpfs` dekodowanie dużych HEIC kończy się błędem, który klient zinterpretuje jako `422 ZDJECIE_NIEPRAWIDLOWE` dla poprawnego zdjęcia. Trzeba też potwierdzić, że wariant `Magick.NET-Q8-AnyCPU` ładuje bibliotekę natywną z `runtimes/<rid>/native`, a nie z katalogu pamięci podręcznej w `/tmp`.
+  2. Magick.NET nie wczytuje systemowego `policy.xml`; polityka musi być ustawiona w kodzie (`MagickNET.SetSecurityPolicy` / `MagickNET.Initialize` z `ConfigurationFiles`). Bez tego wyłączenie koderów z p. 3 nie działa, a jedyną obroną pozostaje sprawdzenie formatu przez `MagickImageInfo`.
+  3. `Environment.FailFast` po 8 s jednego żądania zabija wszystkie równoległe operacje sidecara (2 w `obrazy-api`), czyli przesłania innych Uczniów, a przy powtarzaniu restartów Docker wydłuża opóźnienie kolejnych startów. Jeden spreparowany plik (np. HEIC z kosztownym dekodowaniem w granicach 40 Mpx) wysyłany co kilka sekund wyłącza przesyłanie zdjęć na replice `api` (`503`) — limit szybkości 12.7 nie jest liczony po kosztach dekodowania.
+- **Oczekiwana poprawka:** `tmpfs: /tmp` (np. 512 MiB) i `ResourceLimits.Disk` jawnie; polityka bezpieczeństwa ustawiana w `Program.cs` sidecara z testem „koder spoza listy jest odrzucany”; izolacja operacji per proces potomny albo `ResourceLimits.Time` + `ResourceLimits.Thread = 1` zamiast `FailFast` całego sidecara; metryka i limit przesłań na Ucznia po przekroczeniach czasu normalizacji (np. 3 przekroczenia / 10 min → `429`).
+- **Status:** OTWARTA
+
+### C6-12: Niespójności mapowania 3.2 / 3.3 / 3.5 z resztą dokumentu
+- **Waga:** NISKA
+- **Lokalizacja:** 3.2, 3.3, 3.5, 6.2, 6.4, 12.3, 16.1
+- **Problem:**
+  1. `WersjaZdjecia { Oryginalna, Maskowana }` i `?wersja_zdjecia=MASKOWANA` (3.5 #71) są sprzeczne z 12.3 (`?wersja_zdjecia=ORYGINAL|MASKOWANE`). `MASKOWANA` nie występuje nigdzie poza 3.5, a 3.5 jest według ADR-049 p. 10 źródłem prawdy.
+  2. 3.2: Kalibracja to „moduł Kalibracja (`Lemat.Domain.Kalibracja`); tabele … `kalibracja_trudnosci`”, podczas gdy 3.5 #23 i 6.2 umieszczają `KalibracjaTrudnosci` i tabelę w `Tresci`. 3.2 podaje dla Nauczyciela „— (zasoby: `/klasy`, …)”, a 3.5 #2 — zasób `/nauczyciele`. Kolumna „Klasa domenowa” 3.2 ma `Zadanie.czy_bazowe` w `snake_case`.
+  3. 3.3 („Model decyzyjny”: port `ModelDecyzyjny`; „Model zapasowy”: „implementujący port `ModelDecyzyjny`”) nie ma nazwy `IModelDecyzyjny` z 3.5 #54.
+  4. 3.5 wymienia jako typy TS `WynikZadaniaSkrot` i `ZdjecieRef`, które są typami wewnętrznymi kontraktów agentów (10.1.1, 10.3.1), oraz `ObszarNaZdjeciu`, który nie ma definicji w 12.4 ani na liście „nowych nazw”.
+  5. Typ wyliczeniowy `kontekst_decyzji` (7.3) nie ma odpowiednika C# w 3.5 (powinien być przy #30 `DecyzjaModelu`).
+  6. 16.1 nadal podaje „JWT (EdDSA Ed25519)”, a 5.2 i ADR-048 — ES256; sekcja 16 nie jest na liście sekcji do przepisania.
+  7. `Lemat.Symulacje` (6.4) ma referencje tylko do `Lemat.Domain` i `Lemat.Application`, choć symuluje `OgranicznikSzybkosci` z `Lemat.Infrastructure` (6.7: `OgranicznikSymulacja.cs`); `PredyktorSukcesuGbm` w `Lemat.Modele` (ML.NET LightGBM) nie ma pakietów `Microsoft.ML*` w 6.4.
+  8. Przestrzeń nazw `Lemat.Domain.Modele` / `Lemat.Application.Modele` przesłania projekt `Lemat.Modele` w kodzie wewnątrz `Lemat.Domain.*` / `Lemat.Application.*` (odwołanie `Modele.X` rozwiązuje się do przestrzeni warstwy). ADR-049 p. 6 rozstrzyga kolizję przestrzeni z klasą, ale nie przestrzeni z przestrzenią; to samo dotyczy `Lemat.Application.Agenci` i projektu `Lemat.Agenci`.
+- **Oczekiwana poprawka:** ujednolicić p. 1–6 w 3.2/3.3/3.5/16.1 (dla p. 1 wybrać jedną formę i dopisać wartości do 3.5 i 12.3); p. 7 — referencje i pakiety w 6.4; p. 8 — zapis w ADR-049 i reguła analizatora (pełne kwalifikowanie albo aliasy `using`).
+- **Status:** OTWARTA
+
+### C6-13: „Blokada” ma trzecie znaczenie (konto zablokowane) mimo deklaracji „dokładnie dwa znaczenia”
+- **Waga:** NISKA
+- **Lokalizacja:** 3.1 p. 5 („**Blokada** … ma dokładnie dwa znaczenia domenowe”); 3.4 część 3 (dozwolone użycia `ZABLOKOWANE` — wartość `status_konta`, `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`); 3.6 `StatusKonta.Zablokowane`, `PowodEskalacji.NauczycielDocelowyZablokowany`
+- **Problem:** konto zablokowane przez Administratora to trzecie znaczenie słowa — ani Blokada weryfikacji, ani Blokada obniżania progu. Lista dozwolonych użyć je przepuszcza, ale 3.1 p. 5 i ADR-049 p. 9 go nie definiują. To ta sama klasa ryzyka co C4-04 / C5-04: test CI akceptuje `zablokow*` w znaczeniu, którego słownik nie zna.
+- **Oczekiwana poprawka:** dopisać trzecie znaczenie z kwalifikatorem („blokada konta”: `status_konta = 'ZABLOKOWANE'`, `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`) do 3.1 p. 5, ADR-049 p. 9 i PZS-1 albo przemianować (np. `ZAWIESZONE`, `NAUCZYCIEL_DOCELOWY_ZAWIESZONY` — z kolizją z „Zawieszeniem Wyniku zadania” do rozstrzygnięcia).
+- **Status:** OTWARTA
+
+### C6-14: Struktura App Router nie pokrywa ról Administratora i recenzenta treści ani wyświetlania zdjęć bez BFF
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 6.8 (drzewo `src/app/`), 6.9; 6.2 (grupy tras API `/admin/zadania`, `/zgloszenia-bledu-zadan`, `/zlecenia-generowania`); 3.3 („Recenzent treści … do Przeglądu Zadań i Wkładek o zasięgu globalnym”, „Zgłoszenie błędu w Zadaniu … rozpatrywany przez recenzenta treści albo Administratora”, „Przegląd zadania … Nauczyciela uprawnionego lub Administratora”); 12.3 (`GET /rozwiazania/{id}/zdjecia/{…}` → `302` na podpisany URL); 16.2 (CSP `img-src 'self' blob: https://<magazyn>`); ADR-054 p. 5 (`openapi-fetch` jedynym klientem); 5.2 (Serwist)
+- **Problem:**
+  1. Administrator nie ma ekranów Przeglądu zadań, Zgłoszeń błędu w Zadaniu, `/admin/zadania` ani zleceń generowania (FR-11, FR-14, ADR-028, ADR-038), choć API je udostępnia. Recenzent treści (Nauczyciel) nie ma ekranu przeglądu Wkładek teoretycznych — `wkladki-teoretyczne` jest tylko w `(administrator)`, a moduł `tresci` wskazuje ten ekran jako jedyny. Uczeń zalogowany nie ma ekranu członkostwa w Klasach (dołączenie kodem z konta, `DELETE /uczniowie/ja/klasy/{id}`), a `dolacz/[kod]` jest w `(publiczne)`, mimo że wymaga sesji Ucznia albo rejestracji z kodem — przepływ nie jest opisany.
+  2. Zdjęcia kartek (Uczeń, Nauczyciel w Weryfikacji) są pobierane z endpointu wymagającego `Authorization`. `<img src="/api/v1/…">` nie wyśle nagłówka (token jest tylko w pamięci), więc dostanie `401`. Potrzebny jest jawny wzorzec: `fetch` z nagłówkiem → `302` na S3 → odczyt `blob` (wymaga CORS na buckecie) → `URL.createObjectURL`, albo endpoint zwracający JSON z podpisanym URL. Reguła 6.9 p. 4 (`fetch` wyłącznie w `klient.ts`) musi go objąć; trzeba też zwalniać `blob:` URL (pamięć telefonu przy 5 zdjęciach × 2560 px).
+  3. Next.js 16 buduje domyślnie Turbopackiem, a `@serwist/next` 9 wymaga webpacka; potrzebne `next build --webpack` albo wariant Serwist dla Turbopacka — wymaganie nie jest zapisane w 5.2 / ADR-054.
+- **Oczekiwana poprawka:** dopisać trasy `(administrator)/admin/zadania/**`, `zgloszenia-bledu-zadan`, `zlecenia-generowania`; `(nauczyciel)/nauczyciel/wkladki-teoretyczne/**` dla recenzenta (strażnik flagi `recenzent_tresci`); `(uczen)/klasy` i opis przepływu `dolacz/[kod]` (zalogowany / niezalogowany); wzorzec pobierania zdjęć w `lib/api` z testem Vitest i E2E; decyzję o buildzie Serwist w ADR-054.
+- **Status:** OTWARTA
+
+### C6-15: Drobne luki wykonalności procesów w tle i infrastruktury
+- **Waga:** NISKA
+- **Lokalizacja:** ADR-053 p. 2e; 5.4 (pule połączeń); 3.6 `ProfilUcznia.Zastosuj`, `SciezkaNauki.Zaproponuj`, `Ocena.Automatyczna(RezultatOceny r, Trasa t)`
+- **Problem:**
+  1. ADR-053 p. 2d chroni odnowienie dzierżawy warunkiem `wykonawca = @ja`, ale zapis wyniku (p. 2e: `ZAKONCZONA`, ponowienie, `MARTWA`) nie ma tego warunku. Proces, który stracił dzierżawę (pauza GC, utrata połączenia), może oznaczyć jako `ZAKONCZONA` pracę wykonywaną już przez innego workera albo przenieść ją do `MARTWA`.
+  2. Suma pul połączeń: `api` 2 × (50 + 1), `worker` 2 × (60 + 1), `scheduler` 2 × 5, `migracje` 1 = 235 połączeń. Brak wymagania `max_connections` dla zarządzanego PostgreSQL (wiele planów ma 100–200) i decyzji o PgBouncerze (z ograniczeniem: `LISTEN` i blokady doradcze sesji wymagają trybu sesji).
+  3. `ProfilUcznia.Zastosuj` nie pomija Wyniku z `UniewaznionyAt != null` (zawieszonego przez Zgłoszenie błędu odczytu albo unieważnionego) — gdy `AKTUALIZUJ_PROFIL` wykona się po zawieszeniu, wynik trafi do Profilu wbrew ADR-022.
+  4. `SciezkaNauki` ładuje wszystkie elementy (`Kolejnosc = _elementy.Count + 1`), czyli setki do tysięcy wierszy na Ucznia w ciągu roku, przy każdym `GET …/rekomendacje/nastepna` (cel p95 ≤ 500 ms). Element `PROPONOWANY` po `WygasaAt`, którego praca w tle jeszcze nie oznaczyła `WYGASLY`, blokuje `Zaproponuj` błędem `ELEMENT_JUZ_PROPONOWANY`. Limit Serii ≤ 8 jest tylko w komentarzu.
+  5. Fabryka `Ocena.Automatyczna(RezultatOceny r, Trasa t)` używa `RezultatOceny` (rezultat Agenta oceniającego), którego przestrzeń nazw nie jest określona. Jeśli to typ z `Lemat.Application`, domena zależy od aplikacji (cykl warstw z 6.5).
+- **Oczekiwana poprawka:** (1) `WHERE id = @id AND wykonawca = @ja AND status = 'W_TOKU'` przy zapisie wyniku i test; (2) budżet połączeń w 17.4 / 22 z minimalnym `max_connections` i decyzją o puli; (3) strażnik w `Zastosuj` + test; (4) agregat z aktywnym oknem elementów (np. tylko `PROPONOWANY`/`ROZPOCZETY`) i `Kolejnosc` z sekwencji, wygaszanie w `Zaproponuj` przed sprawdzeniem niezmiennika, limit Serii w metodzie; (5) `RezultatOceny` w `Lemat.Domain.Ocenianie` albo fabryka przyjmująca typy domenowe.
+- **Status:** OTWARTA
+
+### Podsumowanie iteracji 6
+
+Weryfikacja uwag otwartych po iteracji 5:
+
+| Stan | Liczba | Identyfikatory |
+|---|---|---|
+| ZAMKNIĘTA | 9 | C5-01 … C5-09 (C5-06 … C5-09 jako wymagania 18.4 dla nowego `TASKS.md`) |
+| OTWARTA | 0 | — |
+
+Nowe uwagi iteracji 6:
+
+| Waga | Liczba uwag | Identyfikatory |
+|---|---|---|
+| KRYTYCZNA | 0 | — |
+| WYSOKA | 4 | C6-01, C6-02, C6-03, C6-04 |
+| ŚREDNIA | 8 | C6-05, C6-06, C6-07, C6-08, C6-09, C6-10, C6-11, C6-14 |
+| NISKA | 3 | C6-12, C6-13, C6-15 |
+| **Razem** | **15** | |
+
+Werdykt: wersja 3.0 zamyka wszystkie uwagi iteracji 5. Mapowanie słownika jest formalnie kompletne: 111/111 pojęć, a 28 z 30 enumów C# zgadza się z DDL wartość po wartości. Reguła transliteracji ADR-049 jest odwracalna i spójna z `JsonNamingPolicy`. Graf referencji projektów .NET jest acykliczny i ma właściwy kierunek (domena bez pakietów, adaptery i infrastruktura zależą od aplikacji). Wybór SymPy jako sidecara, SSE z `LISTEN/NOTIFY`, ES256 i Next.js bez BFF jest co do zasady wykonalny. Dokument nie jest jednak na poziomie produkcyjnym:
+- dwa mechanizmy, na których opiera się idempotencja i opóźnienie (zlecanie prac z `ON CONFLICT` przez `Add` encji, `NOTIFY` w `SaveChangesInterceptor`), nie działają w EF Core tak, jak je opisano (C6-01);
+- model sesji bez BFF z rotacją i wykrywaniem ponownego użycia refresh tokenu wylogowuje użytkownika przy dwóch kartach (C6-02);
+- warstwa agentów nie ma portu, przez który Semantic Kernel dostałby `IChatClient` roli bez obejścia `konfiguracja_modelu` (C6-03);
+- szkielet głównego agregatu `Rozwiazanie` zostawia Rozwiązanie w `PRZESLANE` po ponowieniu, zawyża metrykę NFR-01 i nie chroni przed oceną nieaktualnej Transkrypcji (C6-04).
+
+Poprawki C6-01 … C6-04 są lokalne (kontrakt `IZlecaniePrac`/`IJednostkaPracy`, okno tolerancji refresh tokenu + single-flight w kliencie, jeden port w `Lemat.Application.Modele`, uzupełnienie metod agregatu). Większość pozostałych uwag mieści się w planowanych iteracjach 2 i 3, ale powinna zostać wpisana do ich zakresu.
 
 STATUS: NEEDS_REVISION
