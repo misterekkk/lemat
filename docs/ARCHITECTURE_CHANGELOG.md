@@ -4,12 +4,70 @@
 |---|---|
 | Dokument | `docs/ARCHITECTURE_CHANGELOG.md` |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](ARCHITECTURE_DETAILED.md) |
-| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.2) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
+| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.3) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
 
 Numery sekcji w tabelach mapowania odnoszą się do wersji dokumentu
 głównego obowiązującej w danej iteracji. Od wersji 3.0 rejestr ADR jest w
 `docs/adr/`, a decyzje właściciela produktu D-1 … D-17 pozostają w sekcji
 23.4 dokumentu głównego.
+
+## Pętla 3.x, iteracja 4 (2026-11-01, wersja 3.3) — zamknięcie uwag C8 i Macierz Pokrycia Wymagań (RTM)
+
+Kontekst: iteracja 4 z 4 pętli „.NET 10 + Next.js” przed audytem końcowym
+krytyka. Zakres: wszystkie 12 uwag iteracji 8 (kontrakty REST/SSE, błędy,
+idempotencja, autoryzacja, przepływy Administratora) i sekcja 18 jako
+macierz RTM. Reguły domenowe wersji 2.4 i zasada Z-1 bez zmian. Poprawki
+sprawdzono poza repozytorium:
+
+- ASP.NET Core 10.0.14 + `Microsoft.AspNetCore.OpenApi` 10.0.14 (.NET SDK
+  10.0.114) — wiązanie `multipart` (wykryte ograniczenia: `FromForm(Name)`
+  niedozwolone dla `IFormFileCollection`, `IReadOnlyList<IFormFile>` w
+  `[AsParameters]` nie kompiluje wyrażenia), polityka `NazwyLemat`,
+  `AllowOutOfOrderMetadataProperties`, błędy wiązania jako `400`/`422`
+  ProblemDetails, `UseStatusCodePages` dla `404`/`405`/`415`,
+  `Opcjonalne<T>` i schematy OpenAPI;
+- PostgreSQL 16 — pełne DDL 3.3 (bloki A i B, 61 tabel + 4 partycje, 43
+  enumy, 15 triggerów, 0 błędów) i funkcja `zarezerwuj_klucz_idempotencji`
+  (rezerwacja, `W_TOKU`, przejęcie po 60 s, `POWTORKA`, `KONFLIKT_CIALA`,
+  brak drugiego skutku, CHECK `2xx`);
+- TypeScript 5.9.3 (`tsc --strict`) — `odswiezanie.ts`, `strumien.ts`,
+  `kolejkaZapisow.ts`; symulacja klienta SSE w Node 22;
+- skrypt `docs/spec/narzedzia/sprawdz_rtm.py` — 46/46 wymagań, 0 błędów
+  odwołań (test negatywny: wykrywa nieistniejący endpoint, tabelę i stronę).
+
+**Zmiany struktury dokumentów:**
+
+- Sekcja 18 przepisana na Macierz Pokrycia Wymagań: 18.1 (FR-01 … FR-36),
+  18.2 (NFR-01 … NFR-10), 18.3 (rodzaje zadań), 18.4 (macierz odwrotna
+  słownik → wymagania), 18.5 (dawne 18.4, wymagania dla `TASKS.md`).
+- Nowe ADR-067 … ADR-074; uzupełnienia 3.3 w ADR-049, ADR-057, ADR-060,
+  ADR-061, ADR-062, ADR-064.
+- `docs/spec/ddl.md` 3.3 (`klucz_idempotencji`, `przypisanie`,
+  `szkic_transkrypcji`, `0007_api.sql`), `ef-core.md` 3.3, `api.md` 3.3
+  (sekcje 1–7, nowa 6.4), nowy `docs/spec/narzedzia/sprawdz_rtm.py`.
+
+**Mapowanie uwag iteracji 8:**
+
+| Uwaga | Rozwiązanie (miejsce) |
+|---|---|
+| C8-01 | ADR-067 p. 1–2: formularze jako klasy `[AsParameters]` z `[FromForm(Name = "snake_case")]`, `IFormFileCollection Pliki` + `GetFiles("zdjecia")` i reguła `PLIK_POZA_POLEM_ZDJECIA`, `TransformatorFormularzy` (nazwany schemat `RozwiazanieWejscie`, `zdjecia: string[] binary 1..5`), test `PrzeslanieMultipartZKlientaOpenApi`; `api.md` 1, 3 (`RozwiazanieWejscie`, `ZdjeciaRozwiazaniaWejscie`, `ImportArkuszaWejscie`), 4; 12.1, 12.3, 12.4, 12.12 (sprawdzone uruchomieniem: element/Przypisanie → `202`, brak kontekstu → `422`) |
+| C8-02 | ADR-064 uzup. 3.3: pierwsze zdarzenie `stan` przy każdym połączeniu niezależnie od `Last-Event-ID` (`api.md` 5), `null` kończy odpytywanie i wraca do SSE (odstęp ≥ 1 000 ms, spoczynek 30 s), jedno ponowienie po `401`, `roznicaZegara`; `api.md` 6.2, 6.3 (`tsc --strict`, symulacja), 12.10, 14.5 E-42, testy Vitest `strumien.test.ts`, `WznowienieZawszeWysylaPierwszyStan` |
+| C8-03 | ADR-068 (zastępuje ADR-062 p. 3): rezerwacja `w_toku_do = now() + 60 s` i `rezerwacja` w `klucz_idempotencji`, funkcja `zarezerwuj_klucz_idempotencji` (`ddl.md` `0007_api.sql`), zapis odpowiedzi `2xx` w transakcji skutku z warunkiem `rezerwacja = @moja`, brak zapisu `4xx`/`409 KONFLIKT_WSPOLBIEZNOSCI`/`429`/`5xx`; 12.1, 12.11, E-41, E-43, C-55, 22; testy `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`, `Konflikt40P01NieJestZapisywanyWKluczu`, `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` (scenariusze sprawdzone na PostgreSQL 16) |
+| C8-04 | ADR-069: brak `If-None-Match`/`304` i nagłówka `ETag` w odczytach, `Cache-Control: no-store`, `If-Match` z pola `version` w ciele, pola `rozwiazanie_version`/`zadanie_version`; 12.1, 12.2 (`412` bez `ETag`), 12.3 (wszystkie „+ ETag” usunięte), 7.2, 9.4, 9.6, 14.1, 15.2, `api.md` 1, 4, 6.1, `ef-core.md` 4; test `OdpytywanieWidziWskazowke` |
+| C8-05 | ADR-070 (zastępuje ADR-062 p. 6): `NaUzytkownika` po `sub`, `Logowanie` po (IP, e-mail) 10/min, `Odswiezenie` po rodzinie tokenu, `Anonimowe` 300/min na IP, nieudane logowania 100 / 15 min na IP, Caddy 12 000/min z modelu „3 klasy za NAT”; odświeżenie: wylogowanie wyłącznie po `401`, `429`/`5xx`/sieć → ponowienia i `SESJA_TYMCZASOWO_NIEDOSTEPNA`; 12.1, 12.7, 14.5 E-40, 17.6 G-3 (d), 22, `api.md` 6.2; ADR-057 uzup. 3.3; testy `klasa-za-nat.spec.ts`, `odswiezanie.test.ts` |
+| C8-06 | ADR-071: kompletna macierz 12.8 z kolumną ścieżek, reguła identyfikatorów zagnieżdżonych, widoczność `ZadanieUczniaWyjscie` z parametrem kontekstu (`GET /zadania/{id}?element_sciezki_id|przypisanie_id|rozwiazanie_id`), `RolaRejestracji { Uczen, Nauczyciel }`, Administrator bez odczytu treści pracy Uczniów, polityka na każdym endpoincie (`api.md` 4), testy `KazdyEndpointZIdMaTestIdor`, `MacierzUprawnienPokrywaKatalog`; 12.3, 12.5 |
+| C8-07 | ADR-071 p. 5–6: `GET /admin/klasy`, `GET /admin/klasy/{id}` (`KlasaAdministratora` z `version`, audyt), pole `diagnostyczne` i filtr `?diagnostyczne=`, `PUT /admin/zadania/{id}/otagowanie` (`OtagowanieZadaniaWejscie`, nowa wersja Zadania), `POST /zadania` pozostaje operacją Nauczyciela (słownik), poprawione mapowanie stron `admin/*` (`api.md` 7); `POST /admin/uzytkownicy` i `Lemat.Narzedzia utworz-administratora` |
+| C8-08 | ADR-067 p. 3–7: `NazwyLemat` (separacja cyfr, test `NazwyJsonZgodneZKolumnamiDdl`), `[JsonStringEnumMemberName]` na każdej regule, `AllowOutOfOrderMetadataProperties = true`, `ObslugaBledowWiazania` (`api.md` 2; `400 ZAPYTANIE_NIEPRAWIDLOWE`, `422` z `bledy_pol` dla nieznanego pola, typu, dyskryminatora i wiązania), `UseStatusCodePages` z `kod`, kody `ZAPYTANIE_NIEPRAWIDLOWE` (400), `ZASOB_USUNIETY` (410), `BLAD_BRAMY` (klient) w 12.2; ADR-060, ADR-061, ADR-049 uzup. 3.3; test `KazdaOdpowiedzBleduMaKod` (wszystkie przypadki sprawdzone uruchomieniem) |
+| C8-09 | ADR-072: JSON Merge Patch z `Opcjonalne<T>` (konwerter `HandleNull`, rekordy z `init`, schemat `T | null` poza `required`), `RejestracjaWyjscie { status_konta, sesja }`; `api.md` 1, 3; 12.3, 12.4, 12.5 (sprawdzone: `{}` vs `null` rozróżnione) |
+| C8-10 | ADR-073: szkic roboczy `PUT …/transkrypcja/szkic` (tabela `szkic_transkrypcji`, `numer_zapisu`, bez zmiany `version` i bez `stan`), wersja Transkrypcji po 10 s stabilnej edycji i przed zatwierdzeniem, limit 20 (`409 LIMIT_WERSJI_TRANSKRYPCJI`), `KolejkaZapisowRozwiazania` (`api.md` 6.4), reguła edytora wobec `stan`, debounce 1,5 s w 9.4, 14.7, 22; C-56; test `autozapis-wolna-siec.spec.ts` |
+| C8-11 | strona `nauczyciel/rozwiazania/[rozwiazanieId]` z korektą (`api.md` 7), `WeryfikacjaSzczegoly.rozwiazanie_version`, `ZgloszenieBleduZadaniaWyjscie.zadanie_version` (ADR-069 p. 3), ADR-074: `GET`/`PATCH /przypisania/{id}`, `POST /przypisania/{id}/wycofanie` (`ddl.md` `przypisanie.version`, `wycofano_at`; `409 PRZYPISANIE_WYCOFANE`), ponowna odpowiedź w Teście diagnostycznym nadpisuje (`200 {nadpisano: true}`) |
+| C8-12 | p. 1 — 3.6 `List<OpanowanieUmiejetnosci>` z podmianą elementu; p. 2 — `api.md` 1 komentarz `\u003C`; p. 3 — C-42 bez odwołania do UUIDv7; p. 4 — 12.6 z kompletem pól wymaganych (`nr_kroku_agenta`, pola danych osobowych, `zakres_poprawek`, `konflikt_filtra`, `zgodnosc_poprawek`, `szkic_transkrypcji`); p. 5 — `prog_pewnosci`, `prog_pewnosci_aktywny` (C#, TS, ADR-049 uzup.); p. 6 — polityki `RecenzentTresci`/`WeryfikatorGlobalny` usunięte (12.1, ADR-062 uzup., ADR-071 p. 7); p. 7 — `rodzaj_zadania: RodzajZadania` + walidator, `ramka`/`koszyk` jako `number[]` z `minItems`/`maxItems`; p. 8 — trasa `GET /uczniowie/ja/profil`; p. 9 — stronicowanie `GET /admin/progi-pewnosci`, `GET /rozwiazania/{id}/ocena/historia`, `GET /klasy`, `GET /zestawy-zadan`; p. 10 — `MigawkaPowiadomien.nastepny_kursor` (ADR-064 uzup. 3.3 p. 5) |
+
+**Macierz RTM (zadanie iteracji 4):** sekcja 18 — 46 wierszy wymagań z
+kolumnami moduł/projekt .NET, Agent/plugin AI, tabele, endpointy, strony
+App Router, reguły/ADR, bramka/test akceptacyjny; macierz odwrotna 25 pojęć
+słownika → wymagania; weryfikacja skryptem (18, akapit „Sprawdzenie
+macierzy”).
 
 ## Pętla 3.x, iteracja 3 (2026-11-01, wersja 3.2) — kontrakty REST/SSE Next.js ↔ .NET, obsługa błędów, współbieżność, przypadki brzegowe; zamknięcie uwag C7
 

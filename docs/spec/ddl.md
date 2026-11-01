@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ddl.md` |
-| Wersja | 3.2 (pętla 3.x, iteracja 3) |
+| Wersja | 3.3 (pętla 3.x, iteracja 4) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — sekcja 7 (decyzje, ERD, konwencje, schematy JSONB), mapowanie EF Core: [`docs/spec/ef-core.md`](ef-core.md) |
 | Status | Jedyne źródło schematu (ADR-063): migracje są klasami EF Core wykonującymi wyłącznie pliki SQL wycięte z tego dokumentu; model EF Core nie generuje schematu i jest sprawdzany z katalogiem testem `ModelEfZgodnyZKatalogiem` (`ef-core.md` 8) |
 
@@ -13,6 +13,19 @@ funkcje i uprawnienia** (w wersji 3.0 opisane komentarzami; od wersji 3.1
 pełna treść, z której powstają pliki `Persistence/Migrations/Sql/*.sql`).
 Skrypt CI `backend/narzedzia/wyodrebnij-ddl.sh` wycina oba bloki do
 `backend/src/Lemat.Infrastructure/Persistence/Schemat/ddl.sql`.
+
+## Zmiany wersji 3.3
+
+| Obiekt | Zmiana | Uwaga krytyka / ADR |
+|---|---|---|
+| `klucz_idempotencji` | nowe kolumny `rezerwacja uuid`, `w_toku_do timestamptz`; `kod_statusu_http` tylko `2xx`; CHECK `ck_klucz_idempotencji_stan` (wiersz jest albo rezerwacją w toku, albo zapisaną odpowiedzią) | C8-03, ADR-068 |
+| `zarezerwuj_klucz_idempotencji` | nowa funkcja (`0007_api.sql`): rezerwacja na 60 s, przejęcie po upływie `w_toku_do`, wynik `WYKONAJ` / `POWTORKA` / `W_TOKU` / `KONFLIKT_CIALA` | C8-03, ADR-068 |
+| `przypisanie` | nowe kolumny `version`, `updated_at`, `wycofano_at`, `powod_wycofania` + CHECK spójności wycofania | C8-11 p. 3, ADR-074 |
+| `szkic_transkrypcji` | nowa tabela: robocza postać Poprawek Transkrypcji (autozapis bez nowej wersji Transkrypcji) | C8-10, ADR-073 |
+
+Stan katalogu po załadowaniu bloków A i B na czystej bazie PostgreSQL
+16 (sprawdzone w wersji 3.3): 61 tabel (+ 4 partycje `decyzja_modelu`),
+43 typy wyliczeniowe, 15 triggerów, 0 błędów.
 
 ## Zmiany wersji 3.2
 
@@ -502,7 +515,12 @@ CREATE TABLE przypisanie (
     nauczyciel_id   uuid REFERENCES nauczyciel(uzytkownik_id) ON DELETE SET NULL, -- NULL po usunięciu konta (ADR-044)
     klasa_id        uuid REFERENCES klasa(id),        -- informacyjnie; adresaci w przypisanie_uczen
     termin          timestamptz NOT NULL,
-    created_at      timestamptz NOT NULL DEFAULT now()
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),          -- 3.3 (C8-11): zmiana terminu albo wycofanie
+    version         integer NOT NULL DEFAULT 1,                  -- 3.3: token współbieżności (If-Match P, ADR-074)
+    wycofano_at     timestamptz,                                 -- 3.3: wycofanie przez Nauczyciela (ADR-074)
+    powod_wycofania text CHECK (powod_wycofania IS NULL OR char_length(powod_wycofania) BETWEEN 10 AND 1000),
+    CHECK ((wycofano_at IS NULL) = (powod_wycofania IS NULL))
 );
 CREATE INDEX ix_przypisanie_nauczyciel ON przypisanie (nauczyciel_id, termin DESC);
 
@@ -662,6 +680,17 @@ CREATE UNIQUE INDEX ux_rozwiazanie_przypisanie ON rozwiazanie (uczen_id, przypis
 --     NEW.przypisanie_id IS NOT NULL i NEW.przypisanie_id IS DISTINCT FROM e.przypisanie_id → wyjątek 'KONTEKST_PROBY_NIESPOJNY'.
 --   Dzięki temu ux_*_przypisanie obejmują obie drogi (element R-PRZYPISANIE i lista Przypisań).
 
+-- 3.3 (C8-10, ADR-073): robocza postać Poprawek — autozapis co 1,5 s bez nowej wersji Transkrypcji i bez
+-- Sprawdzenia zgodności poprawek; usuwana przy zatwierdzeniu, porzuceniu, nowym Przesłaniu i zapisie wersji domenowej
+CREATE TABLE szkic_transkrypcji (
+    rozwiazanie_id      uuid PRIMARY KEY REFERENCES rozwiazanie(id) ON DELETE CASCADE,
+    transkrypcja_id     uuid NOT NULL,                    -- wersja Transkrypcji, od której zaczęto edycję (FK niżej)
+    kroki               jsonb NOT NULL CHECK (jsonb_typeof(kroki) = 'array' AND jsonb_array_length(kroki) BETWEEN 1 AND 40),
+                        -- [{nr_kroku_agenta: int|null, tekst: string ≤ 2000, latex: string ≤ 2000}] (schemat 7.5, TranskrypcjaWejscie)
+    numer_zapisu        integer NOT NULL CHECK (numer_zapisu >= 1),   -- monotoniczny numer zapisu z karty (odrzucenie zapisu starszego)
+    zapisano_at         timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE zdjecie_rozwiazania (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     rozwiazanie_id uuid NOT NULL REFERENCES rozwiazanie(id) ON DELETE CASCADE,
@@ -724,6 +753,8 @@ ALTER TABLE rozwiazanie ADD CONSTRAINT fk_rozwiazanie_transkrypcja
     FOREIGN KEY (zatwierdzona_transkrypcja_id) REFERENCES transkrypcja(id);
 ALTER TABLE rozwiazanie ADD CONSTRAINT fk_rozwiazanie_najnowsza_transkrypcja
     FOREIGN KEY (najnowsza_transkrypcja_id) REFERENCES transkrypcja(id) DEFERRABLE INITIALLY DEFERRED;
+ALTER TABLE szkic_transkrypcji ADD CONSTRAINT fk_szkic_transkrypcji_transkrypcja
+    FOREIGN KEY (transkrypcja_id) REFERENCES transkrypcja(id) ON DELETE CASCADE;
 
 CREATE TABLE krok_transkrypcji (
     id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1113,11 +1144,15 @@ CREATE TABLE klucz_idempotencji (
     uzytkownik_id     uuid NOT NULL REFERENCES uzytkownik(id) ON DELETE CASCADE,
     klucz             uuid NOT NULL,                  -- nagłówek Idempotency-Key
     skrot_zapytania   bytea NOT NULL,                 -- SHA-256(metoda + ścieżka + ciało)
-    kod_statusu_http  smallint,                       -- zapisany status HTTP odpowiedzi (3.1 p. 5)
+    rezerwacja        uuid,                           -- 3.3 (C8-03, ADR-068): identyfikator wykonania, które trzyma klucz
+    w_toku_do         timestamptz,                    -- 3.3: koniec rezerwacji (now() + 60 s); po nim ponowienie przejmuje klucz
+    kod_statusu_http  smallint CHECK (kod_statusu_http BETWEEN 200 AND 299),   -- 3.3: zapisywane wyłącznie 2xx, w transakcji skutku
     cialo_http        jsonb,                          -- zapisane ciało odpowiedzi HTTP
     wygasa_at         timestamptz NOT NULL,           -- created_at + 24 h
     created_at        timestamptz NOT NULL DEFAULT now(),
-    PRIMARY KEY (uzytkownik_id, klucz)
+    PRIMARY KEY (uzytkownik_id, klucz),
+    CONSTRAINT ck_klucz_idempotencji_stan CHECK (
+        (kod_statusu_http IS NULL) = (w_toku_do IS NOT NULL AND rezerwacja IS NOT NULL))
 );
 
 CREATE TABLE powiadomienie (
@@ -1443,4 +1478,34 @@ BEGIN
         RETURN NEXT;
     END LOOP;
 END $$;
+
+-- ===================== 0007_api.sql (3.3, C8-03, ADR-068) =====================
+-- Rezerwacja klucza idempotencji w krótkiej transakcji przed wykonaniem; odpowiedź 2xx zapisuje
+-- przypadek użycia w SWOJEJ transakcji: UPDATE … SET kod_statusu_http, cialo_http, w_toku_do = NULL,
+-- rezerwacja = NULL WHERE (uzytkownik_id, klucz) AND rezerwacja = @moja (0 wierszy → ROLLBACK skutku i powtórka).
+CREATE FUNCTION zarezerwuj_klucz_idempotencji(p_uzytkownik_id uuid, p_klucz uuid, p_skrot bytea, p_rezerwacja uuid)
+RETURNS TABLE (wynik text, kod_statusu_http smallint, cialo_http jsonb, retry_after_s integer)
+LANGUAGE plpgsql AS $$
+DECLARE r klucz_idempotencji;
+BEGIN
+    INSERT INTO klucz_idempotencji AS k (uzytkownik_id, klucz, skrot_zapytania, rezerwacja, w_toku_do, wygasa_at)
+    VALUES (p_uzytkownik_id, p_klucz, p_skrot, p_rezerwacja, now() + interval '60 seconds', now() + interval '24 hours')
+    ON CONFLICT (uzytkownik_id, klucz) DO UPDATE
+        SET rezerwacja = EXCLUDED.rezerwacja, w_toku_do = EXCLUDED.w_toku_do, skrot_zapytania = EXCLUDED.skrot_zapytania
+        WHERE k.kod_statusu_http IS NULL AND k.w_toku_do < now()          -- przejęcie klucza po awarii procesu
+    RETURNING * INTO r;
+    IF FOUND THEN
+        RETURN QUERY SELECT 'WYKONAJ'::text, NULL::smallint, NULL::jsonb, NULL::integer; RETURN;
+    END IF;
+    SELECT * INTO r FROM klucz_idempotencji k WHERE k.uzytkownik_id = p_uzytkownik_id AND k.klucz = p_klucz;
+    IF r.skrot_zapytania <> p_skrot THEN
+        RETURN QUERY SELECT 'KONFLIKT_CIALA'::text, NULL::smallint, NULL::jsonb, NULL::integer; RETURN;
+    END IF;
+    IF r.kod_statusu_http IS NOT NULL THEN
+        RETURN QUERY SELECT 'POWTORKA'::text, r.kod_statusu_http, r.cialo_http, NULL::integer; RETURN;
+    END IF;
+    RETURN QUERY SELECT 'W_TOKU'::text, NULL::smallint, NULL::jsonb,
+                        GREATEST(1, ceil(extract(epoch FROM r.w_toku_do - now())))::integer;
+END $$;
+GRANT EXECUTE ON FUNCTION zarezerwuj_klucz_idempotencji(uuid, uuid, bytea, uuid) TO lemat_api;
 ```

@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ef-core.md` |
-| Wersja | 3.2 (pętla 3.x, iteracja 3) |
+| Wersja | 3.3 (pętla 3.x, iteracja 4) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 3.6 (agregaty), 7 (model danych), 13.4 (prace w tle); schemat: [`docs/spec/ddl.md`](ddl.md) |
 | Projekt | `backend/src/Lemat.Infrastructure/Persistence/` |
 
@@ -236,16 +236,17 @@ wymagana (ADR-058 p. 4, test `ZgodnoscBajtowaLatexTests`).
 
 | Rodzaj | Tabele | Konfiguracja | Zmiana wartości |
 |---|---|---|---|
-| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; agregat nowy ma `Version = 1` z fabryki | `WersjaAgregatuInterceptor` (`SavingChangesAsync`, 3.2 — C7-06 p. 8): dla każdego wpisu `Added`/`Modified`/`Deleted` wyszukuje korzeń agregatu (po kluczu własności `IsOwnership` albo FK encji `IEncjaWewnetrzna`, rekurencyjnie, dla `Deleted` po wartościach oryginalnych) i zwiększa `Version` korzenia `Unchanged`/`Modified` o 1, o ile zmiana nie dotyczy wyłącznie właściwości `[BezZmianyWersji]` (ADR-029); sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` daje `UPDATE profil_ucznia SET version = … WHERE version = @oryginalna` |
+| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `przypisanie` (3.3, ADR-074), `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; agregat nowy ma `Version = 1` z fabryki | `WersjaAgregatuInterceptor` (`SavingChangesAsync`, 3.2 — C7-06 p. 8): dla każdego wpisu `Added`/`Modified`/`Deleted` wyszukuje korzeń agregatu (po kluczu własności `IsOwnership` albo FK encji `IEncjaWewnetrzna`, rekurencyjnie, dla `Deleted` po wartościach oryginalnych) i zwiększa `Version` korzenia `Unchanged`/`Modified` o 1, o ile zmiana nie dotyczy wyłącznie właściwości `[BezZmianyWersji]` (ADR-029); sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` daje `UPDATE profil_ucznia SET version = … WHERE version = @oryginalna` |
 | `version` zmieniane przez trigger | `weryfikacja` (`trg_weryfikacja_wersja`, ADR-037) | `Property(w => w.Version).IsConcurrencyToken().ValueGeneratedOnAddOrUpdate()` | EF Core nie wysyła `version` w `SET`, warunek `WHERE version = @oryginalna` i odczyt `RETURNING version`; interceptor pomija `Weryfikacja` |
 | `xmin` (systemowy licznik wiersza PostgreSQL) | `transkrypcja`, `wynik_zadania`, `zlecenie_generowania`, `import_arkusza`, `konfiguracja_modelu`, `ocena` | `Property<uint>("xmin").HasColumnName("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken()` | PostgreSQL przy każdej zmianie wiersza; kolumny nie ma w DDL (kolumna systemowa) |
-| brak (zapis wyłącznie SQL) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` | encja tylko do odczytu albo brak encji | warunki `UPDATE … WHERE` (13.2, 13.4, 10.1.3, C-36) |
+| brak (zapis wyłącznie SQL) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` (funkcja `zarezerwuj_klucz_idempotencji` i `UPDATE … WHERE rezerwacja = @moja`, ADR-068), `szkic_transkrypcji` (`INSERT … ON CONFLICT … WHERE numer_zapisu <`, ADR-073) | encja tylko do odczytu albo brak encji | warunki `UPDATE … WHERE` (13.2, 13.4, 10.1.3, C-36) |
 
 `DbUpdateConcurrencyException` jest tłumaczony przez `Lemat.Api` na `412
 KONFLIKT_WERSJI` (żądanie z `If-Match`), `409 KONFLIKT_WSPOLBIEZNOSCI` (bez
 `If-Match`) albo przez handler pracy w tle na `rezultat_przestarzaly`
-(15.2 dokumentu głównego). ETag jest **silny**: `"<version>"` (wersja 3.2,
-ADR-062 p. 4; słaby ETag z wersji 3.1 nie nadaje się do `If-Match`);
+(15.2 dokumentu głównego). Wartość `If-Match` to `"<version>"` z pola
+`version` ciała odpowiedzi (od 3.3 API nie wysyła nagłówka `ETag` w
+odczytach, ADR-069);
 `If-Match` ustawia wartość oryginalną: `entry.Property(x => x.Version).OriginalValue
 = wersjaZNaglowka` w repozytorium przed modyfikacją.
 
@@ -612,7 +613,8 @@ wyłącznie SQL, ADR-063).
 | `wstrzymanie_w_doborze` | `WstrzymanieWDoborze` | AG | SQL C-36 (`INSERT … ON CONFLICT DO NOTHING`) | Tresci |
 | `klasa`, `czlonkostwo_klasy` | `Klasa`, `CzlonkostwoKlasy` | AG + EN | `OwnsMany` członkostwa; `KodZaproszenia` → `kod_zaproszenia`, `kod_wazny_do` | Klasy |
 | `zestaw_zadan`, `pozycja_zestawu` | `ZestawZadan`, `PozycjaZestawu` | AG + EN | `version`; `OwnsMany` pozycji | Klasy |
-| `przypisanie`, `przypisanie_uczen` | `Przypisanie`, `PrzypisanieUczen` | AG + EN | `OwnsMany` adresatów | Klasy |
+| `przypisanie`, `przypisanie_uczen` | `Przypisanie`, `PrzypisanieUczen` | AG + EN | `OwnsMany` adresatów; `version` (3.3), `wycofano_at`/`powod_wycofania` (ADR-074) | Klasy |
+| `szkic_transkrypcji` | `SzkicTranskrypcji` | EN (techniczna, 3.3) | `kroki` jako `JsonbConverter<IReadOnlyList<KrokSzkicu>>`; zapis SQL, odczyt w `IOdczytRozwiazan` (ADR-073) | Rozwiazania |
 | `profil_ucznia`, `opanowanie_umiejetnosci` | `ProfilUcznia`, `OpanowanieUmiejetnosci` | AG + EN | 6.5 | Profil |
 | `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `TestDiagnostyczny`, `PozycjaTestuDiagnostycznego` | AG + EN | `pominiete_dzialy` jako `List<DzialId>` (`integer[]`) | Profil |
 | `wynik_zadania` | `WynikZadania` | AG | `xmin`; indeksy częściowe z ddl.md | Profil |

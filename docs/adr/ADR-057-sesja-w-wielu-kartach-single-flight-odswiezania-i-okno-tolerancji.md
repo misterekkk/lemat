@@ -127,3 +127,11 @@ p. 3–4: UUIDv7 nie jest monotoniczny w obrębie milisekundy ani między
 procesami i jest nadawany przed `COMMIT`, więc nie może być kursorem.
 Karta-lider przejmująca strumień (p. 3) dostaje migawkę nieprzeczytanych
 powiadomień i scala ją z rozgłoszonymi zdarzeniami po `id`.
+
+## Uzupełnienie wersji 3.3 (C8-05)
+
+Nieudane odświeżenie nie wylogowuje kart, chyba że serwer odpowiedział
+`401`; `429`, `5xx` i błąd sieci są ponawiane z odstępem i kończą się
+błędem `SESJA_TYMCZASOWO_NIEDOSTEPNA` bez komunikatu `WYLOGOWANIE`
+(ADR-070 p. 4). Termin odświeżenia proaktywnego uwzględnia różnicę zegara
+urządzenia (ADR-064 uzup. 3.3 p. 4).

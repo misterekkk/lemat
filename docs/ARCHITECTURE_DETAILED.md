@@ -3,15 +3,15 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/ARCHITECTURE_DETAILED.md` |
-| Wersja | 3.2 (iteracja 3 z 4 pętli „stos .NET 10 + Next.js”: kontrakty REST/SSE Next.js ↔ .NET, obsługa błędów, współbieżność i przypadki brzegowe; zamknięcie uwag C7-01 … C7-15) |
+| Wersja | 3.3 (iteracja 4 z 4 pętli „stos .NET 10 + Next.js”: zamknięcie uwag C8-01 … C8-12 i Macierz Pokrycia Wymagań RTM w sekcji 18, przed audytem końcowym) |
 | Data | 2026-11-01 |
 | Dokumenty źródłowe | `docs/vision.md`, `docs/glossary.md`, `docs/requirements.md`, `docs/architecture.md` |
 | Stos technologiczny | .NET 10 (ASP.NET Core, EF Core + Npgsql, PostgreSQL 16) w `backend/`; warstwa agentów AI w .NET (Microsoft.Extensions.AI + Semantic Kernel); Next.js (App Router, TypeScript) w `frontend/`; REST + SSE — ADR-048 … ADR-055. Wersja 2.4 (Python/FastAPI, React + Vite) jest zastąpiona w zakresie realizacji technicznej; reguły domenowe, liczby i decyzje biznesowe wersji 2.4 obowiązują bez zmian |
-| Plan pętli 3.x | iteracja 1 (wersja 3.0): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2 (wersja 3.1): agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13; `docs/spec/`); iteracja 3 (ta wersja, 3.2): kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15; `docs/spec/api.md`) oraz poprawki C7 w 7, 10, 13; iteracja 4: audyt i macierz RTM (18) |
+| Plan pętli 3.x | iteracja 1 (wersja 3.0): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2 (wersja 3.1): agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13; `docs/spec/`); iteracja 3 (wersja 3.2): kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15; `docs/spec/api.md`) oraz poprawki C7 w 7, 10, 13; iteracja 4 (ta wersja, 3.3): poprawki C8 (12, 15, 22, `docs/spec/*`, ADR-067 … ADR-074) i macierz RTM (18) |
 | Rejestr ADR | [`docs/adr/`](adr/) — jeden plik na ADR, indeks w sekcji 19 |
 | Specyfikacje szczegółowe | [`docs/spec/ddl.md`](spec/ddl.md) (pełne DDL, triggery, funkcje), [`docs/spec/ef-core.md`](spec/ef-core.md) (mapowanie EF Core 10), [`docs/spec/prompty.md`](spec/prompty.md) (prompty systemowe, szablony stanów, schematy odpowiedzi modeli), [`docs/spec/api.md`](spec/api.md) (rekordy C# kontraktów, klient Next.js, kontrakty SSE, mapowanie stron na endpointy; od 3.2) |
 | Historia zmian | [`docs/ARCHITECTURE_CHANGELOG.md`](ARCHITECTURE_CHANGELOG.md) |
-| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 7 (wersja 3.2) — C7-01 … C7-15, wszystkie 15; iteracja 6 (wersja 3.1) — C6-01 … C6-15, wszystkie 15; iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.4); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C7) |
+| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 8 (wersja 3.3) — C8-01 … C8-12, wszystkie 12; iteracja 7 (wersja 3.2) — C7-01 … C7-15, wszystkie 15; iteracja 6 (wersja 3.1) — C6-01 … C6-15, wszystkie 15; iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.5); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C8) |
 | Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-17 w 23.4 |
 | Status | Do przeglądu przez krytyka (`docs/CRITIQUE_LOG.md`) |
 
@@ -23,8 +23,8 @@ które zmieniają lub doprecyzowują wymagania albo słownik pojęć, są zebran
 bramce **G-0** (sekcja 17.6) i wymagają akceptacji właściciela produktu przed
 startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
 
-**Konwencja odczytu wersji 3.2.** Stos techniczny opisują sekcje 5 i 6
-(.NET 10 + Next.js, ADR-048 … ADR-066), a mapowanie pojęć na identyfikatory
+**Konwencja odczytu wersji 3.3.** Stos techniczny opisują sekcje 5 i 6
+(.NET 10 + Next.js, ADR-048 … ADR-074), a mapowanie pojęć na identyfikatory
 — 3.5. Sekcje 7 (model danych), 10 (agenci) i 13 (porty i prace w tle) są
 od wersji 3.1 przepisane na .NET, a sekcje 12 (kontrakty REST i SSE), 14
 (obsługa błędów) i 15 (współbieżność) — od wersji 3.2; długie listingi są w
@@ -54,7 +54,7 @@ uruchomione w projekcie .NET 10 / TypeScript 5.9 albo na PostgreSQL 16.15
 15. Współbieżność i spójność
 16. Bezpieczeństwo i RODO
 17. Wymagania niefunkcjonalne — realizacja, budżety, obciążenie, obserwowalność, wdrożenie
-18. Mapowanie wymagań na komponenty, przepływy i API (18.4: wymagania dla planu `TASKS.md`)
+18. Macierz Pokrycia Wymagań (Requirements Traceability Matrix): FR, NFR, macierz odwrotna słownik → wymagania (18.5: wymagania dla planu `TASKS.md`)
 19. Rejestr decyzji architektonicznych (indeks; treść w `docs/adr/`)
 20. Odpowiedzi na otwarte pytania z architektury wstępnej
 21. Ryzyka
@@ -1556,15 +1556,20 @@ public enum PowodUniewaznieniaWyniku { OcenaZastapiona, ZgloszenieBleduOdczytu }
 
 public sealed class ProfilUcznia : Agregat<UczenId>
 {
-    private readonly Dictionary<UmiejetnoscId, OpanowanieUmiejetnosci> _opanowanie = [];
-    public IReadOnlyDictionary<UmiejetnoscId, OpanowanieUmiejetnosci> Opanowanie => _opanowanie;
+    // 3.3 (C8-12 p. 1): lista rekordów zgodna z ef-core.md 6.5 (OwnsMany); podmiana elementu przez `with`
+    private readonly List<OpanowanieUmiejetnosci> _opanowanie = [];
+    public IReadOnlyList<OpanowanieUmiejetnosci> Opanowanie => _opanowanie;
 
     public void Zastosuj(WynikZadania wynik, IReadOnlyList<UmiejetnoscId> umiejetnosci, ModelElo elo, DateTimeOffset teraz)
     {
         if (wynik.ZastosowanyWProfiluAt is not null) return;                // idempotencja AKTUALIZUJ_PROFIL
         if (wynik.UniewaznionyAt is not null) return;                       // zawieszony/unieważniony: tylko przez Odtworz (ADR-022, C6-15 p. 3)
         foreach (var u in umiejetnosci)
-            _opanowanie[u] = (_opanowanie.GetValueOrDefault(u) ?? OpanowanieUmiejetnosci.Domyslne(u)).Aktualizuj(wynik, elo, teraz);
+        {
+            var i = _opanowanie.FindIndex(o => o.UmiejetnoscId == u);
+            var nowe = (i >= 0 ? _opanowanie[i] : OpanowanieUmiejetnosci.Domyslne(u)).Aktualizuj(wynik, elo, teraz);
+            if (i >= 0) _opanowanie[i] = nowe; else _opanowanie.Add(nowe);
+        }
         wynik.OznaczZastosowany(teraz);
     }
     // Odtworz(IEnumerable<WynikZadania> wazne, ModelElo elo): zawsze od stanu DOMYSLNEGO (theta = 0), ADR-010
@@ -2664,7 +2669,7 @@ erDiagram
 - Czas: `timestamptz`, zawsze UTC; `date` dla `termin_egzaminu`.
 - Optymistyczna blokada: kolumna `version integer NOT NULL DEFAULT 1`,
   zwiększana przy każdej modyfikacji **wykonanej przez człowieka albo przez
-  przejście maszyny stanów**; API eksponuje ją jako nagłówek `ETag`.
+  przejście maszyny stanów**; API eksponuje ją jako pole `version` w ciele (warunek `If-Match`, ADR-069).
   Wyjątek: `weryfikacja.version` jest **wersją treści** — zmienia ją wyłącznie
   trigger `trg_weryfikacja_wersja` przy zmianie kolumn treści (powody,
   zgłoszenie, Ocena weryfikowana, zamknięcie); podjęcie, przedłużenie,
@@ -3341,14 +3346,15 @@ sequenceDiagram
         PWA->>API: GET /rozwiazania/{id}
     end
     U->>PWA: poprawia błędnie odczytane kroki (edycja istniejących, wstawienie ≤ 2)
-    PWA->>API: PUT /rozwiazania/{id}/transkrypcja (If-Match: version Rozwiązania) — autozapis 2 s po ostatniej edycji i przy opuszczeniu pola (C3-05)
+    PWA->>API: PUT /rozwiazania/{id}/transkrypcja/szkic — autozapis 1,5 s po edycji i przy opuszczeniu pola (szkic roboczy, bez nowej wersji, ADR-073)
+    PWA->>API: PUT /rozwiazania/{id}/transkrypcja (If-Match: version Rozwiązania) — po 10 s bez zmian albo przed zatwierdzeniem (C3-05, ADR-073)
     API->>API: limity twarde ADR-036 (bez usuwania kroków, zakres poprawek ze wstawionymi, długość kroku wstawionego), Filtr danych osobowych (dokładne trafienia)
     alt limit twardy przekroczony
         API-->>PWA: 422 POPRAWKI_ZBYT_ROZLEGLE (UI: „Wyślij nowe zdjęcia”)
     else
         API->>DB: INSERT transkrypcja vN (POPRAWKA_UCZNIA, zakres_poprawek), kroki (nr_kroku_agenta, odleglosc_edycyjna)
         API->>DB: praca_w_tle SPRAWDZ_POPRAWKI_TRANSKRYPCJI (pula S, klucz rozwiazanie_id, oczekująca praca dostaje nowy transkrypcja_id), COMMIT
-        API-->>PWA: 200 RozwiazanieWyjscie + nowy ETag
+        API-->>PWA: 200 RozwiazanieWyjscie (nowe version)
     end
     WRK->>LLM: wycinki zmienionych i wstawionych kroków + zdjęcie poglądowe 1024 px + pary (odczyt agenta, Poprawka) (rola ROZPOZNAWANIE_PISMA, prompt sprawdzenie-poprawek-v2)
     WRK->>DB: UPDATE transkrypcja SET zgodnosc_poprawek (tylko gdy wersja nadal najnowsza)
@@ -3393,9 +3399,14 @@ a zapis Oceny po oknie trwa ≤ 0,2 s (6,2 s < 10 s); rezerwa 9 s na model
 zapasowy nie jest potrzebna, bo model zapasowy startuje równolegle ze
 Sprawdzeniem (po błędzie Jev, najpóźniej w 4,2 s), a nie po nim.
 
-**Autozapis i czas Sprawdzenia (C3-05).** PWA wysyła `PUT …/transkrypcja`
-2 s po ostatniej zmianie kroku i przy opuszczeniu pola edycji (debounce), a
-przycisk „Zatwierdzam i oceniam” najpierw zapisuje niezapisaną zmianę. Każdy
+**Autozapis i czas Sprawdzenia (C3-05, od 3.3 ADR-073).** PWA zapisuje
+szkic roboczy (`PUT …/transkrypcja/szkic`, tabela `szkic_transkrypcji`) 1,5 s
+po ostatniej zmianie kroku i przy opuszczeniu pola edycji (debounce), bez
+nowej wersji Transkrypcji i bez zmiany `version`. Wersję domenową (`PUT
+…/transkrypcja`, ≤ 20 na przesłanie) PWA wysyła po 10 s bez zmiany kroku i
+przed zatwierdzeniem; przycisk „Zatwierdzam i oceniam” najpierw zapisuje
+niezapisaną zmianę jako wersję. Wszystkie zapisy jednego Rozwiązania idą
+przez `KolejkaZapisowRozwiazania` (api.md 6.4). Każdy
 `PUT` podmienia `transkrypcja_id` w oczekującej pracy
 `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (klucz deduplikacji `rozwiazanie_id`);
 praca w toku dla starszej wersji kończy się bez zapisu (`rezultat
@@ -3507,7 +3518,7 @@ sequenceDiagram
     alt 0 wierszy
         API-->>PWA: 409 WERYFIKACJA_ZAJETA
     else
-        API-->>PWA: 200 WeryfikacjaSzczegoly + ETag (zdjęcia lub zdjęcia maskowane, Transkrypcje, decyzje, Opinia pomocnicza, szkic)
+        API-->>PWA: 200 WeryfikacjaSzczegoly z version i rozwiazanie_version (zdjęcia lub zdjęcia maskowane, Transkrypcje, decyzje, Opinia pomocnicza, szkic)
     end
     loop co 20 s przy zmianach
         PWA->>API: PUT /weryfikacje/{id}/szkic
@@ -3516,10 +3527,10 @@ sequenceDiagram
     loop co 5 min, gdy karta jest aktywna
         PWA->>API: POST /weryfikacje/{id}/przedluzenie
         API->>DB: zablokowana_do = least(now() + 15 min, podjeta_at + 2 h) — version bez zmian (ADR-037)
-        API-->>PWA: 200 {zablokowana_do, version} + ETag (ten sam, o ile nie zmieniła się treść)
+        API-->>PWA: 200 {zablokowana_do, version} (ta sama version, o ile nie zmieniła się treść)
     end
     N->>PWA: zatwierdza rozstrzygnięcie (po np. 40 min, 8 przedłużeniach)
-    PWA->>API: POST /weryfikacje/{id}/rozstrzygniecie (If-Match = ETag z podjęcia lub ostatniego przedłużenia)
+    PWA->>API: POST /weryfikacje/{id}/rozstrzygniecie (If-Match = version z podjęcia lub ostatniego przedłużenia)
     API-->>PWA: 200 (412 wyłącznie po zmianie treści, z polem zmiany_tresci)
 ```
 
@@ -6093,16 +6104,16 @@ flowchart LR
 | Element | Ustalenie |
 |---|---|
 | Bazowa ścieżka i wersja | `/api/v1`; w obrębie `v1` wyłącznie zmiany zgodne wstecz (nowy endpoint, nowe pole odpowiedzi, nowe pole opcjonalne żądania); zmiana niekompatybilna → `/api/v2`, `v1` utrzymywane 6 miesięcy z nagłówkami `Deprecation`/`Sunset`; `X-Lemat-Wersja-Api: 1.N.M` w każdej odpowiedzi (ADR-062 p. 1); CI `oasdiff breaking` blokuje zmianę niekompatybilną |
-| Format | JSON UTF-8, `snake_case` (ADR-049), `NumberHandling.Strict`, enumy `UPPER_SNAKE`, pola `null` wysyłane jawnie; czasy ISO-8601 UTC; identyfikatory UUID (`powiadomienie.id` — UUIDv7); opcje `JsonApi.Konfiguruj` (api.md 1) |
+| Format | JSON UTF-8, `snake_case` z separacją cyfr (`oswiadczenie_wieku_16`, `liczba_wynikow_7d`; polityka `NazwyLemat`, ADR-067 p. 3), `NumberHandling.Strict`, enumy `UPPER_SNAKE` (`RegulaRekomendacji` — atrybut na każdym członku), dyskryminator unii w dowolnym miejscu obiektu, pola `null` wysyłane jawnie; czasy ISO-8601 UTC; identyfikatory UUID (`powiadomienie.id` — UUIDv7); `PATCH` = JSON Merge Patch (`Opcjonalne<T>`, ADR-072); formularze `multipart/form-data` — klasy `[AsParameters]` z `FromForm(Name)` (ADR-067 p. 1); opcje `JsonApi.Konfiguruj` (api.md 1) |
 | Specyfikacja | OpenAPI 3.1.1 z `Microsoft.AspNetCore.OpenApi` 10 generowane przy budowie do `backend/openapi/lemat-v1.json` (w repozytorium) i publikowane pod `/api/v1/openapi.json` (tylko poza `Production` oraz dla roli `Administrator` w `Production`); typy TS: `openapi-typescript` 7 → `frontend/src/lib/api/schema.d.ts`; CI sprawdza brak różnic obu plików (ADR-061) |
 | Uwierzytelnianie | `Authorization: Bearer <JWT>` (ES256, 15 min, claims `sub`, `rola`, `status`, `weryfikator_globalny`, `recenzent_tresci`, `exp`, `jti`); refresh token w cookie `lemat_rt` (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`), rotacja z oknem tolerancji 30 s (ADR-020, ADR-057); cookie `lemat_rola` wyłącznie do przekierowań `proxy.ts` |
-| Polityki autoryzacji | `Anonimowy` (`AllowAnonymous`), `Zalogowany`, `Uczen`, `Nauczyciel`, `RecenzentTresci`, `WeryfikatorGlobalny`, `Administrator`, `UczenLubNauczyciel`, `NauczycielLubAdministrator`, `RecenzentLubAdministrator` — przypisane grupom endpointów; każda z wyjątkiem `Anonimowy` wymaga `status = AKTYWNE` (inaczej `403 KONTO_NIEAKTYWNE`); uprawnienia obiektowe 12.8 sprawdza przypadek użycia na obiekcie `Aktor` (ADR-062 p. 2) |
-| Optymistyczna blokada | Zasób wersjonowany zwraca silny `ETag: "<version>"` (Weryfikacja — wersja treści, ADR-037); operacje z kolumną „ETag” ≠ — wymagają `If-Match` (brak → `428 WYMAGANY_IF_MATCH`, niezgodność → `412 KONFLIKT_WERSJI` z aktualnym zasobem w `szczegoly.aktualny`); `If-None-Match` na `GET` → `304`. Zasoby: `R` — Rozwiązanie, `W` — Weryfikacja, `Z` — Zadanie, `U` — Uczeń/Użytkownik, `S` — Zestaw zadań, `K` — Klasa, `WT` — Wkładka teoretyczna, `B` — Stan bezpiecznika (3.2, C-44). Realizacja: `FiltrWersji` + token współbieżności EF Core (15.3) |
-| Idempotencja | `Idempotency-Key: <uuid>` wymagany w operacjach z kolumną „Idem.” = tak (16 operacji tworzących zasób albo wywołujących skutek zewnętrzny); zapis w `klucz_idempotencji` (24 h); powtórka z tym samym kluczem i ciałem → zapisana odpowiedź + `Idempotent-Replayed: true`; w toku → `409 IDEMPOTENCJA_W_TOKU`; inne ciało → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`; brak → `428 WYMAGANY_IDEMPOTENCY_KEY`; odpowiedzi `5xx` nie są zapisywane (ADR-062 p. 3) |
+| Polityki autoryzacji | `Anonimowy` (`AllowAnonymous`), `Zalogowany`, `Uczen`, `Nauczyciel`, `Administrator`, `UczenLubNauczyciel`, `NauczycielLubAdministrator`, `RecenzentLubAdministrator` — przypisane **każdemu endpointowi** (nie tylko grupie); każda z wyjątkiem `Anonimowy` wymaga `status = AKTYWNE` (inaczej `403 KONTO_NIEAKTYWNE`); flagi `recenzent_tresci` i `weryfikator_globalny` są warunkami obiektowymi 12.8 (polityki `RecenzentTresci` i `WeryfikatorGlobalny` usunięte w 3.3, ADR-071 p. 7); uprawnienia obiektowe 12.8 sprawdza przypadek użycia na obiekcie `Aktor` (ADR-062 p. 2, ADR-071) |
+| Optymistyczna blokada | Zasób wersjonowany ma pole `version` w ciele odpowiedzi (Weryfikacja — wersja treści, ADR-037); operacje z kolumną „ETag” ≠ — wymagają `If-Match: "<version>"` (brak → `428 WYMAGANY_IF_MATCH`, niezgodność → `412 KONFLIKT_WERSJI` z aktualnym zasobem w `szczegoly.aktualny`). Nagłówek `ETag` w odczytach, `If-None-Match` i `304` nie są obsługiwane, a odpowiedzi mają `Cache-Control: no-store` (ADR-069, C8-04). Zasoby: `R` — Rozwiązanie, `W` — Weryfikacja, `Z` — Zadanie, `U` — Uczeń/Użytkownik, `S` — Zestaw zadań, `K` — Klasa, `WT` — Wkładka teoretyczna, `B` — Stan bezpiecznika (3.2, C-44), `P` — Przypisanie (3.3, ADR-074). Operacje z `If-Match` innego zasobu niż czytany mają jego wersję w polu `<zasob>_version` (`rozwiazanie_version`, `zadanie_version`; ADR-069 p. 3). Realizacja: `FiltrWersji` + token współbieżności EF Core (15.3) |
+| Idempotencja | `Idempotency-Key: <uuid>` wymagany w operacjach z kolumną „Idem.” = tak (operacje tworzące zasób albo wywołujące skutek zewnętrzny); rezerwacja klucza w `klucz_idempotencji` na 60 s (`w_toku_do`, funkcja `zarezerwuj_klucz_idempotencji`), a odpowiedź `2xx` zapisywana **w transakcji skutku** (ADR-068); powtórka z tym samym kluczem i ciałem → zapisana odpowiedź + `Idempotent-Replayed: true`; rezerwacja w toku → `409 IDEMPOTENCJA_W_TOKU` z `Retry-After` ≤ 60; po upływie rezerwacji bez odpowiedzi (awaria procesu) ponowienie przejmuje klucz; inne ciało → `422 KLUCZ_IDEMPOTENCJI_KONFLIKT`; brak → `428 WYMAGANY_IDEMPOTENCY_KEY`; odpowiedzi inne niż `2xx` (w tym `409 KONFLIKT_WSPOLBIEZNOSCI`, `429`, `5xx`) nie są zapisywane i nie mają skutku; klucz przechowywany 24 h |
 | Stronicowanie | `?limit=1..100` (domyślnie 50) i `?kursor=<base64url, podpis HMAC>`; odpowiedź `Strona<T> { elementy, nastepny_kursor }`; sortowanie zawsze zakończone `id` (ADR-062 p. 5) |
-| Limity | biznesowe 12.7 (`429 LIMIT_PRZEKROCZONY` z `Retry-After`), techniczne: `RateLimiter` 20 żądań/s na użytkownika, 5/min logowań na IP, 600/min na IP w Caddy; rozmiar ciała 1 MB (zdjęcia 52 MB, plik ≤ 10 MB); czas żądania 30 s (`RequestTimeouts`), SSE bez limitu (zamknięcie po 10 min, ADR-064) |
+| Limity | biznesowe 12.7 (`429 LIMIT_PRZEKROCZONY` z `Retry-After`), techniczne (ADR-070): `NaUzytkownika` 20 żądań/s na konto (`sub`), `Logowanie` 10/min na (IP, e-mail), `Odswiezenie` 30/min na rodzinę refresh tokenu, `Anonimowe` 300/min na IP; limit IP wyłącznie dla żądań anonimowych i nieudanych logowań (100 / 15 min); Caddy 12 000/min na IP jako ochrona przed zalewem (3 klasy za jednym NAT, 17.4); rozmiar ciała 1 MB (zdjęcia 52 MB, plik ≤ 10 MB, import 50 MB); czas żądania 30 s (`RequestTimeouts`), SSE bez limitu (zamknięcie po 10 min, ADR-064) |
 | Język | `title`/`detail` po polsku (NFR-10); komunikaty UI z `messages/pl-PL.json` po `kod` (14.4) |
-| Postęp operacji | SSE (12.10); odpytywanie `GET` zasobu wyłącznie jako ścieżka zapasowa (`nastepne_odpytanie_ms` = 1000 w stanach `PRZESLANE`, `ROZPOZNAWANIE`, `ZATWIERDZONE`, `OCENIANIE` i przy `ocena.wskazowka_w_przygotowaniu`, w pozostałych `null`) |
+| Postęp operacji | SSE (12.10); odpytywanie `GET` zasobu wyłącznie jako ścieżka zapasowa (`nastepne_odpytanie_ms` = 1000 w stanach `PRZESLANE`, `ROZPOZNAWANIE`, `ZATWIERDZONE`, `OCENIANIE` i przy `ocena.wskazowka_w_przygotowaniu`, w pozostałych `null` — wtedy klient kończy odpytywanie i wraca do SSE, ADR-064 uzup. 3.3 p. 2) |
 | CORS i CSRF | ten sam origin przez Caddy, bez CORS; brak cookie z poświadczeniem dla `/api/v1/*` poza `/auth/*` (`SameSite=Strict`), więc antyforgery jest wyłączone (`DisableAntiforgery` dla multipart) |
 
 ### 12.2 Model błędu (RFC 9457, ADR-060)
@@ -6128,13 +6139,14 @@ Wspólne kody każdego endpointu (niepowtarzane w 12.3): `401
 NIEUWIERZYTELNIONY`, `403 BRAK_UPRAWNIEN`/`KONTO_NIEAKTYWNE`, `429
 LIMIT_PRZEKROCZONY` (RateLimiter), `500 BLAD_WEWNETRZNY`, `503
 BAZA_NIEDOSTEPNA`/`USLUGA_NIEDOSTEPNA`; ścieżka z `{id}` — `404
-NIE_ZNALEZIONO`; ciało — `422 WALIDACJA`, `413 ZAPYTANIE_ZA_DUZE`; ETag —
+NIE_ZNALEZIONO`; ciało — `400 ZAPYTANIE_NIEPRAWIDLOWE` (składnia JSON), `422 WALIDACJA` (wiązanie, nieznane pole, typ, dyskryminator; ADR-067 p. 6), `413 ZAPYTANIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`; zła trasa i metoda — `404`/`405` z `kod` (ADR-067 p. 7); ETag —
 `412`/`428`; „Idem.” — `409 IDEMPOTENCJA_W_TOKU`, `422
 KLUCZ_IDEMPOTENCJI_KONFLIKT`, `428 WYMAGANY_IDEMPOTENCY_KEY`; strona —
 `400 KURSOR_NIEPRAWIDLOWY`.
 
 | Kod (`kod`) | HTTP | E-xx (14.1) | Znaczenie | `szczegoly` |
 |---|---|---|---|---|
+| `ZAPYTANIE_NIEPRAWIDLOWE` | 400 | E-43 | Ciało nie jest poprawnym JSON (składnia, przerwane ciało); 3.3, ADR-067 p. 6 | — |
 | `KURSOR_NIEPRAWIDLOWY` | 400 | — | Kursor stronicowania zmieniony, sfałszowany albo z innego zapytania (ADR-062 p. 5) | — |
 | `NAGLOWEK_NIEPRAWIDLOWY` | 400 | — | `If-Match` niebędący liczbą w cudzysłowie, `Idempotency-Key` niebędący UUID | — |
 | `NIEUWIERZYTELNIONY` | 401 | E-39 | Brak/nieważny token | — |
@@ -6173,10 +6185,13 @@ KLUCZ_IDEMPOTENCJI_KONFLIKT`, `428 WYMAGANY_IDEMPOTENCY_KEY`; strona —
 | `ZESTAW_UZYWANY` | 409 | — | Usunięcie Zestawu zadań użytego w Przypisaniu | — |
 | `ZGLOSZENIE_NIEDOSTEPNE` | 409 | — | Zgłoszenie błędu odczytu poza warunkami 11.6 | — |
 | `ZGLOSZENIE_ZADANIA_ISTNIEJE` | 409 | — | Nauczyciel ma już otwarte Zgłoszenie błędu w tym Zadaniu | — |
-| `KONFLIKT_WERSJI` | 412 | E-15 | `If-Match` niezgodny | `{aktualny: <zasób>, zmiany_tresci?: string[]}` + nagłówek `ETag` |
+| `LIMIT_WERSJI_TRANSKRYPCJI` | 409 | — | 21. wersja `POPRAWKA_UCZNIA` w jednym przesłaniu (limit 20, ADR-073 p. 3) | `{limit: 20}` |
+| `PRZYPISANIE_WYCOFANE` | 409 | — | Nowa próba albo zmiana Przypisania wycofanego przez Nauczyciela (ADR-074) | `{wycofano_at}` |
+| `ZASOB_USUNIETY` | 410 | — | Zdjęcie Rozwiązania usunięte zgodnie z retencją (NFR-09, ADR-019); 3.3, C8-08 p. 5 | `{usunieto_at}` |
+| `KONFLIKT_WERSJI` | 412 | E-15 | `If-Match` niezgodny | `{aktualny: <zasób z version>, zmiany_tresci?: string[]}` (bez nagłówka `ETag`, ADR-069) |
 | `ZAPYTANIE_ZA_DUZE` | 413 | E-01 | Ciało żądania ponad limit endpointu (1 MB; 52 MB dla przesłania zdjęć, ADR-062 p. 7) | — |
 | `ZDJECIE_ZA_DUZE` | 413 | E-01 | Plik > 10 MB | — |
-| `NIEOBSLUGIWANY_FORMAT` | 415 | E-01 | Inny niż JPEG/PNG/HEIC/WEBP | — |
+| `NIEOBSLUGIWANY_FORMAT` | 415 | E-01 | Inny niż JPEG/PNG/HEIC/WEBP; także `Content-Type` żądania nieobsługiwany przez endpoint (`UseStatusCodePages`, ADR-067 p. 7) | — |
 | `KLUCZ_IDEMPOTENCJI_KONFLIKT` | 422 | E-41 | Ten sam klucz, inne ciało | — |
 | `LIMIT_OBCIAZENIA_WERYFIKATORA` | 422 | — | Nadanie flagi `weryfikator_globalny` Nauczycielowi, którego prognoza kolejki `KLASA` na dzień roboczy (17.7, 7/5 obciążenia dobowego) + `deklarowane_minuty_weryfikacji` > 180 min na dzień roboczy (A-14) | `{prognoza_min, limit_min}` |
 | `POPRAWKI_ZBYT_ROZLEGLE` | 422 | E-31 | Poprawka Transkrypcji przekracza limit twardy ADR-036 (usunięcie kroku, > 2 kroki wstawione, krok wstawiony dłuższy niż limit 9.4, zbyt wiele zmienionych kroków lub znaków — kroki wstawione wliczone); `detail` podaje limit i wartość | `{limit, wartosc, rodzaj}` |
@@ -6188,6 +6203,8 @@ KLUCZ_IDEMPOTENCJI_KONFLIKT`, `428 WYMAGANY_IDEMPOTENCY_KEY`; strona —
 | `WYMAGANY_IF_MATCH` | 428 | — | Brak `If-Match` | — |
 | `LIMIT_PRZEKROCZONY` | 429 | E-30 (generowanie) | Limit szybkości (nagłówek `Retry-After`) | `{zakres, limit, okno_s}` + `Retry-After` |
 | `ZA_DUZO_STRUMIENI` | 429 | E-42 | Limit strumieni SSE repliki (≤ 4 na użytkownika i zasób, ≤ 12 na użytkownika, ADR-057 p. 4), `Retry-After: 30` | — |
+| `BLAD_BRAMY` | 502/503/504 (tylko klient) | E-14 | Odpowiedź bez `application/problem+json` (Caddy przy wdrożeniu albo awarii `api`); nadawany przez `klient.ts`, nie przez API (ADR-067 p. 7) | — |
+| `SESJA_TYMCZASOWO_NIEDOSTEPNA` | — (tylko klient) | E-40 | Odświeżenie tokenu nieudane z powodu `429`/`5xx`/sieci po ponowieniach; bez wylogowania (ADR-070 p. 4) | — |
 | `BLAD_WEWNETRZNY` | 500 | E-25, E-45 | Nieobsłużony wyjątek; `instance` zawiera `trace_id`, bez szczegółów technicznych | — |
 | `BAZA_NIEDOSTEPNA` | 503 | E-14 | Błąd połączenia z PostgreSQL albo przekroczony czas oczekiwania na połączenie z puli (ADR-056 p. 1, ADR-059), `Retry-After: 2` | — |
 | `USLUGA_NIEDOSTEPNA` | 503 | E-02, E-36 | Baza, magazyn obiektów lub bucket `rejestr-zdarzen-rodo` niedostępne, albo piaskownica normalizacji zdjęć zajęta > 5 s (`Retry-After: 5`) | — |
@@ -6205,97 +6222,108 @@ w TS). Identyfikator operacji OpenAPI = `WithName` według ADR-049 p. 15.
 
 | Metoda | Ścieżka | Polityka (rola) | ETag | Idem. | Wymagania | Wejście → Wyjście | Kody błędów specyficzne |
 |---|---|---|---|---|---|---|---|
-| POST | `/auth/rejestracja` | `Anonimowy` | — | — | FR-01 | `RejestracjaWejscie` → `201 SesjaWyjscie` (Nauczyciel: konto `OCZEKUJE_NA_ZATWIERDZENIE`, `201` bez tokenu) | `409 EMAIL_ZAJETY`, `422 WYMAGANY_KOD_ZAPROSZENIA`, `404 KOD_ZAPROSZENIA_NIEWAZNY` |
-| POST | `/auth/logowanie` | `Anonimowy` | — | — | FR-01 | `LogowanieWejscie` → `200 SesjaWyjscie` | `401 NIEUWIERZYTELNIONY` (zły e-mail albo hasło, jeden komunikat), `403 KONTO_NIEAKTYWNE`, `429 LIMIT_PRZEKROCZONY` (12.7) |
+| POST | `/auth/rejestracja` | `Anonimowy` | — | — | FR-01 | `RejestracjaWejscie` (`rola: UCZEN | NAUCZYCIEL`, typ `RolaRejestracji`; `ADMINISTRATOR` → `422 WALIDACJA`, ADR-071 p. 4) → `201 RejestracjaWyjscie { status_konta, sesja }` (Uczeń: `AKTYWNE` + sesja + cookie; Nauczyciel: `OCZEKUJE_NA_ZATWIERDZENIE`, `sesja = null`; ADR-072 p. 4) | `409 EMAIL_ZAJETY`, `422 WYMAGANY_KOD_ZAPROSZENIA`, `404 KOD_ZAPROSZENIA_NIEWAZNY` |
+| POST | `/auth/logowanie` | `Anonimowy` | — | — | FR-01 | `LogowanieWejscie` → `200 SesjaWyjscie` | `401 NIEUWIERZYTELNIONY` (zły e-mail albo hasło, jeden komunikat), `403 KONTO_NIEAKTYWNE`, `429 LIMIT_PRZEKROCZONY` (12.7: klucz (IP, e-mail), nieudane na IP 100 / 15 min, ADR-070) |
 | POST | `/auth/odswiezenie` | `Anonimowy` | — | — | FR-01 | — → `200 SesjaWyjscie` (rotacja refresh tokenu) | `401 SESJA_UNIEWAZNIONA` |
 | POST | `/auth/wylogowanie` | `Zalogowany` | — | — | FR-01 | — → `204` | — |
 | POST | `/auth/reset-hasla` | `Anonimowy` | — | — | FR-01 | `ResetHaslaWejscie` → `202` (zawsze, bez ujawniania istnienia konta) | — |
 | POST | `/auth/reset-hasla/potwierdzenie` | `Anonimowy` | — | — | FR-01 | `PotwierdzenieResetuWejscie` → `204` | — |
-| GET | `/uczniowie/ja` | `Uczen` | — | — | FR-02 | → `UczenWyjscie` + ETag | — |
-| PATCH | `/uczniowie/ja` | `Uczen` | U | — | FR-02, FR-09, NFR-09 | `{poziom_matury?, termin_egzaminu?, wybrany_dzial_id?, zgoda_na_trening?}` → `UczenWyjscie` (skutki zmiany poziomu: 9.1; odwołanie zgody `zgoda_na_trening = false` → `kopia_treningowa.usun_po := now()` w tej samej transakcji, 16.4) | — |
+| GET | `/uczniowie/ja` | `Uczen` | — | — | FR-02 | → `UczenWyjscie` (z `version`) | — |
+| PATCH | `/uczniowie/ja` | `Uczen` | U | — | FR-02, FR-09, NFR-09 | `ZmianaUczniaWejscie` — JSON Merge Patch (ADR-072): pole nieobecne = bez zmiany, `wybrany_dzial_id: null` = wszystkie Działy, `termin_egzaminu: null` = brak terminu, `null` w `poziom_matury`/`zgoda_na_trening` → `422` → `UczenWyjscie` (skutki zmiany poziomu: 9.1; odwołanie zgody `zgoda_na_trening = false` → `kopia_treningowa.usun_po := now()` w tej samej transakcji, 16.4) | — |
 | DELETE | `/uczniowie/ja` | `Uczen` | — | tak | NFR-09 | `{haslo}` → `202` (Zdarzenie RODO `WNIOSEK_O_USUNIECIE` w rejestrze przed zmianą w bazie; okres karencji 30 dni, ADR-040, ADR-041, 16.4) | — |
 | DELETE | `/nauczyciele/ja` | `Nauczyciel` | — | tak | NFR-09 | `{haslo}` → `202` (usunięcie konta Nauczyciela po 30 dniach, ADR-044; Administratorzy dostają `KLASA_DO_PRZEKAZANIA` dla każdej niezarchiwizowanej Klasy) | — |
 | GET | `/uczniowie/ja/eksport-danych` | `Uczen` | — | — | NFR-09 | → `200 application/zip` (dane osobowe, Rozwiązania, Oceny) | — |
 | DELETE | `/uczniowie/ja/klasy/{id}` | `Uczen` | — | — | FR-30 | → `204` (opuszczenie Klasy; otwarte Weryfikacje tej Klasy pozostają u Nauczyciela docelowego) | — |
 | POST | `/uczniowie/ja/test-diagnostyczny` | `Uczen` | — | — | FR-03 | — → `201 TestDiagnostycznyWyjscie` (lub `200` istniejący `W_TOKU`; `409 TEST_JUZ_WYKONANY`; `409 TEST_NIEDOSTEPNY`, 9.1) | `409 TEST_JUZ_WYKONANY`, `409 TEST_NIEDOSTEPNY` |
 | GET | `/testy-diagnostyczne/{id}` | `Uczen` | — | — | FR-03 | → `TestDiagnostycznyWyjscie` | — |
-| POST | `/testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` | `Uczen` | — | — | FR-03 | `{wybor}` → `201 {czy_zapisano: true}` (bez ujawniania poprawności do końca testu) | — |
+| POST | `/testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` | `Uczen` | — | — | FR-03 | `OdpowiedzTestuWejscie` → `201 ZapisOdpowiedziWyjscie {czy_zapisano: true, nadpisano: false}`; ponowna odpowiedź na tę samą pozycję do zakończenia Testu nadpisuje → `200 {…, nadpisano: true}` (ADR-074 p. 3); bez ujawniania poprawności do końca testu; pozycja spoza Testu `{id}` → `404` (ADR-071 p. 2) | `409 TEST_ZAKONCZONY` |
 | POST | `/testy-diagnostyczne/{id}/zakonczenie` | `Uczen` | — | — | FR-03 | — → `202 TestDiagnostycznyWyjscie` (Profil aktualizuje `AKTUALIZUJ_PROFIL`, 9.1) | — |
 | POST | `/testy-diagnostyczne/{id}/pominiecie` | `Uczen` | — | — | FR-03 | — → `204` (D-14; Odpowiedzi bez Wyników zadania) | — |
-| GET | `/uczniowie/{id}/profil` | `UczenLubNauczyciel` (U (`ja`), N (Uczeń swojej Klasy)) | — | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` | — |
+| GET | `/uczniowie/{id}/profil` | `Nauczyciel` (N: Uczeń z aktywnym członkostwem w jego Klasie) | — | — | FR-04, FR-31 | → `ProfilUczniaWyjscie` | — |
+| GET | `/uczniowie/ja/profil` | `Uczen` | — | — | FR-04 | → `ProfilUczniaWyjscie` (własny; trasa osobna, bo `{id:guid}` nie przyjmuje `ja`, C8-12 p. 8) | — |
 | GET | `/uczniowie/ja/rekomendacje/nastepna` | `Uczen` | — | — | FR-05…FR-10 | → `200 RekomendacjaWyjscie` | — |
 | GET | `/uczniowie/ja/sciezka-nauki` | `Uczen` | — | — | FR-05 | `?kursor` → strona `ElementSciezkiWyjscie` | — |
 | POST | `/elementy-sciezki/{id}/rozpoczecie` | `Uczen` | — | — | FR-05, FR-16 | — → `200 ElementSciezkiWyjscie` (idempotentne; ustala `zadanie_wersja_id`) | — |
 | POST | `/elementy-sciezki/{id}/pominiecie` | `Uczen` | — | — | FR-05 | — → `204` | — |
 | POST | `/elementy-sciezki/{id}/przeczytanie` | `Uczen` | — | — | FR-06 | — → `204` (tylko `WKLADKA_TEORETYCZNA`) | — |
 | GET | `/wkladki-teoretyczne` | `RecenzentLubAdministrator` (NR, A) | — | — | FR-06 | `?status=DO_PRZEGLADU&umiejetnosc_id` → strona | — |
-| GET | `/wkladki-teoretyczne/{id}` | `Zalogowany` | — | — | FR-06 | → `WkladkaWyjscie` + ETag (U: tylko `OPUBLIKOWANA`) | — |
+| GET | `/wkladki-teoretyczne/{id}` | `Zalogowany` | — | — | FR-06 | → `WkladkaWyjscie` (z `version`; U: tylko `OPUBLIKOWANA`; N bez NR: tylko `OPUBLIKOWANA`) | — |
 | PUT | `/wkladki-teoretyczne/{id}` | `RecenzentLubAdministrator` (NR, A) | WT | — | FR-06 | `{tytul, tresc_md, szacowany_czas_min, status}` → `200` | — |
 | GET | `/dzialy`, `/umiejetnosci` | `Zalogowany` | — | — | FR-04, FR-36 | → listy referencyjne | — |
-| GET | `/zadania/{id}` | `Zalogowany` (U, N, A) | — | — | FR-15, FR-16 | U → `ZadanieUczniaWyjscie` (bez Rozwiązania wzorcowego i klucza); N/A → `ZadaniePelneWyjscie` + ETag | — |
-| POST | `/zadania/{id}/odpowiedzi` | `Uczen` | — | tak | FR-15, FR-29 | `OdpowiedzWejscie` → `201 OdpowiedzWyjscie` | `409 ELEMENT_SCIEZKI_NIEAKTYWNY`, `409 WERSJA_ZADANIA_NIEAKTUALNA`, `409 ZADANIE_NIEDOSTEPNE`, `409 PRZYPISANIE_PO_TERMINIE` |
-| POST | `/rozwiazania` | `Uczen` | — | tak | FR-16 | multipart `RozwiazanieWejscie` → `202 RozwiazanieWyjscie` | `409 ELEMENT_SCIEZKI_NIEAKTYWNY`, `409 WERSJA_ZADANIA_NIEAKTUALNA`, `409 ZADANIE_NIEDOSTEPNE`, `409 PRZYPISANIE_PO_TERMINIE`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `413 ZDJECIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`, `422 ZA_DUZO_ZDJEC`, `422 ZDJECIE_NIEPRAWIDLOWE`, `429 LIMIT_PRZEKROCZONY`, `503 USLUGA_NIEDOSTEPNA` |
-| GET | `/rozwiazania` | `Uczen` | — | — | FR-24 | `?status&kursor` → strona `RozwiazanieWyjscie` (własne) | — |
-| GET | `/rozwiazania/{id}` | `UczenLubNauczyciel` (U (własne), N (Uczeń Klasy / Weryfikacja)) | — | — | FR-17, FR-24 | → `RozwiazanieWyjscie` + ETag | — |
-| GET | `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `UczenLubNauczyciel` (U (własne), N) | — | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINALNA\|MASKOWANA` (domyślnie `ORYGINALNA`; wersja 3.1, C6-12 p. 1, C6-14 p. 2 — zastępuje `302` na podpisany URL) → `200 AdresZdjeciaWyjscie { url, wygasa_at }` (podpisany URL ważny 10 min); `410` po usunięciu; obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) | — |
-| PUT | `/rozwiazania/{id}/transkrypcja` | `Uczen` | R | — | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` (z `transkrypcja.zakres_poprawek`) / `422 POPRAWKI_ZBYT_ROZLEGLE` (ADR-036) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `422 POPRAWKI_ZBYT_ROZLEGLE` |
+| GET | `/zadania/{id}` | `Zalogowany` (U, N, A) | — | — | FR-12, FR-14, FR-15, FR-16 | U: wymagany dokładnie jeden z `?element_sciezki_id`, `?przypisanie_id`, `?rozwiazanie_id` (brak → `422`), widoczność i wersja wg ADR-071 p. 3 → `ZadanieUczniaWyjscie` (bez Rozwiązania wzorcowego i klucza); N/A → `ZadaniePelneWyjscie` (z `version`, `diagnostyczne`; widoczność 12.8) | — |
+| POST | `/zadania/{id}/odpowiedzi` | `Uczen` | — | tak | FR-15, FR-29 | `OdpowiedzWejscie` → `201 OdpowiedzWyjscie` | `409 ELEMENT_SCIEZKI_NIEAKTYWNY`, `409 WERSJA_ZADANIA_NIEAKTUALNA`, `409 ZADANIE_NIEDOSTEPNE`, `409 PRZYPISANIE_PO_TERMINIE`, `409 PRZYPISANIE_WYCOFANE` |
+| POST | `/rozwiazania` | `Uczen` | — | tak | FR-16 | multipart `[AsParameters] RozwiazanieWejscie` (pola `zadanie_wersja_id`, `element_sciezki_id`, `przypisanie_id`, pliki `zdjecia`; ADR-067) → `202 RozwiazanieWyjscie` | `409 ELEMENT_SCIEZKI_NIEAKTYWNY`, `409 WERSJA_ZADANIA_NIEAKTUALNA`, `409 ZADANIE_NIEDOSTEPNE`, `409 PRZYPISANIE_PO_TERMINIE`, `409 PRZYPISANIE_WYCOFANE`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `413 ZDJECIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`, `422 ZA_DUZO_ZDJEC`, `422 ZDJECIE_NIEPRAWIDLOWE`, `429 LIMIT_PRZEKROCZONY`, `503 USLUGA_NIEDOSTEPNA` |
+| GET | `/rozwiazania` | `Uczen` | — | — | FR-24 | `?status&kursor` → `Strona<RozwiazanieWyjscie>` (własne) | — |
+| GET | `/rozwiazania/{id}` | `UczenLubNauczyciel` (U (własne), N (wg 12.8)) | — | — | FR-17, FR-18, FR-24, FR-34 | → `RozwiazanieWyjscie` (z `version`; U: z `szkic_transkrypcji`; bez `ETag`/`304`, ADR-069) | — |
+| GET | `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `UczenLubNauczyciel` (U (własne), N) | — | — | FR-16, FR-33 | `?wersja_zdjecia=ORYGINALNA\|MASKOWANA` (domyślnie `ORYGINALNA`; wersja 3.1, C6-12 p. 1, C6-14 p. 2 — zastępuje `302` na podpisany URL) → `200 AdresZdjeciaWyjscie { url, wygasa_at }` (podpisany URL ważny 10 min); `410 ZASOB_USUNIETY` po usunięciu (retencja, NFR-09); zdjęcie spoza Rozwiązania `{id}` → `404` (ADR-071 p. 2); obcy weryfikator globalny dostaje wyłącznie wersję maskowaną (11.4.4) | `410 ZASOB_USUNIETY` |
+| PUT | `/rozwiazania/{id}/transkrypcja` | `Uczen` | R | — | FR-18 | `TranskrypcjaWejscie` → `200 RozwiazanieWyjscie` (nowa wersja `POPRAWKA_UCZNIA`, ≤ 20 na przesłanie; wysyłane po 10 s stabilnej edycji i przed zatwierdzeniem, ADR-073) (z `transkrypcja.zakres_poprawek`) / `422 POPRAWKI_ZBYT_ROZLEGLE` (ADR-036) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `422 POPRAWKI_ZBYT_ROZLEGLE`, `409 LIMIT_WERSJI_TRANSKRYPCJI` |
+| PUT | `/rozwiazania/{id}/transkrypcja/szkic` | `Uczen` | — | — | FR-18 | `SzkicTranskrypcjiWejscie {transkrypcja_id, numer_zapisu, kroki}` → `204` (autozapis co 1,5 s; bez zmiany `version`, bez nowej wersji Transkrypcji i bez zdarzenia SSE; zapis o niższym `numer_zapisu` pomijany; ADR-073 p. 1) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `409 TRANSKRYPCJA_NIEAKTUALNA`, `422 POPRAWKI_ZBYT_ROZLEGLE` |
 | POST | `/rozwiazania/{id}/zatwierdzenie` | `Uczen` | R | — | FR-18, FR-19 | `{transkrypcja_id, wersja}` (wersja 3.1, C6-04: zatwierdzana Transkrypcja musi być najnowszą) → `202 RozwiazanieWyjscie` / `409 TRANSKRYPCJA_NIEAKTUALNA` / `412 KONFLIKT_WERSJI` | `409 TRANSKRYPCJA_NIEAKTUALNA`, `412 KONFLIKT_WERSJI` |
-| POST | `/rozwiazania/{id}/zdjecia` | `Uczen` | R | tak | FR-16 | multipart `zdjecia[]` → `202` (nowe przesłanie; `409 LIMIT_PRZESLAN`) | `409 LIMIT_PRZESLAN`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `413 ZDJECIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`, `422 ZA_DUZO_ZDJEC`, `422 ZDJECIE_NIEPRAWIDLOWE` |
+| POST | `/rozwiazania/{id}/zdjecia` | `Uczen` | R | tak | FR-16 | multipart `[AsParameters] ZdjeciaRozwiazaniaWejscie` (pliki `zdjecia`) → `202 RozwiazanieWyjscie` (nowe przesłanie; `409 LIMIT_PRZESLAN`) | `409 LIMIT_PRZESLAN`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, `413 ZDJECIE_ZA_DUZE`, `415 NIEOBSLUGIWANY_FORMAT`, `422 ZA_DUZO_ZDJEC`, `422 ZDJECIE_NIEPRAWIDLOWE` |
 | POST | `/rozwiazania/{id}/ponowienie-rozpoznania` | `Uczen` | R | — | FR-17 | — → `202` (te same zdjęcia; `409 LIMIT_PONOWIEN_ROZPOZNANIA`) | `409 LIMIT_PONOWIEN_ROZPOZNANIA`, `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` |
 | POST | `/rozwiazania/{id}/porzucenie` | `Uczen` | R | — | FR-16 | — → `204` (element pozostaje aktywny do `wygasa_at`) | `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` |
 | POST | `/rozwiazania/{id}/zgloszenie-bledu-odczytu` | `Uczen` | R | tak | FR-28 | `ZgloszenieBleduOdczytuWejscie` → `201 {weryfikacja: WeryfikacjaUcznia}` | `409 ZGLOSZENIE_NIEDOSTEPNE`, `429 LIMIT_PRZEKROCZONY` |
-| GET | `/rozwiazania/{id}/ocena` | `UczenLubNauczyciel` (U, N) | — | — | FR-24, FR-27 | `?historia=true` → `OcenaWyjscie` lub lista wersji | — |
-| POST | `/rozwiazania/{id}/korekty` | `Nauczyciel` | R | — | FR-34 | `RozstrzygniecieWejscie` → `201 OcenaWyjscie` (9.6.3) / `409 KONTO_UCZNIA_NIEAKTYWNE` | `409 KONTO_UCZNIA_NIEAKTYWNE`, `409 WERYFIKACJA_ZAJETA` |
-| POST | `/klasy` | `Nauczyciel` | — | tak | FR-30 | `{nazwa, poziom_matury}` → `201 KlasaWyjscie` (z `kod_zaproszenia`) | — |
-| GET | `/klasy` | `Nauczyciel` | — | — | FR-30 | `?zarchiwizowane=false` → lista `KlasaWyjscie` | — |
-| GET | `/klasy/{id}` | `Nauczyciel` | — | — | FR-30 | → `KlasaWyjscie` + członkowie + ETag | — |
+| GET | `/rozwiazania/{id}/ocena` | `UczenLubNauczyciel` (U (własne), N (wg 12.8)) | — | — | FR-24, FR-27 | → `OcenaWyjscie` (aktualna) | — |
+| GET | `/rozwiazania/{id}/ocena/historia` | `UczenLubNauczyciel` (U (własne), N (wg 12.8)) | — | — | FR-27, FR-34 | `?kursor` → `Strona<OcenaWyjscie>` (wersje Oceny od najnowszej; C8-12 p. 9) | — |
+| POST | `/rozwiazania/{id}/korekty` | `Nauczyciel` | R | — | FR-34 | `RozstrzygniecieWejscie` → `201 OcenaWyjscie` (9.6.3; korekta Oceny ostatecznej także bez Weryfikacji — strona `nauczyciel/rozwiazania/[rozwiazanieId]`, C8-11 p. 1) / `409 KONTO_UCZNIA_NIEAKTYWNE` | `409 KONTO_UCZNIA_NIEAKTYWNE`, `409 WERYFIKACJA_ZAJETA` |
+| POST | `/klasy` | `Nauczyciel` | — | tak | FR-30 | `KlasaWejscie {nazwa, poziom_matury}` → `201 KlasaWyjscie` (z `kod_zaproszenia`) | — |
+| GET | `/klasy` | `Nauczyciel` | — | — | FR-30 | `?zarchiwizowane=false&kursor` → `Strona<KlasaWyjscie>` (własne; C8-12 p. 9) | — |
+| GET | `/klasy/{id}` | `Nauczyciel` | — | — | FR-30 | → `KlasaWyjscie` z `czlonkowie` i `version` | — |
 | POST | `/klasy/{id}/kod-zaproszenia` | `Nauczyciel` | K | — | FR-30 | — → `200 {kod_zaproszenia, kod_wazny_do, link}` (stary kod unieważniony) | — |
 | POST | `/klasy/{id}/archiwizacja` | `Nauczyciel` | K | — | FR-30 | — → `200 KlasaWyjscie` (kod zaproszenia unieważniony; Klasa nie uczestniczy w przydziale 11.4.1 p. 2; Przypisania i Weryfikacje pozostają) | — |
 | POST | `/klasy/dolaczenie` | `Uczen` | — | — | FR-30 | `{kod_zaproszenia}` → `200 KlasaSkrot` (Klasa niezarchiwizowana, kod ważny) | `404 KOD_ZAPROSZENIA_NIEWAZNY` |
-| DELETE | `/klasy/{id}/uczniowie/{uczen_id}` | `Nauczyciel` | — | — | FR-30 | → `204` | — |
+| DELETE | `/klasy/{id}/uczniowie/{uczen_id}` | `Nauczyciel` | — | — | FR-30 | → `204` (`uczen_id` spoza Klasy `{id}` → `404`) | — |
 | GET | `/klasy/{id}/postepy` | `Nauczyciel` | — | — | FR-31 | → `PostepyKlasyWyjscie` | — |
-| GET | `/klasy/{id}/uczniowie/{uczen_id}/rozwiazania` | `Nauczyciel` | — | — | FR-31 | `?kursor` → strona `RozwiazanieWyjscie` | — |
+| GET | `/klasy/{id}/uczniowie/{uczen_id}/rozwiazania` | `Nauczyciel` | — | — | FR-31 | `?kursor` → `Strona<RozwiazanieWyjscie>` (`uczen_id` bez aktywnego członkostwa w Klasie `{id}` → `404`, ADR-071 p. 2) | — |
 | POST | `/zestawy-zadan` | `Nauczyciel` | — | tak | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `201 ZestawZadanWyjscie` | — |
-| GET | `/zestawy-zadan` | `Nauczyciel` | — | — | FR-32 | → lista `ZestawZadanWyjscie` (własne) | — |
-| GET | `/zestawy-zadan/{id}` | `Nauczyciel` | — | — | FR-32 | → `ZestawZadanWyjscie` + ETag | — |
+| GET | `/zestawy-zadan` | `Nauczyciel` | — | — | FR-32 | `?kursor` → `Strona<ZestawZadanWyjscie>` (własne; C8-12 p. 9) | — |
+| GET | `/zestawy-zadan/{id}` | `Nauczyciel` | — | — | FR-32 | → `ZestawZadanWyjscie` (z `version`) | — |
 | PUT | `/zestawy-zadan/{id}` | `Nauczyciel` | S | — | FR-32 | `{nazwa, zadanie_ids[1..30]}` → `200` (zmiana nie wpływa na istniejące Przypisania — pozycje są czytane w chwili rekomendacji; usunięte pozycje znikają z otwartych Przypisań) | — |
 | DELETE | `/zestawy-zadan/{id}` | `Nauczyciel` | S | — | FR-32 | → `204` / `409 ZESTAW_UZYWANY` | `409 ZESTAW_UZYWANY` |
-| POST | `/przypisania` | `Nauczyciel` | — | tak | FR-32 | `{zestaw_zadan_id, klasa_id?, uczen_ids?, termin}` → `201` | — |
-| GET | `/przypisania` | `Nauczyciel` | — | — | FR-32 | `?klasa_id&aktywne=true&kursor` → strona `PrzypisanieWyjscie` (własne) | — |
+| POST | `/przypisania` | `Nauczyciel` | — | tak | FR-32 | `PrzypisanieWejscie {zestaw_zadan_id, klasa_id?, uczen_ids?, termin}` → `201 PrzypisanieWyjscie` | — |
+| GET | `/przypisania` | `Nauczyciel` | — | — | FR-32 | `?klasa_id&aktywne=true&wycofane=false&kursor` → `Strona<PrzypisanieWyjscie>` (własne) | — |
+| GET | `/przypisania/{id}` | `Nauczyciel` (autor) | — | — | FR-32 | → `PrzypisanieWyjscie` (z `version`) | — |
+| PATCH | `/przypisania/{id}` | `Nauczyciel` (autor) | P | — | FR-32 | `ZmianaPrzypisaniaWejscie {termin}` (JSON Merge Patch) → `200 PrzypisanieWyjscie` (termin ≥ now() + 1 h; przesuwa `rezultat_ujawniony_od` i `wygasa_at` elementów; ADR-074 p. 1) | `409 PRZYPISANIE_PO_TERMINIE`, `409 PRZYPISANIE_WYCOFANE` |
+| POST | `/przypisania/{id}/wycofanie` | `Nauczyciel` (autor) | P | — | FR-32 | `WycofaniePrzypisaniaWejscie {powod}` → `200 PrzypisanieWyjscie` (elementy `PROPONOWANY` → `WYGASLY`, nowe próby `409 PRZYPISANIE_WYCOFANE`, rozpoczęte oceniane, klucz nieujawniany; ADR-074 p. 2) | `409 PRZYPISANIE_WYCOFANE` |
 | GET | `/przypisania/{id}/postep` | `Nauczyciel` | — | — | FR-31, FR-32 | → `PostepPrzypisaniaWyjscie` | — |
 | GET | `/uczniowie/ja/przypisania` | `Uczen` | — | — | FR-32 | → lista otwartych Przypisań z pozycjami | — |
-| GET | `/zadania` | `NauczycielLubAdministrator` (N, A) | — | — | FR-14, FR-32, FR-36 | `?dzial_id&umiejetnosc_id&rodzaj&poziom_trudnosci&pochodzenie&zasieg&status&kursor` → strona `ZadaniePelneWyjscie` (widoczność 12.8) | — |
+| GET | `/zadania` | `NauczycielLubAdministrator` (N, A) | — | — | FR-14, FR-32, FR-36 | `?dzial_id&umiejetnosc_id&rodzaj&poziom_trudnosci&pochodzenie&zasieg&status&diagnostyczne&kursor` → `Strona<ZadaniePelneWyjscie>` (widoczność 12.8) | — |
 | POST | `/zadania` | `Nauczyciel` | — | tak | FR-36 | `ZadanieWejscie` → `201` (Zadanie bazowe `BAZOWE_NAUCZYCIEL`, `PRYWATNY`, `OPUBLIKOWANE` po walidacji W-1, W-2, W-8) | — |
-| POST | `/zadania/generowanie` | `NauczycielLubAdministrator` (N, A) | — | tak | FR-11 | `{umiejetnosc_id, poziom_trudnosci, poziom_matury, rodzaj}` → `202 {zlecenie_generowania_id}` | `429 LIMIT_PRZEKROCZONY` (20 / dobę) |
-| GET | `/zlecenia-generowania/{id}` | `NauczycielLubAdministrator` (N, A) | — | — | FR-11 | → `{status, liczba_cykli, zadanie_id, walidacja}` | — |
+| POST | `/zadania/generowanie` | `NauczycielLubAdministrator` (N, A) | — | tak | FR-11 | `ZlecenieGenerowaniaWejscie {umiejetnosc_id, poziom_trudnosci, poziom_matury, rodzaj}` → `202 ZlecenieGenerowaniaPrzyjete` | `429 LIMIT_PRZEKROCZONY` (20 / dobę) |
+| GET | `/zlecenia-generowania/{id}` | `NauczycielLubAdministrator` (N: zlecający; A) | — | — | FR-11, FR-13 | → `ZlecenieGenerowaniaWyjscie` (status, cykle, `zadanie_id`, `walidacja`; ta sama reguła co strumień) | — |
+| GET | `/zlecenia-generowania` | `NauczycielLubAdministrator` (N: własne; A: wszystkie) | — | — | FR-11, FR-13 | `?status&kursor` → `Strona<ZlecenieGenerowaniaWyjscie>` | — |
 | POST | `/zadania/{id}/przeglad` | `NauczycielLubAdministrator` (N (zlecający lub autor wg 8.4), NR, A) | Z | — | FR-14 | `PrzegladWejscie` → `200 ZadaniePelneWyjscie` | — |
 | POST | `/zadania/{id}/wycofanie` | `NauczycielLubAdministrator` (N (autor lub zlecający, `PRYWATNY`), NR, A) | Z | — | FR-14 | `{powod}` → `200 ZadaniePelneWyjscie` | — |
 | POST | `/zadania/{id}/zgloszenia-bledu` | `Nauczyciel` | — | tak | FR-14 | `ZgloszenieBleduZadaniaWejscie` → `201 ZgloszenieBleduZadaniaWyjscie` (tylko `GLOBALNY` i `OPUBLIKOWANE`; `409 ZGLOSZENIE_ZADANIA_ISTNIEJE`; 3 otwarte od różnych Nauczycieli → wiersz `wstrzymanie_w_doborze`, bez zmiany `zadanie.version`, ADR-038) | `409 ZGLOSZENIE_ZADANIA_ISTNIEJE` |
 | GET | `/zgloszenia-bledu-zadan` | `NauczycielLubAdministrator` (N (własne), NR, A) | — | — | FR-14 | `?status=OTWARTE&zadanie_id&kursor` → strona `ZgloszenieBleduZadaniaWyjscie` (sortowanie: `created_at`) | — |
 | POST | `/zgloszenia-bledu-zadan/{id}/rozpatrzenie` | `RecenzentLubAdministrator` (NR, A) | Z | — | FR-14 | `RozpatrzenieZgloszeniaWejscie` → `200 ZgloszenieBleduZadaniaWyjscie` (`UWZGLEDNIONE` wymaga `przeglad` albo `wycofanie` w tej samej transakcji; powiadomienie zgłaszającego) | — |
 | GET | `/weryfikacje` | `Nauczyciel` | — | — | FR-33 | `?dostepnosc=DOSTEPNE\|MOJE_W_TRAKCIE\|WSZYSTKIE&powod&klasa_id&typ_kolejki&kursor` → strona `WeryfikacjaNaLiscie` (sortowanie: priorytet, termin_at) | — |
-| GET | `/weryfikacje/{id}` | `Nauczyciel` | — | — | FR-33 | → `WeryfikacjaSzczegoly` + ETag | — |
-| POST | `/weryfikacje/{id}/podjecie` | `Nauczyciel` | — | — | FR-33 | — → `200 WeryfikacjaSzczegoly` + ETag / `409 WERYFIKACJA_ZAJETA` | `409 WERYFIKACJA_ZAJETA` |
-| POST | `/weryfikacje/{id}/przedluzenie` | `Nauczyciel` | — | — | FR-33 | — → `200 {zablokowana_do, version}` + ETag (wersja treści, niezmieniona przez przedłużenie, ADR-037) / `409 WERYFIKACJA_NIE_PODJETA` / `409 BLOKADA_MAKS_CZAS` | `409 BLOKADA_MAKS_CZAS`, `409 WERYFIKACJA_NIE_PODJETA` |
+| GET | `/weryfikacje/{id}` | `Nauczyciel` | — | — | FR-33 | → `WeryfikacjaSzczegoly` (z `version` — wersja treści, ADR-037 — i `rozwiazanie_version` dla korekty, ADR-069 p. 3) | — |
+| POST | `/weryfikacje/{id}/podjecie` | `Nauczyciel` | — | — | FR-33 | — → `200 WeryfikacjaSzczegoly` / `409 WERYFIKACJA_ZAJETA` | `409 WERYFIKACJA_ZAJETA` |
+| POST | `/weryfikacje/{id}/przedluzenie` | `Nauczyciel` | — | — | FR-33 | — → `200 PrzedluzenieWyjscie {zablokowana_do, version}` (wersja treści, niezmieniona przez przedłużenie, ADR-037) / `409 WERYFIKACJA_NIE_PODJETA` / `409 BLOKADA_MAKS_CZAS` | `409 BLOKADA_MAKS_CZAS`, `409 WERYFIKACJA_NIE_PODJETA` |
 | PUT | `/weryfikacje/{id}/szkic` | `Nauczyciel` | — | — | FR-33 | `SzkicRozstrzygnieciaWejscie` → `204` (tylko właściciel blokady) | — |
 | POST | `/weryfikacje/{id}/zwolnienie` | `Nauczyciel` | — | — | FR-33 | — → `204` (szkic zachowany) | — |
 | POST | `/weryfikacje/{id}/rozstrzygniecie` | `Nauczyciel` | W | — | FR-34 | `RozstrzygniecieWejscie` → `200 OcenaWyjscie` / `412 KONFLIKT_WERSJI` tylko po zmianie treści (ciało: aktualny zasób + `zmiany_tresci`, 8.3) / `409 KONTO_UCZNIA_NIEAKTYWNE` (karencja, C3-08) | `409 WERYFIKACJA_NIE_PODJETA`, `409 OCENA_ZMIENIONA`, `409 KONTO_UCZNIA_NIEAKTYWNE`, `412 KONFLIKT_WERSJI` (`szczegoly.zmiany_tresci`) |
-| GET | `/powiadomienia` | `Zalogowany` | — | — | FR-24, FR-33 | `?nieprzeczytane=true&kursor` → strona `PowiadomienieWyjscie` (sortowanie `created_at DESC, id`) | — |
-| POST | `/powiadomienia/{id}/przeczytanie` | `Zalogowany` | — | — | — | → `204` | — |
-| POST | `/admin/arkusze-cke/importy` | `Administrator` | — | tak | FR-35 | multipart ZIP (`ArkuszImportV1`) → `202 {import_id}` | — |
-| GET | `/admin/arkusze-cke/importy/{id}` | `Administrator` | — | — | FR-35 | → `{status, raport}` | — |
-| PUT | `/admin/zadania/{id}/diagnostyczne` | `Administrator` | Z | — | FR-03 | `{diagnostyczne: boolean}`, `?wymus=true` → `200` (tylko `ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`; pula 9.1; `409 PULA_DIAGNOSTYCZNA_ZA_MALA`) | `409 PULA_DIAGNOSTYCZNA_ZA_MALA` |
+| GET | `/powiadomienia` | `Zalogowany` | — | — | FR-24, FR-33 | `?nieprzeczytane=true&kursor` → `Strona<PowiadomienieWyjscie>` (własne) (sortowanie `created_at DESC, id`) | — |
+| POST | `/powiadomienia/{id}/przeczytanie` | `Zalogowany` (właściciel) | — | — | FR-24, FR-33 | → `204` (powiadomienie innego użytkownika → `404`) | — |
+| POST | `/admin/arkusze-cke/importy` | `Administrator` | — | tak | FR-35 | multipart `[AsParameters] ImportArkuszaWejscie` (plik `plik`, ZIP `ArkuszImportV1`) → `202 ImportPrzyjety` | — |
+| GET | `/admin/arkusze-cke/importy/{id}` | `Administrator` | — | — | FR-35 | → `ImportArkuszaWyjscie` | — |
+| PUT | `/admin/zadania/{id}/diagnostyczne` | `Administrator` | Z | — | FR-03, FR-36 | `{diagnostyczne: boolean}`, `?wymus=true` → `200` (tylko `ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`; pula 9.1; `409 PULA_DIAGNOSTYCZNA_ZA_MALA`) | `409 PULA_DIAGNOSTYCZNA_ZA_MALA` |
+| PUT | `/admin/zadania/{id}/otagowanie` | `Administrator` | Z | — | FR-36 | `OtagowanieZadaniaWejscie {dzial_id, umiejetnosci, poziom_trudnosci_nominalny}` → `200 ZadaniePelneWyjscie` (nowa wersja Zadania, ADR-012; rodzaj niezmienny; ADR-071 p. 6) | `422 WALIDACJA` (`UMIEJETNOSC_GLOWNA_POZA_DZIALEM`) |
 | GET | `/admin/pula-diagnostyczna` | `Administrator` | — | — | FR-03 | → `[{dzial_id, poziom_matury, poziom_trudnosci_nominalny, liczba}]` (G-5) | — |
-| GET | `/admin/uzytkownicy` | `Administrator` | — | — | — | `?rola&status&kursor` → strona | — |
-| PATCH | `/admin/uzytkownicy/{id}` | `Administrator` | U | — | — | `{status?, weryfikator_globalny?, recenzent_tresci?, deklarowane_minuty_weryfikacji?}` → `200` / `422 LIMIT_OBCIAZENIA_WERYFIKATORA` (A-14) | `422 LIMIT_OBCIAZENIA_WERYFIKATORA` |
+| GET | `/admin/uzytkownicy` | `Administrator` | — | — | FR-01, FR-30 | `?rola&status&kursor` → `Strona<UzytkownikNaLiscie>` (zatwierdzanie kont Nauczycieli) | — |
+| POST | `/admin/uzytkownicy` | `Administrator` | — | tak | FR-01 | `UtworzenieAdministratoraWejscie` → `201 UzytkownikNaLiscie` (konto Administratora z hasłem jednorazowym e-mailem; audyt `ADMINISTRATOR_UTWORZONY`; ADR-071 p. 4) | `409 EMAIL_ZAJETY` |
+| PATCH | `/admin/uzytkownicy/{id}` | `Administrator` | U | — | FR-01, FR-14, FR-33 | `ZmianaUzytkownikaWejscie` (JSON Merge Patch; `null` → `422`) → `200 UzytkownikNaLiscie` / `422 LIMIT_OBCIAZENIA_WERYFIKATORA` (A-14) | `422 LIMIT_OBCIAZENIA_WERYFIKATORA` |
 | POST | `/admin/uzytkownicy/{id}/przywrocenie` | `Administrator` | U | — | NFR-09 | — → `200` (konto dowolnej roli w stanie `USUWANE`, < 30 dni; Zdarzenie RODO `ANULOWANIE_USUNIECIA`; wznowienie procesów wg tabel przywrócenia 16.4 — osobno dla Ucznia oraz dla Nauczyciela i Administratora, C3-08; `409 KONTO_NIE_DO_PRZYWROCENIA`) | `409 KONTO_NIE_DO_PRZYWROCENIA` |
 | POST | `/admin/uzytkownicy/{id}/usuniecie` | `Administrator` | U | — | NFR-09 | `{powod}` → `202` (konto Nauczyciela lub innego Administratora; okres karencji 30 dni, ADR-044; `409 OSTATNI_ADMINISTRATOR`) | `409 OSTATNI_ADMINISTRATOR` |
+| GET | `/admin/klasy` | `Administrator` | — | — | FR-30, NFR-09 | `?nauczyciel_id&zarchiwizowane&kursor` → `Strona<KlasaAdministratora>` (audyt `ODCZYT_ADMINISTRACYJNY`; ADR-071 p. 5) | — |
+| GET | `/admin/klasy/{id}` | `Administrator` | — | — | FR-30, NFR-09 | → `KlasaAdministratora` (z `version` dla `If-Match: K` Przekazania; bez listy członków; audyt) | — |
 | POST | `/admin/klasy/{id}/przekazanie` | `Administrator` | K | — | FR-30 | `{nauczyciel_id}` → `200 KlasaWyjscie` (nowy Nauczyciel prowadzący: Klasa, jej otwarte Przypisania, Zadania `PRYWATNY` użyte w tych Przypisaniach, Weryfikacje `KLASA` z `nauczyciel_docelowy_id` = poprzedni; ADR-044) | — |
 | GET | `/admin/konfiguracje-modeli` | `Administrator` | — | — | NFR-06 | → lista | — |
 | POST | `/admin/konfiguracje-modeli` | `Administrator` | — | tak | NFR-06 | `KonfiguracjaModeluWejscie` → `201` (nieaktywna) | — |
 | POST | `/admin/konfiguracje-modeli/{id}/aktywacja` | `Administrator` | — | — | NFR-06 | — → `200` / `409 BRAK_PROGU_DLA_KONFIGURACJI` / `409 BRAK_RETENCJI_DOSTAWCY` | `409 BRAK_PROGU_DLA_KONFIGURACJI`, `409 BRAK_RETENCJI_DOSTAWCY`, `409 DOSTAWCA_NIEDOZWOLONY` |
 | POST | `/admin/konfiguracje-modeli/{id}/ewaluacja-zt1` | `Administrator` | — | — | NFR-02, NFR-04 | — → `202` (praca `EWALUUJ_ZT1`: kalibrator + `prog_pewnosci` `EWALUACJA_ZT1`, raport G-1/G-2) | — |
-| GET | `/admin/progi-pewnosci` | `Administrator` | — | — | FR-34 | → lista z historią (z kalibratorem) | — |
+| GET | `/admin/progi-pewnosci` | `Administrator` | — | — | FR-34 | `?konfiguracja_modelu_id&rodzaj_zadania&kursor` → `Strona<ProgPewnosciWyjscie>` (od najnowszego; C8-12 p. 9) | — |
 | POST | `/admin/progi-pewnosci` | `Administrator` | — | tak | FR-34 | `{konfiguracja_modelu_id, rodzaj_zadania, wartosc, uzasadnienie}` → `201` (ręczne ustawienie, zawsze ≥ wartości wyznaczonej przez 11.5.3 i bezpiecznik; audyt) | — |
 | GET | `/admin/kalibracja` | `Administrator` | — | — | NFR-02…NFR-04 | → `MetrykiKalibracjiWyjscie` | — |
 | GET | `/admin/bezpieczniki` | `Administrator` | — | — | NFR-03 | → `StanBezpiecznikaWyjscie[]` (ADR-046) | — |
@@ -6306,7 +6334,7 @@ w TS). Identyfikator operacji OpenAPI = `WithName` według ADR-049 p. 15.
 | POST | `/admin/praca-w-tle/{id}/ponowienie` | `Administrator` | — | — | — | — → `202` | — |
 | GET | `/rozwiazania/{id}/strumien` | `Uczen` (właściciel) | — | — | FR-17, FR-24, NFR-01 | SSE: `stan`, `koniec` (`RozwiazanieWyjscie`), `ping`, `wznow`, `blad` — 12.10 | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
 | GET | `/powiadomienia/strumien` | `Zalogowany` | — | — | FR-24, FR-33 | SSE: `migawka` (`MigawkaPowiadomien`), `powiadomienie` (`PowiadomienieWyjscie`), `ping`, `wznow` — 12.10 | `429 ZA_DUZO_STRUMIENI` |
-| GET | `/zlecenia-generowania/{id}/strumien` | `NauczycielLubAdministrator` (zlecający, A) | — | — | FR-11 | SSE: `stan`, `koniec` (`ZlecenieGenerowaniaWyjscie`), `ping`, `wznow` | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
+| GET | `/zlecenia-generowania/{id}/strumien` | `NauczycielLubAdministrator` (N: zlecający; A) | — | — | FR-11 | SSE: `stan`, `koniec` (`ZlecenieGenerowaniaWyjscie`), `ping`, `wznow` | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
 | GET | `/admin/arkusze-cke/importy/{id}/strumien` | `Administrator` | — | — | FR-35 | SSE: `stan`, `koniec` (`ImportArkuszaWyjscie`), `ping`, `wznow` | `404 NIE_ZNALEZIONO`, `429 ZA_DUZO_STRUMIENI` |
 | GET | `/admin/harmonogram` | `Administrator` | — | — | — | → `PrzebiegHarmonogramuWyjscie[]` (ADR-066 p. 5) | — |
 ### 12.4 Typy DTO (rekordy C# → OpenAPI → TypeScript)
@@ -6340,7 +6368,7 @@ interface RejestracjaWejscie {
   email: string;                 // RFC 5322, ≤ 254
   haslo: string;                 // 10–128 znaków, sprawdzane z listą 100k najczęstszych haseł
   imie: string; nazwisko: string;
-  rola: "UCZEN" | "NAUCZYCIEL";
+  rola: "UCZEN" | "NAUCZYCIEL";  // RolaRejestracji (3.3, ADR-071 p. 4): ADMINISTRATOR → 422
   oswiadczenie_wieku_16: true;   // wymagane dla UCZEN
   zgoda_regulamin: true;         // regulamin zawiera informację o kolejce globalnej i pseudonimizacji (16.3)
   kod_zaproszenia?: string;      // UCZEN: wymagany, gdy LEMAT_REJESTRACJA_BEZ_KLASY = false (A-14);
@@ -6348,7 +6376,11 @@ interface RejestracjaWejscie {
 }
 interface SesjaWyjscie { access_token: string; wygasa_at: Czas; uzytkownik: { id: Uuid; rola: string; imie: string;
   flagi: { weryfikator_globalny: boolean; recenzent_tresci: boolean } } }   // flagi: wersja 3.1 (C6-14)
-interface AdresZdjeciaWyjscie { url: string; wygasa_at: Czas }   // wersja 3.1 (C6-14): podpisany URL zdjęcia, ważny 10 min
+interface RejestracjaWyjscie { status_konta: "AKTYWNE" | "OCZEKUJE_NA_ZATWIERDZENIE"; sesja: SesjaWyjscie | null }   // 3.3 (ADR-072 p. 4)
+interface ZmianaUczniaWejscie {   // PATCH /uczniowie/ja — JSON Merge Patch (3.3, ADR-072): brak pola = bez zmiany, null = wyczyszczenie
+  poziom_matury?: PoziomMatury; termin_egzaminu?: string | null; wybrany_dzial_id?: number | null; zgoda_na_trening?: boolean;
+}
+interface AdresZdjeciaWyjscie { url: string; wygasa_at: Czas }   // wersja 3.1 (C6-14): podpisany URL zdjęcia, ważny 10 min; 410 ZASOB_USUNIETY po retencji
 
 interface UczenWyjscie {
   id: Uuid; email: string; imie: string; nazwisko: string;
@@ -6402,6 +6434,11 @@ interface ZadaniePelneWyjscie extends ZadanieUczniaWyjscie {
   wstrzymane_w_doborze: boolean;        // wyliczane: istnieje wiersz wstrzymanie_w_doborze (ADR-038, C3-09)
   liczba_otwartych_zgloszen_bledu: number;
   uprawnienia: { przeglad: boolean; wycofanie: boolean; zgloszenie_bledu: boolean };   // dla wywołującego (ADR-028, ADR-038)
+  diagnostyczne: boolean;               // 3.3 (C8-07 p. 2): flaga puli Testu diagnostycznego
+}
+interface OtagowanieZadaniaWejscie {   // PUT /admin/zadania/{id}/otagowanie (3.3, ADR-071 p. 6) → nowa wersja Zadania
+  dzial_id: number; umiejetnosci: { id: number; nazwa: string; glowna: boolean }[];   // 1..5, dokładnie jedna glowna w dzial_id
+  poziom_trudnosci_nominalny: number;   // 1–5
 }
 
 interface ZgloszenieBleduZadaniaWejscie { opis: string; zadanie_wersja_id: Uuid }   // opis 10–1000 znaków
@@ -6410,6 +6447,7 @@ interface ZgloszenieBleduZadaniaWyjscie {
   status: "OTWARTE" | "UWZGLEDNIONE" | "ODRZUCONE";
   nauczyciel: { id: Uuid; imie: string; nazwisko: string } | null;   // null po usunięciu konta
   komentarz_rozpatrzenia: string | null; created_at: Czas; rozpatrzono_at: Czas | null;
+  zadanie_version: number;              // 3.3: If-Match Z rozpatrzenia (ADR-069 p. 3)
 }
 interface RozpatrzenieZgloszeniaWejscie {
   decyzja: "UWZGLEDNIONE" | "ODRZUCONE";
@@ -6448,14 +6486,14 @@ interface OdpowiedzWyjscie {
               poprawna: OdpowiedzWejscie["wybor"] } | null;                                  // null przed terminem Przypisania
 }
 
-// multipart/form-data
+// multipart/form-data — schemat OpenAPI z TransformatorFormularzy (3.3, ADR-067 p. 2); nazwy pól formularza = nazwy niżej
 interface RozwiazanieWejscie {
   zadanie_wersja_id: Uuid;
-  element_sciezki_id?: Uuid; przypisanie_id?: Uuid;           // dokładnie jedno wymagane (ADR-032)
-  zdjecia: File[];                                            // 1..5, każde ≤ 10 MB, JPEG/PNG/HEIC/WEBP
+  element_sciezki_id?: Uuid | null; przypisanie_id?: Uuid | null;   // dokładnie jedno wymagane (ADR-032), brak → 422 DOKLADNIE_JEDEN_KONTEKST
+  zdjecia: Blob[];                                            // 1..5, każde ≤ 10 MB, JPEG/PNG/HEIC/WEBP; plik pod inną nazwą → 422
 }
 
-interface NiepewnyFragment { zdjecie: number; ramka: [number, number, number, number]; odczyt: string; alternatywy: string[] }
+interface NiepewnyFragment { zdjecie: number; ramka: number[]; odczyt: string; alternatywy: string[] }   // ramka: 4 liczby [x, y, szer, wys] (minItems = maxItems = 4)
 interface KrokTranskrypcji {
   nr: number; tekst: string; latex: string; pewnosc_odczytu: number | null;   // null: krok zmieniony przez Ucznia
   niepewne_fragmenty: NiepewnyFragment[]; zmieniony_przez_ucznia: boolean;
@@ -6471,11 +6509,12 @@ interface StanBezpiecznikaWyjscie {     // ADR-046
   dolna_granica_bledu: number | null; gorna_granica_bledu: number | null;
   ostatnie_wyzwolenie_at: Czas | null; wyjscie_z_blokady_at: Czas | null;   // TRAFNOSC: aktywny = Blokada obniżania progu (C4-02)
   dezaktywowano_at: Czas | null; uzasadnienie_dezaktywacji: string | null;   // nazwy od 2.4 (C4-04)
-  prog_aktywny: number | null;                                              // wartość aktywnego progu pary (1.000 = tryb pełnej weryfikacji)
+  prog_pewnosci_aktywny: number | null;                                              // wartość aktywnego progu pary (1.000 = tryb pełnej weryfikacji)
   version: number;                                                          // 3.2: ETag `B` dezaktywacji (C-44)
 }
 interface DezaktywacjaBezpiecznikaWejscie {   // POST /admin/bezpieczniki/dezaktywacja (C4-04)
-  konfiguracja_modelu_id: Uuid; rodzaj_zadania: "OTWARTE_OBLICZENIOWE"; typ: "TRAFNOSC" | "POPRAWKI";
+  konfiguracja_modelu_id: Uuid; rodzaj_zadania: RodzajZadania;   // 3.3 (C8-12 p. 7): typ jak w C#; walidator: tylko OTWARTE_OBLICZENIOWE, inne → 422
+  typ: "TRAFNOSC" | "POPRAWKI";
   uzasadnienie: string;                       // 10..1000 znaków, zapis w stan_bezpiecznika.uzasadnienie_dezaktywacji i dziennik_audytu
 }
 interface ZakresPoprawek { zmienione: number; wstawione: number; kroki_agenta: number; odsetek_znakow: number;
@@ -6525,6 +6564,8 @@ interface RozwiazanieWyjscie {
   weryfikacja: WeryfikacjaUcznia | null;                  // otwarta lub ostatnia
   version: number; created_at: Czas; updated_at: Czas;
   nastepne_odpytanie_ms: number | null;
+  szkic_transkrypcji: { transkrypcja_id: Uuid; numer_zapisu: number;   // 3.3 (ADR-073): tylko rola U; N → null
+                        kroki: { nr_kroku_agenta: number | null; tekst: string; latex: string }[]; zapisano_at: Czas } | null;
 }
 
 interface ZgloszenieBleduOdczytuWejscie { kroki: number[]; opis?: string }   // 1..5 kroków, opis ≤ 500
@@ -6554,7 +6595,8 @@ interface WeryfikacjaSzczegoly extends WeryfikacjaNaLiscie {   // w C# pola list
   opinia_pomocnicza: object | null;                       // 10.4.5
   zgloszenie: { kroki: number[]; opis: string | null; zgloszono_at: Czas } | null;
   szkic: Partial<RozstrzygniecieWejscie> | null;          // tylko szkic wywołującego
-  version: number;                                        // wersja treści (ADR-037) = ETag
+  version: number;                                        // wersja treści (ADR-037) = If-Match W
+  rozwiazanie_version: number;                            // 3.3: If-Match R korekty (ADR-069 p. 3)
 }
 interface RozstrzygniecieWejscie {
   wariant: number;
@@ -6584,7 +6626,8 @@ interface PrzegladWejscie {
 interface ZestawZadanWyjscie { id: Uuid; nazwa: string; zadania: { kolejnosc: number; zadanie_id: Uuid; status: string }[];
                                liczba_przypisan: number; version: number }
 interface PrzypisanieWyjscie { id: Uuid; zestaw: { id: Uuid; nazwa: string }; klasa: { id: Uuid; nazwa: string } | null;
-                               termin: Czas; liczba_uczniow: number; liczba_ukonczonych: number; created_at: Czas }
+                               termin: Czas; liczba_uczniow: number; liczba_ukonczonych: number; created_at: Czas;
+                               wycofano_at: Czas | null; powod_wycofania: string | null; version: number }   // 3.3 (ADR-074)
 interface PostepPrzypisaniaWyjscie {
   przypisanie_id: Uuid; termin: Czas;
   uczniowie: { uczen_id: Uuid; imie: string; nazwisko: string;
@@ -6607,11 +6650,11 @@ interface PostepyKlasyWyjscie {
 
 interface MetrykiKalibracjiWyjscie {
   pozycje: { konfiguracja_modelu_id: Uuid; rola: string; rodzaj_zadania: RodzajZadania;
-             prog: number; tryb_pelnej_weryfikacji: boolean; ece: number | null; liczba_probek_90d: number;
+             prog_pewnosci: number; tryb_pelnej_weryfikacji: boolean; ece: number | null; liczba_probek_90d: number;
              odsetek_automatycznych_30d: number; blad_automatycznych_30d: number | null;
              gorna_granica_bledu_30d: number | null; zgodnosc_z_nauczycielem_30d: number | null;
              wykonanie_kontroli_30d: number | null; bledy_odczytu_niewykryte_30d: number | null;
-             wykres_niezawodnosci: { koszyk: [number, number]; srednia_pewnosc: number; trafnosc: number; n: number }[] }[];
+             wykres_niezawodnosci: { koszyk: number[]; srednia_pewnosc: number; trafnosc: number; n: number }[] }[];   // koszyk: [od, do]
 }
 
 interface ObciazenieWeryfikacjiWyjscie {
@@ -6645,6 +6688,13 @@ Reguły są walidatorami FluentValidation 12 (`<Rekord>Walidator`, filtr `FiltrW
 | `…/rozstrzygniecie`, `…/korekty` | Konto Ucznia `AKTYWNE` (`409 KONTO_UCZNIA_NIEAKTYWNE`, C3-08); blokada należy do wywołującego i nie wygasła (rozstrzygnięcie); kryteria kompletne dla `wariant`; `0 ≤ punkty ≤ punkty_max`; `typ_bledu` null ⇔ `pierwszy_bledny_krok` null i `brakujacy_krok = false`; reguły Wskazówki 9.6.2; Ocena weryfikowana nadal aktualna; niepusty `komentarz`, gdy zdjęcia Rozwiązania są usunięte, a powody zawierają `PODEJRZENIE_BLEDU_ODCZYTU` lub `ZGLOSZENIE_BLEDU_ODCZYTU` (11.4.3 p. 3) | `409 WERYFIKACJA_NIE_PODJETA` / `422` / `409 OCENA_ZMIENIONA` |
 | `POST /przypisania` | Dokładnie jedno z `klasa_id` / `uczen_ids`; Uczniowie należą do niezarchiwizowanych Klas Nauczyciela; `termin > now()`; Zadania Zestawu `OPUBLIKOWANE` i (`GLOBALNY` lub `PRYWATNY` autorstwa Nauczyciela); Zadania dodawane do Zestawu (`POST`/`PUT /zestawy-zadan`) nie mają wiersza `wstrzymanie_w_doborze` (ADR-038) | `422` / `403` |
 | `POST /zadania/{id}/przeglad` | Uprawnienie wg 8.4; `zasieg_po = GLOBALNY` tylko NR/A | `403 BRAK_UPRAWNIEN` |
+| `GET /zadania/{id}` (rola U) | Dokładnie jeden z `element_sciezki_id`, `przypisanie_id`, `rozwiazanie_id`; kontekst należy do Ucznia i dotyczy Zadania `{id}` (ADR-071 p. 3) | `422 WALIDACJA` / `404` |
+| `PATCH /uczniowie/ja`, `PATCH /admin/uzytkownicy/{id}`, `PATCH /przypisania/{id}` | JSON Merge Patch; `null` dozwolone tylko dla `termin_egzaminu` i `wybrany_dzial_id`; `wybrany_dzial_id` — Dział poziomu matury Ucznia (ADR-072) | `422 WALIDACJA` (`NIE_MOZNA_WYCZYSCIC`) |
+| `PATCH /przypisania/{id}`, `POST …/wycofanie` | Autor; Przypisanie niewycofane; obecny termin w przyszłości (zmiana terminu); nowy termin ≥ now() + 1 h (ADR-074) | `404` / `409 PRZYPISANIE_WYCOFANE` / `409 PRZYPISANIE_PO_TERMINIE` / `422` |
+| `POST /rozwiazania`, `POST …/zdjecia` | Pliki wyłącznie pod nazwą `zdjecia` (ADR-067 p. 1) | `422 WALIDACJA` (`PLIK_POZA_POLEM_ZDJECIA`) |
+| `PUT …/transkrypcja/szkic` | Stan `TRANSKRYPCJA_GOTOWA`; `transkrypcja_id` = najnowsza wersja; reguły `TranskrypcjaWejscie` i limity twarde ADR-036 (ADR-073 p. 1) | `409` / `422` |
+| `PUT /admin/zadania/{id}/otagowanie` | 1–5 Umiejętności, dokładnie jedna `glowna` i należąca do `dzial_id` (`trg_umiejetnosc_glowna_w_dziale`); poziom 1–5 | `422 WALIDACJA` |
+| `POST /admin/bezpieczniki/dezaktywacja` | `rodzaj_zadania = OTWARTE_OBLICZENIOWE` (C8-12 p. 7) | `422 WALIDACJA` |
 
 ### 12.6 Przykład: odpowiedź `GET /rozwiazania/{id}` z Oceną wstępną wstrzymaną (rola U)
 
@@ -6660,11 +6710,13 @@ Reguły są walidatorami FluentValidation 12 (`<Rekord>Walidator`, filtr `FiltrW
     "zgodnosc_z_zadaniem": 0.94,
     "kroki": [
       { "nr": 1, "tekst": "", "latex": "p=\\frac{-8}{-4}=2", "pewnosc_odczytu": 0.98,
-        "niepewne_fragmenty": [], "zmieniony_przez_ucznia": false, "wymaga_sprawdzenia": false },
+        "niepewne_fragmenty": [], "zmieniony_przez_ucznia": false, "nr_kroku_agenta": null, "wymaga_sprawdzenia": false,
+        "podejrzenie_danych_osobowych": false, "tylko_dane_osobowe": false, "zastapienia_danych_osobowych": [] },
       { "nr": 2, "tekst": "wartość największa", "latex": "f(2)=-8+16-3=6", "pewnosc_odczytu": 0.74,
         "niepewne_fragmenty": [ { "zdjecie": 1, "ramka": [512, 940, 40, 52], "odczyt": "6", "alternatywy": ["5"] } ],
-        "zmieniony_przez_ucznia": false, "wymaga_sprawdzenia": true } ],
-    "created_at": "2026-10-31T18:01:40Z" },
+        "zmieniony_przez_ucznia": false, "nr_kroku_agenta": null, "wymaga_sprawdzenia": true,
+        "podejrzenie_danych_osobowych": false, "tylko_dane_osobowe": false, "zastapienia_danych_osobowych": [] } ],
+    "created_at": "2026-10-31T18:01:40Z", "zakres_poprawek": null, "konflikt_filtra": false, "zgodnosc_poprawek": null },
   "ocena": { "id": "f1a2…", "wersja": 1, "status": "WSTEPNA", "zrodlo": "AUTOMATYCZNA",
     "widocznosc_dla_ucznia": "WSTRZYMANA_BLAD_ODCZYTU",
     "punkty": null, "punkty_max": 2, "wariant": 1,
@@ -6681,9 +6733,14 @@ Reguły są walidatorami FluentValidation 12 (`<Rekord>Walidator`, filtr `FiltrW
   "weryfikacja": { "status": "OCZEKUJE", "powody": ["PODEJRZENIE_BLEDU_ODCZYTU"],
                    "termin_at": "2026-11-05T07:00:00Z", "opozniona": false },
   "version": 7, "created_at": "2026-10-31T18:01:02Z", "updated_at": "2026-10-31T18:01:52Z",
-  "nastepne_odpytanie_ms": null
+  "nastepne_odpytanie_ms": null,
+  "szkic_transkrypcji": null
 }
 ```
+
+Przykład zawiera wszystkie pola wymagane rekordów (`null` jawnie, 12.1);
+`nr_kroku_agenta` jest `null` w krokach Transkrypcji agenta (pole dotyczy
+Poprawek), a `zgodnosc_poprawek` dla roli U jest zawsze `null` (api.md 3).
 
 `termin_at` (C3-09): Ocena powstała w sobotę 2026-10-31 o 19:01:52 czasu
 warszawskiego (CET, UTC+1), więc `dodaj_dni_robocze` zaczyna liczenie od
@@ -6700,33 +6757,69 @@ prawdopodobieństwami.
 
 | Zakres | Limit | Mechanizm |
 |---|---|---|
-| Nieudane logowania | 5 / 15 min na e-mail, 20 / 15 min na IP | zapytanie do `proba_logowania` |
+| Nieudane logowania | 5 / 15 min na e-mail, 100 / 15 min na IP (udane nie są liczone; klasa za NAT, ADR-070 p. 2) | zapytanie do `proba_logowania` |
 | `POST /rozwiazania` | 30 / h na Ucznia | `count(*)` po `ix_rozwiazanie_uczen` w transakcji przypadku użycia; `Retry-After` = czas do wypadnięcia najstarszego z okna |
 | `POST …/zgloszenie-bledu-odczytu` | 5 / 30 dni na Ucznia, 1 na Rozwiązanie | `count(*)` po `weryfikacja.zgloszenie` |
 | `POST /zadania/generowanie` | 20 / dobę na Nauczyciela | `count(*)` po `zlecenie_generowania` |
 | `POST /zadania/{id}/zgloszenia-bledu` | 10 / dobę na Nauczyciela | `count(*)` po `zgloszenie_bledu_zadania` |
 | Generowanie systemowe (`UZUPELNIJ_PULE` i `GENERUJ_SZKIC_WKLADKI`) | 200 zleceń i szkiców / dobę i 150 PLN / dobę (`Σ koszt_pln` zleceń `systemowe` + `Σ koszt_generowania_pln` Wkładek `wygenerowana_automatycznie`), w tym ≤ 20 szkiców Wkładek | sprawdzenie w handlerze `UZUPELNIJ_PULE` (13.3); po przekroczeniu praca przesunięta na 00:00 UTC następnego dnia, alert przy 80% |
 | `POST /auth/reset-hasla` | 3 / h na e-mail | `count(*)` po `praca_w_tle` typu `WYSLIJ_EMAIL` |
-| Globalnie na IP | 600 żądań / min | Caddy `rate_limit` |
+| Globalnie na IP | 12 000 żądań / min (3 klasy za jednym NAT w trybie odpytywania: 7 200/min × 1,5, ADR-070 p. 3) | Caddy `rate_limit` |
+| `PUT …/transkrypcja` | ≤ 20 wersji `POPRAWKA_UCZNIA` na przesłanie (ADR-073 p. 3) | `count(*)` po `transkrypcja` w transakcji przypadku użycia; `409 LIMIT_WERSJI_TRANSKRYPCJI` |
 
 
-Limity techniczne repliki (ADR-062 p. 6) są realizowane przez
-`AddRateLimiter` (polityki `NaUzytkownika`, `Logowanie`) z odpowiedzią
-ProblemDetails `429 LIMIT_PRZEKROCZONY` (`szczegoly.zakres = "TECHNICZNY"`).
+Limity techniczne repliki (ADR-070 p. 1, zastępuje ADR-062 p. 6) są
+realizowane przez `AddRateLimiter` z odpowiedzią ProblemDetails `429
+LIMIT_PRZEKROCZONY` (`szczegoly.zakres = "TECHNICZNY"`):
+
+| Polityka | Endpointy | Klucz | Limit |
+|---|---|---|---|
+| `NaUzytkownika` | wszystkie z polityką inną niż `Anonimowy` | `sub` z JWT | token bucket 20/s, pojemność 40 |
+| `Logowanie` | `POST /auth/logowanie` | (IP, e-mail po `lower()`/`trim()`) | 10 / min |
+| `Odswiezenie` | `POST /auth/odswiezenie` | rodzina refresh tokenu (cookie `lemat_rt`) | 30 / min |
+| `Anonimowe` | `POST /auth/rejestracja`, `/auth/reset-hasla*` | IP | 300 / min |
+
+Klient przy nieudanym odświeżeniu wylogowuje wyłącznie po `401`; `429`,
+`5xx` i błąd sieci są ponawiane bez wylogowania (ADR-070 p. 4).
 
 ### 12.8 Uprawnienia na poziomie obiektów
 
-| Zasób | Uczeń | Nauczyciel | Administrator |
-|---|---|---|---|
-| Profil ucznia, Rozwiązania, Oceny | tylko własne | Uczniowie jego Klas; Rozwiązania z Weryfikacji, które może podjąć (obcy weryfikator globalny: tylko to Rozwiązanie, z pseudonimem, 11.4.4) | wszystkie (odczyt, wpis w `dziennik_audytu`) |
-| Zdjęcia Rozwiązania | własne | Uczniowie jego Klas i Nauczyciel docelowy: oryginał; obcy weryfikator globalny: wyłącznie wersja maskowana | brak dostępu (zasada minimalizacji) |
-| Weryfikacje | własne (`WeryfikacjaUcznia` w Rozwiązaniu) | `nauczyciel_docelowy_id = ja`, `klasa_id` jego Klasy, lub (`typ_kolejki = GLOBALNA` i `weryfikator_globalny`) | odczyt |
-| Klasy, Przypisania, Zestawy zadań | swoje członkostwa i Przypisania | własne | odczyt |
-| Zadania (pełne) | brak | `GLOBALNY` + własne `PRYWATNY` + `DO_PRZEGLADU` ze swoich zleceń; NR: wszystkie | wszystkie |
-| Przegląd i wycofanie Zadań | brak | wg 8.4 (ADR-028, ADR-038) | wszystkie |
-| Zgłoszenia błędu w Zadaniu | brak | tworzenie dla Zadań `GLOBALNY`; odczyt własnych; NR: odczyt i rozpatrzenie wszystkich | wszystkie |
-| Wkładki `DO_PRZEGLADU` | brak | NR | wszystkie |
-| Konfiguracja modeli, progi, importy, obciążenie | brak | brak | pełny |
+Macierz jest kompletna dla ścieżek z `{id}` katalogu 12.3 (ADR-071 p. 1;
+test `MacierzUprawnienPokrywaKatalog`). „—” = brak dostępu (polityka albo
+warunek obiektowy → `404`/`403` wg 12.2). Administrator nie czyta treści
+pracy Uczniów przez endpointy U/N (ADR-071 p. 5); NR = Nauczyciel z flagą
+`recenzent_tresci`, WG = z flagą `weryfikator_globalny`.
+
+| Zasób | Ścieżki | Uczeń | Nauczyciel | Administrator |
+|---|---|---|---|---|
+| Konto Ucznia, eksport, członkostwa | `/uczniowie/ja*`, `/uczniowie/ja/klasy/{id}` | własne; `{id}` = Klasa z aktywnym członkostwem | — | `/admin/uzytkownicy/{id}*` (status, flagi, przywrócenie, usunięcie; audyt) |
+| Profil ucznia | `/uczniowie/ja/profil`, `/uczniowie/{id}/profil` | `ja` | `{id}` z aktywnym członkostwem w jego Klasie | — (dane zagregowane) |
+| Test diagnostyczny i pozycje | `/testy-diagnostyczne/{id}*`, `…/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` | własny Test; pozycja musi należeć do Testu `{id}` | — | — |
+| Ścieżka nauki, elementy | `/elementy-sciezki/{id}/*` | własne elementy | — | — |
+| Wkładki teoretyczne | `/wkladki-teoretyczne/{id}` | `OPUBLIKOWANA` | `OPUBLIKOWANA`; NR: wszystkie, edycja `DO_PRZEGLADU` | wszystkie, edycja |
+| Zadania (wersja Ucznia) | `GET /zadania/{id}?…` | wyłącznie w kontekście własnego elementu, Przypisania albo Rozwiązania (ADR-071 p. 3) | — | — |
+| Zadania (pełne), przegląd, wycofanie | `/zadania/{id}`, `/zadania/{id}/przeglad`, `/zadania/{id}/wycofanie` | — | `GLOBALNY` + własne `PRYWATNY` + `DO_PRZEGLADU` ze swoich zleceń; przegląd i wycofanie wg 8.4 (ADR-028, ADR-038); NR: wszystkie | wszystkie |
+| Otagowanie, flaga diagnostyczne | `/admin/zadania/{id}/*` | — | — | wszystkie |
+| Odpowiedzi | `/zadania/{id}/odpowiedzi` | własne, kontekst wg 12.5 | — | — |
+| Rozwiązania, Transkrypcja, szkic, Ocena | `/rozwiazania/{id}`, `…/transkrypcja*`, `…/zatwierdzenie`, `…/zdjecia`, `…/ponowienie-rozpoznania`, `…/porzucenie`, `…/zgloszenie-bledu-odczytu`, `…/ocena*`, `…/strumien` | własne (mutacje i strumień tylko właściciel) | odczyt: Uczniowie jego Klas (aktywne członkostwo w chwili próby albo Weryfikacja `KLASA` z `nauczyciel_docelowy_id = ja`), Rozwiązanie z Weryfikacji, którą może podjąć (WG obcy: tylko to Rozwiązanie, pseudonim, 11.4.4); szkic Transkrypcji — nigdy | — |
+| Zdjęcia Rozwiązania | `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | własne; zdjęcie należy do Rozwiązania `{id}` | jak Rozwiązania; oryginał — Uczniowie jego Klas i Nauczyciel docelowy; WG obcy — wyłącznie wersja maskowana | — |
+| Korekta Oceny | `/rozwiazania/{id}/korekty` | — | Uczeń jego Klasy albo Rozwiązanie z Weryfikacją rozstrzygniętą przez niego | — |
+| Weryfikacje | `/weryfikacje/{id}*` | — (status w `WeryfikacjaUcznia`) | `nauczyciel_docelowy_id = ja`, `klasa_id` jego Klasy, albo `typ_kolejki = GLOBALNA` i WG; mutacje — właściciel blokady | — (`/admin/obciazenie-weryfikacji`) |
+| Klasy, członkowie, postępy | `/klasy/{id}*`, `/klasy/{id}/uczniowie/{uczen_id}*` | dołączenie kodem; opuszczenie | własne Klasy; `uczen_id` z aktywnym członkostwem w Klasie `{id}` | `/admin/klasy/{id}` (odczyt z audytem), Przekazanie |
+| Zestawy zadań | `/zestawy-zadan/{id}` | — | własne | — |
+| Przypisania, postęp | `/przypisania/{id}*` | przez `/uczniowie/ja/przypisania` (adresat) | autor | — |
+| Zgłoszenia błędu w Zadaniu | `/zadania/{id}/zgloszenia-bledu`, `/zgloszenia-bledu-zadan/{id}/rozpatrzenie` | — | tworzenie dla `GLOBALNY` + `OPUBLIKOWANE`; odczyt własnych; NR: odczyt i rozpatrzenie wszystkich | wszystkie |
+| Zlecenia generowania | `/zlecenia-generowania/{id}`, `…/strumien` | — | zlecający (ta sama reguła dla `GET` i strumienia) | wszystkie |
+| Powiadomienia | `/powiadomienia/{id}/przeczytanie`, `/powiadomienia/strumien` | właściciel | właściciel | właściciel |
+| Importy Arkuszy CKE | `/admin/arkusze-cke/importy/{id}*` | — | — | wszystkie |
+| Konfiguracje modeli, progi, bezpieczniki, prace w tle | `/admin/konfiguracje-modeli/{id}/*`, `/admin/praca-w-tle/{id}/ponowienie` | — | — | pełny |
+
+**Identyfikatory zagnieżdżone (ADR-071 p. 2):** podzasób jest czytany
+jednym zapytaniem z warunkiem przynależności do rodzica i widoczności
+rodzica dla `Aktor`; niespełnienie dowolnej części → `404 NIE_ZNALEZIONO`.
+Test `KazdyEndpointZIdMaTestIdor` sprawdza każdą ścieżkę z `{id}` (zasób
+innego użytkownika tej samej roli → `404`; podzasób innego rodzica →
+`404`).
 
 Realizacja (.NET): `Aktor` (rekord z `UzytkownikId`, `RolaUzytkownika`, flagami i `WygasaAt`, wiązany z JWT przez `IBindableFromHttpContext<Aktor>`) jest parametrem każdego przypadku użycia; każde zapytanie repozytorium przyjmuje `Aktor` i dokłada
 warunek widoczności w SQL (nie filtrowanie po pobraniu). Brak widoczności →
@@ -6782,20 +6875,25 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
   `COMMIT` (ADR-056) → `NasluchPowiadomien` (jedno połączenie `LISTEN` na
   replikę) → `KoncentratorZdarzen` (kanał 16 na subskrybenta) → odczyt
   stanu z bazy z uprawnieniami `Aktor` → `SseItem<T>`.
-- **Wznowienie:** strumienie stanu porównują skrót z `Last-Event-ID` i
-  zawsze wysyłają bieżący stan, gdy się różni; strumień powiadomień zaczyna
-  każde połączenie migawką nieprzeczytanych i nie używa `Last-Event-ID`
-  (C7-11). Klient scala po `id`.
+- **Wznowienie (3.3, C8-02):** strumień stanu wysyła `stan` jako pierwsze
+  zdarzenie **każdego** połączenia, niezależnie od `Last-Event-ID`; skrót
+  porównuje wyłącznie dla kolejnych zdarzeń tego samego połączenia
+  (ADR-064 uzup. 3.3 p. 1). Strumień powiadomień zaczyna każde połączenie
+  migawką ≤ 100 nieprzeczytanych z `nastepny_kursor` do dociągnięcia
+  pozostałych (C7-11, C8-12 p. 10). Klient scala po `id`.
 - **Heartbeat:** `ping` co 15 s; klient bez zdarzenia przez 45 s łączy się
   ponownie. Pierwsze zdarzenie ma `retry: 3000`.
 - **Autoryzacja:** `Authorization: Bearer` (fetch, nie `EventSource`);
   uprawnienie sprawdzane przy otwarciu i przy każdym odczycie stanu; błąd po
   rozpoczęciu → `blad` z ProblemDetails.
 - **Ponowne łączenie i ścieżka zapasowa:** odstęp 1 … 30 s z rozrzutem,
-  `wznow` → natychmiast, `401` → odświeżenie tokenu i jedno ponowienie,
-  `403`/`404` → koniec, `429`/2 porażki w 10 s/brak pierwszego zdarzenia w
-  5 s → odpytywanie `GET` co `nastepne_odpytanie_ms` (powiadomienia co 30 s)
-  i próba SSE co 60 s (api.md 6.3).
+  `wznow` → natychmiast, `401` → odświeżenie tokenu i jedno ponowienie
+  (drugi `401` kończy strumień), `403`/`404` → koniec, `429`/2 porażki w
+  10 s/brak pierwszego zdarzenia w 5 s → odpytywanie `GET` co
+  `max(1000, nastepne_odpytanie_ms)` ms (powiadomienia co 30 s);
+  `nastepne_odpytanie_ms = null` kończy odpytywanie i wraca do SSE (próba
+  SSE najwyżej co 60 s, między próbami odpytanie co 30 s; api.md 6.3,
+  ADR-064 uzup. 3.3 p. 2–3).
 - **Proxy:** Caddy `flush_interval -1`, brak `read_timeout` dla
   `*/strumien`; serwer wysyła `Cache-Control: no-cache, no-store`,
   `X-Accel-Buffering: no` i nie kompresuje (`Content-Encoding: identity`,
@@ -6814,17 +6912,22 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
   odświeżeniu tokenu (operacja jest wywoływana ponownie, więc ciało
   multipart jest budowane od nowa); `cache: "no-store"` (api.md 6.1).
 - **`lib/auth/odswiezanie.ts`** — single-flight w Web Locks
-  `lemat-odswiezenie` i `BroadcastChannel("lemat-sesja")`; `401
-  SESJA_UNIEWAZNIONA` albo nieudane odświeżenie → komunikat `WYLOGOWANIE`
-  do wszystkich kart (api.md 6.2, ADR-057).
-- **Idempotencja w UI:** klucz tworzony raz na intencję (kliknięcie
-  „Wyślij”), trzymany w stanie formularza do odpowiedzi `2xx`/`4xx`;
-  ponowienie po błędzie sieci albo `503` używa tego samego klucza; przycisk
-  zablokowany w trakcie żądania.
-- **`If-Match`:** komponent przekazuje `version` z ostatnio pobranego
-  zasobu (`ifMatch(version)`); `412` → odświeżenie zapytania i dialog
-  „Dane zmieniły się w międzyczasie” z aktualną wersją
-  (`szczegoly.aktualny`).
+  `lemat-odswiezenie` i `BroadcastChannel("lemat-sesja")`; różnica zegara
+  z nagłówka `Date` (`roznicaZegara`); wyłącznie `401` z odświeżenia →
+  `WYLOGOWANIE` do wszystkich kart; `429`/`5xx`/sieć → ponowienia i
+  `SESJA_TYMCZASOWO_NIEDOSTEPNA` bez wylogowania (api.md 6.2, ADR-057,
+  ADR-070 p. 4).
+- **Idempotencja w UI (ADR-068 p. 5):** klucz tworzony raz na intencję
+  (kliknięcie „Wyślij”); ten sam klucz po `BLAD_SIECI`, `5xx`, `409
+  IDEMPOTENCJA_W_TOKU` (po `Retry-After`) i `409 KONFLIKT_WSPOLBIEZNOSCI`
+  (≤ 3 razy); po innym `4xx` następne kliknięcie tworzy nowy klucz;
+  przycisk zablokowany w trakcie żądania.
+- **`If-Match`:** komponent przekazuje `version` (albo `<zasob>_version`)
+  z ciała ostatniego odczytu (`ifMatch(version)`, ADR-069); zapisy jednego
+  Rozwiązania idą przez `KolejkaZapisowRozwiazania` (jedno żądanie w
+  locie, `If-Match` z poprzedniej odpowiedzi, api.md 6.4); `412` →
+  odświeżenie zapytania i dialog „Dane zmieniły się w międzyczasie” z
+  aktualną wersją (`szczegoly.aktualny`).
 - **Granice błędów:** `app/error.tsx` (globalna), `(uczen)/error.tsx`,
   `(nauczyciel)/nauczyciel/error.tsx`, `(administrator)/admin/error.tsx`
   dla `5xx` i błędów sieci; `app/not-found.tsx` dla `404`; `4xx` —
@@ -6848,6 +6951,16 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
 | `ProblemDetailsDlaKazdegoKodu` | `Lemat.Api.Tests` (`WebApplicationFactory`) | dla każdego `KodBledu` wyjątek domenowy daje odpowiedź z właściwym `status`, `type`, `kod`, `trace_id` |
 | `IdempotencjaPodwojneZadanie` | `Lemat.Api.Tests` | dwa równoległe `POST /rozwiazania` z tym samym kluczem → jedno Rozwiązanie, druga odpowiedź `409 IDEMPOTENCJA_W_TOKU` albo powtórka z `Idempotent-Replayed` |
 | `StrumienieSse*` | `Lemat.Api.Tests/Strumienie` | ADR-064 p. 9 |
+| `PrzeslanieMultipartZKlientaOpenApi` | `Lemat.Api.Tests/Rozwiazania` | formularz zbudowany z `components.schemas.RozwiazanieWejscie` wygenerowanego `lemat-v1.json`: element → `202`, Przypisanie → `202`, brak kontekstu → `422 WALIDACJA` z `bledy_pol` (ADR-067) |
+| `SchematFormularzaZgodnyZWiazaniem`, `NazwyJsonZgodneZKolumnamiDdl`, `EnumyZMyslnikiemMajaAtrybutNaKazdymCzlonku` | `Lemat.Api.Tests/Kontrakt` | nazwy pól formularzy = `FromForm.Name` = `NazwyLemat`; JSON rekordów 1:1 = kolumny DDL; atrybuty enumów (ADR-067 p. 2–4) |
+| `KazdaOdpowiedzBleduMaKod` | `Lemat.Api.Tests` | niepoprawny JSON (`400`), nieznane pole, brak dyskryminatora, zły typ (`422`), zła trasa (`404`), zła metoda (`405`), zły `Content-Type` (`415`) → `application/problem+json` z `kod` z katalogu (ADR-067 p. 6–7) |
+| `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`, `Konflikt40P01NieJestZapisywanyWKluczu`, `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` | `Lemat.Api.Tests/Idempotencja` (Testcontainers) | ADR-068 |
+| `OdpytywanieWidziWskazowke`, `BrakNaglowkaEtagWOdczytach`, `KazdaOperacjaIfMatchMaZrodloWersji` | `Lemat.Api.Tests` | ADR-069 |
+| `KazdyEndpointZIdMaTestIdor`, `MacierzUprawnienPokrywaKatalog` | `Lemat.Api.Tests/Uprawnienia` | ADR-071 p. 1, p. 8 |
+| `ZmianaUczniaWyczyszczenieDzialu`, `RejestracjaUczniaZwracaSesje`, `RejestracjaNauczycielaBezSesji` | `Lemat.Api.Tests/Konta` | ADR-072 |
+| `WznowienieZawszeWysylaPierwszyStan` | `Lemat.Api.Tests/Strumienie` | ADR-064 uzup. 3.3 p. 1 |
+| `strumien.test.ts`, `odswiezanie.test.ts`, `kolejkaZapisow.test.ts` | Vitest | ADR-064 uzup. 3.3 p. 6, ADR-070, ADR-073 |
+| `klasa-za-nat.spec.ts`, `autozapis-wolna-siec.spec.ts` | Playwright | ADR-070, ADR-073 |
 | `kontrakt-api.spec.ts` | Playwright (E2E) | przepływ FR-16 … FR-27 przez `klient.ts` na Docker Compose z Mock (ADR-065), w tym zerwanie SSE i powrót odpytywaniem |
 
 ---
@@ -7693,7 +7806,7 @@ public sealed class TerminMinalException(string termin) : Exception(termin);
 
 Kod HTTP pochodzi z atrybutu `[Http(n)]` członka `KodBledu` (api.md 2);
 `ObslugaWyjatkowDomenowych` ustawia `Retry-After` dla wyjątków 429/503,
-nagłówek `ETag` dla `KonfliktWersjiException` (wersja z `aktualny`), a
+aktualny zasób (z polem `version`) w `szczegoly.aktualny` dla `KonfliktWersjiException` (bez nagłówka `ETag`, ADR-069), a
 `bledy_pol` dla `WalidacjaException`.
 
 ### 14.2 Tłumaczenie wyjątków infrastruktury
@@ -7800,10 +7913,10 @@ Wskazówki). Kody przyczyn w `praca_w_tle.ostatni_blad`:
 | E-37 | Filtr danych osobowych: krok z treścią matematyczną (po wyłączeniu tokenów imienia, nazwiska, inicjałów i oznaczenia klasy, C4-03) w ramce danych osobowych (`konflikt_filtra`) | Filtr 10.3.1 p. 3a | treść kroku zachowana (poza zastąpieniami b1/b2/c), T-3 (`PODEJRZENIE_BLEDU_ODCZYTU`) — Ocena wstępna wstrzymana do Weryfikacji (11.1 p. 7d); metryka `konflikt_filtra_total` | „Ocena wstrzymana — możliwy błąd odczytu…” (komunikat T-3) | komunikat T-3 |
 | E-38 | Obiekty magazynu bez wiersza w bazie (awaria między zapisem obiektu a transakcją albo odtworzenie PITR) | `SPRZATAJ_OSIEROCONE_OBIEKTY` | usunięcie obiektu (tryb `CODZIENNY` po 1 h; tryb `ODTWORZENIE` przed startem workerów), metryka; przyrost > 100 obiektów na dobę w trybie `CODZIENNY` → `ALERT_RODO` (ADR-047) | brak | brak komunikatu |
 | E-39 | Access token wygasł w trakcie pracy (karta w tle, uśpiony telefon) | `401 NIEUWIERZYTELNIONY` z `JwtBearer` | klient: `odswiezToken()` (single-flight) i jedno ponowienie operacji (`wywolaj`) | brak (operacja kończy się po odświeżeniu) | brak komunikatu |
-| E-40 | Sesja unieważniona albo wygasła (30 dni, ponowne użycie tokenu, blokada konta) | `401 SESJA_UNIEWAZNIONA` z `POST /auth/odswiezenie` | `BroadcastChannel` `WYLOGOWANIE` do wszystkich kart; `lemat_rola` usuwane; powrót po zalogowaniu na tę samą trasę (`?powrot=`) | przejście do logowania; Poprawki Transkrypcji zapisane autozapisem (≤ 1,5 s) nie giną | „Sesja wygasła. Zaloguj się ponownie — Twoje zapisane zmiany są bezpieczne.” |
-| E-41 | Podwójne kliknięcie albo ponowienie żądania w toku z tym samym `Idempotency-Key`; ten sam klucz z innym ciałem | `FiltrIdempotencji` | `409 IDEMPOTENCJA_W_TOKU` (`Retry-After: 1`) → klient czeka i ponawia tym samym kluczem (dostaje zapisaną odpowiedź); `422 KLUCZ_IDEMPOTENCJI_KONFLIKT` → nowy klucz tylko po decyzji użytkownika | jedno Rozwiązanie / jedna Odpowiedź | brak komunikatu (409); „Ta operacja została już wysłana z innymi danymi. Odśwież stronę.” (422) |
-| E-42 | Strumień SSE niedostępny (proxy buforujące, sieć komórkowa, `429 ZA_DUZO_STRUMIENI`) | `strumien.ts`: 2 porażki w 10 s, brak pierwszego zdarzenia w 5 s, `429` | odpytywanie `GET` co `nastepne_odpytanie_ms`, próba SSE co 60 s (ADR-064 p. 8) | postęp aktualizowany co 1 s zamiast natychmiast | brak komunikatu |
-| E-43 | Przerwane przesyłanie zdjęć (utrata sieci w trakcie `multipart`) | `IOException`/`BadHttpRequestException` przy odczycie ciała w Kestrel; klient: `TypeError` w `fetch` | żaden obiekt nie jest zapisany przed pełnym odczytem i walidacją wszystkich plików; wiersz `klucz_idempotencji` bez odpowiedzi jest usuwany przy błędzie odczytu; klient ponawia z tym samym kluczem (3 próby, 2 s, 5 s, 15 s), potem przycisk „Wyślij ponownie” | zdjęcia pozostają w pamięci strony do sukcesu (bez zapisu na urządzeniu, NFR-09) | „Przesyłanie przerwane — brak połączenia. Wyślemy zdjęcia ponownie, gdy wróci sieć.” |
+| E-40 | Sesja unieważniona albo wygasła (30 dni, ponowne użycie tokenu, blokada konta) | `401 SESJA_UNIEWAZNIONA` z `POST /auth/odswiezenie` (wyłącznie `401`; `429`/`5xx`/sieć → ponowienia bez wylogowania, `SESJA_TYMCZASOWO_NIEDOSTEPNA`, ADR-070 p. 4) | `BroadcastChannel` `WYLOGOWANIE` do wszystkich kart; `lemat_rola` usuwane; powrót po zalogowaniu na tę samą trasę (`?powrot=`) | przejście do logowania; szkic Poprawek Transkrypcji zapisany autozapisem (≤ 1,5 s, ADR-073) nie ginie | „Sesja wygasła. Zaloguj się ponownie — Twoje zapisane zmiany są bezpieczne.” |
+| E-41 | Podwójne kliknięcie albo ponowienie żądania w toku z tym samym `Idempotency-Key`; ten sam klucz z innym ciałem | `FiltrIdempotencji` | `409 IDEMPOTENCJA_W_TOKU` (`Retry-After` ≤ 60 s do końca rezerwacji, ADR-068) → klient czeka i ponawia tym samym kluczem najwyżej 2 razy (dostaje zapisaną odpowiedź albo — po awarii procesu — przejmuje klucz po 60 s); `422 KLUCZ_IDEMPOTENCJI_KONFLIKT` → nowy klucz tylko po decyzji użytkownika | jedno Rozwiązanie / jedna Odpowiedź | brak komunikatu (409); „Ta operacja została już wysłana z innymi danymi. Odśwież stronę.” (422) |
+| E-42 | Strumień SSE niedostępny (proxy buforujące, sieć komórkowa, `429 ZA_DUZO_STRUMIENI`) | `strumien.ts`: 2 porażki w 10 s, brak pierwszego zdarzenia w 5 s, `429` | odpytywanie `GET` co `max(1000, nastepne_odpytanie_ms)` ms, `null` → koniec odpytywania i powrót do SSE, próba SSE co 60 s (ADR-064 p. 8 i uzup. 3.3) | postęp aktualizowany co 1 s zamiast natychmiast | brak komunikatu |
+| E-43 | Przerwane przesyłanie zdjęć (utrata sieci w trakcie `multipart`) | `IOException`/`BadHttpRequestException` przy odczycie ciała w Kestrel; klient: `TypeError` w `fetch` | żaden obiekt nie jest zapisany przed pełnym odczytem i walidacją wszystkich plików; rezerwacja `klucz_idempotencji` jest usuwana przy błędzie odczytu, a gdy usunięcie się nie uda — wygasa po 60 s (ADR-068); klient ponawia z tym samym kluczem (3 próby, 2 s, 5 s, 15 s), potem przycisk „Wyślij ponownie” | zdjęcia pozostają w pamięci strony do sukcesu (bez zapisu na urządzeniu, NFR-09) | „Przesyłanie przerwane — brak połączenia. Wyślemy zdjęcia ponownie, gdy wróci sieć.” |
 | E-44 | Frontend starszy niż API (wdrożenie w trakcie sesji) | `X-Lemat-Wersja-Api` wyższej wersji głównej niż w buildzie albo `ChunkLoadError` Next.js | baner z przyciskiem „Odśwież”; service worker aktywuje nową wersję po odświeżeniu | jedno przeładowanie strony | „Dostępna jest nowa wersja aplikacji. Odśwież stronę.” |
 | E-45 | Naruszenie ograniczenia bazy niewykryte walidacją (`23514` CHECK, `23503` FK) | `TlumaczBledowInfrastruktury` (ADR-063 p. 4) | `500 BLAD_WEWNETRZNY`, log `NARUSZENIE_SCHEMATU {ograniczenie}`, metryka; brak zapisu (rollback) | jak E-25 | jak E-25 |
 | E-46 | Rozwiązanie zawieszone w `ROZPOZNAWANIE`/`OCENIANIE` bez aktywnej pracy > 5 min | praca kontrolna `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` (ADR-066 p. 6) | ponowne zlecenie pracy przed terminem twardym albo ścieżka „po wyczerpaniu” (T-6, `BLAD_ROZPOZNAWANIA`); alert | jak E-03 / E-09 | jak E-03 / E-09 |
@@ -7847,7 +7960,7 @@ zwraca `zatwierdzono_at + 120 s` dla klasyfikacji ADR-066 p. 1, a
 | **Duże zdjęcia (do 10 MB, 12 Mpx+)** | `kompresja.worker.ts`: dłuższy bok ≤ 2560 px, JPEG 0,85 (typowo 0,6–1,2 MB); plik > 10 MB po kompresji → komunikat E-01 bez wysyłki | `request_body max_size 52MB` | `MaxRequestBodySize` 52 MB, `MultipartBodyLengthLimit` 10 MB/plik, strumieniowy zapis do pliku tymczasowego (`IFormFile` > 64 kB na dysk), normalizacja w `Lemat.ImageSandbox` z limitami (E-35) | normalizacja nie w `worker` (ADR-052) | Vitest `kompresja.test.ts` (12 Mpx → ≤ 2560 px); `Lemat.Api.Tests/PrzeslanieDuzegoZdjecia` (10 MB, 5 plików) |
 | **HEIC (iPhone)** | Safari dekoduje HEIC (`createImageBitmap`) → kompresja do JPEG w przeglądarce; Chrome/Firefox bez dekodera → plik wysyłany bez kompresji (≤ 10 MB) z `Content-Type: image/heic` | — | sygnatura `ftypheic`/`ftypmif1` akceptowana; `Lemat.ImageSandbox` (Magick.NET z libheif) konwertuje do JPEG; plik HEIC > 10 MB → `413 ZDJECIE_ZA_DUZE` | — | `Lemat.ImageSandbox.Tests/HeicDoJpeg`; Playwright WebKit (iPhone 15) przesłanie HEIC |
 | **Przerwane przesyłanie zdjęć** | zdjęcia trzymane w pamięci strony do sukcesu; ponowienie z tym samym `Idempotency-Key` (3 próby, potem przycisk) — E-43 | połączenie zerwane | odczyt ciała → `IOException`; nic nie zapisano w S3 ani w bazie; wiersz `klucz_idempotencji` usunięty | obiekty zapisane częściowo (awaria po zapisie S3, przed `COMMIT`) usuwa `SPRZATAJ_OSIEROCONE_OBIEKTY` (ADR-047) | `Lemat.Api.Tests/PrzerwanePrzeslanie` (strumień ciała przerwany w połowie → brak wierszy i obiektów; ponowienie tym samym kluczem → `202`) |
-| **Wygasła sesja w trakcie pracy** | access token: odświeżenie proaktywne 60 s przed `exp` i reaktywne po `401` (E-39); refresh token nieważny → wylogowanie wszystkich kart z powrotem na trasę (E-40); autozapis Poprawek (`PUT …/transkrypcja` z debounce 1,5 s) i szkicu rozstrzygnięcia (`PUT …/szkic` z debounce 3 s) ogranicza utratę do ostatnich sekund | — | `JwtBearer` `ClockSkew` 30 s; SSE zamykane w chwili `exp` zdarzeniem `wznow` | blokada Weryfikacji trwa do `zablokowana_do`, szkic w bazie (C-08) | Playwright `sesja-wygasla.spec.ts` (zegar +16 min w trakcie edycji Transkrypcji → zapis udany po odświeżeniu; refresh token unieważniony → logowanie i powrót) |
+| **Wygasła sesja w trakcie pracy** | access token: odświeżenie proaktywne 60 s przed `exp` i reaktywne po `401` (E-39); refresh token nieważny → wylogowanie wszystkich kart z powrotem na trasę (E-40); autozapis szkicu Poprawek (`PUT …/transkrypcja/szkic` z debounce 1,5 s, ADR-073) i szkicu rozstrzygnięcia (`PUT …/szkic` z debounce 3 s) ogranicza utratę do ostatnich sekund | — | `JwtBearer` `ClockSkew` 30 s; SSE zamykane w chwili `exp` zdarzeniem `wznow` | blokada Weryfikacji trwa do `zablokowana_do`, szkic w bazie (C-08) | Playwright `sesja-wygasla.spec.ts` (zegar +16 min w trakcie edycji Transkrypcji → zapis udany po odświeżeniu; refresh token unieważniony → logowanie i powrót) |
 | **Podwójne kliknięcie** | przycisk zablokowany od kliknięcia do odpowiedzi; jeden `Idempotency-Key` na intencję | — | `FiltrIdempotencji`: drugie żądanie → `409 IDEMPOTENCJA_W_TOKU` albo zapisana odpowiedź (E-41); operacje z `If-Match` → drugie `412`/`409` | `ux_*` indeksy częściowe (C-01, C-02) | `IdempotencjaPodwojneZadanie` (12.12); Playwright `podwojne-klikniecie.spec.ts` |
 | **Wiele kart / wiele urządzeń** | single-flight odświeżania (Web Locks), jeden strumień powiadomień na przeglądarkę (karta-lider), `BroadcastChannel` dla tokenu i wylogowania (ADR-057); w drugiej karcie `412` → dialog z aktualną wersją | — | okno tolerancji rotacji 30 s; limity strumieni 4/12 bez zamykania istniejących | `If-Match` + tokeny współbieżności (15.2), C-03, C-04, C-41 … C-43 | `sesja-dwie-karty.spec.ts`, `powiadomienia-dwie-karty.spec.ts`, `Lemat.Api.Tests/Rozwiazania/PoprawkaKontraZatwierdzenieTests` |
 | **Przeładowanie karty przez system (iOS po uruchomieniu aparatu)** | stan formularza przesyłania w `sessionStorage` wyłącznie bez zdjęć i danych osobowych (identyfikator elementu, liczba zdjęć); po powrocie ekran prosi o ponowne wybranie zdjęć | — | — | — | Playwright WebKit `aparat-przeladowanie.spec.ts` |
@@ -7887,7 +8000,7 @@ zwraca `zatwierdzono_at + 120 s` dla klasyfikacji ADR-066 p. 1, a
 
 | Rodzaj tokenu | Tabele | Konfiguracja EF Core | Konflikt |
 |---|---|---|---|
-| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; `WersjaAgregatuInterceptor` zwiększa `Version` korzenia, gdy zmienił się **dowolny** wiersz agregatu (korzeń, encja własna, encja wewnętrzna — wyszukiwanie korzenia po kluczu własności albo FK encji `IEncjaWewnetrzna`, C7-06 p. 8; sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` podnosi `profil_ucznia.version`) | `UPDATE … WHERE version = @oryginalna` → 0 wierszy → `DbUpdateConcurrencyException` |
+| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `przypisanie` (3.3, ADR-074), `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; `WersjaAgregatuInterceptor` zwiększa `Version` korzenia, gdy zmienił się **dowolny** wiersz agregatu (korzeń, encja własna, encja wewnętrzna — wyszukiwanie korzenia po kluczu własności albo FK encji `IEncjaWewnetrzna`, C7-06 p. 8; sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` podnosi `profil_ucznia.version`) | `UPDATE … WHERE version = @oryginalna` → 0 wierszy → `DbUpdateConcurrencyException` |
 | `version` z triggera | `weryfikacja` (`trg_weryfikacja_wersja`, ADR-037) | `IsConcurrencyToken().ValueGeneratedOnAddOrUpdate()`; interceptor pomija | jw.; nowa wartość czytana przez `RETURNING` |
 | `xmin` | `transkrypcja`, `wynik_zadania`, `zlecenie_generowania`, `import_arkusza`, `konfiguracja_modelu`, `ocena` | `Property<uint>("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken()` | jw.; konflikt zawsze wewnętrzny (te encje nie mają ETag) |
 | brak (zapis SQL warunkowy) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` | encja tylko do odczytu albo brak encji | liczba zmienionych wierszy = 0 → `RezultatPrzestarzaly` / ścieżka 13.4 |
@@ -7901,7 +8014,7 @@ przypadek użycia rzuca `KonfliktWersjiException` od razu, bez modyfikacji.
 
 **Odpowiedzi.** `DbUpdateConcurrencyException`: żądanie z `If-Match` →
 `412 KONFLIKT_WERSJI` (aktualny zasób czytany nowym zapytaniem bez
-śledzenia, nagłówek `ETag`); bez `If-Match` → `409 KONFLIKT_WSPOLBIEZNOSCI`
+śledzenia, z polem `version`); bez `If-Match` → `409 KONFLIKT_WSPOLBIEZNOSCI`
 z `Retry-After: 1`; w `worker` → `RezultatPrzestarzaly`. Konflikt stanu
 wykryty przed zapisem (np. stan Rozwiązania ≠ `TRANSKRYPCJA_GOTOWA`) → `409`
 z kodem stanu z 12.2 — `412` oznacza wyłącznie niezgodną wersję.
@@ -7978,7 +8091,7 @@ p. 1); `40P01`/`40001` → E-47.
 | C-28 | Zgłoszenie błędu odczytu do Weryfikacji `W_TRAKCIE`, gdy Nauczyciel właśnie wysyła rozstrzygnięcie | oba: `SELECT rozwiazanie FOR UPDATE`; zgłoszenie zmienia treść, więc trigger podnosi `weryfikacja.version` (ADR-037); rozstrzygnięcie wymaga `If-Match` Weryfikacji | gdy pierwsze jest zgłoszenie: rozstrzygnięcie `412` z aktualnym zasobem, blokada i szkic zachowane, Nauczyciel rozstrzyga po przejrzeniu zgłoszenia; gdy pierwsze jest rozstrzygnięcie: zgłoszenie dotyczy nowej Oceny Nauczyciela i tworzy nową Weryfikację (11.6 — limit 1 zgłoszenia na Rozwiązanie nie został jeszcze zużyty) |
 | C-29 | Zgłoszenie błędu odczytu równolegle z `AKTUALIZUJ_PROFIL` stosującym ten sam Wynik zadania | zawieszenie ustawia `uniewazniony_at` w transakcji z `FOR UPDATE rozwiazanie`; `AKTUALIZUJ_PROFIL` bierze `FOR UPDATE profil_ucznia` i przetwarza Wyniki z nieprzetworzonym unieważnieniem (`ix_wynik_do_profilu`) | Wynik zastosowany przed zawieszeniem zostaje cofnięty przy kolejnym przebiegu (odtworzenie); żaden Wynik nie zostaje w Profilu po zawieszeniu |
 | C-30 | Ta sama pozycja Przypisania rozwiązywana z elementu `R-PRZYPISANIE` i z listy `GET /uczniowie/ja/przypisania` (dwa urządzenia) | `trg_kontekst_proby` dziedziczy `przypisanie_id` z elementu; `ux_rozwiazanie_przypisanie` / `ux_odpowiedz_przypisanie` na (Uczeń, Przypisanie, Zadanie) | drugie żądanie: `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN` z `id` istniejącego; jedna Weryfikacja u Nauczyciela Przypisania; klucz Zadania zamkniętego ukryty do terminu w obu drogach (C1-21) |
-| C-31 | Rozstrzygnięcie po 40 min pracy i 8 przedłużeniach blokady | przedłużenie i podjęcie nie zmieniają `version` (`trg_weryfikacja_wersja`, ADR-037); rozstrzygnięcie z `If-Match` = ETag z podjęcia | `200`; `412` wyłącznie, gdy w międzyczasie zmieniła się treść (np. zgłoszenie — C-28), z polem `zmiany_tresci` (C2-02) |
+| C-31 | Rozstrzygnięcie po 40 min pracy i 8 przedłużeniach blokady | przedłużenie i podjęcie nie zmieniają `version` (`trg_weryfikacja_wersja`, ADR-037); rozstrzygnięcie z `If-Match` = `version` z podjęcia | `200`; `412` wyłącznie, gdy w międzyczasie zmieniła się treść (np. zgłoszenie — C-28), z polem `zmiany_tresci` (C2-02) |
 | C-32 | Wynik zadania zatwierdzony, gdy `AKTUALIZUJ_PROFIL` tego Ucznia jest `W_TOKU` i już odczytał Wyniki | zlecenie nowej pracy nie koliduje z pracą `W_TOKU` (deduplikacja tylko `OCZEKUJE`); nowa praca czeka na `FOR UPDATE profil_ucznia`; pętla do pustego wyniku; `ZAMIATAJ_PROFILE` | Wynik zastosowany najpóźniej w kolejnym przebiegu (≤ 5 min także przy awarii); `wynik_najstarszy_niezastosowany_sekundy` > 300 → alert (C2-04) |
 | C-33 | Żądanie usunięcia konta, a następnie przywrócenie w okresie karencji | żądanie nie zmienia stanów (ADR-040); przywrócenie w jednej transakcji: `status = AKTYWNE`, Zdarzenie RODO `ANULOWANIE_USUNIECIA`, `termin_at := dodaj_dni_robocze(now(), 3)` otwartych Weryfikacji, ponowne zlecenie przerwanych prac (16.4) | zawieszone Wyniki i otwarte zgłoszenia są rozstrzygane normalnie; Kontrole losowe wracają do `π_wykonanie`; Rozwiązania z minionym terminem twardym trafiają do T-6 (C2-08) |
 | C-34 | Odtworzenie bazy z PITR do punktu sprzed żądania usunięcia konta lub odwołania zgody | Zdarzenia RODO w buckecie Object Lock zapisane **przed** transakcją; `ponow_zdarzenia_rodo` stosuje zdarzenia późniejsze niż punkt odtworzenia, zanim wystartują `worker` i `scheduler` (16.4, ADR-041) | konto wraca do `USUWANE` z pierwotnym `usuniecie_zaplanowane_at`, zgoda do `false`, kopie treningowe z `usun_po = now()`; żadna kopia nie powstaje wbrew odwołanej zgodzie (C2-09) |
@@ -7989,7 +8102,7 @@ p. 1); `40P01`/`40001` → E-47.
 | C-39 | Odtworzenie bazy z PITR do punktu `T` w trakcie `USUN_KONTO` (po kroku 1, przed krokiem 5) albo w trakcie usunięcia konta Nauczyciela (C4-01) | dla `USUNIECIE_WYKONANE` kryterium zastosowania = „wiersz `uzytkownik` nie istnieje”, a nie „wiersz `zdarzenie_rodo` istnieje”; `ponow_zdarzenia_rodo` przegląda cały prefiks `wykonane/` i wykonuje idempotentne kroki właściwe dla `dane.rola` tymi samymi funkcjami domenowymi co `USUN_KONTO` (16.4) | konto usunięte przed startem workerów, dane Nauczyciela spseudonimizowane w uzasadnieniach rekomendacji; G-6 (a3), (a4) |
 | C-40 | Start 3. repliki workera w szczycie „koniec lekcji”, gdy 2 workery i 2 `api` wykorzystują pełny przydział (C4-05) | odnowienia wierszy `limit_szybkosci_modelu` pod `pg_advisory_xact_lock` klucza; nowy wiersz: pusty kubełek, `r = min(formuła, 0,8 × limit − Σ przydziałów pozostałych)` i `B = min(formuła, B_całk − Σ pojemności pozostałych)`; zmniejszenia stosowane przed `COMMIT`, zwiększenia po | Σ przydziałów ≤ 40/s i Σ pojemności ≤ 34 w każdej chwili, ≤ 74 wywołania w dowolnym oknie 1 s; nowa replika osiąga 12,5/s po ≤ 12 s; test 13.2 (f)–(h), G-3 (c) |
 | C-41 | Dwie karty (albo React Strict Mode, ponowienie TanStack Query) jednocześnie odświeżają access token tym samym cookie `lemat_rt` (C6-02) | klient: sekcja krytyczna Web Locks `lemat-odswiezenie` + `BroadcastChannel("lemat-sesja")` — druga karta używa tokenu rozgłoszonego przez pierwszą; serwer: `UPDATE token_odswiezania … WHERE zastapiony_at IS NULL AND uniewazniony_at IS NULL RETURNING`; drugie żądanie w oknie 30 s z tym samym `skrot_klienta_http` → nowy access token bez `Set-Cookie` (ADR-057) | obie karty zalogowane; jedna rotacja; rodzina unieważniana wyłącznie poza oknem albo z innego klienta HTTP; test Playwright `sesja-dwie-karty.spec.ts`, `OknoTolerancjiTests` |
-| C-42 | Dwie karty z otwartym strumieniem powiadomień i strumieniami dwóch Rozwiązań (C6-09) | strumień powiadomień tylko w karcie-liderze (Web Locks `lemat-powiadomienia-lider`), limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar `429` bez zamykania istniejących | brak pętli ponownych połączeń; przejęcie strumienia po zamknięciu lidera z migawką nieprzeczytanych (ADR-064 p. 3; wersja 3.1: `Last-Event-ID` UUIDv7, C7-11); test `powiadomienia-dwie-karty.spec.ts` |
+| C-42 | Dwie karty z otwartym strumieniem powiadomień i strumieniami dwóch Rozwiązań (C6-09) | strumień powiadomień tylko w karcie-liderze (Web Locks `lemat-powiadomienia-lider`), limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar `429` bez zamykania istniejących | brak pętli ponownych połączeń; przejęcie strumienia po zamknięciu lidera z migawką nieprzeczytanych (ADR-064 p. 3); test `powiadomienia-dwie-karty.spec.ts` |
 | C-43 | Uczeń zapisuje Poprawkę w karcie A (`PUT …/transkrypcja` → wersja 2), a w karcie B zatwierdza widoczną wersję 1 (C6-04 p. 4) | `PUT` zmienia `rozwiazanie.version` (ETag); `Rozwiazanie.Zatwierdz(transkrypcja, wersjaTranskrypcji, oczekiwanaWersjaRozwiazania)` sprawdza `If-Match` i to, że zatwierdzana Transkrypcja jest `najnowsza_transkrypcja_id` | karta B: `412 KONFLIKT_WERSJI` (ETag nieaktualny) albo `409 TRANSKRYPCJA_NIEAKTUALNA`; oceniana jest wyłącznie Transkrypcja, którą Uczeń widział i zatwierdził; test `Lemat.Api.Tests/Rozwiazania/PoprawkaKontraZatwierdzenieTests` |
 | C-44 | `KALIBRUJ` liczy bezpieczniki (do 10 min), a Administrator w tym czasie dezaktywuje bezpiecznik (C6-08) | `stan_bezpiecznika.version` jako token współbieżności; dezaktywacja z `If-Match`; `KALIBRUJ` zapisuje stan z wersją odczytaną na starcie — konflikt → ponowny odczyt i ponowna ocena tylko kroku bezpieczników (maks. 3 próby); `StanBezpiecznika.DezaktywowanyPo(startPrzebiegu)` → dezaktywacja wygrywa: przebieg nie wyzwala bezpiecznika ponownie na danych sprzed `okno_od` i loguje `rezultat_przestarzaly` | decyzja Administratora nie ginie; dezaktywacja po zapisie przebiegu dostaje `412` z aktualnym stanem i jest ponawiana świadomie; test `Lemat.Infrastructure.Tests/Kalibracja/KalibrujKontraDezaktywacjaTests` |
 | C-45 | Worker po pauzie GC traci dzierżawę, inny worker przejmuje pracę, pierwszy kończy i zapisuje wynik (C6-15 p. 1) | jednostka pracy handlera: `SELECT … FROM praca_w_tle WHERE id = @id AND wykonawca = @ja AND status = 'W_TOKU' FOR UPDATE` przed `COMMIT`; zapis wyniku z tym samym warunkiem (ADR-056 p. 4) | zmiany domenowe pierwszego workera wycofane (`UtrataDzierzawyException`), wynik odrzucony, `praca_zapis_po_utracie_dzierzawy_total` + 1; praca kończy się raz |
@@ -8002,6 +8115,8 @@ p. 1); `40P01`/`40001` → E-47.
 | C-52 | Przekroczenie czasu wywołania modelu przy ważnej dzierżawie (C7-04) | klasyfikacja anulowania ADR-066 p. 1 | `Ponow`, po terminie twardym `Trwaly` → T-6 / `BLAD_ROZPOZNAWANIA`; nigdy `ZAKONCZONA` bez efektu |
 | C-53 | Przejęcie roli harmonogramu w trakcie wystąpienia (restart o 02:59:58, nowa instancja aktywna o 03:00:07) (C7-13) | `przebieg_harmonogramu` + nadrabianie ≤ 24 h, klucz deduplikacji z datą | `KALIBRUJ` zlecona raz dla bieżącej daty; test (l) ADR-066 |
 | C-54 | Podwójne kliknięcie „Zatwierdź” (dwa żądania z tym samym `If-Match`) | pierwsze zmienia stan i `version`; drugie: `412 KONFLIKT_WERSJI` albo `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`; klient blokuje przycisk | jedna praca `OCEN_ROZWIAZANIE` (deduplikacja `OczekujaceIWToku`); UI pokazuje stan po pierwszym żądaniu |
+| C-55 | Proces `api` ginie po rezerwacji `Idempotency-Key` (wdrożenie, OOM) albo `DELETE` rezerwacji po `503` nie dochodzi do bazy (C8-03) | rezerwacja z `w_toku_do = now() + 60 s`; odpowiedź `2xx` zapisywana w transakcji skutku z warunkiem `rezerwacja = @moja` (ADR-068) | ponowienie w 60 s → `409 IDEMPOTENCJA_W_TOKU` z `Retry-After`; po 60 s przejęcie i jedno wykonanie; spóźnione zatwierdzenie starej rezerwacji → `ROLLBACK`; testy `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`, `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` |
+| C-56 | Autozapis Poprawek w jednej karcie: drugi zapis wysłany przed odpowiedzią pierwszego; zdarzenie `stan` przychodzi w trakcie pisania (C8-10) | szkic bez `If-Match` z `numer_zapisu` (starszy pomijany), `KolejkaZapisowRozwiazania` (jedno żądanie w locie, `If-Match` z poprzedniej odpowiedzi), edytor ignoruje `transkrypcja.kroki` z `stan` przy niezapisanych zmianach (ADR-073) | 0 dialogów `412` na własnej edycji, brak utraty znaków; test `autozapis-wolna-siec.spec.ts` |
 
 ---
 
@@ -8395,7 +8510,7 @@ termin miękki = `max(10 s, 28 s − t_R)`):
 | Model decyzyjny — Jev, tryb wsadowy (2 rundy = 2 żądania, A-01) | 2 s na żądanie | 1.6 s |
 | Model decyzyjny — Jev, tryb pojedynczy (2 rundy = ≤ 3 fale po ≤ 16 wywołań, 10.4.3; p95 fali 1.2 s) — **wartość przyjęta w budżecie** | 2 s na wywołanie | 3.6 s |
 | Oczekiwanie na przydział globalnego ogranicznika (13.2: przyjęcie planu, fale ≥ 2 z pierwszeństwem; wersja 2.3, C3-04) | plan przyjmowany tylko, gdy przewidywany koniec ≤ termin miękki; termin fali k: `termin_miekki − t_fali × (F − k + 1) − 0,2 s` | 0 s poza szczytem przy 2 workerach (fala 16 mieści się w kubełku 16); przy skalowaniu do 3 / 4 workerów poza szczytem ≤ 0,48 s / ≤ 0,84 s (`B_całk = 34` dzielone między repliki, 13.2, C4-05); w szczycie A-03 łącznie ≤ 3,7 s na Ocenę (symulacja S-6) |
-| Sprawdzenie zgodności poprawek (tylko Transkrypcje z Poprawkami; startuje przy autozapisie `PUT …/transkrypcja`, pula `S`, równolegle z SymPy i Jev) | ≤ 6 s oczekiwania po zatwierdzeniu, niezależnie od `t_R` (wersja 2.4, C4-06 p. 10) | 0 s na ścieżce krytycznej: p95 Sprawdzenia 4 s (A-08) < SymPy + Jev ≥ 3,1 s + odstęp od ostatniego `PUT`; brak rezultatu ≤ 0,5% Rozwiązań z Poprawkami (9.4, rachunek log-normalny) |
+| Sprawdzenie zgodności poprawek (tylko Transkrypcje z Poprawkami; startuje przy zapisie wersji `PUT …/transkrypcja` — po 10 s bez zmian albo przed zatwierdzeniem, ADR-073, pula `S`, równolegle z SymPy i Jev) | ≤ 6 s oczekiwania po zatwierdzeniu, niezależnie od `t_R` (wersja 2.4, C4-06 p. 10) | 0 s na ścieżce krytycznej: p95 Sprawdzenia 4 s (A-08) < SymPy + Jev ≥ 3,1 s + odstęp od ostatniego `PUT`; brak rezultatu ≤ 0,5% Rozwiązań z Poprawkami (9.4, rachunek log-normalny) |
 | Model decyzyjny — zapasowy (1 wywołanie) | 9 s | 6.5 s |
 | Reguły, zapis wyniku | — | 0.2 s |
 | Odpytywanie klienta | interwał 1 s | +1 s |
@@ -8603,7 +8718,7 @@ flowchart LR
 | G-0 | **Akceptacja właściciela produktu i właścicieli słownika:** PZS-1 (3.4); interpretacja NFR-01 (A-11); założenie A-12; rozszerzenia względem wymagań: powody Weryfikacji `PODEJRZENIE_BLEDU_ODCZYTU`, `ZGLOSZENIE_BLEDU_ODCZYTU`, `KONTROLA_LOSOWA`, `BLAD_PRZETWARZANIA`; Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu (ADR-022); kolejka globalna z pseudonimizacją i kontrolą przyjęć (ADR-021, ADR-031); brak wpisu ręcznego (ADR-024); tryb pełnej weryfikacji, jeśli G-1(b) nie jest spełnione; zatwierdzanie kont Nauczycieli przez Administratora; **(2.1)** rekrutacja i finansowanie Nauczycieli współpracujących albo start bez rejestracji Uczniów bez Klasy (A-14, ADR-034); zawieszenie Wyniku zadania na czas Zgłoszenia błędu odczytu (11.6); rozstrzyganie na korzyść Ucznia po usunięciu zdjęć (11.4.3 p. 3); kopie treningowe za zgodą (ADR-035); **(2.2)** limity Poprawek Transkrypcji i powód `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM` (ADR-036, D-10); Przegląd Zadań wygenerowanych przez zlecającego Nauczyciela i Zgłoszenia błędu w Zadaniu zamiast bezpośredniej poprawki Zadań `GLOBALNY` (ADR-028, ADR-038, D-11); kryterium G-1(a) dla dowodów LB ≥ 85% przy n ≥ 350 (11.5.1, D-12); SLA w dniach roboczych, pula 18 weryfikatorów globalnych i kontrola przyjęć per Klasa (A-15, ADR-043, D-13); pominięcie Testu diagnostycznego (D-14); **(2.3)** Klasy przekazane w karencji nie wracają do przywróconego Nauczyciela (D-15); **(2.4)** automatyczne przejście pary w tryb pełnej weryfikacji przez bezpiecznik trafności przy progu 0,990 i koszt na granicy NFR-03 (D-16); zapas puli globalnej przy aktywnym bezpieczniku poprawek w fazie startowej (D-17). Akceptacja zapisana jako podpisany wpis w `docs/` (decyzja produktowa z datą). |
 | G-1 | ZT-1 (A-09: ≥ 700 obliczeniowych, ≥ 350 z dowodem), Transkrypcje referencyjne: (a) Zgodność Oceny (ADR-027) ≥ 90% — dla Jev **i** modelu zapasowego, osobno dla każdego rodzaju zadania otwartego (NFR-02) — oraz dolna granica Wilsona 95% ≥ 87,5% dla `OTWARTE_OBLICZENIOWE` i ≥ 85,0% dla `OTWARTE_Z_DOWODEM` (analiza mocy 11.5.1, tabela 2; D-12); (b) próg z 11.5.3 (wartości out-of-fold) z UB błędu auto ≤ 2% i `n_eff ≥ 189` — albo tryb pełnej weryfikacji zaakceptowany w G-0; (c) ECE ≤ 0.05 |
 | G-2 | Agent rozpoznający na zdjęciach ZT-1: ≥ 85% kroków z Transkrypcją identyczną z referencyjną po normalizacji LaTeX, CER ≤ 5%; czułość T-3 (`czulosc_t3`, 11.8) ≥ 90%; **end-to-end** (zdjęcie → Transkrypcja bez poprawek Ucznia → Ocena, praca `EWALUUJ_ZT1` w trybie `E2E`) Zgodność Oceny ≥ 85% dla każdego modelu decyzyjnego (dolne oszacowanie produkcji, w której Uczeń poprawia Transkrypcję); **(2.2)** Sprawdzenie zgodności poprawek (10.3.3): wykrywalność Poprawek „zastępujących” ≥ 95% na 200 syntetycznych przypadkach, **(2.3)** wykrywalność „wstawień rozwiązania” (T-7 albo `422`) ≥ 95% na 200 syntetycznych przypadkach i odsetek fałszywych alarmów ≤ 5% na 200 rzeczywistych Poprawkach błędów odczytu (wersja 2.2: ≤ 10%), p95 czasu Sprawdzenia ≤ 4 s; Filtr danych osobowych (2.3, C3-02): 0 wystąpień imienia i nazwiska z konta w zapisanych Transkrypcjach ≥ 150 kartek ZT-1 z danymi (w tym ≥ 30 z imionami lub nazwiskami < 4 znaków; górna granica Wilsona 95% odsetka kartek z wyciekiem 2,5%), ≥ 98% obszarów danych osobowych zamaskowanych, **0 zastąpień tokenów ze Słownika terminów matematycznych w krokach z treścią matematyczną** (wersja 3.0, C5-01; wyjątek: sąsiedztwo z pełnym drugim członem imienia i nazwiska z konta, reguła b1, liczone i raportowane osobno, oczekiwane ≤ 0,1% kroków) i ≤ 0,5% kroków z fałszywym zastąpieniem innych tokenów na wszystkich 1 050 Transkrypcjach referencyjnych ZT-1 przefiltrowanych z syntetycznymi danymi konta (200 par imię–nazwisko z listy najczęstszych w Polsce, w tym nazwiska Pole, Kula, Granica, Suma, Prosta, Koło), `konflikt_filtra` ≤ 1% Transkrypcji, 0 zmian w `latex`; **(2.4, C4-03)** osobne kryterium dla ≥ 30 kartek z nazwiskiem równym terminowi matematycznemu (A-09): 0 wystąpień nazwiska w zapisanych Transkrypcjach, gdy stoi obok imienia lub inicjału albo w kroku w ramce danych osobowych (reguły a, b1, b2), i ≤ 1 kartka z `konflikt_filtra` wywołanym linią podpisu (≤ 3,3%); na 1 050 Transkrypcjach z syntetycznymi danymi konta `uczniowie_z_konfliktem_filtra_udzial` ≤ 1% (200 syntetycznych kont po ≥ 5 Transkrypcji); test Poprawek: przywrócenie kroku `tylko_dane_osobowe` na 50 przypadkach nie jest ponownie maskowane i trafia do Sprawdzenia zgodności poprawek (100%); **(3.0, C5-01)** celowy zestaw ≥ 20 kartek z nazwiskiem-terminem i oznaczeniem równym inicjałowi imienia (np. konto „Piotr Pole” i kroki „Pole P trójkąta wynosi 12”, konto „Kamil Prosta” i „prosta k: y = 2x + 1”, konto „Szymon Suma” i „suma S₁₀”): 0 zastąpień i 0 `konflikt_filtra` dla oznaczeń bez kropki, `konflikt_filtra` (bez zastąpienia) dla „Pole P. =” w kroku z treścią matematyczną; test przywrócenia słowa w miejscu znacznika w kroku z oznaczeniem (20 przypadków): słowo zostaje (100%) |
-| G-3 | Test obciążeniowy: (a) 2× szczyt wieczorny A-03 (600 Rozwiązań/h) przez 30 min; (b) „koniec lekcji”: 90 przesłań w 60 s, następnie 90 zatwierdzeń w 120 s; kryterium w obu: p95 czasu systemowego ≤ 20 s, ≥ 99% ≤ 28 s (czas widoczny ≤ 30 s), 0 przypadków T-6; **(2.4, C4-05)** (c) scenariusz (b) przy 3 replikach workera i dołączeniu 4. repliki w trakcie szczytu: 0 odpowiedzi `429`, maksimum wywołań Jev w dowolnym oknie 1 s ≤ 74 (pomiar po stronie zaślepki), Σ opublikowanych przydziałów ≤ 40/s w każdej próbce co 1 s |
+| G-3 | Test obciążeniowy: (a) 2× szczyt wieczorny A-03 (600 Rozwiązań/h) przez 30 min; (b) „koniec lekcji”: 90 przesłań w 60 s, następnie 90 zatwierdzeń w 120 s; kryterium w obu: p95 czasu systemowego ≤ 20 s, ≥ 99% ≤ 28 s (czas widoczny ≤ 30 s), 0 przypadków T-6; **(2.4, C4-05)** (c) scenariusz (b) przy 3 replikach workera i dołączeniu 4. repliki w trakcie szczytu: 0 odpowiedzi `429`, maksimum wywołań Jev w dowolnym oknie 1 s ≤ 74 (pomiar po stronie zaślepki), Σ opublikowanych przydziałów ≤ 40/s w każdej próbce co 1 s; **(3.3, C8-05)** (d) „trzy klasy za jednym NAT” (k6 `trzy-klasy-za-nat.js`, ADR-070 p. 3): 90 Uczniów z jednego IP, 30 logowań w 60 s, 90 przesłań w 60 s, odpytywanie zapasowe co 1 s przez 30 s → 0 odpowiedzi `429` |
 | G-4 | Test chaosu NFR-07 przy 300 Rozwiązaniach/h, trzy scenariusze: (a) Jev zaczyna zwracać timeout na 100% wywołań przy obwodzie ZAMKNIĘTYM (pomiar 10 min od wstrzyknięcia awarii, obejmuje przejście obwodu); (b) Jev zwraca natychmiast 503; (c) Jev degraduje do p95 2.5 s; (d) Jev zwraca `429` dla 30% żądań przez 10 min — obwód nie może się otworzyć, a przydział ogranicznika spada i wraca (ADR-039); kryterium w każdym: ≥ 99% Ocen z czasem systemowym ≤ 28 s (czas widoczny ≤ 30 s) i 0 przypadków T-6. Przed G-4 ustalany jest `parametry.tryb_jev` (test wsadu 32 pytań; brak wsadu → `POJEDYNCZY` i G-3/G-4 w tym trybie) oraz **(2.3)** tolerancja limitu (A-01): seria 74 wywołań w 1 s po 10 s bezczynności bez `429` → łączna pojemność kubełków `B_całk = 34` (worker 16 przy 2 replikach), inaczej `B_całk = 10` (13.2, C4-05) |
 | G-5 | Wszystkie Umiejętności **obu poziomów matury** mają opublikowaną Wkładkę teoretyczną i ≥ 3 Zadania `GLOBALNY` na każdy z Poziomów trudności 2–4 (FR-06, FR-07); **(2.2)** pula Testu diagnostycznego: ≥ 3 Zadania `diagnostyczne = true` (`ZAMKNIETE`, `GLOBALNY`, `OPUBLIKOWANE`) na każdą trójkę (Dział poziomu matury, poziom matury, nominalny Poziom trudności ∈ {2, 4}) — 12 × 2 × 3 = 72 dla `PODSTAWOWY` i 13 × 2 × 3 = 78 dla `ROZSZERZONY` (raport `GET /admin/pula-diagnostyczna`, FR-03, C2-13) |
 | G-6 | Przegląd RODO: umowy powierzenia z dostawcami z retencją zgodną z A-07, polityka prywatności (w tym kolejka globalna i pseudonimizacja), umowy poufności weryfikatorów globalnych, rejestr czynności przetwarzania, test procedury `ponow_zdarzenia_rodo` (odtworzenie PITR w środowisku testowym z rejestrem w buckecie Object Lock) w czterech scenariuszach: (a) wykonane usunięcie po punkcie odtworzenia — **(2.3, C3-03)** w dwóch wariantach: odtworzenie 3 min i 60 min po usunięciu (dłużej niż okno unieważniania 10 min); **(2.4, C4-01)** (a3) punkt odtworzenia `T` **w trakcie** `USUN_KONTO` Ucznia — po kroku 1, 2, 3 i 4, a przed krokiem 5 (cztery przebiegi; zatrzymanie przez zmienną testową `LEMAT_TEST_ZATRZYMAJ_USUN_KONTO_PO_KROKU ∈ {1, 2, 3, 4}`, dostępną wyłącznie w środowisku testowym): odtworzona baza ma wiersz `zdarzenie_rodo` i pełne dane konta, a po skrypcie brak wiersza `uzytkownik`, 0 wierszy `decyzja_modelu` z `uczen_id` konta, 0 obiektów z prefiksem konta w `zdjecia/`, `zdjecia-maskowane/`, `zbior-treningowy/`; (a4) konto **Nauczyciela**: wniosek po `T` (po skrypcie Weryfikacje `KLASA` eskalowane z `KARENCJA_KONTA_NAUCZYCIELA`, blokady zwolnione, szkice zachowane, `KLASA_DO_PRZEKAZANIA` wysłane), usunięcie po `T` i w trakcie kroków (2)–(4) (Klasy zarchiwizowane, Zadania `PRYWATNY` `WYCOFANE`, 0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie` i `uzasadnienie_fakty`), anulowanie po `T` (tabela przywrócenia Nauczyciela); we wszystkich wariantach konto jest w stanie docelowym przed startem workerów, a `zdarzenia_rodo_uniewaznione_total` się nie zmienia, (b) **wniosek** o usunięcie po punkcie odtworzenia (konto wraca do `USUWANE` z pierwotnym terminem), (c) **odwołanie zgody** po punkcie odtworzenia (zgoda `false`, brak nowych kopii, istniejące kopie usunięte), (d) **(2.3, C3-06)** kopia treningowa i zdjęcia utworzone po punkcie odtworzenia — po kroku 2a w `zbior-treningowy/`, `zdjecia/` i `zdjecia-maskowane/` nie ma obiektów bez wiersza w bazie oraz test przywrócenia konta w karencji (C-33), usunięcia konta Nauczyciela z Przekazaniem Klasy i bez niego (ADR-044) oraz **(2.3)** przywrócenia konta Nauczyciela w karencji (Weryfikacje z `powod_eskalacji = KARENCJA_KONTA_NAUCZYCIELA` wracają do `KLASA`, szkice i flagi zachowane) i rozstrzygnięcia dla Ucznia w karencji (`409 KONTO_UCZNIA_NIEAKTYWNE`, C-37) |
@@ -8756,65 +8871,143 @@ Słownika.
 
 ---
 
-## 18. Mapowanie wymagań na komponenty, przepływy i API
+## 18. Macierz Pokrycia Wymagań (Requirements Traceability Matrix)
 
-> Kolumna komponentów używa nazw modułów wersji 2.4 (`lemat.*`); odpowiedniki .NET — 6.10. Pełna macierz RTM na projekty, klasy i testy .NET powstaje w iteracji 4.
+Wersja 3.3 (C8, iteracja 4) zastępuje mapowanie wersji 2.4 macierzą RTM na
+projekty .NET 10, Agentów, tabele DDL, endpointy, strony App Router, reguły
+i testy akceptacyjne. Konwencje kolumn:
+
+- **Moduł / projekt .NET** — moduł z 6.2 (przestrzenie `Lemat.Domain.<Modul>`
+  i `Lemat.Application.<Modul>`) i projekt z 6.4; w nawiasie typ pracy w tle
+  z 13.3, gdy wymaganie realizuje `Lemat.Worker`.
+- **Agent / plugin AI** — interfejs Agenta z 10.0 (implementacja w
+  `Lemat.Agenci`), plugin Semantic Kernel, identyfikator promptu systemowego
+  z `docs/spec/prompty.md` albo port modelu z 13.1.
+- **Encje / tabele** — tabele `docs/spec/ddl.md` (encje EF Core:
+  `docs/spec/ef-core.md` 7).
+- **Endpointy** — ścieżki względem `/api/v1` z katalogu 12.3.
+- **Strony** — trasy z mapowania `docs/spec/api.md` 7 (grupy tras 6.8).
+- **Weryfikacja** — bramka G-x z 17.6 albo test akceptacyjny. Testy
+  Playwright `frNN-*.spec.ts` są katalogiem testów akceptacyjnych
+  (`frontend/e2e/akceptacja/`, Docker Compose z Mock, ADR-065); każdy
+  sprawdza kryterium wymagania przez UI i API, a pozostałe nazwy to testy
+  z 12.12 i ADR.
+
+**Sprawdzenie macierzy** (skrypt [`docs/spec/narzedzia/sprawdz_rtm.py`](spec/narzedzia/sprawdz_rtm.py);
+po utworzeniu `backend/` uruchamiany w CI jako `backend/narzedzia/sprawdz_rtm.py`; sprawdzone na wersji 3.3): (1) każde FR-01 … FR-36 i
+NFR-01 … NFR-10 z `docs/requirements.md` ma dokładnie jeden wiersz; (2)
+każdy endpoint istnieje w katalogu 12.3 (metoda i ścieżka); (3) każda tabela
+istnieje w `CREATE TABLE` `docs/spec/ddl.md`; (4) każda strona istnieje w
+mapowaniu `api.md` 7; (5) każdy ADR ma plik w `docs/adr/`; (6) każda
+bramka G-x istnieje w 17.6; (7) każde pojęcie słownika ma wiersz macierzy
+odwrotnej, a jego identyfikatory występują w dokumencie lub DDL; (8) każde
+wymaganie z macierzy odwrotnej istnieje. Wynik dla wersji 3.3: 46/46
+wymagań z jednym wierszem; sprawdzonych odwołań: 140 endpointów, 114
+tabel, 80 stron, 96 ADR, 15 bramek, 107 identyfikatorów; 25/25 pojęć
+słownika; 0 błędów. Macierz odwrotna pokrywa 45 z 46 wymagań — NFR-10
+(język interfejsu) nie odpowiada żadnemu pojęciu słownika.
 
 ### 18.1 Wymagania funkcjonalne
 
-| Wymaganie | Komponenty | Przepływ / reguły | API | Dane |
-|---|---|---|---|---|
-| FR-01 konto, logowanie | `lemat.konta` | 9.1 | `/auth/*` | `uzytkownik`, `uczen`, `token_odswiezania` |
-| FR-02 poziom matury, termin | `lemat.konta`, `lemat.profil` | 9.1 (w tym zmiana poziomu) | `PATCH /uczniowie/ja` | `uczen.poziom_matury`, `termin_egzaminu` |
-| FR-03 test diagnostyczny | `lemat.profil`, `lemat.tresci` (pula), Orkiestrator (`AKTUALIZUJ_PROFIL`, `SPRAWDZ_PULE_DIAGNOSTYCZNA`) | 9.1 (pula, `TEST_NIEDOSTEPNY`, pominięcie D-14), 10.1.3, G-5 | `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne/*`, `PUT /admin/zadania/{id}/diagnostyczne`, `GET /admin/pula-diagnostyczna` | `test_diagnostyczny` (`ux_test_jeden`, `pominiete_dzialy`), `odpowiedz`, `wynik_zadania.test_diagnostyczny_id`, `opanowanie_umiejetnosci` |
-| FR-04 widok profilu | `lemat.profil` | 10.1.3 | `GET /uczniowie/{id}/profil` | `opanowanie_umiejetnosci` |
-| FR-05 kolejne zadanie | Agent rekomendujący, `lemat.rekomendacje`, fasada Orkiestratora | 9.2, 10.1.2 kroki 1–8 | `GET …/rekomendacje/nastepna`, `POST /elementy-sciezki/{id}/rozpoczecie` | `element_sciezki`, `rekomendacja` |
-| FR-06 wkładka przed zadaniami | Agent rekomendujący, Agent generujący (szkice), `lemat.tresci` | 10.1.2 krok 6, E-20, G-5 (oba poziomy) | `…/nastepna`, `/wkladki-teoretyczne/*`, `/elementy-sciezki/{id}/przeczytanie` | `wkladka_teoretyczna` |
-| FR-07 rosnąca trudność | Agent rekomendujący (Elo, Seria) | 10.1.2 kroki 3 i 7, 10.1.3, reguły Serii | `…/nastepna` | `theta`, `kalibracja_trudnosci`, `sciezka_nauki.seria_*` |
-| FR-08 powtórki | Agent rekomendujący | 10.1.2 kroki 4 i 5b, 10.1.3 | `…/nastepna` | `nastepna_powtorka_at`, `licznik_powtorek`, `element_sciezki.cel` |
-| FR-09 wybór działu | `lemat.konta`, Agent rekomendujący | 10.1.2 krok 2 | `PATCH /uczniowie/ja` | `uczen.wybrany_dzial_id` |
-| FR-10 uzasadnienie | Agent rekomendujący | 10.1.5 (szablon dla każdej reguły i braku elementu) | `RekomendacjaWyjscie` | `rekomendacja.uzasadnienie`, `uzasadnienie_fakty`, `regula` |
-| FR-11 generowanie | Agent generujący | 9.7, 13.3 (`UZUPELNIJ_PULE` z budżetem) | `POST /zadania/generowanie` | `zlecenie_generowania`, `zadanie` |
-| FR-12 treść + wzorcowe + kryteria | Agent generujący | 10.2.1 | `GET /zadania/{id}` | `zadanie_wersja`, `kryterium_oceniania` |
-| FR-13 walidacja | Agent generujący, SymPy, model decyzyjny | 9.7, 10.2.2 | `GET /zlecenia-generowania/{id}` | `walidacja_zadania` |
-| FR-14 przegląd przez Nauczyciela | `lemat.tresci` | 8.4 (uprawnienia ADR-028, ADR-038; Zadania zlecone przez Nauczyciela zawsze `DO_PRZEGLADU`), 9.7, D-11 | `POST /zadania/{id}/przeglad`, `POST /zadania/{id}/wycofanie`, `POST /zadania/{id}/zgloszenia-bledu`, `/zgloszenia-bledu-zadan/*` | `przeglad_zadania`, `zadanie_wersja`, `zadanie.zasieg`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze` |
-| FR-15 zadanie zamknięte | `lemat.rozwiazania` | 9.3 | `POST /zadania/{id}/odpowiedzi` | `odpowiedz` |
-| FR-16 zdjęcia rozwiązania | `lemat.rozwiazania`, PWA | 9.4, 8.5 (rozpoczęcie) | `POST /rozwiazania`, `…/zdjecia`, `…/porzucenie` | `rozwiazanie`, `zdjecie_rozwiazania` |
-| FR-17 odczyt pisma, kroki | Agent rozpoznający | 9.4, 10.3 | `GET /rozwiazania/{id}`, `…/ponowienie-rozpoznania` | `transkrypcja`, `krok_transkrypcji` |
-| FR-18 poprawa transkrypcji | `lemat.rozwiazania`, Agent rozpoznający (Sprawdzenie zgodności poprawek) | 9.4 (limity), 8.1, 10.3.3, 11.3 T-7, ADR-036, D-10 | `PUT …/transkrypcja`, `POST …/zatwierdzenie` | `transkrypcja` (wersje, `zakres_poprawek`, `zgodnosc_poprawek`), `krok_transkrypcji.nr_kroku_agenta`, `zmieniony_przez_ucznia` |
-| FR-19 ocena krokowa, punkty cząstkowe | Agent oceniający | 9.5, 11.1 | `GET …/ocena` | `ocena`, `ocena_kryterium` |
-| FR-20 wynik tylko z rozumowania | Agent oceniający | 11.1 p. 5 | — | `ocena_kryterium`, `ocena.punkty_surowe` |
-| FR-21 wynikanie kroków | SymPy, Q-OC-05, N-3, N-6 | 10.4.3, 11.1 p. 8 | — | `decyzja_modelu` |
-| FR-22 pewność oceny | Agent oceniający, `lemat.kalibracja` | 11.2, ADR-027 | pole `pewnosc_oceny` (N) | `ocena.pewnosc_oceny`, `kalibrator_pewnosci` |
-| FR-23 auto powyżej progu | Agent oceniający | 11.3 T-4 | — | `ocena.status = OSTATECZNA`, `prog_pewnosci` |
-| FR-24 poniżej progu → weryfikacja, ocena wstępna | Agent oceniający, `lemat.weryfikacja` | 9.5, 11.3, 8.2 (widoczność) | `GET /rozwiazania/{id}` (`ocena.status = WSTEPNA`) | `weryfikacja` |
-| FR-25 poprawny wynik, błędne kroki | Agent oceniający | 11.3 T-2 (τ_FR25) | — | `powody` |
-| FR-26 dowód zawsze do weryfikacji | Agent oceniający | 11.3 T-1, CHECK progu 1.000 | — | `powody`, `prog_pewnosci` |
-| FR-27 błędny krok, typ, wskazówka | Agent oceniający, Agent wyjaśniający | 9.5, 9.6.2 (reguły Wskazówki), 10.5, 11.1 p. 6 (N-1), 11.7 | `OcenaWyjscie` | `pierwszy_bledny_krok`, `typ_bledu`, `wskazowka`, `uzasadnienie` |
-| FR-28 błędy odczytu nie obniżają oceny | Agent rozpoznający, Agent oceniający, `lemat.weryfikacja` | 8.6, 9.4, 9.12 (zawieszenie Wyniku), 11.1 p. 5–7, 11.3 T-3, 11.4.3 p. 3, 11.6, 11.8, ADR-022 | `…/zgloszenie-bledu-odczytu`, `OcenaWyjscie.widocznosc_dla_ucznia`, `RozstrzygniecieWejscie.kroki_z_bledem_odczytu` | `mozliwy_blad_odczytu`, `krok_podejrzany_odczyt`, `weryfikacja.zgloszenie` |
-| FR-29 ocena aktualizuje profil | `lemat.profil` | 9.3, 9.5, 9.6, 10.1.3 (wagi) | — | `wynik_zadania`, `opanowanie_umiejetnosci` |
-| FR-30 klasy, zaproszenia | `lemat.klasy` | 16.4 (Przekazanie Klasy przy usunięciu konta Nauczyciela) | `/klasy`, `/klasy/dolaczenie`, `…/archiwizacja`, `DELETE /uczniowie/ja/klasy/{id}`, `POST /admin/klasy/{id}/przekazanie` | `klasa`, `czlonkostwo_klasy` |
-| FR-31 postępy | `lemat.klasy`, `lemat.profil` | — | `/klasy/{id}/postepy`, `/uczniowie/{id}/profil`, `/przypisania/{id}/postep` | widok agregujący |
-| FR-32 przypisania | `lemat.klasy`, Agent rekomendujący (krok 1) | 10.1.2, 8.5 (element `R-PRZYPISANIE`), ADR-032, C-30 | `/zestawy-zadan` (CRUD), `/przypisania`, `GET /przypisania/{id}/postep` (`PostepPrzypisaniaWyjscie`) | `zestaw_zadan`, `przypisanie`, `element_sciezki.przypisanie_id`, `trg_kontekst_proby` |
-| FR-33 kolejka z powodem | `lemat.weryfikacja` | 9.6.1, 11.3, 11.4, 17.7 | `GET /weryfikacje`, `…/podjecie`, `…/przedluzenie`, `…/szkic` | `weryfikacja.powody`, `priorytet`, `termin_at` |
-| FR-34 korekty → kalibracja | `lemat.weryfikacja`, `lemat.kalibracja` | 9.6.2, 9.6.3, 9.8, 11.5 | `…/rozstrzygniecie`, `…/korekty` | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci` |
-| FR-35 import CKE | `lemat.tresci` | 9.11 | `/admin/arkusze-cke/importy` | `arkusz_cke`, `import_arkusza` |
-| FR-36 tagowanie | `lemat.tresci` | 9.11 | `POST /zadania`, `GET /zadania?…` | `zadanie.rodzaj`, `dzial_id`, `zadanie_umiejetnosc`, `poziom_trudnosci_nominalny`, `kalibracja_trudnosci.poziom_trudnosci` |
+| ID | Wymaganie (skrót) | Moduł / projekt .NET | Agent / plugin AI | Encje / tabele | Endpointy REST / SSE | Strony Next.js (`src/app`) | Reguły / ADR | Weryfikacja (bramka / test akceptacyjny) |
+|---|---|---|---|---|---|---|---|---|
+| FR-01 | Konto i logowanie Ucznia | Konta: `Lemat.Domain.Konta`, `Lemat.Application.Konta`, `Lemat.Api` | — | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania` | `POST /auth/rejestracja`<br>`POST /auth/logowanie`<br>`POST /auth/odswiezenie`<br>`POST /auth/wylogowanie`<br>`POST /auth/reset-hasla`<br>`POST /auth/reset-hasla/potwierdzenie`<br>`GET /admin/uzytkownicy`<br>`PATCH /admin/uzytkownicy/{id}` | `(publiczne)/logowanie`<br>`(publiczne)/rejestracja`<br>`rejestracja/nauczyciel`<br>`(publiczne)/reset-hasla`<br>`(administrator)/admin/uzytkownicy` | 9.1, 16.1; ADR-020, ADR-057, ADR-070, ADR-071, ADR-072 | `fr01-konto.spec.ts`, `sesja-dwie-karty.spec.ts`, `klasa-za-nat.spec.ts`, `RejestracjaUczniaZwracaSesje` |
+| FR-02 | Poziom matury i termin egzaminu | Konta, Profil: `Lemat.Application.Konta`, `Lemat.Api` | — | `uczen` | `GET /uczniowie/ja`<br>`PATCH /uczniowie/ja` | `(uczen)/start`<br>`(uczen)/ustawienia` | 9.1 (zmiana poziomu); ADR-072 | `fr02-poziom-termin.spec.ts`, `ZmianaUczniaWyczyszczenieDzialu` |
+| FR-03 | Test diagnostyczny → początkowy Profil | Profil, Tresci (pula): `Lemat.Application.Profil`, `Lemat.Worker` (`AKTUALIZUJ_PROFIL`) | `IAgentRekomendujacy` (inicjalizacja Profilu, 10.1.3) | `test_diagnostyczny`, `pozycja_testu_diagnostycznego`, `odpowiedz`, `wynik_zadania`, `opanowanie_umiejetnosci` | `POST /uczniowie/ja/test-diagnostyczny`<br>`GET /testy-diagnostyczne/{id}`<br>`POST /testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz`<br>`POST /testy-diagnostyczne/{id}/zakonczenie`<br>`POST /testy-diagnostyczne/{id}/pominiecie`<br>`PUT /admin/zadania/{id}/diagnostyczne`<br>`GET /admin/pula-diagnostyczna` | `(uczen)/test-diagnostyczny`<br>`admin/pula-diagnostyczna` | 9.1, 10.1.3; ADR-010, ADR-074 p. 3 | G-5; `fr03-test-diagnostyczny.spec.ts`, `PonownaOdpowiedzWTescieNadpisuje` |
+| FR-04 | Widok Profilu ucznia (Działy, Umiejętności) | Profil: `Lemat.Application.Profil`, `Lemat.Api` | — | `profil_ucznia`, `opanowanie_umiejetnosci`, `dzial`, `umiejetnosc` | `GET /uczniowie/ja/profil`<br>`GET /dzialy`<br>`GET /umiejetnosci` | `(uczen)/profil` | 10.1.3; ADR-010 | `fr04-profil.spec.ts` |
+| FR-05 | Propozycja kolejnego Zadania z Profilu | Rekomendacje: `Lemat.Application.Rekomendacje`, `Lemat.Application.Orkiestracja.Synchroniczna` | `IAgentRekomendujacy` (`AgentRekomendujacy`, `PredyktorSukcesuElo`, Q-RE-01 `stan-rekomendacji-v1`) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` | `GET /uczniowie/ja/rekomendacje/nastepna`<br>`GET /uczniowie/ja/sciezka-nauki`<br>`POST /elementy-sciezki/{id}/rozpoczecie`<br>`POST /elementy-sciezki/{id}/pominiecie` | `(uczen)/start`<br>`(uczen)/sciezka-nauki` | 9.2, 10.1.2; ADR-010, ADR-023 | `fr05-rekomendacja.spec.ts` |
+| FR-06 | Wkładka teoretyczna przed Zadaniami słabej Umiejętności | Rekomendacje, Tresci | `IAgentRekomendujacy` (reguły `R-WKLADKA`), `IAgentGenerujacy` (rola `GENERATYWNY_WKLADKI`) | `wkladka_teoretyczna`, `element_sciezki` | `GET /wkladki-teoretyczne/{id}`<br>`GET /wkladki-teoretyczne`<br>`PUT /wkladki-teoretyczne/{id}`<br>`POST /elementy-sciezki/{id}/przeczytanie`<br>`POST /admin/wkladki-teoretyczne/szkice` | `(uczen)/wkladki-teoretyczne/[wkladkaId]`<br>`nauczyciel/wkladki-teoretyczne`<br>`admin/wkladki-teoretyczne` | 10.1.2 krok 6; ADR-015, ADR-030 | G-5; `fr06-wkladka.spec.ts` |
+| FR-07 | Rosnąca trudność Zadań | Rekomendacje, Tresci (`kalibracja_trudnosci`) | `IAgentRekomendujacy` (Elo, Seria) | `kalibracja_trudnosci`, `opanowanie_umiejetnosci`, `sciezka_nauki` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/start` | 10.1.2 kroki 3 i 7; ADR-010, ADR-029, ADR-030 | `fr07-trudnosc.spec.ts` |
+| FR-08 | Powtórki opanowanych Działów | Rekomendacje, Profil | `IAgentRekomendujacy` (`R-POWTORKA`) | `opanowanie_umiejetnosci`, `element_sciezki` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/start` | 10.1.2 kroki 4 i 5b; ADR-010 | `fr08-powtorki.spec.ts` |
+| FR-09 | Samodzielny wybór Działu | Konta, Rekomendacje | `IAgentRekomendujacy` (10.1.2 krok 2) | `uczen` | `PATCH /uczniowie/ja`<br>`GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/ustawienia` | 10.1.2 krok 2; ADR-072 (`wybrany_dzial_id: null`) | `fr09-wybor-dzialu.spec.ts`, `ZmianaUczniaWyczyszczenieDzialu` |
+| FR-10 | Uzasadnienie rekomendacji | Rekomendacje | `IAgentRekomendujacy` (szablony 10.1.5, bez LLM) | `rekomendacja` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/start` | 10.1.5; ADR-011 | `fr10-uzasadnienie.spec.ts` |
+| FR-11 | Generowanie Zadania dla Umiejętności i Poziomu trudności | Tresci: `Lemat.Application.Tresci`, `Lemat.Worker` (`GENERUJ_ZADANIE`) | `IAgentGenerujacy`, plugin `SprawdzanieSymbolicznePlugin` | `zlecenie_generowania`, `zadanie`, `zadanie_wersja` | `POST /zadania/generowanie`<br>`GET /zlecenia-generowania/{id}`<br>`GET /zlecenia-generowania`<br>`GET /zlecenia-generowania/{id}/strumien` | `nauczyciel/zadania/generowanie`<br>`admin/zlecenia-generowania` | 9.7, 10.2; ADR-015, ADR-058, ADR-064 | `fr11-generowanie.spec.ts` |
+| FR-12 | Treść, rozwiązanie wzorcowe i Kryteria oceniania | Tresci | `IAgentGenerujacy` (`rozwiazanie-niezalezne-v1`) | `zadanie_wersja`, `kryterium_oceniania` | `GET /zadania/{id}` | `nauczyciel/zadania/[zadanieId]/przeglad` | 10.2.1; ADR-012 | `fr12-tresc-kryteria.spec.ts` |
+| FR-13 | Walidacja Zadania przed udostępnieniem | Tresci, `Lemat.Worker` (`WALIDUJ_ZADANIE`) | `IAgentGenerujacy` (`plan-pytan-walidacji-v1`, `stan-walidacji-v1`, Q-WA-*), plugin `SprawdzanieSymbolicznePlugin` | `walidacja_zadania`, `zadanie` | `GET /zlecenia-generowania/{id}`<br>`GET /zlecenia-generowania/{id}/strumien` | `nauczyciel/zadania/generowanie` | 9.7, 10.2.2; ADR-015, ADR-050 | `fr13-walidacja.spec.ts` |
+| FR-14 | Przegląd, poprawa i odrzucenie Zadania wygenerowanego | Tresci | — | `przeglad_zadania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze`, `zadanie` | `GET /zadania`<br>`POST /zadania/{id}/przeglad`<br>`POST /zadania/{id}/wycofanie`<br>`POST /zadania/{id}/zgloszenia-bledu`<br>`GET /zgloszenia-bledu-zadan`<br>`POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` | `nauczyciel/zadania/[zadanieId]/przeglad`<br>`nauczyciel/zgloszenia-bledu-zadan`<br>`admin/zgloszenia-bledu-zadan` | 8.4; ADR-028, ADR-038, ADR-069 p. 3 | `fr14-przeglad.spec.ts` |
+| FR-15 | Zadanie zamknięte zaznaczane na platformie | Rozwiazania | — | `odpowiedz`, `element_sciezki` | `GET /zadania/{id}`<br>`POST /zadania/{id}/odpowiedzi` | `(uczen)/zadania/[zadanieId]` | 9.3, 12.5; ADR-032, ADR-071 p. 3 | `fr15-zamkniete.spec.ts` |
+| FR-16 | Rozwiązanie zadania otwartego jako zdjęcia | Rozwiazania: `Lemat.Application.Rozwiazania`, `Lemat.Api`, `Lemat.ImageSandbox` | — | `rozwiazanie`, `zdjecie_rozwiazania`, `klucz_idempotencji` | `POST /rozwiazania`<br>`POST /rozwiazania/{id}/zdjecia`<br>`POST /rozwiazania/{id}/porzucenie`<br>`GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `(uczen)/zadania/[zadanieId]`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 9.4; ADR-024, ADR-052, ADR-067, ADR-068 | `fr16-przeslanie.spec.ts`, `podwojne-klikniecie.spec.ts`, `PrzeslanieMultipartZKlientaOpenApi` |
+| FR-17 | Odczyt pisma i podział na kroki | Rozwiazania, `Lemat.Worker` (`ROZPOZNAJ_PISMO`) | `IAgentRozpoznajacy` (rola `ROZPOZNAWANIE_PISMA`) | `transkrypcja`, `krok_transkrypcji` | `GET /rozwiazania/{id}`<br>`GET /rozwiazania/{id}/strumien`<br>`POST /rozwiazania/{id}/ponowienie-rozpoznania` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.4, 10.3; ADR-004, ADR-042, ADR-064 | G-2; `kontrakt-api.spec.ts` |
+| FR-18 | Poprawa Transkrypcji przed oceną | Rozwiazania | `IAgentRozpoznajacy` (`sprawdzenie-poprawek-v2`) | `szkic_transkrypcji`, `transkrypcja`, `krok_transkrypcji` | `PUT /rozwiazania/{id}/transkrypcja/szkic`<br>`PUT /rozwiazania/{id}/transkrypcja`<br>`POST /rozwiazania/{id}/zatwierdzenie` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.4, 11.3 T-7; ADR-017, ADR-036, ADR-073 | `autozapis-wolna-siec.spec.ts`, `LimitWersjiTranskrypcji` |
+| FR-19 | Ocena krok po kroku z punktami cząstkowymi | Ocenianie: `Lemat.Application.Ocenianie`, `Lemat.Worker` (`OCEN_ROZWIAZANIE`) | `IAgentOceniajacy` (`plan-pytan-v1`, `stan-oceny-v1`; Jev przez `JevAdapter`) | `ocena`, `ocena_kryterium`, `decyzja_modelu` | `GET /rozwiazania/{id}/ocena` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.5, 11.1; ADR-005, ADR-026 | G-1; `fr19-ocena-krokowa.spec.ts` |
+| FR-20 | Punkty za wynik tylko z rozumowania | Ocenianie | `IAgentOceniajacy` | `ocena_kryterium` | `GET /rozwiazania/{id}/ocena` | `(uczen)/rozwiazania/[rozwiazanieId]` | 11.1 p. 5; ADR-005 | G-1; `fr20-wynik-z-rozumowania.spec.ts` |
+| FR-21 | Wynikanie kolejnych kroków | Ocenianie | `IAgentOceniajacy` + `ISprawdzanieSymboliczne` (sidecar SymPy) | `decyzja_modelu` | `GET /rozwiazania/{id}/ocena` | `(uczen)/rozwiazania/[rozwiazanieId]` | 10.4.3, 11.1 p. 8; ADR-050 | G-1; `fr21-wynikanie-krokow.spec.ts` |
+| FR-22 | Pewność oceny | Ocenianie, Kalibracja | `IAgentOceniajacy` | `ocena`, `kalibrator_pewnosci` | `GET /rozwiazania/{id}/ocena`<br>`GET /admin/kalibracja` | `nauczyciel/weryfikacje/[weryfikacjaId]` | 11.2; ADR-006, ADR-027 | G-1; `fr22-pewnosc.spec.ts` |
+| FR-23 | Ocena automatyczna powyżej Progu pewności | Ocenianie | `IAgentOceniajacy` | `ocena`, `prog_pewnosci` | `GET /rozwiazania/{id}` | `(uczen)/rozwiazania/[rozwiazanieId]` | 11.3 T-4; ADR-007 | G-1; `fr23-auto.spec.ts` |
+| FR-24 | Poniżej progu → Weryfikacja, Uczeń widzi Ocenę wstępną | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja`, `ocena` | `GET /rozwiazania/{id}`<br>`GET /rozwiazania`<br>`GET /rozwiazania/{id}/strumien`<br>`GET /powiadomienia` | `(uczen)/rozwiazania`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 8.2, 11.3; ADR-018, ADR-025 | `fr24-ocena-wstepna.spec.ts`, `OdpytywanieWidziWskazowke` |
+| FR-25 | Poprawny wynik przy błędnym/brakującym kroku → zawsze Weryfikacja | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja` | `GET /weryfikacje` | `nauczyciel/weryfikacje` | 11.3 T-2; ADR-027 | `fr25-wynik-bledne-kroki.spec.ts` |
+| FR-26 | Zadanie z dowodem: Ocena wstępna i zawsze Weryfikacja | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja`, `prog_pewnosci` | `GET /weryfikacje` | `nauczyciel/weryfikacje` | 11.3 T-1; ADR-008 | `fr26-dowod.spec.ts` |
+| FR-27 | Pierwszy błędny krok, typ błędu, Wskazówka | Ocenianie, `Lemat.Worker` (`NAPISZ_WSKAZOWKE`) | `IAgentOceniajacy`, `IAgentWyjasniajacy` (rola `GENERATYWNY_WSKAZOWKI`) | `ocena` | `GET /rozwiazania/{id}/ocena`<br>`GET /rozwiazania/{id}/ocena/historia` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.6.2, 10.5, 11.7; ADR-025 | `fr27-wskazowka.spec.ts` |
+| FR-28 | Błąd odczytu nie obniża Oceny | Rozwiazania, Ocenianie, Weryfikacje | `IAgentRozpoznajacy`, `IAgentOceniajacy` | `weryfikacja`, `ocena`, `wynik_zadania` | `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu`<br>`POST /weryfikacje/{id}/rozstrzygniecie` | `(uczen)/rozwiazania/[rozwiazanieId]`<br>`nauczyciel/weryfikacje/[weryfikacjaId]` | 9.12, 11.6, 11.8; ADR-022, ADR-036 | `fr28-blad-odczytu.spec.ts` |
+| FR-29 | Wynik Oceny aktualizuje Profil ucznia | Profil, `Lemat.Worker` (`AKTUALIZUJ_PROFIL`) | `IAgentRekomendujacy` (model Elo, 10.1.3) | `wynik_zadania`, `opanowanie_umiejetnosci`, `profil_ucznia` | `GET /uczniowie/ja/profil` | `(uczen)/profil` | 9.3, 9.5, 10.1.3; ADR-010, ADR-018 | `fr29-profil-po-ocenie.spec.ts` |
+| FR-30 | Klasa i zaproszenia Uczniów | Klasy: `Lemat.Application.Klasy` | — | `klasa`, `czlonkostwo_klasy` | `POST /klasy`<br>`GET /klasy`<br>`GET /klasy/{id}`<br>`POST /klasy/{id}/kod-zaproszenia`<br>`POST /klasy/{id}/archiwizacja`<br>`POST /klasy/dolaczenie`<br>`DELETE /klasy/{id}/uczniowie/{uczen_id}`<br>`DELETE /uczniowie/ja/klasy/{id}`<br>`GET /admin/klasy`<br>`GET /admin/klasy/{id}`<br>`POST /admin/klasy/{id}/przekazanie` | `nauczyciel/klasy`<br>`(publiczne)/dolacz/[kod]`<br>`(uczen)/klasy`<br>`admin/klasy` | 16.4; ADR-044, ADR-071 p. 5 | `fr30-klasa.spec.ts` |
+| FR-31 | Postępy Klasy i Uczniów | Klasy, Profil | — | `klasa`, `opanowanie_umiejetnosci`, `wynik_zadania` | `GET /klasy/{id}/postepy`<br>`GET /uczniowie/{id}/profil`<br>`GET /klasy/{id}/uczniowie/{uczen_id}/rozwiazania`<br>`GET /przypisania/{id}/postep` | `nauczyciel/klasy/[klasaId]/uczniowie/[uczenId]`<br>`nauczyciel/rozwiazania/[rozwiazanieId]` | 12.8; ADR-071 | `fr31-postepy.spec.ts`, `KazdyEndpointZIdMaTestIdor` |
+| FR-32 | Przypisania Zadań i Zestawów zadań | Klasy | `IAgentRekomendujacy` (`R-PRZYPISANIE`) | `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` | `POST /zestawy-zadan`<br>`GET /zestawy-zadan`<br>`PUT /zestawy-zadan/{id}`<br>`DELETE /zestawy-zadan/{id}`<br>`POST /przypisania`<br>`GET /przypisania`<br>`PATCH /przypisania/{id}`<br>`POST /przypisania/{id}/wycofanie`<br>`GET /uczniowie/ja/przypisania` | `nauczyciel/zestawy-zadan`<br>`nauczyciel/przypisania`<br>`(uczen)/przypisania` | 8.5, 12.5; ADR-032, ADR-074 | `fr32-przypisania.spec.ts`, `WycofanieNieUjawniaKlucza` |
+| FR-33 | Kolejka weryfikacji z powodem | Weryfikacje: `Lemat.Application.Weryfikacje` | — | `weryfikacja`, `szkic_rozstrzygniecia` | `GET /weryfikacje`<br>`GET /weryfikacje/{id}`<br>`POST /weryfikacje/{id}/podjecie`<br>`POST /weryfikacje/{id}/przedluzenie`<br>`PUT /weryfikacje/{id}/szkic`<br>`POST /weryfikacje/{id}/zwolnienie`<br>`GET /admin/obciazenie-weryfikacji` | `nauczyciel/weryfikacje`<br>`nauczyciel/weryfikacje/[weryfikacjaId]`<br>`admin/obciazenie-weryfikacji` | 9.6.1, 11.4, 17.7; ADR-021, ADR-031, ADR-033, ADR-034, ADR-043 | G-7; `fr33-weryfikacja-zdjecia.spec.ts` |
+| FR-34 | Korekty Ocen → kalibracja Progu pewności | Weryfikacje, Kalibracja, `Lemat.Worker` (`KALIBRUJ`) | — | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `ocena` | `POST /weryfikacje/{id}/rozstrzygniecie`<br>`POST /rozwiazania/{id}/korekty`<br>`GET /admin/progi-pewnosci`<br>`POST /admin/progi-pewnosci` | `nauczyciel/weryfikacje/[weryfikacjaId]`<br>`nauczyciel/rozwiazania/[rozwiazanieId]`<br>`admin/progi-pewnosci` | 9.6.2, 9.6.3, 9.8, 11.5; ADR-007, ADR-046, ADR-069 | `fr34-korekta.spec.ts` |
+| FR-35 | Import Arkuszy CKE z Kryteriami oceniania | Tresci, `Lemat.Worker` (`IMPORTUJ_ARKUSZ`) | — | `arkusz_cke`, `import_arkusza`, `zadanie`, `kryterium_oceniania` | `POST /admin/arkusze-cke/importy`<br>`GET /admin/arkusze-cke/importy/{id}`<br>`GET /admin/arkusze-cke/importy/{id}/strumien` | `admin/arkusze-cke` | 9.11, 12.9; ADR-067 p. 1 | `fr35-import.spec.ts` |
+| FR-36 | Otagowanie Zadania: rodzaj, Dział, Umiejętności, Poziom trudności | Tresci | — | `zadanie`, `zadanie_umiejetnosc`, `kalibracja_trudnosci`, `dzial`, `umiejetnosc` | `POST /zadania`<br>`GET /zadania`<br>`PUT /admin/zadania/{id}/otagowanie`<br>`PUT /admin/zadania/{id}/diagnostyczne` | `nauczyciel/zadania`<br>`admin/zadania` | 9.11; ADR-012, ADR-071 p. 6 | `fr36-otagowanie.spec.ts` |
 
 ### 18.2 Wymagania niefunkcjonalne
 
-Pełne mapowanie w 17.1; budżety w 17.2; bramki weryfikujące w 17.6.
+Budżety i realizacja NFR — 17.1, 17.2; bramki — 17.6.
+
+| ID | Wymaganie (skrót) | Moduł / projekt .NET | Agent / plugin AI | Encje / tabele | Endpointy REST / SSE | Strony Next.js (`src/app`) | Reguły / ADR | Weryfikacja (bramka / test akceptacyjny) |
+|---|---|---|---|---|---|---|---|---|
+| NFR-01 | Ocena ≤ 30 s | Orkiestracja: `Lemat.Application.Orkiestracja`, `Lemat.Worker` (pule `R`, `O`, `S`) | `IAgentRozpoznajacy`, `IAgentOceniajacy` | `rozwiazanie`, `praca_w_tle` | `GET /rozwiazania/{id}/strumien`<br>`GET /rozwiazania/{id}` | `(uczen)/rozwiazania/[rozwiazanieId]` | 14.6, 17.2; ADR-025, ADR-039, ADR-064 | G-3; `sse-zapasowe-odpytywanie.spec.ts` |
+| NFR-02 | Zgodność z Nauczycielem ≥ 90% | Kalibracja, `Lemat.Worker` (`EWALUUJ_ZT1`) | `IAgentOceniajacy` | `probka_kalibracyjna`, `decyzja_modelu` | `POST /admin/konfiguracje-modeli/{id}/ewaluacja-zt1`<br>`GET /admin/kalibracja` | `admin/konfiguracje-modeli`<br>`admin/kalibracja` | 11.5; ADR-027 | G-1 |
+| NFR-03 | Błędne zaliczenia automatyczne ≤ 2% | Kalibracja | `IAgentOceniajacy` | `stan_bezpiecznika`, `prog_pewnosci`, `probka_kalibracyjna` | `GET /admin/bezpieczniki`<br>`POST /admin/bezpieczniki/dezaktywacja`<br>`GET /admin/kalibracja` | `admin/bezpieczniki`<br>`admin/kalibracja` | 11.5.3; ADR-007, ADR-046 | G-1; `Lemat.Symulacje` (symulacje bezpiecznika) |
+| NFR-04 | Kalibracja Pewności oceny | Kalibracja, `Lemat.Worker` (`KALIBRUJ`) | `IAgentOceniajacy` | `kalibrator_pewnosci`, `probka_kalibracyjna` | `GET /admin/kalibracja` | `admin/kalibracja` | 11.2, 11.5; ADR-006 | G-1 |
+| NFR-05 | Wyjaśnialność Ocen i rekomendacji | Modele, Ocenianie, Rekomendacje | `IAgentWyjasniajacy`, `IAgentRekomendujacy` | `decyzja_modelu`, `rekomendacja`, `ocena` | `GET /weryfikacje/{id}`<br>`GET /rozwiazania/{id}/ocena`<br>`GET /uczniowie/ja/rekomendacje/nastepna` | `nauczyciel/weryfikacje/[weryfikacjaId]`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 10.0, 11.7; ADR-011, ADR-026 | `fr27-wskazowka.spec.ts`, `fr10-uzasadnienie.spec.ts` |
+| NFR-06 | Wymienne Modele AI | Modele: `Lemat.Modele`, `Lemat.Application.Modele` | porty `IModelGeneratywny`, `IModelDecyzyjny`; Mock każdego dostawcy | `konfiguracja_modelu` | `GET /admin/konfiguracje-modeli`<br>`POST /admin/konfiguracje-modeli`<br>`POST /admin/konfiguracje-modeli/{id}/aktywacja` | `admin/konfiguracje-modeli` | 13.1; ADR-003, ADR-055, ADR-058, ADR-065 | `AgentNieRozwiazujeKlientaCzatuZDi`, `Lemat.Architecture.Tests` |
+| NFR-07 | Model zapasowy przy niedostępności Modelu decyzyjnego | Modele: `Lemat.Modele` | `CircuitBreakerModeluDecyzyjnego` (rola `DECYZYJNY_ZAPASOWY`) | `konfiguracja_modelu`, `decyzja_modelu` | `GET /admin/kalibracja` | `admin/kalibracja`<br>`admin/konfiguracje-modeli` | 9.9, 13.2; ADR-009 | G-4 |
+| NFR-08 | Przeglądarka na telefonie i komputerze, zdjęcie z aplikacji | frontend Next.js (PWA, `features/rozwiazania`) | — | `zdjecie_rozwiazania` | `POST /rozwiazania` | `(uczen)/zadania/[zadanieId]`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 6.8; ADR-054 | `aparat-przeladowanie.spec.ts`, `siec-komorkowa.spec.ts` |
+| NFR-09 | RODO i usuwanie zdjęć po czasie | Konta (`Lemat.Domain.Konta.Rodo`), Rozwiazania, `Lemat.Scheduler` | `IAgentRozpoznajacy` (Filtr danych osobowych) | `zdarzenie_rodo`, `zdjecie_rozwiazania`, `kopia_treningowa`, `dziennik_audytu`, `szkic_transkrypcji` | `DELETE /uczniowie/ja`<br>`DELETE /nauczyciele/ja`<br>`GET /uczniowie/ja/eksport-danych`<br>`POST /admin/uzytkownicy/{id}/przywrocenie`<br>`POST /admin/uzytkownicy/{id}/usuniecie`<br>`GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `(uczen)/ustawienia`<br>`nauczyciel/ustawienia` | 9.10, 16.3, 16.4; ADR-019, ADR-035, ADR-040, ADR-041, ADR-042, ADR-044, ADR-047, ADR-071 p. 5 | G-6 |
+| NFR-10 | Interfejs po polsku | `Lemat.Api` (`katalog-bledow.yaml`), frontend (`messages/pl-PL.json`) | — | — | — | `(uczen)/start`<br>`(nauczyciel)/nauczyciel`<br>`(administrator)/admin/uzytkownicy` | 12.1, 14.4; ADR-060 | `KatalogBledowKompletny` |
 
 ### 18.3 Rodzaje zadań
 
-| Rodzaj | Przepływ | Ocena | Weryfikacja |
-|---|---|---|---|
-| Zamknięte | 9.3 | porównanie z kluczem (`odpowiedz.czy_poprawna`), bez zdjęcia | nigdy |
-| Otwarte obliczeniowe | 9.4 → 9.5 | Agent oceniający krok po kroku | wg 11.3 (T-2…T-5) |
-| Otwarte z dowodem | 9.4 → 9.5 | Ocena wstępna (bez Q-OC-01) | zawsze (T-1) |
+| Rodzaj | Przepływ | Ocena | Weryfikacja | Wymagania |
+|---|---|---|---|---|
+| Zamknięte | 9.3 | porównanie z kluczem (`odpowiedz.czy_poprawna`), bez zdjęcia | nigdy | FR-15 |
+| Otwarte obliczeniowe | 9.4 → 9.5 | Agent oceniający krok po kroku | wg 11.3 (T-2…T-5) | FR-16 … FR-25 |
+| Otwarte z dowodem | 9.4 → 9.5 | Ocena wstępna (bez Q-OC-01) | zawsze (T-1) | FR-26 |
 
+### 18.4 Macierz odwrotna: pojęcia słownika → wymagania
 
-### 18.4 Wymagania dla planu `TASKS.md` po pętli 3.x (C5-06 … C5-09, C6-01 … C6-15)
+Każde pojęcie `docs/glossary.md` z identyfikatorami (3.2, 3.5) i
+wymaganiami, które je wykorzystują. Pojęcia uzupełniające PZS-1 (3.3) są
+mapowane w 3.5.
+
+| Pojęcie słownika | Identyfikatory (C# / tabela) | Wymagania |
+|---|---|---|
+| Uczeń | `Uczen`, `uczen` | FR-01 … FR-10, FR-15 … FR-18, FR-24, FR-28, FR-29, NFR-08, NFR-09 |
+| Nauczyciel | `Nauczyciel`, `nauczyciel` | FR-14, FR-24 … FR-26, FR-30 … FR-34 |
+| Zadanie | `Zadanie`, `zadanie` | FR-05, FR-11 … FR-16, FR-32, FR-35, FR-36 |
+| Zadanie bazowe | `PochodzenieZadania.BazoweArkuszCke`, `BazoweNauczyciel` | FR-11, FR-35, FR-36 |
+| Zadanie wygenerowane | `PochodzenieZadania.Wygenerowane`, `zlecenie_generowania` | FR-11 … FR-14 |
+| Dział | `Dzial`, `dzial` | FR-04, FR-08, FR-09, FR-36 |
+| Umiejętność | `Umiejetnosc`, `umiejetnosc` | FR-04, FR-06, FR-11, FR-36 |
+| Profil ucznia | `ProfilUcznia`, `profil_ucznia` | FR-03, FR-04, FR-05, FR-29 |
+| Poziom trudności | `PoziomTrudnosci`, `kalibracja_trudnosci` | FR-07, FR-11, FR-36 |
+| Ścieżka nauki | `SciezkaNauki`, `sciezka_nauki` | FR-05 … FR-08 |
+| Wkładka teoretyczna | `WkladkaTeoretyczna`, `wkladka_teoretyczna` | FR-06 |
+| Rozwiązanie | `Rozwiazanie`, `rozwiazanie` | FR-16 … FR-19, FR-24, FR-33 |
+| Transkrypcja | `Transkrypcja`, `transkrypcja` | FR-17, FR-18, FR-28 |
+| Kryteria oceniania | `KryteriumOceniania`, `kryterium_oceniania` | FR-12, FR-19, FR-35 |
+| Ocena | `Ocena`, `ocena` | FR-19 … FR-29, FR-34, NFR-01 … NFR-03, NFR-05 |
+| Pewność oceny | `PewnoscOceny`, `ocena` | FR-22 … FR-24, NFR-04 |
+| Próg pewności | `ProgPewnosci`, `prog_pewnosci` | FR-23, FR-24, FR-34, NFR-03, NFR-04 |
+| Weryfikacja | `Weryfikacja`, `weryfikacja` | FR-24 … FR-26, FR-33, FR-34 |
+| Agent | `IAgentRekomendujacy`, `IAgentGenerujacy`, `IAgentRozpoznajacy`, `IAgentOceniajacy`, `IAgentWyjasniajacy` | FR-05, FR-11, FR-17, FR-19, FR-27, NFR-06 |
+| Orkiestrator | `Orkiestrator`, `praca_w_tle` | FR-17, FR-19, FR-29, NFR-01, NFR-07 |
+| Model System One | `IModelDecyzyjny`, `decyzja_modelu` | FR-19, FR-22, NFR-05, NFR-07 |
+| Jev | `JevAdapter`, `konfiguracja_modelu` | FR-19 … FR-23, NFR-02, NFR-07 |
+| Kalibracja | `KalibratorPewnosci`, `kalibrator_pewnosci` | FR-34, NFR-04 |
+| Model generatywny (LLM) | `IModelGeneratywny`, `konfiguracja_modelu` | FR-06, FR-11, FR-12, FR-17, FR-27, NFR-07 |
+| Arkusz CKE | `ArkuszCke`, `arkusz_cke` | FR-19, FR-35 |
+
+### 18.5 Wymagania dla planu `TASKS.md` po pętli 3.x (C5-06 … C5-09, C6-01 … C6-15)
 
 Obecne `TASKS.md`, `HANDOFF.md` i `CLAUDE.md` opisują stos wersji 2.4 i nie
 są edytowane w tej iteracji. Po iteracji 4 pętli 3.x planista generuje nowy
@@ -8930,11 +9123,19 @@ produktu (23.4).
 | ADR-059 | Budżet połączeń PostgreSQL bez PgBouncera w pilotażu | Nowa (wersja 3.1) | — | [ADR-059-budzet-polaczen-postgresql-bez-pgbouncera.md](adr/ADR-059-budzet-polaczen-postgresql-bez-pgbouncera.md) |
 | ADR-060 | Błędy API jako ProblemDetails (RFC 9457) z kodem domenowym; hierarchia wyjątków C# i obsługa w Next.js | Nowa (wersja 3.2) | — | [ADR-060-problemdetails-rfc-9457-z-kodami-domenowymi.md](adr/ADR-060-problemdetails-rfc-9457-z-kodami-domenowymi.md) |
 | ADR-061 | Kontrakt OpenAPI generowany z kodu (`Microsoft.AspNetCore.OpenApi`) i klient TypeScript generowany przez `openapi-typescript` | Nowa (wersja 3.2) | — | [ADR-061-kontrakt-openapi-z-kodu-i-generowany-klient-typescript.md](adr/ADR-061-kontrakt-openapi-z-kodu-i-generowany-klient-typescript.md) |
-| ADR-062 | Semantyka HTTP API — wersjonowanie, polityki autoryzacji, `Idempotency-Key`, `ETag`/`If-Match`, stronicowanie kursorem i limity | Nowa (wersja 3.2) | — | [ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md](adr/ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md) |
+| ADR-062 | Semantyka HTTP API — wersjonowanie, polityki autoryzacji, `Idempotency-Key`, `ETag`/`If-Match`, stronicowanie kursorem i limity | Nowa (wersja 3.2); p. 3, 4 (część), 6 zastąpione w 3.3 (ADR-068 … ADR-070) | — | [ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md](adr/ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md) |
 | ADR-063 | DDL jako jedyne źródło schematu (migracje SQL); model EF Core bez generowania schematu | Nowa (wersja 3.2) | — | [ADR-063-ddl-jako-jedyne-zrodlo-schematu-ef-core-bez-generowania.md](adr/ADR-063-ddl-jako-jedyne-zrodlo-schematu-ef-core-bez-generowania.md) |
-| ADR-064 | Kontrakt strumieni SSE — migawka stanu przy każdym połączeniu zamiast kursora UUIDv7, heartbeat, zamykanie, ścieżka zapasowa | Nowa (wersja 3.2) | — | [ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md](adr/ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md) |
+| ADR-064 | Kontrakt strumieni SSE — migawka stanu przy każdym połączeniu zamiast kursora UUIDv7, heartbeat, zamykanie, ścieżka zapasowa | Nowa (wersja 3.2); uzupełnienie 3.3 (C8-02, C8-12 p. 10) | — | [ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md](adr/ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md) |
 | ADR-065 | Scenariusze Mock sterowane jawnie, tryb ścisły E2E i dane deweloperskie poza migracjami | Nowa (wersja 3.2) | — | [ADR-065-scenariusze-mock-sterowane-jawnie-i-dane-deweloperskie-poza-migracjami.md](adr/ADR-065-scenariusze-mock-sterowane-jawnie-i-dane-deweloperskie-poza-migracjami.md) |
 | ADR-066 | Odporność pętli prac w tle i harmonogramu — klasyfikacja anulowania, obsługa wyjątków, ponowienie bez konfliktu deduplikacji, nadrabianie | Nowa (wersja 3.2) | — | [ADR-066-odpornosc-petli-prac-w-tle-i-harmonogramu.md](adr/ADR-066-odpornosc-petli-prac-w-tle-i-harmonogramu.md) |
+| ADR-067 | Wiązanie `multipart/form-data` przez `[AsParameters]`, polityka nazw JSON `NazwyLemat` i błędy wiązania jako ProblemDetails | Nowa (wersja 3.3) | — | [ADR-067-wiazanie-multipart-i-serializacja-json-api.md](adr/ADR-067-wiazanie-multipart-i-serializacja-json-api.md) |
+| ADR-068 | Idempotencja — rezerwacja klucza z terminem i zapis odpowiedzi w transakcji skutku | Nowa (wersja 3.3) | — | [ADR-068-idempotencja-w-jednostce-pracy-z-rezerwacja-klucza.md](adr/ADR-068-idempotencja-w-jednostce-pracy-z-rezerwacja-klucza.md) |
+| ADR-069 | Wersja agregatu w ciele odpowiedzi jako źródło `If-Match`; brak warunkowego `GET` (`304`) i nagłówka `ETag` w odczytach | Nowa (wersja 3.3) | — | [ADR-069-wersja-w-ciele-zrodlem-if-match-bez-warunkowego-get.md](adr/ADR-069-wersja-w-ciele-zrodlem-if-match-bez-warunkowego-get.md) |
+| ADR-070 | Limity szybkości kluczowane kontem i odświeżanie sesji odporne na chwilowe awarie | Nowa (wersja 3.3) | — | [ADR-070-limity-szybkosci-kluczowane-kontem-i-odpornosc-odswiezania.md](adr/ADR-070-limity-szybkosci-kluczowane-kontem-i-odpornosc-odswiezania.md) |
+| ADR-071 | Autoryzacja obiektowa — kompletna macierz, identyfikatory zagnieżdżone, widoczność Zadań dla Ucznia, odczyty Administratora | Nowa (wersja 3.3) | — | [ADR-071-autoryzacja-obiektowa-macierz-kompletna-i-test-idor.md](adr/ADR-071-autoryzacja-obiektowa-macierz-kompletna-i-test-idor.md) |
+| ADR-072 | `PATCH` jako JSON Merge Patch z `Opcjonalne<T>`; odpowiedź rejestracji jednym rekordem | Nowa (wersja 3.3) | — | [ADR-072-patch-jako-json-merge-patch-i-rejestracja-jednym-rekordem.md](adr/ADR-072-patch-jako-json-merge-patch-i-rejestracja-jednym-rekordem.md) |
+| ADR-073 | Autozapis Poprawek Transkrypcji jako szkic roboczy | Nowa (wersja 3.3) | — | [ADR-073-autozapis-poprawek-transkrypcji-szkic-roboczy.md](adr/ADR-073-autozapis-poprawek-transkrypcji-szkic-roboczy.md) |
+| ADR-074 | Zmiana terminu i wycofanie Przypisania; ponowna odpowiedź w Teście diagnostycznym | Nowa (wersja 3.3) | — | [ADR-074-zmiana-i-wycofanie-przypisania.md](adr/ADR-074-zmiana-i-wycofanie-przypisania.md) |
 
 ---
 
@@ -9041,7 +9242,7 @@ progami, kalibratorami i konfiguracją modeli (baza danych).
 | Model obciążenia: współczynnik zapasu / dni pracy / odsetek eskalacji | 1,3 / 5 dni roboczych / 5% | 17.7, A-15 |
 | Poprawki Transkrypcji — limity twarde | bez usuwania; ≤ 2 wstawione, każdy ≤ min(200, max(60, ⌈1,5 × mediana długości kroków agenta⌉)) znaków; zmienione + wstawione ≤ max(3, ⌈0,5 n⌉); odsetek znaków (z krokami wstawionymi) ≤ 0,50 | 9.4, ADR-036 |
 | Poprawki Transkrypcji — limity miękkie (T-7) | zmienione + wstawione ≤ max(2, ⌈0,25 n⌉); odsetek znaków ≤ 0,25; `p_zgodna_z_poprawka ≥ 0,50` | 9.4, 10.3.3 |
-| Sprawdzenie zgodności poprawek | pula `S` (4 korutyny na replikę); timeout 8 s, 2 próby; ≤ 6 wycinków + zdjęcie poglądowe 1024 px; autozapis PWA 2 s po edycji; oczekiwanie w Ocenie do `zatwierdzono_at + 6 s` niezależnie od `t_R` (C4-06 p. 10) | 9.4, 10.3.3 |
+| Sprawdzenie zgodności poprawek | pula `S` (4 korutyny na replikę); timeout 8 s, 2 próby; ≤ 6 wycinków + zdjęcie poglądowe 1024 px; autozapis szkicu PWA 1,5 s po edycji, wersja Transkrypcji po 10 s bez zmian (ADR-073); oczekiwanie w Ocenie do `zatwierdzono_at + 6 s` niezależnie od `t_R` (C4-06 p. 10) | 9.4, 10.3.3 |
 | Odsetek Kontroli losowej dla Transkrypcji z Poprawkami | 2 × odsetek bazowy (maks. 1) | 11.3 T-5 |
 | Jev: tryb / wsad / równoległość w trybie pojedynczym | `WSADOWY` (wymaganie A-01) albo `POJEDYNCZY` / ≤ 32 pytania / 16 na Ocenę | 13.2 |
 | Globalny ogranicznik szybkości modelu | `r_i = min(0,8 × limit × waga_i / Σ wag, 0,8 × limit − Σ_{j≠i} r_j)`; wagi: worker 1,0, `api` 0,1; łączna pojemność kubełków `B_całk` (`LEMAT_POJEMNOSC_LACZNA_KUBELKOW`): 34 (tolerancja A-01), 10 (ścisłe okno 1 s, G-4); pojemność `api` 1, pozostałe ⌊(B_całk − n_api) × w_i / Σ w⌋ (worker 16 / 10 / 8 przy 2 / 3 / 4 replikach); nowy wiersz z pustym kubełkiem, odnowienie co 2 s do osiągnięcia formuły; 1 token = 1 wywołanie; fale ≥ 2 z pierwszeństwem; `t_fali` 1,2 s (pojedynczy) / 0,8 s (wsadowy); odnowienie 10 s pod `pg_advisory_xact_lock`, wygasanie 30 s; po `429` przydział × 0,5 na 30 s; rozpoznawanie: 0,8 × 150 = 120/min, `B_całk = 30`, wiersze R (1,0) i S (0,3) na replikę | 13.2, 13.4, ADR-039 |
@@ -9079,7 +9280,9 @@ progami, kalibratorami i konfiguracją modeli (baza danych).
 | Stronicowanie | `limit` 1–100, domyślnie 50; kursor z podpisem HMAC (16 B) | ADR-062 p. 5 |
 | Limity techniczne `api` | 20 żądań/s na użytkownika (pojemność 40), logowanie 5/min na IP, ciało 1 MB (zdjęcia 52 MB, plik 10 MB), czas żądania 30 s | 12.1, ADR-062 p. 6–7 |
 | Ponowienia klienta (TanStack Query) | 3 próby dla `BLAD_SIECI`, `503`, `KONFLIKT_WSPOLBIEZNOSCI`; odstęp `min(1 s × 2^n, 15 s)` albo `Retry-After`; ponowienie przesłania zdjęć: 2 s, 5 s, 15 s | 14.4, 14.7 |
-| Autozapis | Poprawki Transkrypcji: debounce 1,5 s; szkic rozstrzygnięcia: 3 s; przedłużenie blokady przy aktywności co 10 min | api.md 7 |
+| Autozapis | Szkic Poprawek Transkrypcji: debounce 1,5 s; wersja Transkrypcji: po 10 s bez zmian i przed zatwierdzeniem, ≤ 20 na przesłanie (ADR-073); szkic rozstrzygnięcia: 3 s; przedłużenie blokady przy aktywności co 10 min | api.md 6.4, 7 |
+| Idempotencja | rezerwacja klucza 60 s (`w_toku_do`), przechowywanie 24 h, zapis wyłącznie `2xx` (ADR-068) | 12.1 |
+| Limity techniczne | `NaUzytkownika` 20/s (40), `Logowanie` 10/min (IP, e-mail), `Odswiezenie` 30/min, `Anonimowe` 300/min, nieudane logowania 100 / 15 min na IP, Caddy 12 000/min na IP (ADR-070) | 12.7 |
 | Harmonogram — nadrabianie | wystąpienia z ostatnich 24 h; alert `HARMONOGRAM_ZALEGLY` przy wpisie dziennym starszym niż 26 h | 13.5, ADR-066 p. 5 |
 | Pętla prac — ponowienia infrastruktury | 0,5 s, 1 s, 2 s … 30 s bez limitu prób; health check: brak iteracji pętli przez 60 s → `503` | ADR-066 p. 2, 4 |
 | Zawieszone Rozwiązanie | `ROZPOZNAWANIE`/`OCENIANIE` bez pracy > 5 min → `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` (co 5 min) | 13.3, ADR-066 p. 6 |

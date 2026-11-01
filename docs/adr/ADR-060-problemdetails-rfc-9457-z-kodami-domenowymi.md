@@ -95,3 +95,13 @@ w jednym miejscu, a nie w kodzie komponentów (ADR-054 p. 7).
   `katalog-bledow.yaml`, co wymusza komunikat pl-PL.
 - Klient nie parsuje tekstów; zmiana tytułu nie psuje logiki UI.
 - `trace_id` w każdej odpowiedzi błędu ułatwia zgłoszenia od użytkowników.
+
+## Uzupełnienie wersji 3.3 (C8-08)
+
+Odpowiedzi bez wyjątku domenowego też mają ciało ProblemDetails z `kod`:
+błędy wiązania i deserializacji (`ObslugaBledowWiazania`, ADR-067 p. 6),
+`404` trasy, `405`, `415` (`UseStatusCodePages`, ADR-067 p. 7). Nowe kody:
+`ZAPYTANIE_NIEPRAWIDLOWE` (400), `ZASOB_USUNIETY` (410),
+`LIMIT_WERSJI_TRANSKRYPCJI` (409), `PRZYPISANIE_WYCOFANE` (409); po stronie
+klienta `BLAD_BRAMY` (odpowiedź bez `application/problem+json`) i
+`SESJA_TYMCZASOWO_NIEDOSTEPNA` (ADR-070). Test `KazdaOdpowiedzBleduMaKod`.

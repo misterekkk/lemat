@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Nowa (wersja 3.2, 2026-11-01) |
+| Status | Nowa (wersja 3.2, 2026-11-01); p. 3, 4 (część), 6 zastąpione w 3.3 (ADR-068 … ADR-070) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 3, wersja 3.2) |
 | Bramka G-0 | nie |
 | Realizuje | 12.1 wersji 2.4 w realizacji ASP.NET Core 10; ADR-020, ADR-037, ADR-057 |
@@ -114,3 +114,17 @@ handlera z osobna i były widoczne w OpenAPI (ADR-061).
   `EndpointDataSource`.
 - `klucz_idempotencji` rośnie o ≤ 1 wiersz na operację modyfikującą
   z listy; czyści go `WYCZYSC_DANE_TECHNICZNE` po `wygasa_at`.
+
+## Uzupełnienie wersji 3.3 (C8-03 … C8-06, C8-12 p. 6)
+
+- **p. 2:** polityki `RecenzentTresci` i `WeryfikatorGlobalny` są usunięte;
+  flagi są warunkami obiektowymi 12.8 (ADR-071 p. 7). Lista polityk:
+  `Anonimowy`, `Zalogowany`, `Uczen`, `Nauczyciel`, `Administrator`,
+  `UczenLubNauczyciel`, `NauczycielLubAdministrator`,
+  `RecenzentLubAdministrator`.
+- **p. 3** jest zastąpiony przez ADR-068 (rezerwacja z `w_toku_do`, zapis
+  odpowiedzi `2xx` w transakcji skutku).
+- **p. 4:** `If-Match` z `version` w ciele pozostaje; nagłówek `ETag` w
+  odczytach, `If-None-Match` i `304` są usunięte (ADR-069). Nowy zasób
+  wersjonowany `P` (Przypisanie, ADR-074).
+- **p. 6** jest zastąpiony przez ADR-070 (klucze limitów i progi dla NAT).

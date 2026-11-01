@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Nowa (wersja 3.2, 2026-11-01) |
+| Status | Nowa (wersja 3.2, 2026-11-01); uzupełnienie 3.3 (C8-02) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 3, wersja 3.2) |
 | Bramka G-0 | nie |
 | Realizuje | C7-11; zmienia ADR-051 p. 1, p. 3–5 i ADR-057 p. 5 |
@@ -130,3 +130,41 @@ wznowieniu. Każdy kursor nadawany przed zatwierdzeniem (sekwencja,
 - Zmiana kolejności zatwierdzeń transakcji nie gubi powiadomień; test p. 9
   jest bramką CI.
 - Kontrakty zdarzeń są w OpenAPI (`x-lemat-zdarzenia`, ADR-061 p. 3).
+
+## Uzupełnienie wersji 3.3 (C8-02, C8-12 p. 10)
+
+1. **Pierwsze zdarzenie po każdym połączeniu (zmienia p. 2 c).** Strumień
+   stanu wysyła `stan` (albo `koniec`) natychmiast po rejestracji
+   subskrypcji i odczycie stanu **niezależnie od `Last-Event-ID`**;
+   porównanie skrótu z `Last-Event-ID` dotyczy wyłącznie kolejnych zdarzeń
+   tego samego połączenia. Reguła „brak pierwszego zdarzenia w ciągu 5 s →
+   odpytywanie” (p. 8) jest więc spełniana przez każdy poprawny serwer, a
+   wznowienie po `wznow` w stanie niezmienionym (`TRANSKRYPCJA_GOTOWA`,
+   `OCZEKUJE_NA_WERYFIKACJE`) nie przełącza klienta na odpytywanie. Koszt:
+   jedno zdarzenie (≤ 4 KB) na połączenie, czyli ≤ 6 na godzinę na kartę.
+   Test `StanZTymSamymSkrotemNieJestWysylanyPonownie` dotyczy kolejnych
+   zdarzeń, a nowy `WznowienieZawszeWysylaPierwszyStan` — połączenia z
+   `Last-Event-ID` = skrót bieżącego stanu (oczekiwane `stan` w ≤ 1 s).
+2. **Odpytywanie zapasowe kończy się przy `nastepne_odpytanie_ms = null`
+   (zmienia p. 8).** `null` oznacza stan bez zmian samoczynnych; klient
+   przerywa pętlę odpytywania i wraca do SSE (`polacz()`), a gdy SSE nadal
+   nie działa — odpytuje co 30 s (stała `OKRES_ODPYTYWANIA_SPOCZYNKU_MS`),
+   nigdy z opóźnieniem 0 ms. Opóźnienie odpytywania jest zawsze ≥ 1 000 ms.
+3. **`401` przy otwarciu strumienia:** najwyżej jedno odświeżenie tokenu i
+   jedno ponowienie na połączenie (licznik `ponowienia401`); drugi `401`
+   kończy strumień i przekazuje sterowanie `DostawcaSesji` (wylogowanie
+   wyłącznie przy `401 SESJA_UNIEWAZNIONA` z odświeżenia, ADR-070 p. 4).
+4. **Różnica zegara.** `odswiezanie.ts` liczy `roznicaZegara =
+   Date.parse(naglowek Date) − Date.now()` z każdej odpowiedzi
+   `/auth/odswiezenie` i `/auth/logowanie`, a termin odświeżenia
+   proaktywnego = `wygasa_at − 60 s` porównuje z `Date.now() +
+   roznicaZegara`.
+5. **Migawka powiadomień > 100 nieprzeczytanych (C8-12 p. 10).**
+   `MigawkaPowiadomien` ma pole `nastepny_kursor` (kursor ADR-062 p. 5 dla
+   `GET /powiadomienia?nieprzeczytane=true`, sortowanie `created_at DESC,
+   id`); gdy `liczba_nieprzeczytanych > 100`, klient dociąga pozostałe
+   strony tym kursorem, więc powiadomienie starsze od 100 najnowszych nie
+   ginie.
+6. **Testy Vitest `strumien.test.ts`:** „wznow przy niezmienionym stanie nie
+   przełącza na odpytywanie”, „null zatrzymuje odpytywanie i wraca do SSE”,
+   „drugi 401 kończy strumień”, „opóźnienie odpytywania ≥ 1000 ms”.

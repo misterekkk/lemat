@@ -83,3 +83,12 @@ z `pattern`, co daje w TypeScript `number | string`.
   niekompatybilna wymaga `v2` albo pola opcjonalnego.
 - Frontend nie definiuje DTO ręcznie; aliasy `typy.ts` (3.5) wskazują na
   `components["schemas"][...]`.
+
+## Uzupełnienie wersji 3.3 (C8-01, C8-08)
+
+Formularze `multipart/form-data` są klasami `[AsParameters]` z
+`[FromForm(Name)]`, a ich schemat OpenAPI buduje `TransformatorFormularzy`
+(ADR-067 p. 1–2). Polityka nazw JSON to `NazwyLemat` (snake_case z
+separacją cyfr, ADR-067 p. 3), `AllowOutOfOrderMetadataProperties = true`
+(p. 5). Typ `Opcjonalne<T>` rekordów `PATCH` ma w OpenAPI schemat `T | null`
+poza `required` (ADR-072).

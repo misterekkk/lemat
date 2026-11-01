@@ -206,3 +206,12 @@ nazwy parametrów ścieżek (C5-05 p. 2) i wieloznaczność słowa „blokada”
     nazwy rekordów C#; nazwy zdarzeń SSE — małe litery bez polskich znaków
     (`stan`, `koniec`, `migawka`, `powiadomienie`, `ping`, `wznow`,
     `blad`); nagłówki własne `X-Lemat-*` w PascalCase z łącznikami.
+
+## Uzupełnienie wersji 3.3 (C8-08)
+
+Reguła p. 14 (separator `_` między literą a cyfrą: `oswiadczenie_wieku_16`,
+`liczba_wynikow_7d`) obowiązuje także w JSON i nazwach pól formularzy —
+realizuje ją polityka `NazwyLemat` (ADR-067 p. 3); test
+`NazwyJsonZgodneZKolumnamiDdl`. Pole słownikowe „Próg pewności” w kontraktach
+ma nazwę `prog_pewnosci` (`PozycjaKalibracji.prog_pewnosci`,
+`StanBezpiecznikaWyjscie.prog_pewnosci_aktywny`), nie `prog` (C8-12 p. 5).
