@@ -1,7 +1,8 @@
-// @Role: Rejestr typów wyliczeniowych PostgreSQL (43 z ddl.md) i mapowanie na enumy C# dla źródła danych Npgsql oraz modelu EF Core (ef-core.md 3.2) | @DependsOn: TlumaczNazwUpperSnake, Npgsql, Lemat.Domain.Common | @UsedBy: PersistenceRegistration, LematDbContext, testy | @Task: TASK-015, TASK-016
+// @Role: Rejestr typów wyliczeniowych PostgreSQL (43 z ddl.md) i mapowanie na enumy C# dla źródła danych Npgsql oraz modelu EF Core (ef-core.md 3.2) | @DependsOn: TlumaczNazwUpperSnake, Npgsql, Lemat.Domain.Common | @UsedBy: PersistenceRegistration, LematDbContext, testy | @Task: TASK-015, TASK-016, TASK-017
 using System.Collections.Concurrent;
 using Lemat.Domain.Accounts;
 using Lemat.Domain.Common;
+using Lemat.Domain.Content;
 using Npgsql;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
@@ -28,13 +29,18 @@ public static class MapowanieTypowWyliczeniowych
         "zrodlo_zdarzenia_rodo", "typ_bezpiecznika", "powod_eskalacji",
     ];
 
-    /// <summary>Enumy C# istniejące w chwili TASK-015 (reszta dochodzi z TASK modułów).</summary>
+    /// <summary>Enumy C# zarejestrowane przez TASK-015/016/017 (reszta dochodzi z TASK modułów).</summary>
     public static readonly IReadOnlyList<(Type Typ, string NazwaPg)> Poczatkowe =
     [
         (typeof(PoziomMatury), "poziom_matury"),
         (typeof(RodzajZadania), "rodzaj_zadania"),
         (typeof(RolaUzytkownika), "rola_uzytkownika"),
         (typeof(StatusKonta), "status_konta"),
+        (typeof(PochodzenieZadania), "pochodzenie_zadania"),
+        (typeof(ZasiegZadania), "zasieg_zadania"),
+        (typeof(StatusZadania), "status_zadania"),
+        (typeof(FormaZamknieta), "forma_zamknieta"),
+        (typeof(StatusWkladki), "status_wkladki"),
     ];
 
     private static readonly ConcurrentDictionary<Type, string> Rejestr = new(

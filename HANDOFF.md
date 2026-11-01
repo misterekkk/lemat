@@ -8,7 +8,7 @@
 | Architektura | `docs/ARCHITECTURE_DETAILED.md` v3.5; spec: `docs/spec/{ddl,ef-core,api,prompts}.md`; ADR-001 … ADR-075 w `docs/adr/` |
 | Stos | .NET 10 (`backend/`), Next.js App Router + TypeScript (`frontend/`), PostgreSQL 16, REST + SSE, Microsoft.Extensions.AI + Semantic Kernel |
 | Kod | moduł Konta: `Lemat.Domain.Accounts`, `Lemat.Application.Accounts`, konfiguracje EF i repozytoria (TASK-016) + warstwa trwałości EF Core: konwencje, `IJednostkaPracy`, `TlumaczBledowBazy`, `DodajPersystencje` (TASK-015) + `Lemat.Domain.Common` (TASK-014) + szkielet solucji `backend/` (TASK-001) + 7 projektów testowych (TASK-002) + hosty z `/zdrowie` i OpenAPI (TASK-003) + `LematOpcje` (TASK-004) + PostgreSQL 16 w `docker-compose.yml` i skrypty `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js, next-intl pl-PL, KaTeX, `src/ui`); skrypty `verify-*` i CI (TASK-007); schemat bazy: `extract-ddl.sh`, migracja SQL, `Lemat.Tools migrate`, `PostgresFixture` (TASK-013); dokumentacja i definicje agentów w `.claude/agents/` |
-| Następne TASK | **TASK-017** (moduł Treści; zależności TASK-015, TASK-016 spełnione) |
+| Następne TASK | **TASK-018** (moduły Klasy, Modele, Kalibracja; zależności TASK-015, TASK-016 spełnione) |
 | Jak pracować | `CLAUDE.md` (reguły), `TASKS.md` (backlog + macierz pokrycia), `docs/CODEBASE_MAP.md` (żywa mapa), ten plik (stan, założenia, decyzje) |
 
 Poprzednia wersja `CLAUDE.md`/`TASKS.md`/`HANDOFF.md` (Python/FastAPI/React, ścieżki `src/lemat/…`) była nieaktualna i została
@@ -176,6 +176,7 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 **Do wykonania przez właściciela / człowieka (agent nie może tego zrobić sam):**
 
+0h. **Po TASK-017:** brak akcji obowiązkowych; brak mocków i nowych zmiennych `LEMAT_*`. Testy bazy: `LEMAT_TEST_BAZA` albo Docker. Do potwierdzenia (informacyjnie): (a) nowe kody błędów domeny spoza katalogu 12.2 (`KRYTERIA_NIESPOJNE`, `ZA_DUZO_KRYTERIOW`, `UMIEJETNOSC_GLOWNA_POZA_DZIALEM`, `ZADANIE_*`, `OPCJE_ZAMKNIETE_*`, `WKLADKA_*`, `WKLADKA_OPUBLIKOWANA_ISTNIEJE`, `WYNIK_WZORCOWY_*`) do zmapowania w TASK-071; (b) jsonb zapisywany przez DTO `ContentJson` (nie `OwnsOne.ToJson`) — akceptacja odstępstwa; (c) dane referencyjne (13 Działów, Umiejętności) NIE są ładowane — to TASK-025; (d) hosty nie wołają jeszcze `DodajModulTresci`.
 0g. **Po TASK-016:** brak akcji obowiązkowych; brak mocków i nowych zmiennych `LEMAT_*`. Testy bazy: `LEMAT_TEST_BAZA` (np. `Host=localhost;Port=5432;Database=lemat_test;Username=lemat;Password=lemat_dev`) albo Docker. Do potwierdzenia: (a) definicja fnv1a (przyjęto 32-bit nad 16 bajtami UUID big-endian, mod 100; ten sam `Fnv1a.Skrot32` posłuży T-5 w TASK-021), OQ-09; (b) kody błędów domeny spoza katalogu 12.2 do zmapowania w TASK-071 (m.in. `EMAIL_NIEPRAWIDLOWY`, `KONTO_NIEPRAWIDLOWA_ROLA`, `OSWIADCZENIE_WIEKU_WYMAGANE`, `HASLO_HASH_WYMAGANY`, `TOKEN_*`, `KONTO_JUZ_USUWANE`, `PRZYWROCENIE_NIEMOZLIWE`, `UMOWA_POUFNOSCI_WYMAGANA`, `DEKLAROWANY_CZAS_ZA_KROTKI`); (c) hasher argon2id i rotacja tokenów z oknem tolerancji (ADR-057) — TASK-072; (d) hosty jeszcze nie wołają `DodajPersystencje`/`DodajModulKonta` (podpiąć przy pierwszym endpoincie, TASK-071/072).
 0f. **Po TASK-015:** brak akcji obowiązkowych; brak mocków i nowych zmiennych `LEMAT_*`. Testy bazy wymagają Dockera (Testcontainers) albo `LEMAT_TEST_BAZA` (np. `Host=localhost;Port=5432;Database=lemat_test;Username=lemat;Password=lemat_dev`). Do potwierdzenia (informacyjnie): (a) kody błędów `ux_rozwiazanie_przypisanie` i `ux_test_jeden` w `KatalogIndeksowUnikalnych` to interpretacja 12.2 developera — zweryfikować w TASK modułów; (b) hosty (`Program.cs`/`ApiHost` itd.) NIE wołają jeszcze `DodajPersystencje` — podpiąć przy pierwszym endpoincie/handlerze potrzebującym bazy (wtedy `KontenerDiTests` będą wymagać bazy lub podmiany); (c) nazwa `DodajPersystencje` (wg TASKS.md), `ef-core.md` ma `DodajPersistence`.
 0e. **Po TASK-014:** brak akcji obowiązkowych (czysty kod domeny, bez mocków, zmiennych środowiskowych ani konfiguracji). Do zatwierdzenia (informacyjnie): `default(PoziomTrudnosci)` ma `Wartosc == 0` (struct) — używać konstruktora; `CA1710` wyciszony na `WyjatekDomenowy` (nazwa wymagana przez zadanie).
@@ -214,8 +215,8 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 | Faza | `[MVP]` ukończone | `[POST-MVP]` ukończone | Następne TASK |
 |---|---|---|---|
-| 1. Szkielet i środowisko (001 … 012) | 7 / 7 | 0 / 5 | faza MVP ukończona; dalej **TASK-017** (faza 2) |
-| 2. Model domenowy i baza (013 … 037) | 4 / 16 | 0 / 9 | **TASK-017** (TASK-013 … 016 gotowe) |
+| 1. Szkielet i środowisko (001 … 012) | 7 / 7 | 0 / 5 | faza MVP ukończona; dalej **TASK-018** (faza 2) |
+| 2. Model domenowy i baza (013 … 037) | 5 / 16 | 0 / 9 | **TASK-018** (TASK-013 … 017 gotowe) |
 | 3. Agenci AI i prace w tle (038 … 070) | 0 / 14 | 0 / 19 | po TASK-013 … 028 |
 | 4. API i integracja z Next.js (071 … 108) | 0 / 19 | 0 / 19 | po fazie 3 (dla części API wystarcza TASK-015, 016) |
 | 5. Testy i dopracowanie (109 … 120) | 0 / 4 | 0 / 8 | po TASK-089 |
@@ -238,9 +239,15 @@ Weryfikacja jakości (DZIAŁA od TASK-007): `scripts/verify-all.sh` (opcje `--ba
 
 **Co działa (TASK-016):** moduł Konta. Domena `backend/src/Lemat.Domain/Accounts/` (`Uzytkownik.Zaloz` — Nauczyciel startuje jako `OCZEKUJE_NA_ZATWIERDZENIE`, reszta `AKTYWNE`; przejścia 8.x: zatwierdzenie, blokada, wniosek o usunięcie, przywrócenie; `Uczen.Utworz` wymaga oświadczenia 16+; `Nauczyciel` z flagami; `TokenOdswiezania` z rodziną; `ProbaLogowania`; `GrupaEksperymentu` z `Fnv1a`), aplikacja `backend/src/Lemat.Application/Accounts/` (5 portów repozytoriów, `IKontaFasada`/`KontaFasada`, `DodajModulKonta`), trwałość `Persistence/Configurations/Accounts` i `Persistence/Repositories/Accounts` (If-Match przez `PobierzAsync(id, wersja)`; skrót hasła jako shadow property `haslo_hash`). Testy: 20 testów bazy na PostgreSQL (EMAIL_ZAJETY, CHECK weryfikatora, uzytkownik+uczen w jednej transakcji).
 
-**Ostatnia zmiana: TASK-016** (pliki: `TASKS.md` pod TASK-016). Decyzje: fnv1a 32-bit/UUID big-endian mod 100; skrót hasła poza agregatem; `OstatnieLogowanieAt` z `[BezZmianyWersji]`; klasa testowa `UczenTests` w `StudentTests.cs` (strażnik synonimów); dodano `DzialId`. Weryfikacja: build `-warnaserror` 0/0; testy zielone; `dotnet format` czysto.
+**Co działa (TASK-017):** moduł Treści. Domena `backend/src/Lemat.Domain/Content/` (`Zadanie` + `ZadanieWersja`/`TrescWersji` z wersjonowaniem ADR-012, `KryteriumOceniania`, `RozwiazanieWzorcowe`, `WynikKoncowyWzorcowy`, `OpcjeZamkniete.Ocen` dla `WYBOR_JEDNOKROTNY`/`PRAWDA_FALSZ`, `ZasadyKryteriow`, `WkladkaTeoretyczna`, `Dzial`, `Umiejetnosc`, `KalibracjaTrudnosci`), aplikacja `backend/src/Lemat.Application/Content/` (`ITresciFasada`: `PobierzZadanieDoOcenyAsync`, `PobierzZadanieUczniaAsync`, `PobierzKandydatowDoboruAsync`, `ListaDzialowAsync`, `ListaUmiejetnosciAsync`, `PobierzOpublikowanaWkladkeAsync`; 3 porty repozytoriów; `DodajModulTresci`), trwałość `Persistence/Configurations/Content/` + `Persistence/Repositories/Content/`. Testy: Domain 179, Application 29, Infrastructure 103 (33 testy bazy Treści), Architecture 104.
 
-**Wytyczne dla TASK-017 (następne MVP):** `Lemat.Domain.Content` — `DzialId` już istnieje w `Lemat.Domain.Content/CurriculumSectionId.cs` (nie duplikuj, dopisz resztę typów); nowe enumy rejestruj w `MapowanieTypowWyliczeniowych.Poczatkowe`; jsonb przez `JsonbSupport` (7.5.1–7.5.3); konfiguracje w `Persistence/Configurations/Content/`, repozytoria w `Persistence/Repositories/Content/`; wzorzec fasady/rejestracji jak `AccountsFacade`/`AccountsRegistration`; testy bazy na `LEMAT_TEST_BAZA`.
+**Ostatnia zmiana: TASK-017** (pliki: `TASKS.md` pod TASK-017). Decyzje: jsonb przez `ContentJson` + ValueConverter (klucze snake_case, enumy UPPER_SNAKE); `Dzial`/`Umiejetnosc`/`KalibracjaTrudnosci` bez `Version`; `Zadanie.AktualnaWersjaId` jako zapisana właściwość; `IZadanieRepozytorium.Dodaj` dodaje też wiersz początkowy kalibracji (b = 0.8*(poziom-3)); `ZasadyKryteriow` wymaga także ≥1 Kryterium dla Zadań otwartych i unikalności (wariant, nr); Zadanie zamknięte = 1 punkt bez wyniku wzorcowego; limit 24 punktów nieosiągalny przez bazę (test tylko domeny). Weryfikacja: build `-warnaserror` 0/0; testy zielone; `dotnet format` czysto.
+
+**Wytyczne dla TASK-018 (następne MVP):** `Lemat.Domain.Classes` (`Klasa`, `CzlonkostwoKlasy`, `IKlasyFasada`), `Lemat.Domain.Models` (`KonfiguracjaModelu`, `DecyzjaModelu` z partycją miesięczną, `PlanPytan`…), `Lemat.Domain.Calibration` (`KalibratorPewnosci`, `ProgPewnosci`, `IKalibracjaFasada`) — wzorzec jak Konta/Treści: enumy przez `MapowanieTypowWyliczeniowych.Poczatkowe`, konfiguracje w `Persistence/Configurations/<Moduł>/`, repozytoria w `Persistence/Repositories/<Moduł>/`, `Dodaj<Moduł>` w DI, testy bazy na `LEMAT_TEST_BAZA`. `DzialId` i `UmiejetnoscId` są już w `Lemat.Domain.Content`. Kalibrację trudności (`kalibracja_trudnosci`) aktualizuj wyłącznie atomowym SQL 10.1.3. TASK-019/040: adapter `IDaneDoboru` nad `ITresciFasada.PobierzKandydatowDoboruAsync` (filtry zależne od Ucznia — Wyniki 60 dni, Przypisania — stosuje wywołujący). TASK-025/026: zadania przez `Zadanie.Utworz(NoweZadanie, ...)` + `IZadanieRepozytorium.Dodaj` w `IJednostkaPracy` (triggery sum kryteriów i umiejętności głównej działają na COMMIT).
+
+**Poprzednia zmiana: TASK-016** (pliki: `TASKS.md` pod TASK-016). Decyzje: fnv1a 32-bit/UUID big-endian mod 100; skrót hasła poza agregatem; `OstatnieLogowanieAt` z `[BezZmianyWersji]`; klasa testowa `UczenTests` w `StudentTests.cs` (strażnik synonimów); dodano `DzialId`. Weryfikacja: build `-warnaserror` 0/0; testy zielone; `dotnet format` czysto.
+
+**Wytyczne dla TASK-017 (zrealizowane):** `Lemat.Domain.Content` — `DzialId` już istnieje w `Lemat.Domain.Content/CurriculumSectionId.cs` (nie duplikuj, dopisz resztę typów); nowe enumy rejestruj w `MapowanieTypowWyliczeniowych.Poczatkowe`; jsonb przez `JsonbSupport` (7.5.1–7.5.3); konfiguracje w `Persistence/Configurations/Content/`, repozytoria w `Persistence/Repositories/Content/`; wzorzec fasady/rejestracji jak `AccountsFacade`/`AccountsRegistration`; testy bazy na `LEMAT_TEST_BAZA`.
 
 **Poprzednia zmiana: TASK-015** (pliki: `TASKS.md` pod TASK-015). Zrobiono: j.w. Weryfikacja: build `-warnaserror` OK; `dotnet test` zielone; `dotnet format` czysto. Decyzje: (1) rejestr enumów: `NazwyTypowDdl` = wszystkie 43 nazwy PG (test porównuje z `pg_type`); kolejne moduły wołają `MapowanieTypowWyliczeniowych.Zarejestruj(typeof(X), "nazwa_pg")` przed zbudowaniem źródła danych/modelu; (2) konwerter `IdentyfikatorConverter<TId,TWartosc>` automatycznie dla value types z `IIdentyfikator<T>` w `Lemat.Domain`; (3) interceptor wersji pomija korzenie Added/Deleted, korzenie z `Version` generowanym przez bazę (Weryfikacja/xmin) i zmiany wyłącznie `[BezZmianyWersji]`/`UpdatedAt`; encje wewnętrzne niebędące owned (FK, `IEncjaWewnetrzna` z ef-core.md 4) NIE są obsługiwane — dodać w TASK-016+ przy pierwszym takim agregacie; (4) konfiguracje agregatów same ustawiają `Version.IsConcurrencyToken()` (ef-core.md 6); (5) nie zaimplementowano (poza zakresem): rozsyłanie zdarzeń domenowych (`IObslugaZdarzenia`, TASK-024/13.6), `IKontekstPracy` (potwierdzenie dzierżawy), `AddInterceptors` NOTIFY i `ZlecaniePracSql` (TASK-024); (6) katalog `ux_*` zawiera tylko pary jednoznaczne z architektury — nieznane 23505 przechodzą bez tłumaczenia, uzupełniać w TASK modułów. Nagłówki 19 plików `.cs` sprawdzone, poprawne. Brak mocków, brak nowych U-xx.
 
@@ -297,20 +304,20 @@ mieszczą się w słowach technicznych 3.1 p. 7. Dopisuj tu kolejne propozycje w
 
 ## 10. Gotowy prompt dla kolejnego dewelopera
 
-### 10.1 Następne TASK: TASK-017 (kopiuj do agenta `developer`)
+### 10.1 Następne TASK: TASK-018 (kopiuj do agenta `developer`)
 
 ```text
 Jesteś Senior Developerem .NET i Next.js w projekcie Lemat (repozytorium: /home/user/lemat).
-Zrealizuj dokładnie jedno zadanie planu: TASK-017 z TASKS.md ("Moduł Treści: Działy, Umiejętności, Zadania z wersjami i Kryteriami, Wkładki").
+Zrealizuj dokładnie jedno zadanie planu: TASK-018 z TASKS.md ("Moduły Klasy, Modele i Kalibracja (minimum): Klasa, Konfiguracja modelu, Decyzja modelu, Próg").
 
-Najpierw przeczytaj: CLAUDE.md, HANDOFF.md (sekcje 5, 6, 7: wytyczne dla TASK-017), docs/CODEBASE_MAP.md oraz opis TASK-017 w TASKS.md.
-Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (3.5 wiersze 3, 6, 7, 11, 14, 36, 37, 39, 41; 7.4, 7.5.1–7.5.3; 8.4; 6.2; ADR-012, ADR-063; docs/spec/ef-core.md); docs/ jest tylko do odczytu.
+Najpierw przeczytaj: CLAUDE.md, HANDOFF.md (sekcje 5, 6, 7: wytyczne dla TASK-018), docs/CODEBASE_MAP.md oraz opis TASK-018 w TASKS.md.
+Architekturę czytaj WYŁĄCZNIE we wskazanych sekcjach (3.5 wiersze 17, 23, 27, 30, 52, 54–56, 66, 79, 103; 7.x; 10.4.4; ADR-003, ADR-006, ADR-026; docs/spec/ef-core.md 6.5–6.6); docs/ jest tylko do odczytu.
 
 Wymagania:
-- Lemat.Domain.Content (Dzial, Umiejetnosc, Zadanie + ZadanieWersja, KryteriumOceniania, OpcjeZamkniete, WkladkaTeoretyczna itd.; DzialId już istnieje), Lemat.Application.Content (ITresciFasada, repozytoria), konfiguracje EF (jsonb) i repozytoria w Lemat.Infrastructure/Persistence wg wzorca z modułu Konta (TASK-016).
-- Testy wg DoD z TASKS.md (triggery trg_suma_kryteriow, trg_umiejetnosc_glowna_w_dziale, round-trip jsonb, OpcjeZamkniete.Ocen, wersjonowanie Zadania); testy bazy na LEMAT_TEST_BAZA lub Docker.
+- Lemat.Domain.Classes / Models / Calibration, porty i fasady w Lemat.Application, konfiguracje EF i repozytoria w Lemat.Infrastructure/Persistence wg wzorca z modułów Konta (TASK-016) i Treści (TASK-017).
+- Testy wg DoD z TASKS.md (kod zaproszenia, unikalność członkostwa, partycja miesięczna decyzja_modelu, ProgPewnosci, KalibratorPewnosci.Tozsamosciowy, walidacja PlanPytan); testy bazy na LEMAT_TEST_BAZA lub Docker.
 - Nagłówki @Role/@DependsOn/@UsedBy/@Task w każdym nowym .cs; uruchom scripts/verify-all.sh (kod 0).
-- Nie edytuj TASKS.md, HANDOFF.md, docs/. Nie commituj. Nie wychodź poza zakres TASK-017.
+- Nie edytuj TASKS.md, HANDOFF.md, docs/. Nie commituj. Nie wychodź poza zakres TASK-018.
 Zwróć raport: lista plików, wyniki weryfikacji, decyzje i odstępstwa, wskazówki dla kolejnego TASK.
 ```
 
