@@ -1258,7 +1258,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - Ustalić nazwy narzędzi: plugin bez prefiksu albo jawne nazwy `sympy_*` wszędzie (prompt, Mock, test, ślad, metryka `wywolania_funkcji_total{funkcja}`). Do tego test „nazwa w `ChatOptions.Tools` = nazwa w prompcie i w danych Mock”.
   - Wybrać `TerminateOnUnknownCalls` (np. `true` + `BladModeluTrwalyException("NIEZNANE_NARZEDZIE")`).
   - Dodać budżet czasu generowania z liczbą żądań (np. termin per żądanie i łączny 120 s) albo uzasadnić 60 s pomiarem.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 1–2, 4. Sprawdzone uruchomieniem: `MaximumIterationsPerRequest = 9` i `MaximumConsecutiveErrorsPerRequest = 0` z `FunkcjaZLimitem` (limit 8) dają 8 wykonań i wyjątek `LIMIT_WYWOLAN_FUNKCJI` przy 9. żądaniu (9 żądań do modelu). Nazwy `sympy_*` są w prompcie, Mock i teście. Budżet to 45 s na żądanie i 150 s na wywołanie agenta.
 
 ### C7-02: Kolejność i konstrukcja potoku `ChatClientBuilder` (ADR-058 p. 3) — kod się nie kompiluje, a spany `execute_tool` i koszt per iteracja nie powstają
 - **Waga:** ŚREDNIA
@@ -1269,7 +1269,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   3. Z tego samego powodu `LimitCzasuChatClient`, `KosztIZuzycieChatClient`, `OgranicznikChatClient` i `KlasyfikacjaBledowChatClient` obejmują całą pętlę wywołań funkcji, a nie pojedyncze żądanie do dostawcy. Ogranicznik dla `ROZPOZNAWANIE_PISMA` jest bez narzędzi, więc tam to nie szkodzi. Dla `GENERATYWNY_ZADANIA` nie wiadomo jednak, czy limit czasu, koszt i ogranicznik działają per żądanie HTTP, czy per wywołanie agenta.
   4. `KlasyfikacjaBledowChatClient` dostaje `OperationCanceledException` z limitu czasu potoku i z anulowania dzierżawy tym samym tokenem. Nie ma reguły, jak je rozróżnia — por. C7-04.
 - **Oczekiwana poprawka:** zapis potoku w kompilowalnej postaci (`.Use(w => new LimitCzasuChatClient(w, …))`) z jawną kolejnością i uzasadnieniem każdej warstwy (per żądanie vs per wywołanie agenta). Zalecana kolejność: `UseFunctionInvocation` na zewnątrz, `UseOpenTelemetry` wewnątrz niego, a koszt, ogranicznik i klasyfikacja per żądanie do dostawcy. Test `Lemat.Modele.Tests` z `ActivityListener`: „generowanie z 2 wywołaniami → 3 spany `chat` i 2 spany `execute_tool`”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 3: potok `.Use(w => new …(w, …))`, `UseFunctionInvocation` najbardziej zewnętrzne, a telemetria, klasyfikacja, limit czasu i koszt działają per żądanie. Reguła rozróżniania anulowania jest zapisana (`!ct.IsCancellationRequested`).
 
 ### C7-03: Ponowienie i odzyskiwanie dzierżawy łamią indeks `ux_praca_dedup_oczekujace` — jeden konflikt blokuje odzyskiwanie wszystkich prac
 - **Waga:** WYSOKA
@@ -1288,7 +1288,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - Alternatywnie scalić A z B (`DELETE` B i przejęcie ładunku) w jednym poleceniu z `NOT EXISTS`.
   - Odzyskiwanie dzierżaw wykonywać per wiersz albo z `ON CONFLICT`-bezpiecznym predykatem `NOT EXISTS (SELECT 1 … status = 'OCZEKUJE' AND typ = p.typ AND klucz_deduplikacji = p.klucz_deduplikacji)`.
   - Testy (g) „ponowienie przy istniejącej pracy `OCZEKUJE` z tym samym kluczem” i (h) „odzyskiwanie dzierżaw z jednym konfliktem odzyskuje pozostałe prace”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). `ponow_prace` i `odzyskaj_dzierzawy` w `0006_prace_w_tle.sql`. Sprawdzone na PostgreSQL 16 z pełnym DDL: A (`AKTUALIZUJ_PROFIL`, `W_TOKU`, dzierżawa wygasła) + B (`OCZEKUJE`, ten sam klucz) + C (`OCEN_ROZWIAZANIE`, dzierżawa wygasła) → A `ZAKONCZONA`/`ZASTAPIONA_NOWSZA`, C `OCZEKUJE`, bez błędu. `ponow_prace` przy konflikcie zwraca `ZAKONCZONA`, a dla pracy już odzyskanej `NULL`.
 
 ### C7-04: `PulaPracHostedService` klasyfikuje każde anulowanie jako utratę dzierżawy i nie obsługuje pozostałych wyjątków — zatrzymane Rozwiązania i zatrzymanie procesu `worker`
 - **Waga:** WYSOKA
@@ -1319,7 +1319,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - `BackgroundServiceExceptionBehavior` ustawione świadomie (`Ignore` + health check albo `StopHost` z restartem kontenera i alertem).
   - Praca kontrolna harmonogramu dla Rozwiązań w `ROZPOZNAWANIE`/`OCENIANIE` bez aktywnej pracy dłużej niż 5 min.
   - Testy: „timeout modelu → `Ponow`, a nie `ZAKONCZONA`”, „wyjątek bazy w `PobierzAsync` nie zatrzymuje hosta”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-066 p. 1, 2, 4, 6: klasyfikacja po `UtraconaAt`, `catch (Exception)` z wynikiem, `PonawiajInfrastrukture`, świadome `StopHost` z restartem i health check, `TerminMinalException`, praca `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA` (E-46, C-52).
 
 ### C7-05: Strategia migracji i test `SchematZgodnyZDdlTest` są niewykonalne — dwa źródła schematu dają różne nazwy, typy i rodzaje ograniczeń
 - **Waga:** WYSOKA
@@ -1336,7 +1336,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - **Wariant B:** DDL generowany z migracji (`dotnet ef migrations script`), a `ddl.md` jako artefakt.
 
   W obu wariantach DDL powinien nadać jawne nazwy wszystkim CHECK-om/FK/UNIQUE (zgodnie z 7.2). `HasMaxLength` należy zastąpić `HasColumnType("text")` + CHECK albo przyjąć `varchar(n)` w DDL.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-063 (wariant A): migracje wyłącznie SQL, model EF bez `HasCheckConstraint`/`HasMaxLength`/`HasTrigger`, test `ModelEfZgodnyZKatalogiem`. Sprawdzone: bloki A i B ładują się na czystej bazie PostgreSQL 16 bez błędów. Katalog: 60 tabel + 4 partycje, 43 enumy, 15 triggerów, 142 CHECK, 124 FK, 21 UNIQUE, role `lemat_*` utworzone.
 
 ### C7-06: Konfiguracje EF Core z `ef-core.md` nie budują modelu albo nie odpowiadają DDL (sprawdzone kompilacją i budową modelu)
 - **Waga:** WYSOKA
@@ -1362,7 +1362,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - `HasColumnName` dla p. 7 albo zmiana DDL na `maks_prob`.
   - Interceptor oznaczający korzeń jako `Modified`, gdy zmienia się dowolna encja jego agregatu (np. przez `IAgregatWlasciciel`).
   - Test `ModelEfBudujeSieIZgadzaZKatalogiem` (budowa `IModel` + porównanie z katalogiem, C7-05) uruchamiany przy każdym PR.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). `ef-core.md` 4, 6.1, 6.4, 6.5, 7; DDL `maks_prob`, FK kont `DEFERRABLE INITIALLY DEFERRED` (potwierdzone w `pg_constraint`). Sprawdzone na PostgreSQL 16 i EF Core 10.0.3: `OwnsMany` z `List<record>` i podmianą elementu przez `with` zapisuje zmianę `theta`. Pozostałość redakcyjna (szkielet 3.6 nadal ma `Dictionary`) przechodzi do C8-12.
 
 ### C7-07: Implementacje Mock nie są wystarczające do deterministycznych testów E2E, a domyślny przepływ offline nie dochodzi do Oceny automatycznej
 - **Waga:** WYSOKA
@@ -1384,7 +1384,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - `MockModelDecyzyjny` z domyślną masą ≥ 0,99 na opcji „zgodnej z rozwiązaniem wzorcowym” (np. „tak” dla Q-OC-01, `BRAK_BLEDU`, maks. punkty), żeby domyślny przepływ szedł trasą automatyczną.
   - Czas `api`/`worker` w E2E ustawiany przez `LEMAT_CZAS_TESTOWY` (`TimeProvider` z przesunięciem).
   - Macierz scenariuszy E2E (trasa automatyczna, każdy powód Weryfikacji, T-6, T-7, błąd przejściowy, timeout) z przypisanymi plikami danych.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-065: nagłówek `X-Lemat-Mock-Scenariusz` (tylko `Development`/`E2E`) w ładunku prac, tryb ścisły, odpowiedzi domyślne trasy automatycznej (masa 0,995), `PrzesunietyTimeProvider`, macierz 15 scenariuszy.
 
 ### C7-08: Model zapasowy dla Walidacji Zadania (Q-WA) nie ma promptu ani stanu, a `ZapasowyLlmAdapter` nie zna kontekstu decyzji
 - **Waga:** ŚREDNIA
@@ -1399,7 +1399,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - Osobny prompt `plan-pytan-walidacji-v1` (bez Q-OC-04) albo wersja promptu wybierana per kontekst z `konfiguracja_modelu`.
   - Test „Walidacja przy obwodzie otwartym”.
   - Port `IWywolanieUstrukturyzowane` (`Lemat.Application.Modele`) z implementacją w jednym miejscu albo przeniesienie `WywolanieCzatu` do `Lemat.Modele` (i dopisanie `JsonSchema.Net` do pakietów).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 5: `KontekstDecyzji` w `ZapasowyLlmAdapter`, prompt `plan-pytan-walidacji-v1`, port `IWywolanieUstrukturyzowane` z jedną implementacją w `Lemat.Modele`.
 
 ### C7-09: Schematy odpowiedzi — dwa źródła prawdy, test zgodności niewykonalny literalnie, a mapy rozkładów są sprzeczne z „trybem ścisłym”
 - **Waga:** ŚREDNIA
@@ -1415,7 +1415,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - Jedno źródło: schematy wyłącznie generowane z rekordów (z `TransformOptions`), a `prompty.md` jako wygenerowany artefakt; albo schematy ręczne jako zasoby i rekordy bez generacji.
   - Mapy zastąpić tablicami `[{opcja, p}]` (zgodne z trybem ścisłym), z walidacją kompletu opcji w kodzie.
   - Jawne ustawienie trybu ścisłego per dostawca i test kontraktu na schemacie każdej roli.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 6: schematy generowane z `TransformOptions` i zapisane jako migawki, mapy zamienione na tablice par, `strict = true`, test kontraktu WireMock.
 
 ### C7-10: Równoległe wywołania w agentach (`Task.WhenAll`) a `DbContext` o zasięgu `Scoped`
 - **Waga:** ŚREDNIA
@@ -1427,7 +1427,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
   Jeśli te porty używają `LematDbContext` z zakresu pracy (jedyny kontekst opisany w `ef-core.md`), drugie równoległe zapytanie kończy się `InvalidOperationException: A second operation was started on this context instance`, co daje losowe błędy Walidacji zależne od czasu wygaśnięcia pamięci podręcznej. Dokument nie określa czasu życia `FabrykaKlientowCzatu` i źródła jej odczytów ani reguły „porty używane współbieżnie nie korzystają z `DbContext` zakresu”.
 - **Oczekiwana poprawka:** odczyty portów wywoływanych przez agentów przez `IDbContextFactory<LematDbContext>` albo `NpgsqlDataSource` (nowe połączenie na zapytanie); `FabrykaKlientowCzatu` jako `Singleton` z pamięcią podręczną odświeżaną poza ścieżką żądania; test architektury „typy `Lemat.Agenci` i porty wywoływane z agentów nie zależą od `LematDbContext`” i test współbieżny Walidacji.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 7: `PamiecKonfiguracjiModeli` jako Singleton, porty agentów przez `NpgsqlDataSource`/`IDbContextFactory`, test architektury i test współbieżny (C-51).
 
 ### C7-11: Wznawianie strumienia powiadomień po `Last-Event-ID` z UUIDv7 gubi zdarzenia
 - **Waga:** ŚREDNIA
@@ -1443,7 +1443,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - albo kolumna `nr_zdarzenia bigint` nadawana w triggerze `AFTER INSERT` z sekwencji połączonej z oknem bezpieczeństwa.
 
   Do tego test „dwa powiadomienia zatwierdzone w odwróconej kolejności nie giną po ponownym połączeniu”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-064 p. 2–4: strumień powiadomień zaczyna każde połączenie migawką nieprzeczytanych i nie używa kursora UUIDv7; test odwróconej kolejności zatwierdzeń (C-49). Wada wznawiania strumieni stanu po skrócie jest nową uwagą C8-02.
 
 ### C7-12: Konfiguracje `mock` jako migracja danych warunkowana `ASPNETCORE_ENVIRONMENT` — ryzyko aktywnego Mock w produkcji i nieudanego startu
 - **Waga:** ŚREDNIA
@@ -1453,7 +1453,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   - Pierwsze wdrożenie kończy się wtedy odmową startu `api`/`worker` (6.6). Bez tego zabezpieczenia aktywny Mock oceniałby Rozwiązania.
   - Migracja warunkowa daje też w `__historia_migracji` wpis „zastosowana” niezależnie od tego, czy dane wstawiono, więc późniejsza zmiana środowiska jej nie powtórzy.
 - **Oczekiwana poprawka:** dane Mock poza migracjami — osobne polecenie `Lemat.Narzedzia seed-dev` (uruchamiane przez `docker compose` dla `Development`) albo `HostedService` startowy aktywny wyłącznie przy `IHostEnvironment.IsDevelopment()`; test „migracje na pustej bazie nie tworzą konfiguracji `mock`”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-065 p. 6: migracje bez danych `mock`, polecenie `seed-dev` z odmową w `Production`, test `MigracjeNaPustejBazieNieTworzaKonfiguracjiMock`.
 
 ### C7-13: Harmonogram nie nadrabia wystąpień pominiętych przy przełączeniu instancji, restarcie albo wdrożeniu
 - **Waga:** ŚREDNIA
@@ -1466,14 +1466,14 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
     - `UTRZYMAJ_PARTYCJE` 1. dnia miesiąca przesuwa utworzenie partycji o miesiąc (bufor 3 miesiące maleje bez alertu).
   - Deduplikacja chroni przed duplikatami tylko wśród `OCZEKUJE`/`W_TOKU`, więc nie zastąpi nadrabiania.
 - **Oczekiwana poprawka:** trwały znacznik ostatniego wykonania per wpis (tabela `przebieg_harmonogramu(nazwa, ostatnie_wystapienie)` aktualizowana w jednostce pracy zlecenia) i nadrabianie wystąpień z ostatnich 24 h przy starcie albo przejęciu roli (warunki wykonania 13.3 są idempotentne); test „przejęcie roli o 03:00:05 zleca `KALIBRUJ` dla bieżącej daty”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-066 p. 5: tabela `przebieg_harmonogramu` (jest w katalogu po załadowaniu DDL), nadrabianie z 24 h zapisywane w tej samej transakcji, klucze z datą wystąpienia, test (l) (C-53).
 
 ### C7-14: Szablony SK kodują wartości zmiennych HTML-em — założenie ADR-058 p. 4 nie jest sprawdzane dla nazw z bazy referencyjnej
 - **Waga:** NISKA
 - **Lokalizacja:** ADR-058 p. 4 (zmienne: `int`, `decimal`, enumy, „nazwy Umiejętności i Działów z bazy referencyjnej”); `prompty.md` 4.3, 4.5, 4.6 (`{{$umiejetnosc}}`, `{{$dzial}}`); test `SzablonBezZmiennychTresci` (sprawdza tylko typy)
 - **Problem:** `KernelPromptTemplateFactory` 1.81 renderuje `x<2 & y>3 "q"` jako `x&lt;2 &amp; y&gt;3 &quot;q&quot;` (sprawdzone). Nazwa Umiejętności albo Działu z cudzysłowem, `<`, `>` lub `&` (np. „Nierówności typu „f(x) < g(x)”” albo nazwy z LaTeX) trafi do promptu systemowego w postaci zakodowanej, a test tego nie wykryje.
 - **Oczekiwana poprawka:** `AllowDangerouslySetContent = true` w `PromptTemplateConfig` (bezpieczne, bo zmienne są wyłącznie systemowe), albo CHECK/test w danych referencyjnych zabraniający tych znaków w nazwach; test renderowania każdego szablonu dla wszystkich nazw z `umiejetnosci.yaml`.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 8: `new KernelPromptTemplateFactory { AllowDangerouslySetContent = true }` (pomiar architekta: flaga w `PromptTemplateConfig` nie działa) i test `RenderowanieNazwUmiejetnosci`.
 
 ### C7-15: Drobne niespójności wersji 3.1
 - **Waga:** NISKA
@@ -1492,7 +1492,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
   7. `FabrykaKlientowCzatu` dla `DECYZYJNY_ZAPASOWY` musi zbudować klienta z `parametry.dostawca_llm`, a nie z `dostawca = zapasowy-llm`. Rejestr adapterów 13.1 tego nie opisuje, a `KlientCzatuRoli.Dostawca` będzie wtedy niejednoznaczny w telemetrii (`gen_ai.system`).
   8. Tekst 10.0.3 („bez zamiany na <”) i `ef-core.md` 3.3 („zapisuje `<`, `>`, `&` jako `<`, `>`, `&`”) zgubił sekwencje `<` itd. Uzasadnienie `UnsafeRelaxedJsonEscaping` dla `jsonb` jest też nieścisłe: `jsonb` dekoduje sekwencje `\uXXXX` przy zapisie, więc równość bajtowa dotyczy tekstu wiadomości do modelu i kolumn `text`, a nie zawartości `jsonb`.
 - **Oczekiwana poprawka:** p. 1 — 43; p. 2 — definicje enumów w 3.6/13 albo odnośnik do generatora; p. 3 — `HasTrigger` na właściwych tabelach dla wszystkich 15 triggerów; p. 4 — `CREATE ROLE … IF NOT EXISTS` (blok `DO`) albo tworzenie ról poza migracją z warunkiem; p. 5 — reguła aliasów w ADR-049; p. 6 — zapis w 6.4 i test kontraktu; p. 7 — opis w 13.1; p. 8 — poprawka tekstu.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 8). p. 1: 43 typy (potwierdzone w katalogu). p. 2: enumy w `ef-core.md` 3.2. p. 3: `KatalogTriggerow` z 15 pozycjami (potwierdzone w `pg_trigger`). p. 4: role tworzone blokiem `DO` (potwierdzone). p. 5–7: ADR-049 p. 13, 6.4, 13.1. p. 8: poprawione w 10.0.3 i `ef-core.md` 3.3, ale ten sam błąd wrócił w `api.md` 1 (C8-12).
 
 ### Podsumowanie iteracji 7
 
@@ -1535,5 +1535,298 @@ Poprawki C7-01 … C7-07 są lokalne. Wymagają zmiany:
 - selektora scenariuszy Mock.
 
 Iteracja 3 (sekcje 12, 14, 15) powinna je uwzględnić razem z mapowaniem macierzy błędów.
+
+---
+
+## Iteracja 8 (v3.2 — kontrakty REST/SSE i błędy)
+
+Data przeglądu: 2026-11-01. Wersja dokumentu: 3.2 (iteracja 3 pętli „.NET 10 + Next.js”). Zakres przeglądu:
+- sekcje 12, 14 i 15 (przepisane);
+- `docs/spec/api.md` (nowy), `ddl.md`, `ef-core.md`, `prompty.md`;
+- ADR-060 … ADR-066 i mapowanie C7 w `ARCHITECTURE_CHANGELOG.md`.
+
+**Weryfikacja uwag iteracji 7.** Wszystkie 15 uwag (C7-01 … C7-15) są ZAMKNIĘTE. Uzasadnienia są wpisane przy uwagach. Dwie pozostałości redakcyjne, czyli szkielet `ProfilUcznia` w 3.6 i sekwencja `<` w `api.md` 1, przechodzą do C8-12.
+
+**Metoda (niezależnie od tabel architekta, artefakty w scratchpadzie).**
+1. Bloki A i B `ddl.md` załadowano do PostgreSQL 16 na czystej bazie, bez błędów. Katalog po załadowaniu:
+   - 60 tabel + 4 partycje, 43 enumy, 15 triggerów;
+   - 142 CHECK, 124 FK, 21 UNIQUE;
+   - role `lemat_api`, `lemat_worker`, `lemat_scheduler`;
+   - FK kont `DEFERRABLE`.
+
+   Scenariusze C-47/C-48 odtworzono SQL-em na `ponow_prace` i `odzyskaj_dzierzawy`.
+2. Projekt ASP.NET Core 10.0.14 (`Microsoft.AspNetCore.OpenApi` 10.0.14) uruchomiono z opcjami `JsonApi.Konfiguruj` z `api.md` 1. Sprawdzono:
+   - nazwy JSON pól z cyframi;
+   - polimorficzne `WyborOdpowiedzi`, nieznane pole i `PATCH` z `null`;
+   - wiązanie `[FromForm]` rekordu `RozwiazanieWejscie` w postaci z `api.md` 3 i w trzech wariantach;
+   - schemat OpenAPI;
+   - `TypedResults.ServerSentEvents` z wyjątkiem przed pierwszym zdarzeniem.
+3. `FunctionInvokingChatClient` (MEAI 10.11, SK 1.81) i `OwnsMany` EF Core 10.0.3 sprawdzono na PostgreSQL 16 (C7-01, C7-06).
+4. Kod `klient.ts`, `odswiezanie.ts` i `strumien.ts` z `api.md` 6 przeanalizowano ścieżka po ścieżce wobec ADR-064 p. 2 i p. 8.
+5. Pokrycie: każdy FR/NFR porównano z katalogiem 12.3, mapowaniem stron `api.md` 7 i macierzą 12.8.
+
+**Co działa (potwierdzone):**
+- wyjątek z iteratora SSE przed pierwszym `yield` daje `404 application/problem+json` (ADR-064 p. 6);
+- `JsonStringEnumMemberName("R-SERIA")` trafia do `enum` w OpenAPI;
+- unia `WyborOdpowiedzi` daje `anyOf` z `discriminator`;
+- limit wywołań funkcji działa zgodnie z ADR-058 uzup. 3.2 p. 1;
+- funkcje prac w tle są odporne na konflikt deduplikacji;
+- pokrycie FR-01 … FR-36 endpointami jest kompletne co do istnienia operacji (wyjątki: C8-07, C8-11);
+- macierz E-01 … E-47 jest kompletna co do numeracji.
+
+### C8-01: `POST /rozwiazania` (multipart) nie wiąże się w zapisanej postaci, a nazwy pól z OpenAPI nie trafiają do rekordu (sprawdzone uruchomieniem)
+- **Waga:** WYSOKA
+- **Lokalizacja:** `api.md` 3 (`public sealed record RozwiazanieWejscie(Guid ZadanieWersjaId, Guid? ElementSciezkiId, Guid? PrzypisanieId, IFormFileCollection Zdjecia)`), 4 (`[FromForm] RozwiazanieWejscie wejscie`, `.Accepts<RozwiazanieWejscie>("multipart/form-data")`); 12.3 `POST /rozwiazania`, `POST /rozwiazania/{id}/zdjecia`, `POST /admin/arkusze-cke/importy`; 12.4 `RozwiazanieWejscie`; 12.12 (`kontrakt-api.spec.ts`); ADR-061 p. 2
+- **Problem (ASP.NET Core 10.0.14, `curl -F`):**
+  1. Rekord z konstruktorem pozycyjnym i polem `IFormFileCollection` (postać z `api.md`) odrzuca **każde** żądanie kodem `400` z pustym ciałem. Log: `FormDataMappingException: An error occurred while trying to map a value from form data`. Dotyczy nazw pól w obu konwencjach. Wariant bez wartości domyślnych `Guid? … = null` kończy się `BadHttpRequestException: Missing required value for constructor parameter 'ElementSciezkiId'`, a reguła 12.5 („dokładnie jeden kontekst”) wymaga, by jedno z pól było nieobecne.
+  2. Binder formularza dopasowuje pola po nazwach CLR (`ZadanieWersjaId`), a nie po `JsonNamingPolicy`. Schemat OpenAPI rekordu formularza (to, co trafi do `schema.d.ts`) ma jednak nazwy `zadanie_wersja_id`, `element_sciezki_id`, `przypisanie_id`. W wariancie klasy z setterami pola z nazwami ze schematu wiążą się **po cichu** jako `Guid.Empty`/`null`, a przy nazwach PascalCase wartości są poprawne. Klient generowany z OpenAPI wysłałby więc Rozwiązanie bez Zadania i kontekstu. Skutek: `422` albo, przy słabszej walidacji, `404`/`409` mylące Ucznia.
+  3. Przypadek działający bez zastrzeżeń to parametry `[FromForm(Name = "zadanie_wersja_id")] Guid`, `[FromForm(Name = "element_sciezki_id")] Guid?` i `IFormFileCollection zdjecia`, ale wtedy OpenAPI nie zawiera rekordu `RozwiazanieWejscie`, do którego odwołują się 12.3 i 12.4.
+
+  FR-16, czyli główny przepływ systemu, nie przejdzie więc testu `kontrakt-api.spec.ts`. To samo ryzyko dotyczy `POST /rozwiazania/{id}/zdjecia` i importu ZIP. Dokument nie zawiera żadnego testu wiązania multipart przez klienta wygenerowanego z OpenAPI.
+- **Oczekiwana poprawka:**
+  - Ustalić kompilowalną i działającą postać wiązania: parametry z `[FromForm(Name = "…")]` albo klasa z `[FromForm(Name = "…")]` na każdej właściwości i wartościami domyślnymi dla pól opcjonalnych.
+  - Transformator OpenAPI dający schemat `multipart/form-data` z nazwami `snake_case` i `zdjecia: string[] (format: binary)`.
+  - Test `Lemat.Api.Tests/Rozwiazania/PrzeslanieMultipartZKlientaOpenApi`: formularz zbudowany według wygenerowanego schematu, oba warianty kontekstu i brak kontekstu → `422 WALIDACJA` z `bledy_pol`, a nie `400` z pustym ciałem.
+
+### C8-02: Wznowienie strumienia stanu bez zmiany stanu nie wysyła pierwszego zdarzenia, więc klient przechodzi na odpytywanie po każdym `wznow`, a odpytywanie przy `nastepne_odpytanie_ms = null` kręci się bez przerwy
+- **Waga:** WYSOKA
+- **Lokalizacja:** ADR-064 p. 2 c („wysyła `stan`, chyba że skrót równa się `Last-Event-ID`”), p. 6, p. 8 („brak pierwszego zdarzenia w ciągu 5 s → odpytywanie”); `api.md` 5 (`if (skrot != poprzedniSkrot || terminalny)` przy `poprzedniSkrot = ostatnie`), 6.3 (`pierwszeZdarzenie = setTimeout(…abort("BUFOROWANIE"), 5_000)`, `porazki.length >= 2`, `przejdzNaOdpytywanie`, `setTimeout(r, o.okresOdpytywaniaMs())`, `if (r.status === 401 && (await odswiezToken())) return polacz();`); 12.10; 14.7 („Zegar urządzenia niezgodny”); E-42
+- **Problem (analiza ścieżek kodu z `api.md` przy semantyce ADR-064):**
+  1. Serwer zamyka każdy strumień `wznow` najpóźniej po 10 min albo przy `exp` tokenu (15 min). Klient łączy się natychmiast z `Last-Event-ID` = skrót ostatniego stanu. W typowych stanach długotrwałych stan się nie zmienił:
+     - `TRANSKRYPCJA_GOTOWA` w trakcie edycji;
+     - `OCZEKUJE_NA_WERYFIKACJE`, które dla strumienia nie jest terminalne, a trwa do 3 dni roboczych.
+
+     Serwer nie wysyła więc nic do pierwszego `ping` po 15 s. Klient przerywa po 5 s (`BUFOROWANIE`), dopisuje porażkę i po ok. 1 s łączy się ponownie z tym samym skutkiem. Druga porażka w 10 s daje `przejdzNaOdpytywanie()`. Każde wznowienie kończy się więc trybem odpytywania na 60 s, a „brak pierwszego zdarzenia” myli poprawny serwer z proxy buforującym. Metryka E-42 i cel ADR-051 p. 6 (dostarczenie SSE p99 ≤ 300 ms) są nieosiągalne w długich sesjach.
+  2. W trybie odpytywania `okresOdpytywaniaMs()` czyta `nastepne_odpytanie_ms`, które w stanach niezmiennych jest `null` (12.1). Kod wywołuje `setTimeout(r, null)`, czyli opóźnienie 0 ms. Pętla `GET /rozwiazania/{id}` przez 60 s ogranicza tylko czas odpowiedzi: przy 50 ms to ok. 1 200 żądań na kartę, ponad limit `NaUzytkownika` (20/s), więc pojawiają się `429` i toasty. Opis z `api.md` 6.3 („null → koniec odpytywania”) nie jest zaimplementowany.
+  3. `401` → `odswiezToken()` → `polacz()` jest rekurencją bez limitu. 12.10 i ADR-064 p. 8 mówią o „jednym ponowieniu”.
+  4. `pobierzToken()` porównuje `wygasa_at` z `Date.now()` bez `roznicaZegara`, choć 14.7 deklaruje przeliczenie względem nagłówka `Date`. Przy zegarze urządzenia +10 min każdy `pobierzToken()` odświeża token, a każde odświeżenie rotuje refresh token. Przy zegarze −20 min token jest używany po `exp`, więc każde żądanie przechodzi przez `401` i ponowienie.
+- **Oczekiwana poprawka:**
+  - Serwer zawsze wysyła pierwsze zdarzenie po połączeniu: `stan` niezależnie od `Last-Event-ID` albo `ping` natychmiast. Regułę 5 s liczyć od dowolnego zdarzenia.
+  - Odpytywanie z `null` → zatrzymanie i powrót do SSE.
+  - Licznik ponowień `401` (maks. 1).
+  - `roznicaZegara` w `odswiezanie.ts`.
+  - Testy Vitest `strumien.test.ts`: „wznow przy niezmienionym stanie nie przełącza na odpytywanie”, „null zatrzymuje odpytywanie”, „drugi 401 kończy strumień”.
+
+### C8-03: Idempotencja — wiersz klucza bez odpowiedzi blokuje operację na 24 h, a zapis poza transakcją przypadku użycia dopuszcza podwójny skutek
+- **Waga:** WYSOKA
+- **Lokalizacja:** ADR-062 p. 3 („Filtr w osobnej krótkiej transakcji wstawia `klucz_idempotencji` … wykonuje endpoint, zapisuje `kod_statusu_http` i `cialo_http` (tylko `2xx` i `4xx` poza `409 IDEMPOTENCJA_W_TOKU`, `429`; dla `5xx` usuwa wiersz)”); `ddl.md` `klucz_idempotencji` (brak kolumny terminu „w toku”); 12.1; E-41, E-43, E-47 („klient ponawia z tym samym `Idempotency-Key`”); 14.4 („ponowienia automatyczne … `KONFLIKT_WSPOLBIEZNOSCI`”); 15.3 (C-01)
+- **Problem:**
+  1. **Zawieszony klucz.** Wiersz bez odpowiedzi oznacza „w toku” bez terminu. Zostaje na 24 h, gdy:
+     - proces `api` kończy się w trakcie żądania (wdrożenie z `ShutdownTimeout` 30 s, OOM, restart kontenera);
+     - zapis odpowiedzi albo `DELETE` po `5xx` się nie udaje.
+
+     Drugi przypadek jest typowy, bo najczęstszym `5xx` jest `503 BAZA_NIEDOSTEPNA` i właśnie wtedy `DELETE` nie dojdzie do bazy. Każde ponowienie z tym kluczem dostaje `409 IDEMPOTENCJA_W_TOKU`, a klient zgodnie z E-41 „czeka i ponawia tym samym kluczem” bez końca. E-02 i E-36 („ponawia z tym samym `Idempotency-Key`”) dają tę samą pętlę dla `POST /rozwiazania` i `DELETE /uczniowie/ja`.
+  2. **Podwójny skutek.** Klucz i odpowiedź są w innych transakcjach niż jednostka pracy przypadku użycia (ADR-056 p. 1). Ciąg zdarzeń: `COMMIT` przypadku użycia → błąd zapisu odpowiedzi → `5xx` → wiersz usunięty → ponowienie wykonuje operację drugi raz. Bez naturalnego indeksu unikalnego daje to duplikat:
+     - `POST /klasy`, `/zestawy-zadan`, `/przypisania`, `/zadania`;
+     - `/zadania/generowanie` (koszt modelu i limit 20/dobę);
+     - `/admin/konfiguracje-modeli`, `/admin/progi-pewnosci`.
+  3. **Zapisane odpowiedzi przejściowe.** Zapisywane są wszystkie `4xx` poza `409 IDEMPOTENCJA_W_TOKU` i `429`, więc także `409 KONFLIKT_WSPOLBIEZNOSCI` (E-47). Automatyczne ponowienie z tym samym kluczem (14.4, E-47) zwraca zapisane `409` z `Idempotent-Replayed: true` zamiast wykonać operację. Mechanizm z E-47 nie działa. 12.11 („klucz trzymany do odpowiedzi `2xx`/`4xx`”) i 14.4 się wykluczają.
+- **Oczekiwana poprawka:**
+  - Wstawienie klucza i zapis odpowiedzi w **tej samej** jednostce pracy co przypadek użycia (`IJednostkaPracy`, ADR-056), a wiersz „w toku” tylko jako krótka rezerwacja z kolumną `w_toku_do` (np. `now() + 60 s`). Po jej upływie ponowienie przejmuje klucz, bo skutek bez zapisanej odpowiedzi nie został zatwierdzony.
+  - Lista kodów niezapisywanych: `409 KONFLIKT_WSPOLBIEZNOSCI`, `409 IDEMPOTENCJA_W_TOKU`, `429`, `5xx`.
+  - Testy:
+    - `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`;
+    - `Konflikt40P01NieJestZapisywanyWKluczu`;
+    - `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` (wstrzyknięty wyjątek po `COMMIT`).
+
+### C8-04: `ETag`/`If-None-Match → 304` dla zasobów złożonych zwraca nieaktualny stan (Wskazówka, Weryfikacja, blokada, podpisane URL)
+- **Waga:** WYSOKA
+- **Lokalizacja:** 12.1 („`If-None-Match` na `GET` → `304`”), ADR-062 p. 4 („oszczędność transferu w sieci komórkowej”); `api.md` 4 (`MapGet("/{id:guid}") … .Produces(304).ZwracaETag(ZasobWersjonowany.R)`); 12.3 `GET /weryfikacje/{id}` (`ETag` = wersja treści, ADR-037), `GET /zadania/{id}`; 15.2 (tokeny `ocena`, `transkrypcja` = `xmin` „bez ETag”, `weryfikacja.version` z triggera)
+- **Problem:** `ETag` jest wersją **jednego** agregatu, a odpowiedź zawiera dane innych agregatów albo danych zależnych od czasu:
+  - **`GET /rozwiazania/{id}` (`ETag` = `rozwiazanie.version`)** — `ocena` (Wskazówka dopisywana `UPDATE ocena`, `wskazowka_w_przygotowaniu`), `weryfikacja` (status `OCZEKUJE` → `W_TRAKCIE` → `ZAKONCZONA` bez zmiany Rozwiązania przy rozstrzygnięciu Kontroli losowej, `termin_at` przy przywróceniu konta, `opozniona` zależne od czasu), `zdjecia[].dostepne` (retencja), `transkrypcja.zgodnosc_poprawek`. W trybie zapasowym (odpytywanie co 1 s przy `wskazowka_w_przygotowaniu`) klient z `If-None-Match` dostaje `304` w nieskończoność: Wskazówka nigdy się nie pojawia, a odpytywanie się nie kończy.
+  - **`GET /weryfikacje/{id}` (`ETag` = wersja treści)** — `status`, `podjeta_przez`, `zablokowana_do`, `dostepna` zmieniają się bez zmiany `version` (ADR-037, C-31), a `zdjecia[].url` wygasają po 10 min. `304` oddaje Nauczycielowi nieaktualną blokadę i martwe adresy zdjęć przy blokadzie trwającej do 2 h.
+  - Ten sam silny `ETag` jest wysyłany rolom U i N, choć reprezentacje się różnią (12.6), co narusza RFC 9110 §8.8.3.
+- **Oczekiwana poprawka:**
+  - Rozdzielić dwa znaczenia: `If-Match` (współbieżność) = `version` agregatu, a `ETag` dla `If-None-Match` = skrót reprezentacji, ten sam co `id:` SSE (ADR-064 p. 2), obejmujący rolę.
+  - Wersję dla `If-Match` przekazywać polem `version` w ciele, jak już robi UI w 12.11.
+  - Albo zrezygnować z `304` dla zasobów złożonych.
+  - Test `Etag304NieUkrywaZmianyOceny` (Wskazówka dopisana → `200` z nowym `ETag`).
+
+### C8-05: Limity szybkości per IP i obsługa nieudanego odświeżenia odcinają klasy szkolne za NAT i wylogowują wszystkie karty przy chwilowej awarii
+- **Waga:** WYSOKA
+- **Lokalizacja:** 12.1 („5/min logowań na IP, 600/min na IP w Caddy”); ADR-062 p. 6 (`Logowanie` 5/min na IP); 12.7 (nieudane logowania 20/15 min na IP); A-03 („koniec lekcji: 90 przesłań w ciągu 60 s, 3 klasy”); `api.md` 6.2 (`if (!r.ok) { token = null; kanal.postMessage({ typ: "WYLOGOWANIE" }); … }`); ADR-057; E-40, E-42
+- **Problem:**
+  1. Uczniowie jednej szkoły wychodzą do internetu przez jeden adres IP (NAT). Klasa logująca się na początku lekcji (25–30 osób w 1–2 min) przekracza `Logowanie` 5/min na IP: 20–25 Uczniów dostaje `429` przez kilka minut. Polityka liczy wszystkie logowania, nie tylko nieudane.
+  2. Caddy 600 żądań/min na IP przy scenariuszu A-03 (3 klasy, 90 Uczniów) daje ok. 6,7 żądania/min na Ucznia. Samo przesłanie, otwarcie SSE, `GET` po `koniec`, autozapis Poprawek (debounce 1,5 s), powiadomienia i podpisane adresy zdjęć to kilkanaście żądań na Ucznia. Sieci szkolne z proxy buforującym (E-42, cel testu `sse-zapasowe-odpytywanie.spec.ts`) przechodzą na odpytywanie co 1 s, czyli 60 żądań/min na Ucznia, i cała szkoła dostaje `429`.
+  3. `odswiezToken()` traktuje **każdą** odpowiedź `!ok` jako koniec sesji: `429` (limit `NaUzytkownika` dla anonimowych po IP!), `503 BAZA_NIEDOSTEPNA`, `502` z Caddy przy wdrożeniu. Wylogowuje wtedy wszystkie karty (`WYLOGOWANIE`) i niszczy niezapisane szkice. Błąd sieci (`fetch` rzuca) zostawia natomiast `trwajace` w stanie odrzuconym bez obsługi w `pobierzToken`.
+- **Oczekiwana poprawka:**
+  - Limity per IP tylko dla żądań nieuwierzytelnionych i nieudanych, z kluczem (IP, e-mail).
+  - Limit Caddy z kluczem po `sub` tokenu albo wyższy (np. 6 000/min) z uzasadnieniem z modelu A-03 i scenariuszem obciążenia „3 klasy za jednym NAT”.
+  - Odświeżenie: `WYLOGOWANIE` wyłącznie przy `401 SESJA_UNIEWAZNIONA`; `429`/`5xx`/sieć → ponowienie z odstępem i `BladApi` bez wylogowania.
+  - Test Playwright `klasa-za-nat.spec.ts` (30 logowań z jednego IP w 60 s).
+
+### C8-06: Autoryzacja obiektowa niepełna — widoczność Zadania dla Ucznia nieokreślona, brak reguł dla kilku zasobów, rejestracja z dowolną rolą
+- **Waga:** WYSOKA
+- **Lokalizacja:** 12.3 `GET /zadania/{id}` (`Zalogowany`, „U → `ZadanieUczniaWyjscie`”), `GET /zlecenia-generowania/{id}` (bez warunku „zlecający”, choć strumień go ma), `POST /powiadomienia/{id}/przeczytanie`, `/testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/…`, `/rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres`, `/klasy/{id}/uczniowie/{uczen_id}/…`; 12.8; `api.md` 3 (`RejestracjaWejscie(… RolaUzytkownika Rola …)`), 4 (grupa `RequireAuthorization("Zalogowany")`, `GET /{id:guid}` bez własnej polityki); 12.4 (`rola: "UCZEN" | "NAUCZYCIEL"`)
+- **Problem:**
+  1. **`GET /zadania/{id}` dla Ucznia.** 12.8 określa tylko „Zadania (pełne): brak”. Nie ma reguły, **które** Zadania Uczeń może czytać w wersji uczniowskiej. Dosłowna implementacja zwraca każde Zadanie po identyfikatorze, w tym:
+     - Zadania `PRYWATNY` innych Nauczycieli;
+     - Zadania `WALIDACJA`, `ODRZUCONE_W_WALIDACJI`, `DO_PRZEGLADU`, `ODRZUCONE`;
+     - pozycje Testu diagnostycznego przed jego rozpoczęciem.
+
+     Identyfikatory trafiają do Uczniów przez Przypisania i Ścieżki nauki innych osób (UUIDv7 ujawnia czas utworzenia). Reguła powinna dopuszczać tylko Zadania z własnego elementu Ścieżki nauki, własnego Przypisania, własnego Rozwiązania lub Odpowiedzi i własnego Testu diagnostycznego, w wersji `zadanie_wersja_id` tego kontekstu.
+  2. **Brak wierszy w 12.8** dla Powiadomień (właściciel), Zleceń generowania (zlecający albo A — `GET` i `/strumien` mają różne reguły), Testów diagnostycznych i ich pozycji, Wkładek dla N bez NR oraz Importów. Brak też reguły dla identyfikatorów zagnieżdżonych, która wymaga spójności z rodzicem:
+     - `zdjecie_rozwiazania.rozwiazanie_id = {id}`;
+     - `pozycja.test_diagnostyczny_id = {id}`;
+     - `uczen_id` członkiem Klasy `{id}`.
+
+     Bez tej reguły Nauczyciel z dostępem do dwóch Rozwiązań może łączyć identyfikatory dowolnie, a test „brak widoczności → 404” nie ma specyfikacji wejściowej.
+  3. **Rejestracja z rolą `ADMINISTRATOR`.** Rekord C# ma typ `RolaUzytkownika` (z `ADMINISTRATOR`), więc wygenerowany `schema.d.ts` i OpenAPI dopuszczą tę wartość. Ograniczenie do `UCZEN | NAUCZYCIEL` istnieje tylko w „referencyjnym” listingu 12.4. 12.5 nie ma reguły walidatora, a przepływ 9.1 nie mówi, co się stanie z `rola = ADMINISTRATOR` (Nauczyciel → `OCZEKUJE_NA_ZATWIERDZENIE`, Administrator — nieokreślone). To potencjalna eskalacja uprawnień przez anonimowy endpoint.
+  4. **Administrator.** 12.8 przyznaje Administratorowi odczyt wszystkich Rozwiązań, Ocen, Weryfikacji, Klas i Przypisań, ale:
+     - polityki tych endpointów (`UczenLubNauczyciel`, `Nauczyciel`) go wykluczają, a osobnych endpointów `admin/*` nie ma;
+     - przykład `api.md` 4 (grupa `Zalogowany`, `GET /{id:guid}` bez polityki) wpuszcza na `GET /rozwiazania/{id}` każdą rolę.
+
+     Trzy źródła mówią trzy różne rzeczy, a test `KazdyEndpointMaPolitykeIKody` nie wie, które jest wzorcem.
+- **Oczekiwana poprawka:**
+  - Reguła widoczności `ZadanieUczniaWyjscie` w 12.8.
+  - Kompletna macierz 12.8 dla każdego zasobu z 12.3 i reguła zagnieżdżonych identyfikatorów.
+  - Osobny enum `RolaRejestracji { Uczen, Nauczyciel }` w `RejestracjaWejscie`.
+  - Jedna decyzja o odczycie przez Administratora (endpointy `admin/*` z audytem albo usunięcie z 12.8).
+  - Test `KazdyEndpointZIdMaTestIdor` (dla każdej ścieżki z `{id}`: zasób innego użytkownika tej samej roli → `404`).
+
+### C8-07: Przepływy Administratora niewykonalne — Przekazanie Klasy wymaga `If-Match` zasobu, którego Administrator nie może odczytać; brak odczytu flagi „diagnostyczne” i zarządzania bazą Zadań
+- **Waga:** WYSOKA
+- **Lokalizacja:** 12.3 `POST /admin/klasy/{id}/przekazanie` (ETag `K`), `GET /klasy`, `GET /klasy/{id}` (`Nauczyciel`, „własne”), `PUT /admin/zadania/{id}/diagnostyczne` (ETag `Z`), `GET /zadania` (filtry bez `diagnostyczne`), `POST /zadania` (`Nauczyciel`); `api.md` 3 (`ZadaniePelneWyjscie` bez pola `diagnostyczne`, `PoprawkiZadania` bez `DzialId`/`Umiejetnosci`/`Rodzaj`), 7 (strona `admin/klasy` czyta wyłącznie `GET /admin/uzytkownicy`; `admin/zadania` = „jak w grupie Nauczyciela”, czyli `POST /zadania` i `POST /zadania/{id}/zgloszenia-bledu`, zakazane dla A); ADR-044; 16.4; FR-35, FR-36; wymagania „Administrator – zarządza … bazą zadań”
+- **Problem:**
+  1. Przekazanie Klasy jest warunkiem usunięcia konta Nauczyciela (ADR-044, NFR-09). Administrator nie ma jednak endpointu zwracającego Klasę, jej `version` ani listy Klas danego Nauczyciela, więc `If-Match: K` jest niemożliwe do spełnienia (`428`/`412`). Powiadomienie `KLASA_DO_PRZEKAZANIA` ma co najwyżej identyfikator. Przepływ 16.4 kończy się w martwym punkcie.
+  2. Strona `admin/pula-diagnostyczna` nie może pokazać, które Zadania mają flagę `diagnostyczne`: pola nie ma w `ZadaniePelneWyjscie`, a `GET /zadania` nie ma takiego filtru. Administrator zmienia więc flagę na ślepo.
+  3. Administrator „zarządza bazą zadań” (aktorzy, FR-36), ale:
+     - nie może utworzyć Zadania (`POST /zadania` tylko `Nauczyciel`);
+     - nie może poprawić otagowania: `PoprawkiZadania` nie obejmuje Działu, Umiejętności ani rodzaju, a import tego samego `kod` jest odrzucany (C-22).
+
+     Błąd tagu w Zadaniu z arkusza nie ma więc ścieżki naprawy poza wycofaniem.
+- **Oczekiwana poprawka:**
+  - `GET /admin/klasy?nauczyciel_id&zarchiwizowane&kursor` i `GET /admin/klasy/{id}` (z `ETag`, audyt).
+  - Pole `diagnostyczne` w `ZadaniePelneWyjscie` i filtr `?diagnostyczne=` w `GET /zadania`.
+  - `PoprawkiZadania` z `dzial_id`, `umiejetnosci` (walidacja `trg_umiejetnosc_glowna_w_dziale`) albo osobne `PUT /admin/zadania/{id}/otagowanie` (nowa wersja Zadania).
+  - Polityka `POST /zadania` = `NauczycielLubAdministrator` albo poprawione mapowanie stron `api.md` 7.
+
+### C8-08: Serializacja i błędy deserializacji niezgodne z kontraktem (sprawdzone uruchomieniem): nazwy pól z cyframi, unia z dyskryminatorem, nieznane pole i błędy bez ProblemDetails
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** `api.md` 1 (`JsonApi.Konfiguruj`, „nieznane pole żądania → 422 WALIDACJA”), 2 (`BladApi` z `problem?.kod ?? "BLAD_WEWNETRZNY"`), 3; ADR-061 p. 2; ADR-049 p. 14 (cyfry w nazwach, por. `oswiadczenie_wieku_16` w DDL); 12.2; 12.3 (`410` dla `…/zdjecia/…/adres`); 12.4; 14.2 (`BadHttpRequestException` → `400`)
+- **Problem (ASP.NET Core 10.0.14 z `JsonApi.Konfiguruj`):**
+  1. `JsonNamingPolicy.SnakeCaseLower` nie oddziela cyfr od liter:
+     - `OswiadczenieWieku16` → `oswiadczenie_wieku16`;
+     - `LiczbaWynikow7d` → `liczba_wynikow7d`, `SredniUlamek7d` → `sredni_ulamek7d`;
+     - `LiczbaProbek90d` → `liczba_probek90d`, `OdsetekAutomatycznych30d` → `odsetek_automatycznych30d`.
+
+     Tak samo w schemacie OpenAPI (`required: ["oswiadczenie_wieku16", …]`). Listing 12.4 i DDL używają `oswiadczenie_wieku_16`, `liczba_wynikow_7d`, `sredni_ulamek_7d`, `liczba_probek_90d`, `odsetek_automatycznych_30d`, `odsetek_eskalacji_7d`, `weryfikatorzy_globalni_aktywni_7d`… (≥ 14 pól). Test `TypyReferencyjneZgodneZSchematem` nie przejdzie, a JSON łamie ADR-049 p. 14, który EF Core realizuje przez `HasColumnName("oswiadczenie_wieku_16")`.
+  2. Wartość enumu bez atrybutu: `RTrudnoscWGore` → `R_TRUDNOSC_W_GORE`, a listing ma `R-TRUDNOSC_W_GORE`. Atrybut `[JsonStringEnumMemberName]` jest potrzebny na **każdej** z 12 reguł, nie tylko jako „wyjątki”.
+  3. Unia `WyborOdpowiedzi`: `{"opcja":"B","rodzaj":"OPCJA"}`, czyli dyskryminator nie jako pierwszy, kończy się `NotSupportedException: … must specify a type discriminator` → **`500`**. Kolejność kluczy w obiekcie JS nie jest kontrolowana przez typ TS. Potrzebne `JsonSerializerOptions.AllowOutOfOrderMetadataProperties = true` i mapowanie na `422`. To samo dotyczy `WskazowkaRozstrzygniecia`.
+  4. Nieznane pole przy `UnmappedMemberHandling.Disallow` daje **`400` z pustym ciałem**, a nie `422 WALIDACJA` z `bledy_pol` (ADR-061 p. 2, `api.md` 1). Błędy wiązania i routingu (`400`, `404` trasy, `405`) też nie mają ciała `application/problem+json`. Klient mapuje je wtedy na `kod = "BLAD_WEWNETRZNY"` (toast „Coś poszło nie tak”) zamiast na kod domenowy.
+  5. W katalogu 12.2 brakuje kodów `400` (np. `ZAPYTANIE_NIEPRAWIDLOWE`: JSON niepoprawny, przerwane ciało E-43) i `410` (zdjęcie usunięte, `…/zdjecia/…/adres`). Test `KatalogBledowKompletny` ich nie wykryje, bo porównuje tylko zbiory deklarowane.
+- **Oczekiwana poprawka:**
+  - Własna `JsonNamingPolicy` (snake_case z separacją cyfr) albo `[JsonPropertyName]` dla pól z cyframi i test „nazwy JSON = nazwy kolumn DDL dla pól mapowanych 1:1”.
+  - `[JsonStringEnumMemberName]` na każdej regule.
+  - `AllowOutOfOrderMetadataProperties = true`.
+  - `IExceptionHandler` dla `BadHttpRequestException`/`JsonException`/`NotSupportedException` z wiązania → `422 WALIDACJA` (pole z `Path`).
+  - `UseStatusCodePages` z ProblemDetails dla `404`/`405`.
+  - Kody `ZAPYTANIE_NIEPRAWIDLOWE` (400) i `ZASOB_USUNIETY` (410) w `katalog-bledow.yaml`.
+  - Test `KazdaOdpowiedzBleduMaKod` (fuzz: niepoprawny JSON, nieznane pole, zła ścieżka, zła metoda).
+
+### C8-09: Semantyka `PATCH` i odpowiedzi wielowariantowe — nie da się wyczyścić pola, a `201` rejestracji ma dwa niezróżnicowane kształty
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 12.3 `PATCH /uczniowie/ja`, `PATCH /admin/uzytkownicy/{id}`, `POST /auth/rejestracja` („`201 SesjaWyjscie` (Nauczyciel: … `201` bez tokenu)”); `api.md` 3 (`ZmianaUczniaWejscie(… int? WybranyDzialId = null …) // PATCH: null = bez zmiany`, `RejestracjaNauczycielaWyjscie(StatusKonta Status)`); FR-09, FR-02
+- **Problem:**
+  1. `null` znaczy „bez zmiany”. Sprawdzone: `{"wybrany_dzial_id": null}` i `{}` dają ten sam rekord. Uczeń, który wybrał Dział (FR-09), nie może wrócić do rekomendacji wszystkich Działów, a `termin_egzaminu` nie da się usunąć. Dokument nie opisuje innej operacji, która to umożliwia.
+  2. `POST /auth/rejestracja` zwraca `201` z `SesjaWyjscie` (Uczeń) albo `RejestracjaNauczycielaWyjscie` (Nauczyciel) bez dyskryminatora. OpenAPI dla jednego kodu statusu da `oneOf` bez `discriminator`, więc klient TS musi zgadywać po obecności `access_token`. To nie jest zapisane i nie jest testowane.
+- **Oczekiwana poprawka:**
+  - JSON Merge Patch (RFC 7396) z typem „pole obecne/nieobecne” (`Opcjonalne<T>` z konwerterem STJ) albo jawne pola czyszczące (`wyczysc_wybrany_dzial: true`).
+  - Rejestracja: jeden rekord `RejestracjaWyjscie { status_konta, sesja: SesjaWyjscie | null }` albo `202` dla Nauczyciela.
+  - Testy obu przypadków.
+
+### C8-10: Autozapis Poprawek Transkrypcji — wyścig z własnym żądaniem, nadpisywanie edytora przez SSE i nieograniczona liczba wersji
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 9.4 (autozapis „2 s po ostatniej edycji”, „INSERT transkrypcja vN” i praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` przy każdym `PUT`); 12.11, 14.7, `api.md` 7 („debounce 1,5 s”); 22 („autozapis PWA 2 s”); `api.md` 6.3 (`useStrumienRozwiazania` → `setQueryData(["rozwiazanie", id], …)` dla każdego `stan`); 12.4 `WeryfikacjaSzczegoly.transkrypcje` („wszystkie wersje”); C-03, C-43; 17.4 (1,5 wywołania sprawdzenia na Rozwiązanie)
+- **Problem:**
+  1. `PUT …/transkrypcja` wymaga `If-Match` = `rozwiazanie.version` i zmienia `version`. Jeśli kolejny autozapis (po debounce albo „przy opuszczeniu pola”) wyruszy, zanim przyjdzie odpowiedź poprzedniego (sieć komórkowa, 9.4: „przy opuszczeniu pola” + debounce), wysyła stary `ETag` i dostaje `412`. Uczeń widzi wtedy dialog „Dane zmieniły się w międzyczasie” na własnej edycji (C-03 opisuje tylko dwa urządzenia). Kolejka autozapisów per Rozwiązanie nie jest opisana.
+  2. Każdy `PUT` zmienia skrót stanu, więc strumień tej samej karty dostaje `stan`. `setQueryData` nadpisuje wtedy stan edytora wersją z serwera, starszą niż tekst wpisany od wysłania `PUT`, i wpisane znaki giną. Brakuje reguły „edytor z niezapisanymi zmianami ignoruje `stan`, poza zmianą `status`”.
+  3. Każdy autozapis tworzy nową wersję Transkrypcji i (dedup tylko wśród `OCZEKUJE`) kolejne wywołanie multimodalne. 10 min edycji z debounce 1,5 s daje do ~400 wersji. Weryfikacja ładuje „wszystkie wersje” (do 40 kroków każda), a model kosztów 17.4 zakłada 1,5 wywołania na Rozwiązanie bez uzasadnienia i limitu.
+  4. Okres debounce jest niespójny: 1,5 s (12.11, 14.7, `api.md` 7) i 2 s (9.4, 22).
+- **Oczekiwana poprawka:**
+  - Kolejka autozapisów (jeden `PUT` w locie, następny z `ETag` z odpowiedzi poprzedniego).
+  - Reguła edytora wobec `stan`.
+  - Ograniczenie wersji: wersja domenowa tylko przy zatwierdzeniu albo „przy opuszczeniu pola” po co najmniej N s, szkic w kolumnie roboczej albo limit wersji na przesłanie. Wywołania sprawdzenia uzależnione od stabilności edycji (np. ≥ 10 s bez zmian).
+  - Jedna wartość debounce w 22.
+  - Test Playwright `autozapis-wolna-siec.spec.ts`.
+
+### C8-11: Luki stron i odczytów dla FR-32/FR-34 oraz operacji z `If-Match` — Nauczyciel nie skoryguje Oceny poza Weryfikacją, brak edycji Przypisania
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** `api.md` 7: `nauczyciel/klasy/[klasaId]/uczniowie/[uczenId]` (bez mutacji), `nauczyciel/weryfikacje/[weryfikacjaId]` (`POST /rozwiazania/{id}/korekty` (If-Match `R`), a strona czyta tylko `GET /weryfikacje/{id}` z ETag `W`), `nauczyciel/zgloszenia-bledu-zadan` (`rozpatrzenie` z If-Match `Z`, strona czyta tylko listę zgłoszeń); 12.3 (`/przypisania` tylko `POST`/`GET`); FR-32, FR-34; wizja („Nauczyciel … może … poprawiać oceny wystawione przez system”)
+- **Problem:**
+  1. Korekta Oceny ostatecznej wystawionej automatycznie (FR-34, 9.6.3) jest dostępna tylko ze strony Weryfikacji. Takie Rozwiązanie nie ma jednak otwartej Weryfikacji. Nie ma strony Rozwiązania Ucznia dla Nauczyciela (zdjęcia, Transkrypcja, Ocena, historia, akcja „Skoryguj”), a strona Ucznia w Klasie nie ma mutacji. Główny mechanizm uczenia systemu z wizji („poprawiać oceny … dzięki czemu z czasem system ocenia coraz trafniej”) nie ma interfejsu.
+  2. Operacje z `If-Match` bez źródła wersji na stronie:
+     - `korekty` (`R`) — `WeryfikacjaSzczegoly` nie zawiera `rozwiazanie.version`;
+     - `rozpatrzenie` zgłoszenia (`Z`) — `ZgloszenieBleduZadaniaWyjscie` nie zawiera `zadanie.version`.
+
+     Każde takie wywołanie kończy się `428` albo wymaga nieopisanego dodatkowego `GET`.
+  3. FR-32: Przypisania nie da się zmienić (termin) ani wycofać (brak `PATCH`/`DELETE /przypisania/{id}`). Błędny termin oznacza, że do jego upływu Uczniowie widzą pozycje, a po nim następuje ujawnienie klucza (12.5).
+  4. `POST /testy-diagnostyczne/{id}/pozycje/{…}/odpowiedz`: nie wiadomo, czy ponowna odpowiedź na tę samą pozycję nadpisuje poprzednią (`201` za każdym razem), czy ją odrzuca, i jaki jest wtedy kod.
+- **Oczekiwana poprawka:**
+  - Strona `nauczyciel/rozwiazania/[rozwiazanieId]` (`GET /rozwiazania/{id}` N, korekta z `If-Match` R).
+  - Pola `rozwiazanie_version` w `WeryfikacjaSzczegoly` i `zadanie_version` w `ZgloszenieBleduZadaniaWyjscie` albo jawny odczyt w mapowaniu stron.
+  - `PATCH /przypisania/{id}` (`termin`, ETag) i `POST /przypisania/{id}/wycofanie` z regułami dla prób w toku.
+  - Semantyka ponownej odpowiedzi w Teście diagnostycznym.
+
+### C8-12: Drobne niespójności wersji 3.2
+- **Waga:** NISKA
+- **Lokalizacja:** 3.6 (`ProfilUcznia`), `api.md` 1, 15.4 C-42, 12.6, 12.4/`api.md` 3, 12.1, 12.3, ADR-064 p. 3
+- **Problem:**
+  1. Szkielet 3.6 nadal ma `Dictionary<UmiejetnoscId, OpanowanieUmiejetnosci> _opanowanie` i indeksator, a `ef-core.md` 6.5 deklaruje `List<…>` (C7-06 p. 2). Wariant listy z rekordem i podmianą `with` działa w EF Core 10.0.3 (sprawdzone), więc wystarczy poprawić szkielet.
+  2. `api.md` 1: komentarz „bez sekwencji <”, czyli ponownie zgubione `<` (C7-15 p. 8).
+  3. C-42 kończy się „wersja 3.1: `Last-Event-ID` UUIDv7, C7-11”, choć mechanizm został zastąpiony migawką.
+  4. Przykład 12.6 pomija pola wymagane rekordów (`nr_kroku_agenta`, `podejrzenie_danych_osobowych`, `tylko_dane_osobowe`, `zastapienia_danych_osobowych`, `zakres_poprawek`, `konflikt_filtra`, `zgodnosc_poprawek`), choć 12.1 mówi „pola `null` wysyłane jawnie”.
+  5. Słownik: pole `prog` (`PozycjaKalibracji`) i `prog_aktywny` (`StanBezpiecznikaWyjscie`) zamiast `prog_pewnosci`/`prog_pewnosci_aktywny` („Próg pewności”, ADR-016).
+  6. Polityki `RecenzentTresci` i `WeryfikatorGlobalny` (12.1, ADR-062 p. 2) nie są przypisane żadnemu endpointowi 12.3.
+  7. Typy referencyjne węższe niż rekordy: `DezaktywacjaBezpiecznikaWejscie.rodzaj_zadania` (TS tylko `OTWARTE_OBLICZENIOWE`, C# `RodzajZadania`), krotki `[number, number]` (`ramka`, `koszyk`) wobec `IReadOnlyList<…>`.
+  8. `GET /uczniowie/{id}/profil` z wartością `ja` (`api.md` 7) przy trasach `{id:guid}` (`api.md` 4) — brak trasy albo ograniczenia dla `ja`.
+  9. Listy bez stronicowania, które rosną bez ograniczenia: `GET /admin/progi-pewnosci` („z historią”), `GET /rozwiazania/{id}/ocena?historia=true`, `GET /klasy`, `GET /zestawy-zadan`.
+  10. ADR-064 p. 3: migawka zawiera ≤ 100 najnowszych nieprzeczytanych. Przy > 100 nieprzeczytanych starsze powiadomienie zatwierdzone w odwróconej kolejności (C-49) nie trafia ani do migawki, ani do strumienia. Warto to zapisać jako ograniczenie albo użyć limitu z kursorem.
+- **Oczekiwana poprawka:** poprawki redakcyjne w podanych miejscach; dla p. 6 — usunięcie polityk albo przypisanie; dla p. 8 — osobna trasa `/uczniowie/ja/profil`.
+
+### Podsumowanie iteracji 8
+
+Weryfikacja uwag otwartych po iteracji 7:
+
+| Stan | Liczba | Identyfikatory |
+|---|---|---|
+| ZAMKNIĘTA | 15 | C7-01 … C7-15 (pozostałości redakcyjne C7-06 p. 2 i C7-15 p. 8 przeniesione do C8-12) |
+| OTWARTA | 0 | — |
+
+Nowe uwagi iteracji 8:
+
+| Waga | Liczba uwag | Identyfikatory |
+|---|---|---|
+| KRYTYCZNA | 0 | — |
+| WYSOKA | 7 | C8-01, C8-02, C8-03, C8-04, C8-05, C8-06, C8-07 |
+| ŚREDNIA | 4 | C8-08, C8-09, C8-10, C8-11 |
+| NISKA | 1 | C8-12 |
+| **Razem** | **12** | |
+
+Ocena scenariuszy współbieżności C-47 … C-54:
+- C-47 i C-48 potwierdzone na PostgreSQL 16;
+- C-49 … C-53 są spójne z ADR-064/066 i `ef-core.md` (z ograniczeniem C8-12 p. 10);
+- C-54 jest poprawny.
+
+Brakuje scenariuszy:
+- równoległego autozapisu z jednej karty i nadpisania edytora przez SSE (C8-10);
+- zawieszonego klucza idempotencji (C8-03).
+
+Werdykt:
+- Wersja 3.2 zamyka wszystkie uwagi iteracji 7. Warstwa danych, prace w tle i potok agentów są wykonalne i w kluczowych miejscach sprawdzone.
+- Kontrakt REST/SSE nie jest jeszcze na poziomie produkcyjnym:
+  - główne żądanie FR-16 w zapisanej postaci się nie wiąże (C8-01);
+  - wznawianie SSE przy niezmienionym stanie przełącza klienta na odpytywanie, które przy `null` kręci się bez przerwy (C8-02);
+  - idempotencja może zablokować operację na 24 h albo wykonać ją dwa razy (C8-03);
+  - `304` ukrywa zmiany zasobów złożonych (C8-04);
+  - limity per IP odcinają klasy za NAT, a chwilowa awaria odświeżenia wylogowuje wszystkie karty (C8-05);
+  - autoryzacja obiektowa i przepływy Administratora mają luki (C8-06, C8-07).
+- Poprawki są lokalne:
+  - wiązanie formularza;
+  - pierwsze zdarzenie SSE;
+  - przeniesienie klucza idempotencji do jednostki pracy;
+  - rozdzielenie `ETag` reprezentacji i wersji;
+  - klucze limitów;
+  - uzupełnienie macierzy 12.8 i endpointów `admin/*`.
 
 STATUS: NEEDS_REVISION
