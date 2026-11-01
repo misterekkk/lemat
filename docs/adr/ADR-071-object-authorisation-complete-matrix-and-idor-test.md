@@ -28,7 +28,7 @@ odczycie; brak ścieżki poprawy otagowania Zadania.
 1. **Macierz 12.8 jest kompletna:** ma wiersz dla każdej ścieżki z `{id}`
    katalogu 12.3; test `MacierzUprawnienPokrywaKatalog` porównuje zbiór
    ścieżek z `EndpointDataSource` ze zbiorem ścieżek w kolumnie „Ścieżki”
-   macierzy (plik `backend/tests/Lemat.Api.Tests/Uprawnienia/macierz-12-8.yaml`
+   macierzy (plik `backend/tests/Lemat.Api.Tests/Permissions/matrix-12-8.yaml`
    generowany z dokumentu).
 2. **Identyfikatory zagnieżdżone.** Dla ścieżki
    `/{zasob}/{id}/{podzasob}/{podzasob_id}` przypadek użycia wczytuje
@@ -59,7 +59,7 @@ odczycie; brak ścieżki poprawy otagowania Zadania.
 4. **Rejestracja.** `RejestracjaWejscie.Rola` ma typ `RolaRejestracji {
    Uczen, Nauczyciel }`; wartość `ADMINISTRATOR` daje `422 WALIDACJA`
    (`TYP_NIEPRAWIDLOWY`, ADR-067 p. 6). Konto Administratora powstaje
-   wyłącznie poleceniem `dotnet Lemat.Narzedzia.dll utworz-administratora
+   wyłącznie poleceniem `dotnet Lemat.Tools.dll utworz-administratora
    --email <adres>` (to samo narzędzie co `seed-dev`, 10.0; hasło
    jednorazowe z wymuszoną zmianą) albo przez innego Administratora (`POST
    /admin/uzytkownicy`, audyt `ADMINISTRATOR_UTWORZONY`).
@@ -84,14 +84,14 @@ odczycie; brak ścieżki poprawy otagowania Zadania.
    Zadanie), `PUT /admin/zadania/{id}/diagnostyczne`, Przegląd i wycofanie
    (`POST /zadania/{id}/przeglad|wycofanie`), rozpatrzenie Zgłoszeń błędu.
    `POST /zadania` pozostaje operacją Nauczyciela (słownik: Zadanie bazowe
-   „dodane ręcznie przez nauczyciela”); strona `admin/zadania` nie ma
+   „dodane ręcznie przez nauczyciela”); strona `admin/exercises` nie ma
    akcji „Nowe Zadanie”.
 7. **Polityki `RecenzentTresci` i `WeryfikatorGlobalny` są usunięte**
    (C8-12 p. 6): flagi `recenzent_tresci` i `weryfikator_globalny` są
    warunkami obiektowymi macierzy 12.8 sprawdzanymi w przypadku użycia
    (`Aktor.Flagi`), nie politykami grup.
 8. **Test IDOR.** `KazdyEndpointZIdMaTestIdor`
-   (`Lemat.Api.Tests/Uprawnienia`, `WebApplicationFactory` + dane z
+   (`Lemat.Api.Tests/Permissions`, `WebApplicationFactory` + dane z
    `ZbiorDanychIdor`: dwóch Uczniów, dwóch Nauczycieli w dwóch Klasach,
    Nauczyciel NR, Administrator): dla każdej ścieżki z `{id}` z
    `EndpointDataSource` i każdej roli dopuszczonej polityką — zasób innego
@@ -111,5 +111,5 @@ odczycie; brak ścieżki poprawy otagowania Zadania.
 - 12.3 dostaje `GET /admin/klasy`, `GET /admin/klasy/{id}`, `PUT
   /admin/zadania/{id}/otagowanie`, `POST /admin/uzytkownicy`, trasę `GET
   /uczniowie/ja/profil` i parametry kontekstu `GET /zadania/{id}`.
-- `api.md` 7: strona `admin/klasy` czyta `GET /admin/klasy*`, strona
-  `admin/pula-diagnostyczna` filtruje `GET /zadania?diagnostyczne=`.
+- `api.md` 7: strona `admin/classes` czyta `GET /admin/klasy*`, strona
+  `admin/diagnostic-pool` filtruje `GET /zadania?diagnostyczne=`.

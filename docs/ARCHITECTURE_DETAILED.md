@@ -3,15 +3,15 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/ARCHITECTURE_DETAILED.md` |
-| Wersja | 3.3 (iteracja 4 z 4 pętli „stos .NET 10 + Next.js”: zamknięcie uwag C8-01 … C8-12 i Macierz Pokrycia Wymagań RTM w sekcji 18, przed audytem końcowym) |
+| Wersja | 3.4 (po pętli „stos .NET 10 + Next.js”: wymaganie właściciela projektu — angielskie nazwy plików i katalogów, ADR-075; identyfikatory bez zmian) |
 | Data | 2026-11-01 |
 | Dokumenty źródłowe | `docs/vision.md`, `docs/glossary.md`, `docs/requirements.md`, `docs/architecture.md` |
 | Stos technologiczny | .NET 10 (ASP.NET Core, EF Core + Npgsql, PostgreSQL 16) w `backend/`; warstwa agentów AI w .NET (Microsoft.Extensions.AI + Semantic Kernel); Next.js (App Router, TypeScript) w `frontend/`; REST + SSE — ADR-048 … ADR-055. Wersja 2.4 (Python/FastAPI, React + Vite) jest zastąpiona w zakresie realizacji technicznej; reguły domenowe, liczby i decyzje biznesowe wersji 2.4 obowiązują bez zmian |
-| Plan pętli 3.x | iteracja 1 (wersja 3.0): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2 (wersja 3.1): agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13; `docs/spec/`); iteracja 3 (wersja 3.2): kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15; `docs/spec/api.md`) oraz poprawki C7 w 7, 10, 13; iteracja 4 (ta wersja, 3.3): poprawki C8 (12, 15, 22, `docs/spec/*`, ADR-067 … ADR-074) i macierz RTM (18) |
+| Plan pętli 3.x | iteracja 1 (wersja 3.0): moduły, projekty, katalogi, mapowanie słownika (3.5, 3.6, 5, 6); iteracja 2 (wersja 3.1): agenci AI w .NET i schemat EF Core (sekcje 7, 10, 13; `docs/spec/`); iteracja 3 (wersja 3.2): kontrakty REST/SSE Next.js ↔ .NET, błędy, przypadki brzegowe (12, 14, 15; `docs/spec/api.md`) oraz poprawki C7 w 7, 10, 13; iteracja 4 (wersja 3.3): poprawki C8 (12, 15, 22, `docs/spec/*`, ADR-067 … ADR-074) i macierz RTM (18); wersja 3.4: angielskie nazwy plików, katalogów, projektów, przestrzeni nazw i segmentów tras (ADR-075; 3.5 kolumna EN, 6.4, 6.7, 6.8, 6.11, 18) |
 | Rejestr ADR | [`docs/adr/`](adr/) — jeden plik na ADR, indeks w sekcji 19 |
-| Specyfikacje szczegółowe | [`docs/spec/ddl.md`](spec/ddl.md) (pełne DDL, triggery, funkcje), [`docs/spec/ef-core.md`](spec/ef-core.md) (mapowanie EF Core 10), [`docs/spec/prompty.md`](spec/prompty.md) (prompty systemowe, szablony stanów, schematy odpowiedzi modeli), [`docs/spec/api.md`](spec/api.md) (rekordy C# kontraktów, klient Next.js, kontrakty SSE, mapowanie stron na endpointy; od 3.2) |
+| Specyfikacje szczegółowe | [`docs/spec/ddl.md`](spec/ddl.md) (pełne DDL, triggery, funkcje), [`docs/spec/ef-core.md`](spec/ef-core.md) (mapowanie EF Core 10), [`docs/spec/prompts.md`](spec/prompts.md) (prompty systemowe, szablony stanów, schematy odpowiedzi modeli), [`docs/spec/api.md`](spec/api.md) (rekordy C# kontraktów, klient Next.js, kontrakty SSE, mapowanie stron na endpointy; od 3.2) |
 | Historia zmian | [`docs/ARCHITECTURE_CHANGELOG.md`](ARCHITECTURE_CHANGELOG.md) |
-| Zaadresowane uwagi | `docs/CRITIQUE_LOG.md`: iteracja 8 (wersja 3.3) — C8-01 … C8-12, wszystkie 12; iteracja 7 (wersja 3.2) — C7-01 … C7-15, wszystkie 15; iteracja 6 (wersja 3.1) — C6-01 … C6-15, wszystkie 15; iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.5); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C8) |
+| Zaadresowane uwagi | wersja 3.4 nie zamyka nowych uwag (brak uwag OTWARTA po iteracji 8; zmiana wynika z wymagania właściciela projektu); `docs/CRITIQUE_LOG.md`: iteracja 8 (wersja 3.3) — C8-01 … C8-12, wszystkie 12; iteracja 7 (wersja 3.2) — C7-01 … C7-15, wszystkie 15; iteracja 6 (wersja 3.1) — C6-01 … C6-15, wszystkie 15; iteracja 5 (wersja 3.0) — C5-01 … C5-05 w treści dokumentu, C5-06 … C5-09 jako wymagania dla nowego `TASKS.md` (18.5); wcześniejsze: iteracja 1 — C1-01 … C1-29 (wersje 2.0 i 2.1); iteracja 2 — ponownie otwarta C1-21 oraz C2-01 … C2-16, wszystkie 17 (wersja 2.2); iteracja 3 — C3-01 … C3-09, wszystkie 9 (wersja 2.3); iteracja 4 — C4-01 … C4-06 (w tym 10 podpunktów C4-06), wszystkie 6 (wersja 2.4); mapowanie uwaga → miejsce rozwiązania: `docs/ARCHITECTURE_CHANGELOG.md` (C1 … C8) |
 | Decyzje właściciela produktu | zebrane w bramce G-0 (17.6), lista D-1 … D-17 w 23.4 |
 | Status | Do przeglądu przez krytyka (`docs/CRITIQUE_LOG.md`) |
 
@@ -23,8 +23,8 @@ które zmieniają lub doprecyzowują wymagania albo słownik pojęć, są zebran
 bramce **G-0** (sekcja 17.6) i wymagają akceptacji właściciela produktu przed
 startem produkcyjnym; do tego czasu obowiązują w brzmieniu z tego dokumentu.
 
-**Konwencja odczytu wersji 3.3.** Stos techniczny opisują sekcje 5 i 6
-(.NET 10 + Next.js, ADR-048 … ADR-074), a mapowanie pojęć na identyfikatory
+**Konwencja odczytu wersji 3.4.** Stos techniczny opisują sekcje 5 i 6
+(.NET 10 + Next.js, ADR-048 … ADR-075; nazwy plików, katalogów i przestrzeni nazw — 6.11), a mapowanie pojęć na identyfikatory
 — 3.5. Sekcje 7 (model danych), 10 (agenci) i 13 (porty i prace w tle) są
 od wersji 3.1 przepisane na .NET, a sekcje 12 (kontrakty REST i SSE), 14
 (obsługa błędów) i 15 (współbieżność) — od wersji 3.2; długie listingi są w
@@ -42,11 +42,11 @@ uruchomione w projekcie .NET 10 / TypeScript 5.9 albo na PostgreSQL 16.15
 3. Język wszechobecny (reguły nazewnictwa, PZS-1, 3.5 mapowanie słownika na model domenowy C#/PostgreSQL/TypeScript/JSON, 3.6 szkielety agregatów)
 4. Widok kontekstu systemu
 5. Widok kontenerów i stos technologiczny (.NET 10 + Next.js)
-6. Moduły, agenci i porty (solucja .NET, reguły warstw, warstwa AI, katalogi `backend/` i `frontend/`)
+6. Moduły, agenci i porty (solucja .NET, reguły warstw, warstwa AI, katalogi `backend/` i `frontend/`, 6.11 angielskie nazwy plików i katalogów)
 7. Model danych (ERD, konwencje, decyzje EF Core, migracje; pełne DDL w `docs/spec/ddl.md`)
 8. Maszyny stanów
 9. Przepływy (diagramy sekwencji)
-10. Agenci — architektura .NET (10.0), kontrakty C#, algorytmy, pytania do Jev; prompty w `docs/spec/prompty.md`
+10. Agenci — architektura .NET (10.0), kontrakty C#, algorytmy, pytania do Jev; prompty w `docs/spec/prompts.md`
 11. Reguły decyzyjne oceniania i kierowania do Weryfikacji
 12. Kontrakty API (REST + SSE; listingi w `docs/spec/api.md`)
 13. Kontrakty wewnętrzne (porty C#) i prace w tle (`BackgroundService`, SQL sklepu prac)
@@ -240,7 +240,7 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
    `Fixture`, `Tests`. Nie oznaczają pojęć domenowych i nie mogą zastąpić
    pojęcia słownika (np. `GradeHandler` jest zakazany, `OcenRozwiazanieHandler`
    — dozwolony). Słowo `strumien` (strumień SSE, ADR-051) jest słowem
-   ogólnym listy `slownik_tokeny.yaml`.
+   ogólnym listy `glossary-tokens.yaml`.
 
 ### 3.2 Pojęcia słownika → identyfikatory
 
@@ -264,12 +264,12 @@ Poza zakresem (zgodnie z `requirements.md` i decyzjami tego dokumentu):
 | Pewność oceny | `ocena.pewnosc_oceny` (prawdopodobieństwo zgodności Oceny w rozumieniu ADR-027) | `PewnoscOceny` | pole `pewnosc_oceny` |
 | Próg pewności | `prog_pewnosci` (wyłącznie wartość progu, jego źródło i uzasadnienie) | `ProgPewnosci` | `/admin/progi-pewnosci` |
 | Weryfikacja | `weryfikacja` (PZS-1 B-2) | `Weryfikacja` | `/weryfikacje` |
-| Agent | projekt `Lemat.Agenci` (6.6) | `IAgent*` / `Agent*` | — |
-| Orkiestrator | `Lemat.Application.Orkiestracja` (fasada wywoływana w procesach `worker` i `api`, ADR-023) | `Orkiestrator` | — |
-| Model System One | adapter `JevAdapter` (`Lemat.Modele.Jev`), rola `DECYZYJNY_GLOWNY` (Jev jest jedynym Modelem System One w systemie) | `JevAdapter` | — |
+| Agent | projekt `Lemat.Agents` (6.6) | `IAgent*` / `Agent*` | — |
+| Orkiestrator | `Lemat.Application.Orchestration` (fasada wywoływana w procesach `worker` i `api`, ADR-023) | `Orkiestrator` | — |
+| Model System One | adapter `JevAdapter` (`Lemat.Models.Jev`), rola `DECYZYJNY_GLOWNY` (Jev jest jedynym Modelem System One w systemie) | `JevAdapter` | — |
 | Jev | adapter `JevAdapter`, `konfiguracja_modelu.dostawca = 'typesafe-jev'` | `JevAdapter` | — |
-| Kalibracja | moduł Kalibracja (`Lemat.Domain.Kalibracja`: `KalibratorPewnosci`, `ProbkaKalibracyjna`; tabele `kalibrator_pewnosci`, `probka_kalibracyjna`) i moduł Tresci (`Lemat.Domain.Tresci.KalibracjaTrudnosci`, tabela `kalibracja_trudnosci` — kalibracja Poziomu trudności, 6.2) | `KalibratorPewnosci`, `KalibracjaTrudnosci` | `/admin/kalibracja` |
-| Model generatywny (LLM) | port `IModelGeneratywny` (`Lemat.Application.Modele`) nad `IChatClient` | `IModelGeneratywny` | — |
+| Kalibracja | moduł Kalibracja (`Lemat.Domain.Calibration`: `KalibratorPewnosci`, `ProbkaKalibracyjna`; tabele `kalibrator_pewnosci`, `probka_kalibracyjna`) i moduł Tresci (`Lemat.Domain.Content.KalibracjaTrudnosci`, tabela `kalibracja_trudnosci` — kalibracja Poziomu trudności, 6.2) | `KalibratorPewnosci`, `KalibracjaTrudnosci` | `/admin/kalibracja` |
+| Model generatywny (LLM) | port `IModelGeneratywny` (`Lemat.Application.Models`) nad `IChatClient` | `IModelGeneratywny` | — |
 | Arkusz CKE | `arkusz_cke` | `ArkuszCke` | `/admin/arkusze-cke` |
 
 Pełne mapowanie wszystkich pojęć na typy C#, kolumny, typy TypeScript i
@@ -315,7 +315,7 @@ dopisania do słownika (PZS-1, część A).
 | Zgodność Oceny | NFR-02, słownik (Pewność oceny) | Ocena automatyczna jest zgodna z Oceną Nauczyciela, gdy ma tę samą liczbę punktów, ten sam pierwszy błędny krok (lub oba brak) i tę samą wartość `brakujacy_krok` (ADR-027). | `probka_kalibracyjna.zgodna` |
 | Kalibrator pewności | słownik (Kalibracja) | Monotoniczna funkcja przekształcająca pewność surową w Pewność oceny, dopasowana na Próbkach kalibracyjnych. | `kalibrator_pewnosci` |
 | Opinia pomocnicza | architecture.md | Niezależna ocena mocniejszego LLM dołączona do Weryfikacji jako materiał dla Nauczyciela; nie zmienia Oceny. | `opinia_pomocnicza` |
-| Model decyzyjny | architecture.md | Rola pełniona przez Model System One (Jev) albo model zapasowy (NFR-07). | port `IModelDecyzyjny` (`Lemat.Application.Modele`) |
+| Model decyzyjny | architecture.md | Rola pełniona przez Model System One (Jev) albo model zapasowy (NFR-07). | port `IModelDecyzyjny` (`Lemat.Application.Models`) |
 | Model zapasowy | NFR-07 | LLM ze strukturyzowaną odpowiedzią implementujący port `IModelDecyzyjny`. | rola `DECYZYJNY_ZAPASOWY`, `ZapasowyLlmAdapter` |
 | Plan pytań | architecture.md (pytania do Jev) | Zbiór pytań do Modelu decyzyjnego z jawnymi zależnościami między nimi (ADR-026). | `PlanPytan` |
 | Rekomendacja | FR-05, FR-10 | Decyzja Agenta rekomendującego o kolejnym elemencie Ścieżki nauki wraz z uzasadnieniem. | `rekomendacja` |
@@ -367,7 +367,7 @@ dopisania do słownika (PZS-1, część A).
 | Przekazanie Klasy | FR-30, ADR-044 | Zmiana Nauczyciela prowadzącego Klasę przez Administratora, wymagana przed usunięciem konta Nauczyciela. | `POST /admin/klasy/{id}/przekazanie` |
 | Bezpiecznik | NFR-03, ADR-046 | Automatyczna reakcja nadzoru na **dowód** przekroczenia 2% błędu ocen automatycznych w Kontroli losowej (dolna granica Wilsona 95% > 2% przy `n_eff ≥ 50`): bezpiecznik trafności podnosi Próg pewności, bezpiecznik poprawek kieruje każdą Transkrypcję z Poprawkami do Weryfikacji (T-7). | `stan_bezpiecznika`, `typ_bezpiecznika` |
 | Wniosek o usunięcie konta | NFR-09, ADR-040 | Zdarzenie RODO rozpoczynające okres karencji usunięcia konta (`DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie`). | `WNIOSEK_O_USUNIECIE` |
-| Słownik terminów matematycznych | ADR-042 | Zamknięta lista form wyrazowych terminów matematycznych (z odmianą), których Filtr danych osobowych nie zastępuje, także gdy są równe imieniu lub nazwisku z konta — z wyjątkami (wersja 2.4, C4-03; wersja 3.0, C5-01): token sąsiaduje z pełnym drugim członem imienia i nazwiska, z inicjałem z kropką w kroku bez treści matematycznej, albo leży w kroku agenta z podejrzeniem danych osobowych. | `backend/src/Lemat.Domain/Rozwiazania/FiltrDanychOsobowych/slownik_matematyczny.txt` (w 2.4 `lemat/rozpoznawanie/slownik_matematyczny.txt`) |
+| Słownik terminów matematycznych | ADR-042 | Zamknięta lista form wyrazowych terminów matematycznych (z odmianą), których Filtr danych osobowych nie zastępuje, także gdy są równe imieniu lub nazwisku z konta — z wyjątkami (wersja 2.4, C4-03; wersja 3.0, C5-01): token sąsiaduje z pełnym drugim członem imienia i nazwiska, z inicjałem z kropką w kroku bez treści matematycznej, albo leży w kroku agenta z podejrzeniem danych osobowych. | `backend/src/Lemat.Domain/Solutions/PersonalDataFilter/math-terms.txt` (w 2.4 `lemat/rozpoznawanie/slownik_matematyczny.txt`) |
 | Obszar kroku | 10.3.2 | Ramka linii kroku Transkrypcji na znormalizowanym zdjęciu, używana przez Filtr danych osobowych i Sprawdzenie zgodności poprawek. | `krok_transkrypcji.obszar`, `ObszarKroku` |
 | Przyjęcie planu | ADR-039 | Decyzja globalnego ogranicznika szybkości przed pierwszą falą Oceny: plan pytań Jev zostanie wykonany przed terminem miękkim albo Ocena od razu przechodzi do modelu zapasowego. | `PrzyjeciePlanu` |
 | Dezaktywacja bezpiecznika | ADR-046, C4-04 | Decyzja Administratora z uzasadnieniem kończąca stan aktywny bezpiecznika (poprawek: koniec T-7 dla każdej Poprawki; trafności: koniec blokady obniżania progu) i ustawiająca nowy początek okna oceny `okno_od`. | `POST /admin/bezpieczniki/dezaktywacja`, `dezaktywowano_at` |
@@ -392,15 +392,18 @@ usunięć”) —, 17 dopisanych w wersji 2.2 — od „Pewność surowa” do
 bezpiecznika”, „Blokada obniżania progu”, „Wstrzymanie”; razem 86 pojęć).
 
 **Test w CI** (wersja 2.2, C2-11; od wersji 3.0
-`backend/tests/Lemat.Architecture.Tests/Slownik/TestSlownika.cs`, w 2.4
+`backend/tests/Lemat.Architecture.Tests/Glossary/GlossaryTest.cs`, w 2.4
 `tests/test_slownik.py`) ma cztery części, każda z zamkniętą listą wyjątków
-w `backend/tests/Lemat.Architecture.Tests/Slownik/slownik_wyjatki.yaml`
+w `backend/tests/Lemat.Architecture.Tests/Glossary/glossary-exceptions.yaml`
 (w 2.4 `tests/slownik_wyjatki.yaml`). Od wersji 3.0 źródłami identyfikatorów
 są dodatkowo: nazwy typów, właściwości i członków enumów C# z zestawów
 `Lemat.Domain`, `Lemat.Application` i `Lemat.Api` (refleksja, nazwy
 przekształcone do formy bazowej według ADR-049 i porównywane z kolumną C#
-tabeli 3.5) oraz nazwy segmentów tras `frontend/src/app/**` (bez nawiasów
-grup tras); przyrostki z 3.1 p. 7 są pomijane przed podziałem na tokeny:
+tabeli 3.5); od wersji 3.4 (ADR-075) segmenty tras `frontend/src/app/**`
+i inne nazwy plików oraz katalogów **nie** są źródłem identyfikatorów (są
+angielskie i sprawdza je test `TestNazwPlikow`, 6.11.2 p. 4), a klucze
+`params` segmentów dynamicznych są na zamkniętej liście wyjątków 6.11.4;
+przyrostki z 3.1 p. 7 są pomijane przed podziałem na tokeny:
 
 1. **Tabele:** nazwy tabel z DDL 7.3 (odczyt `information_schema.tables` w
    bazie testowej po migracjach) muszą mieć wpis w 3.2/3.3. Lista
@@ -415,9 +418,9 @@ grup tras); przyrostki z 3.1 p. 7 są pomijane przed podziałem na tokeny:
 2. **Tokeny identyfikatorów:** kolumny (`information_schema.columns`), typy
    wyliczeniowe i ich wartości (`pg_enum`), ścieżki, parametry i właściwości
    schematów OpenAPI (`/api/v1/openapi.json`), klucze schematów JSON
-   odpowiedzi modeli (`backend/src/Lemat.Modele/Schematy/*.json`, w 2.4 `lemat/modele/schematy/*.json`) i typy prac w tle
+   odpowiedzi modeli (`backend/src/Lemat.Models/Schemas/*.json`, w 2.4 `lemat/modele/schematy/*.json`) i typy prac w tle
    (13.3) są dzielone na tokeny (`_`, `-`, granice `PascalCase`); każdy token
-   musi należeć do słownika tokenów `slownik_tokeny.yaml` (ten sam katalog), generowanego
+   musi należeć do słownika tokenów `glossary-tokens.yaml` (ten sam katalog), generowanego
    z identyfikatorów 3.2/3.3, terminów technicznych 3.1 p. 2 i p. 6 oraz
    zamkniętej listy słów ogólnych (np. `nr`, `opis`, `status`, `liczba`,
    `termin`, `tresc`, `koszt`; od wersji 2.4: `dezaktywacja`,
@@ -462,7 +465,7 @@ grup tras); przyrostki z 3.1 p. 7 są pomijane przed podziałem na tokeny:
    `zgodnosc_z_zadaniem`, wartości `ZADANIE`, `ZADANIE_LATWE`,
    `ZADANIE_MATURALNE`, `ZADANIE_Z_DOWODEM`, `ZADANIE_DO_PRZEGLADU`, klasy
    `Zadanie*`, `*Zadania*` i prefiksy `ux_zadanie_*`, `ix_zadanie_*`; pełna lista
-   w `slownik_wyjatki.yaml`). Przypadki kontrolne testu (wersja 2.4):
+   w `glossary-exceptions.yaml`). Przypadki kontrolne testu (wersja 2.4):
    migracja testowa z kolumną `stan_bezpiecznika.zdjeto_at` i ścieżka
    `/admin/bezpieczniki/zdjecie` muszą kończyć test błędem; (wersja 3.0,
    C5-04) migracja testowa z kolumną `praca_w_tle.zablokowana_do` i
@@ -506,14 +509,14 @@ Tabela obejmuje **wszystkie 25 pojęć** `docs/glossary.md` (część I) i
 `snake_case` według ADR-049 (transliteracja, PascalCase w C#/TS, `snake_case`
 w bazie i JSON, `UPPER_SNAKE` dla wartości wyliczeniowych, `kebab-case` w
 URL). Test słownika (3.4) sprawdza każdą kolumnę: typy C# (refleksja po
-`Lemat.Domain`, `Lemat.Application`, `Lemat.Api.Kontrakty`), schemat bazy po
+`Lemat.Domain`, `Lemat.Application`, `Lemat.Api.Contracts`), schemat bazy po
 migracjach, dokument OpenAPI (z niego powstają typy TS) i schematy JSON
 odpowiedzi modeli.
 
 Skróty: `D.` = `Lemat.Domain.`, `A.` = `Lemat.Application.`, `M.` =
-`Lemat.Modele.`, `I.` = `Lemat.Infrastructure.`, `K.` =
-`Lemat.Api.Kontrakty.`. Typy TS są aliasami schematów OpenAPI eksportowanymi
-z `frontend/src/lib/api/typy.ts` (np. `export type OcenaWyjscie =
+`Lemat.Models.`, `I.` = `Lemat.Infrastructure.`, `K.` =
+`Lemat.Api.Contracts.`. Typy TS są aliasami schematów OpenAPI eksportowanymi
+z `frontend/src/lib/api/types.ts` (np. `export type OcenaWyjscie =
 components["schemas"]["OcenaWyjscie"]`); wyliczenia w TS to unie literałów
 (`type StatusOceny = "WSTEPNA" | "OSTATECZNA" | "ZASTAPIONA"`). Rodzaj DDD:
 **AG** — korzeń agregatu, **EN** — encja wewnątrz agregatu, **VO** — value
@@ -524,126 +527,143 @@ odczytu (zapytanie), **ZA** — zasób zewnętrzny, **ME** — metoda/właściwo
 agregatu. „—” oznacza świadomy brak reprezentacji w danej warstwie (z
 podanym powodem w kolumnie JSON albo w uwadze pod tabelą).
 
+**Kolumna „Nazwa pliku/folderu (EN)” (wersja 3.4, ADR-075).** Podaje
+jedyną angielską nazwę pojęcia używaną w **nazwach plików i katalogów**
+(nie w identyfikatorach): forma `PascalCase` dla plików `.cs`, `.tsx` i
+katalogów C#, forma `kebab-case` dla pozostałych plików TS/YAML/JSON i
+katalogów frontendu (także segmentów tras App Router, w liczbie mnogiej dla
+kolekcji: `exercises`, `solutions`). Każde pojęcie ma dokładnie jedną nazwę
+EN, a nazwy są parami różne także po sprowadzeniu do małych liter
+(sprawdzone skryptem: 111 pojęć, 111 nazw, 0 kolizji; test
+`NazwyPlikowPojecUnikalne` w `Lemat.Architecture.Tests`). Plik `.cs` z
+typem pojęcia nosi nazwę EN z ewentualnym przyrostkiem roli
+(`Solution.cs` dla `Rozwiazanie`, `SolutionStatus.cs` dla
+`StatusRozwiazania`, `SolutionsEndpoints.cs`); typ w środku zachowuje nazwę
+ze słownika. Zasady, przyrostki i mapowania katalogów — 6.11. Zakazane
+synonimy z 3.1 p. 4 (`student`, `task`, `grade`, `review` …) dotyczą
+identyfikatorów, nie nazw plików: `Student.cs`, `Grade.cs`, `review/` są
+dozwolone, a klasa w `Student.cs` nazywa się `Uczen`.
+
 **Część I — pojęcia `docs/glossary.md` (25)**
 
-| # | Pojęcie | Rodzaj | C# (przestrzeń nazw → typ) | PostgreSQL | TypeScript | JSON API |
-|---|---|---|---|---|---|---|
-| 1 | Uczeń | AG | `D.Konta.Uczen` (klucz `UczenId` = `UzytkownikId`) | `uczen` (PK `uzytkownik_id`); `uzytkownik.rola = 'UCZEN'` | `UczenWyjscie`; `RolaUzytkownika` | `uczen_id`; `"rola": "UCZEN"`; zasób `/uczniowie` |
-| 2 | Nauczyciel | AG | `D.Konta.Nauczyciel` (klucz `NauczycielId`) | `nauczyciel` (PK `uzytkownik_id`); `uzytkownik.rola = 'NAUCZYCIEL'` | `NauczycielWyjscie` | `nauczyciel_id`; `"rola": "NAUCZYCIEL"`; zasób `/nauczyciele` |
-| 3 | Zadanie | AG + EN | `D.Tresci.Zadanie` (`ZadanieId`) z encją `D.Tresci.ZadanieWersja` (`ZadanieWersjaId`) | `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `zalacznik_zadania` | `ZadaniePelneWyjscie`, `ZadanieUczniaWyjscie` | `zadanie_id`, `zadanie_wersja_id`; zasób `/zadania` |
-| 4 | Zadanie bazowe | WA + ME | `D.Tresci.PochodzenieZadania.BazoweArkuszCke`, `.BazoweNauczyciel`; `Zadanie.CzyBazowe` | `zadanie.pochodzenie IN ('BAZOWE_ARKUSZ_CKE','BAZOWE_NAUCZYCIEL')` | `PochodzenieZadania` | `"pochodzenie": "BAZOWE_ARKUSZ_CKE"`; filtr `?pochodzenie=` |
-| 5 | Zadanie wygenerowane | WA + ME | `PochodzenieZadania.Wygenerowane`; `Zadanie.CzyWygenerowane`, `Zadanie.ZlecenieGenerowaniaId` | `zadanie.pochodzenie = 'WYGENEROWANE'`, `zadanie.zlecenie_generowania_id` | `PochodzenieZadania` | `"pochodzenie": "WYGENEROWANE"`, `zlecenie_generowania_id` |
-| 6 | Dział | AG (referencyjny) | `D.Tresci.Dzial` (`DzialId` = `int`) | `dzial` | `DzialWyjscie` | `dzial_id`; zasób `/dzialy` |
-| 7 | Umiejętność | AG (referencyjny) | `D.Tresci.Umiejetnosc` (`UmiejetnoscId` = `int`), kolekcja `WymaganeUmiejetnosci` | `umiejetnosc`, `umiejetnosc_wymagana` | `UmiejetnoscWyjscie` | `umiejetnosc_id`; zasób `/umiejetnosci` |
-| 8 | Profil ucznia | AG + EN | `D.Profil.ProfilUcznia` (klucz `UczenId`) z encją `D.Profil.OpanowanieUmiejetnosci` | `profil_ucznia`, `opanowanie_umiejetnosci` | `ProfilUczniaWyjscie` | `profil`; zasób `/uczniowie/{id}/profil` |
-| 9 | Poziom trudności | VO | `D.Wspolne.PoziomTrudnosci` (`readonly record struct`, 1–5) | `kalibracja_trudnosci.poziom_trudnosci` (skalibrowany), `zadanie.poziom_trudnosci_nominalny` (PZS-1 B-4) | `PoziomTrudnosci = 1 \| 2 \| 3 \| 4 \| 5` | `poziom_trudnosci`, `poziom_trudnosci_nominalny` |
-| 10 | Ścieżka nauki | AG | `D.Rekomendacje.SciezkaNauki` (`SciezkaNaukiId`) z encjami `ElementSciezki` i VO `Seria` | `sciezka_nauki`, `element_sciezki` | `ElementSciezkiWyjscie` (strona) | zasób `/uczniowie/ja/sciezka-nauki` |
-| 11 | Wkładka teoretyczna | AG | `D.Tresci.WkladkaTeoretyczna` (`WkladkaTeoretycznaId`), `StatusWkladki` | `wkladka_teoretyczna`, typ `status_wkladki` | `WkladkaTeoretycznaWyjscie` | `wkladka_teoretyczna_id`; zasób `/wkladki-teoretyczne` |
-| 12 | Rozwiązanie | AG + EN | `D.Rozwiazania.Rozwiazanie` (`RozwiazanieId`) z encją `ZdjecieRozwiazania`; `StatusRozwiazania` | `rozwiazanie`, `zdjecie_rozwiazania`, typ `status_rozwiazania` | `RozwiazanieWejscie`, `RozwiazanieWyjscie`, `StatusRozwiazania` | `rozwiazanie_id`; zasób `/rozwiazania` |
-| 13 | Transkrypcja | AG (niezmienny) + EN | `D.Rozwiazania.Transkrypcja` (`TranskrypcjaId`) z encją `KrokTranskrypcji`; `ZrodloTranskrypcji` | `transkrypcja`, `krok_transkrypcji`, typ `zrodlo_transkrypcji` | `TranskrypcjaWyjscie`, `TranskrypcjaWejscie`, `KrokTranskrypcji` | `transkrypcja`; zasób `/rozwiazania/{id}/transkrypcja` |
-| 14 | Kryteria oceniania | EN (kolekcja) | `ZadanieWersja.KryteriaOceniania : IReadOnlyList<D.Tresci.KryteriumOceniania>` | `kryterium_oceniania` | `KryteriumOcenianiaWyjscie[]` | `kryteria_oceniania` |
-| 15 | Ocena | AG (niezmienny) + EN | `D.Ocenianie.Ocena` (`OcenaId`) z encją `OcenaKryterium`; `StatusOceny`, `ZrodloOceny` | `ocena`, `ocena_kryterium`, typy `status_oceny`, `zrodlo_oceny` | `OcenaWyjscie`, `StatusOceny` | `ocena`; zasób `/rozwiazania/{id}/ocena` |
-| 16 | Pewność oceny | VO | `D.Ocenianie.PewnoscOceny` (`readonly record struct`, `decimal` 0–1, 4 miejsca) | `ocena.pewnosc_oceny numeric(5,4)` | `number` w `OcenaWyjscie` | `pewnosc_oceny` |
-| 17 | Próg pewności | AG | `D.Kalibracja.ProgPewnosci` (`ProgPewnosciId`), `ZrodloProgu` | `prog_pewnosci`, typ `zrodlo_progu` | `ProgPewnosciWyjscie` | zasób `/admin/progi-pewnosci` |
-| 18 | Weryfikacja | AG | `D.Weryfikacje.Weryfikacja` (`WeryfikacjaId`), `StatusWeryfikacji` | `weryfikacja`, typ `status_weryfikacji` | `WeryfikacjaNaLiscie`, `WeryfikacjaSzczegoly`, `WeryfikacjaUcznia` | `weryfikacja_id`; zasób `/weryfikacje` |
-| 19 | Agent | PO + SA | `A.Agenci.Rekomendacje.IAgentRekomendujacy`, `A.Agenci.Generowanie.IAgentGenerujacy`, `A.Agenci.Rozpoznawanie.IAgentRozpoznajacy`, `A.Agenci.Ocenianie.IAgentOceniajacy`, `A.Agenci.Wyjasnianie.IAgentWyjasniajacy` (10); implementacje `Lemat.Agenci.*.Agent*` (6.6) | brak tabeli; ślad decyzji w `decyzja_modelu` | — | agent nie jest zasobem API; ujawniane wyłącznie wartości `"AGENT_ROZPOZNAJACY"` (`zrodlo` Transkrypcji) i `"AGENT_WYJASNIAJACY"` (`zrodlo_wskazowki`) |
-| 20 | Orkiestrator | SA | `A.Orkiestracja.Orkiestrator : IOrkiestrator` | `praca_w_tle` (stan przepływów w tabelach agregatów) | — | wewnętrzny; podgląd prac: `/admin/praca-w-tle` |
-| 21 | Model System One | AD | `M.Jev.JevAdapter : A.Modele.IModelDecyzyjny` | `konfiguracja_modelu.rola = 'DECYZYJNY_GLOWNY'` | `RolaModelu` | `"rola": "DECYZYJNY_GLOWNY"` |
-| 22 | Jev | AD | `M.Jev.JevAdapter`; stała `M.RejestrAdapterow.TypesafeJev = "typesafe-jev"` | `konfiguracja_modelu.dostawca = 'typesafe-jev'` | `KonfiguracjaModeluWyjscie` | `"dostawca": "typesafe-jev"` |
-| 23 | Kalibracja | AG ×2 + SA | `D.Kalibracja.KalibratorPewnosci` (Pewność oceny), `D.Tresci.KalibracjaTrudnosci` (Poziom trudności), `A.Kalibracja.KalibrujHandler` (praca `KALIBRUJ`) | `kalibrator_pewnosci`, `kalibracja_trudnosci`, `probka_kalibracyjna` | `MetrykiKalibracjiWyjscie` | zasób `/admin/kalibracja` |
-| 24 | Model generatywny (LLM) | PO + AD | `A.Modele.IModelGeneratywny` (fabryka klientów czatu per rola, `DlaRoliAsync → KlientCzatuRoli`, ADR-058); `M.Llm.FabrykaKlientowCzatu` nad `Microsoft.Extensions.AI.IChatClient` | `konfiguracja_modelu.rola` ∈ `GENERATYWNY_*`, `ROZPOZNAWANIE_PISMA`, `DECYZYJNY_ZAPASOWY` | `RolaModelu` | `"rola": "GENERATYWNY_ZADANIA"` |
-| 25 | Arkusz CKE | AG | `D.Tresci.ArkuszCke` (`ArkuszCkeId`), `D.Tresci.ImportArkusza` (`StatusImportu`) | `arkusz_cke`, `import_arkusza` | `ArkuszCkeWyjscie`, `ImportArkuszaWyjscie` | `arkusz_cke_id`; zasób `/admin/arkusze-cke` |
+| # | Pojęcie | Rodzaj | C# (przestrzeń nazw → typ) | PostgreSQL | TypeScript | JSON API | Nazwa pliku/folderu (EN) |
+|---|---|---|---|---|---|---|---|
+| 1 | Uczeń | AG | `D.Accounts.Uczen` (klucz `UczenId` = `UzytkownikId`) | `uczen` (PK `uzytkownik_id`); `uzytkownik.rola = 'UCZEN'` | `UczenWyjscie`; `RolaUzytkownika` | `uczen_id`; `"rola": "UCZEN"`; zasób `/uczniowie` | `Student` / `student` |
+| 2 | Nauczyciel | AG | `D.Accounts.Nauczyciel` (klucz `NauczycielId`) | `nauczyciel` (PK `uzytkownik_id`); `uzytkownik.rola = 'NAUCZYCIEL'` | `NauczycielWyjscie` | `nauczyciel_id`; `"rola": "NAUCZYCIEL"`; zasób `/nauczyciele` | `Teacher` / `teacher` |
+| 3 | Zadanie | AG + EN | `D.Content.Zadanie` (`ZadanieId`) z encją `D.Content.ZadanieWersja` (`ZadanieWersjaId`) | `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `zalacznik_zadania` | `ZadaniePelneWyjscie`, `ZadanieUczniaWyjscie` | `zadanie_id`, `zadanie_wersja_id`; zasób `/zadania` | `Exercise` / `exercise` |
+| 4 | Zadanie bazowe | WA + ME | `D.Content.PochodzenieZadania.BazoweArkuszCke`, `.BazoweNauczyciel`; `Zadanie.CzyBazowe` | `zadanie.pochodzenie IN ('BAZOWE_ARKUSZ_CKE','BAZOWE_NAUCZYCIEL')` | `PochodzenieZadania` | `"pochodzenie": "BAZOWE_ARKUSZ_CKE"`; filtr `?pochodzenie=` | `BaseExercise` / `base-exercise` |
+| 5 | Zadanie wygenerowane | WA + ME | `PochodzenieZadania.Wygenerowane`; `Zadanie.CzyWygenerowane`, `Zadanie.ZlecenieGenerowaniaId` | `zadanie.pochodzenie = 'WYGENEROWANE'`, `zadanie.zlecenie_generowania_id` | `PochodzenieZadania` | `"pochodzenie": "WYGENEROWANE"`, `zlecenie_generowania_id` | `GeneratedExercise` / `generated-exercise` |
+| 6 | Dział | AG (referencyjny) | `D.Content.Dzial` (`DzialId` = `int`) | `dzial` | `DzialWyjscie` | `dzial_id`; zasób `/dzialy` | `CurriculumSection` / `curriculum-section` |
+| 7 | Umiejętność | AG (referencyjny) | `D.Content.Umiejetnosc` (`UmiejetnoscId` = `int`), kolekcja `WymaganeUmiejetnosci` | `umiejetnosc`, `umiejetnosc_wymagana` | `UmiejetnoscWyjscie` | `umiejetnosc_id`; zasób `/umiejetnosci` | `Skill` / `skill` |
+| 8 | Profil ucznia | AG + EN | `D.Profile.ProfilUcznia` (klucz `UczenId`) z encją `D.Profile.OpanowanieUmiejetnosci` | `profil_ucznia`, `opanowanie_umiejetnosci` | `ProfilUczniaWyjscie` | `profil`; zasób `/uczniowie/{id}/profil` | `StudentProfile` / `student-profile` |
+| 9 | Poziom trudności | VO | `D.Common.PoziomTrudnosci` (`readonly record struct`, 1–5) | `kalibracja_trudnosci.poziom_trudnosci` (skalibrowany), `zadanie.poziom_trudnosci_nominalny` (PZS-1 B-4) | `PoziomTrudnosci = 1 \| 2 \| 3 \| 4 \| 5` | `poziom_trudnosci`, `poziom_trudnosci_nominalny` | `DifficultyLevel` / `difficulty-level` |
+| 10 | Ścieżka nauki | AG | `D.Recommendations.SciezkaNauki` (`SciezkaNaukiId`) z encjami `ElementSciezki` i VO `Seria` | `sciezka_nauki`, `element_sciezki` | `ElementSciezkiWyjscie` (strona) | zasób `/uczniowie/ja/sciezka-nauki` | `LearningPath` / `learning-path` |
+| 11 | Wkładka teoretyczna | AG | `D.Content.WkladkaTeoretyczna` (`WkladkaTeoretycznaId`), `StatusWkladki` | `wkladka_teoretyczna`, typ `status_wkladki` | `WkladkaTeoretycznaWyjscie` | `wkladka_teoretyczna_id`; zasób `/wkladki-teoretyczne` | `TheoryInsert` / `theory-insert` |
+| 12 | Rozwiązanie | AG + EN | `D.Solutions.Rozwiazanie` (`RozwiazanieId`) z encją `ZdjecieRozwiazania`; `StatusRozwiazania` | `rozwiazanie`, `zdjecie_rozwiazania`, typ `status_rozwiazania` | `RozwiazanieWejscie`, `RozwiazanieWyjscie`, `StatusRozwiazania` | `rozwiazanie_id`; zasób `/rozwiazania` | `Solution` / `solution` |
+| 13 | Transkrypcja | AG (niezmienny) + EN | `D.Solutions.Transkrypcja` (`TranskrypcjaId`) z encją `KrokTranskrypcji`; `ZrodloTranskrypcji` | `transkrypcja`, `krok_transkrypcji`, typ `zrodlo_transkrypcji` | `TranskrypcjaWyjscie`, `TranskrypcjaWejscie`, `KrokTranskrypcji` | `transkrypcja`; zasób `/rozwiazania/{id}/transkrypcja` | `Transcription` / `transcription` |
+| 14 | Kryteria oceniania | EN (kolekcja) | `ZadanieWersja.KryteriaOceniania : IReadOnlyList<D.Content.KryteriumOceniania>` | `kryterium_oceniania` | `KryteriumOcenianiaWyjscie[]` | `kryteria_oceniania` | `GradingCriteria` / `grading-criteria` |
+| 15 | Ocena | AG (niezmienny) + EN | `D.Grading.Ocena` (`OcenaId`) z encją `OcenaKryterium`; `StatusOceny`, `ZrodloOceny` | `ocena`, `ocena_kryterium`, typy `status_oceny`, `zrodlo_oceny` | `OcenaWyjscie`, `StatusOceny` | `ocena`; zasób `/rozwiazania/{id}/ocena` | `Grade` / `grade` |
+| 16 | Pewność oceny | VO | `D.Grading.PewnoscOceny` (`readonly record struct`, `decimal` 0–1, 4 miejsca) | `ocena.pewnosc_oceny numeric(5,4)` | `number` w `OcenaWyjscie` | `pewnosc_oceny` | `GradeConfidence` / `grade-confidence` |
+| 17 | Próg pewności | AG | `D.Calibration.ProgPewnosci` (`ProgPewnosciId`), `ZrodloProgu` | `prog_pewnosci`, typ `zrodlo_progu` | `ProgPewnosciWyjscie` | zasób `/admin/progi-pewnosci` | `ConfidenceThreshold` / `confidence-threshold` |
+| 18 | Weryfikacja | AG | `D.Verifications.Weryfikacja` (`WeryfikacjaId`), `StatusWeryfikacji` | `weryfikacja`, typ `status_weryfikacji` | `WeryfikacjaNaLiscie`, `WeryfikacjaSzczegoly`, `WeryfikacjaUcznia` | `weryfikacja_id`; zasób `/weryfikacje` | `Verification` / `verification` |
+| 19 | Agent | PO + SA | `A.Agents.Recommendations.IAgentRekomendujacy`, `A.Agents.Generation.IAgentGenerujacy`, `A.Agents.Recognition.IAgentRozpoznajacy`, `A.Agents.Grading.IAgentOceniajacy`, `A.Agents.Explanation.IAgentWyjasniajacy` (10); implementacje `Lemat.Agents.*.Agent*` (6.6) | brak tabeli; ślad decyzji w `decyzja_modelu` | — | agent nie jest zasobem API; ujawniane wyłącznie wartości `"AGENT_ROZPOZNAJACY"` (`zrodlo` Transkrypcji) i `"AGENT_WYJASNIAJACY"` (`zrodlo_wskazowki`) | `Agent` / `agent` |
+| 20 | Orkiestrator | SA | `A.Orchestration.Orkiestrator : IOrkiestrator` | `praca_w_tle` (stan przepływów w tabelach agregatów) | — | wewnętrzny; podgląd prac: `/admin/praca-w-tle` | `Orchestrator` / `orchestrator` |
+| 21 | Model System One | AD | `M.Jev.JevAdapter : A.Models.IModelDecyzyjny` | `konfiguracja_modelu.rola = 'DECYZYJNY_GLOWNY'` | `RolaModelu` | `"rola": "DECYZYJNY_GLOWNY"` | `SystemOneModel` / `system-one-model` |
+| 22 | Jev | AD | `M.Jev.JevAdapter`; stała `M.RejestrAdapterow.TypesafeJev = "typesafe-jev"` | `konfiguracja_modelu.dostawca = 'typesafe-jev'` | `KonfiguracjaModeluWyjscie` | `"dostawca": "typesafe-jev"` | `Jev` / `jev` |
+| 23 | Kalibracja | AG ×2 + SA | `D.Calibration.KalibratorPewnosci` (Pewność oceny), `D.Content.KalibracjaTrudnosci` (Poziom trudności), `A.Calibration.KalibrujHandler` (praca `KALIBRUJ`) | `kalibrator_pewnosci`, `kalibracja_trudnosci`, `probka_kalibracyjna` | `MetrykiKalibracjiWyjscie` | zasób `/admin/kalibracja` | `Calibration` / `calibration` |
+| 24 | Model generatywny (LLM) | PO + AD | `A.Models.IModelGeneratywny` (fabryka klientów czatu per rola, `DlaRoliAsync → KlientCzatuRoli`, ADR-058); `M.Llm.FabrykaKlientowCzatu` nad `Microsoft.Extensions.AI.IChatClient` | `konfiguracja_modelu.rola` ∈ `GENERATYWNY_*`, `ROZPOZNAWANIE_PISMA`, `DECYZYJNY_ZAPASOWY` | `RolaModelu` | `"rola": "GENERATYWNY_ZADANIA"` | `GenerativeModel` / `generative-model` |
+| 25 | Arkusz CKE | AG | `D.Content.ArkuszCke` (`ArkuszCkeId`), `D.Content.ImportArkusza` (`StatusImportu`) | `arkusz_cke`, `import_arkusza` | `ArkuszCkeWyjscie`, `ImportArkuszaWyjscie` | `arkusz_cke_id`; zasób `/admin/arkusze-cke` | `CkeExamSheet` / `cke-exam-sheet` |
 
 **Część II — pojęcia PZS-1, część A (86)**
 
-| # | Pojęcie | Rodzaj | C# (przestrzeń nazw → typ) | PostgreSQL | TypeScript | JSON API |
-|---|---|---|---|---|---|---|
-| 26 | Administrator | WA + AG | `D.Konta.RolaUzytkownika.Administrator`; konto: `D.Konta.Uzytkownik` | `uzytkownik.rola = 'ADMINISTRATOR'` (bez osobnej tabeli) | `RolaUzytkownika` | `"rola": "ADMINISTRATOR"`; zasoby `/admin/*` |
-| 27 | Klasa | AG + EN | `D.Klasy.Klasa` (`KlasaId`) z encją `CzlonkostwoKlasy` | `klasa`, `czlonkostwo_klasy` | `KlasaWyjscie` | `klasa_id`; zasób `/klasy` |
-| 28 | Rodzaj zadania | EW | `D.Wspolne.RodzajZadania { Zamkniete, OtwarteObliczeniowe, OtwarteZDowodem }` | typ `rodzaj_zadania` | `RodzajZadania` | `rodzaj`, `rodzaj_zadania` |
-| 29 | Odpowiedź | AG | `D.Rozwiazania.Odpowiedz` (`OdpowiedzId`), VO `WyborOdpowiedzi` | `odpowiedz` | `OdpowiedzWejscie`, `OdpowiedzWyjscie` | `odpowiedz_id`; zasób `/zadania/{id}/odpowiedzi` |
-| 30 | Decyzja składowa | VO + AG | `D.Modele.DecyzjaSkladowa` (rekord); utrwalenie `D.Modele.DecyzjaModelu`; kontekst `D.Modele.KontekstDecyzji { Ocena, Rekomendacja, WalidacjaZadania }` (C6-12 p. 5) | `decyzja_modelu` (partycjonowana), typ `kontekst_decyzji` | `DecyzjaSkladowaWyjscie` (wyłącznie widoki Administratora) | `decyzje`, `kontekst` |
-| 31 | Poziom matury | EW | `D.Wspolne.PoziomMatury { Podstawowy, Rozszerzony }` | typ `poziom_matury` | `PoziomMatury` | `poziom_matury` |
-| 32 | Termin egzaminu | ME | `Uczen.TerminEgzaminu : DateOnly?` | `uczen.termin_egzaminu date` | `string` (ISO `YYYY-MM-DD`) w `UczenWyjscie` | `termin_egzaminu` |
-| 33 | Test diagnostyczny | AG + EN | `D.Profil.TestDiagnostyczny` (`TestDiagnostycznyId`) z encją `PozycjaTestuDiagnostycznego`; `StatusTestu` | `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `TestDiagnostycznyWyjscie` | zasoby `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne` |
-| 34 | Zestaw zadań | AG + EN | `D.Klasy.ZestawZadan` (`ZestawZadanId`) z encją `PozycjaZestawu` | `zestaw_zadan`, `pozycja_zestawu` | `ZestawZadanWyjscie` | `zestaw_zadan_id`; zasób `/zestawy-zadan` |
-| 35 | Przypisanie | AG + EN | `D.Klasy.Przypisanie` (`PrzypisanieId`) z encją `PrzypisanieUczen` | `przypisanie`, `przypisanie_uczen` | `PrzypisanieWyjscie`, `PostepPrzypisaniaWyjscie` | `przypisanie_id`; zasób `/przypisania` |
-| 36 | Rozwiązanie wzorcowe | VO | `D.Tresci.RozwiazanieWzorcowe` (rekord z listą wariantów kroków, schemat 7.5.2) | `zadanie_wersja.rozwiazanie_wzorcowe jsonb` | `RozwiazanieWzorcowe` | `rozwiazanie_wzorcowe` |
-| 37 | Wariant rozwiązania | VO | `D.Tresci.WariantRozwiazania` (`readonly record struct`, 1–4) | `kryterium_oceniania.wariant`, `ocena.wariant` | `number` | `wariant` |
-| 38 | Krok rozwiązania | EN | `D.Rozwiazania.KrokTranskrypcji` (numer `Nr`, 1–40) | `krok_transkrypcji` (`nr`) | `KrokTranskrypcji` | `kroki[].nr`, `pierwszy_bledny_krok` |
-| 39 | Kryterium | EN | `D.Tresci.KryteriumOceniania` (`NrKryterium` 1–12) | `kryterium_oceniania` (`nr_kryterium`) | `KryteriumOcenianiaWyjscie` | `nr_kryterium` |
-| 40 | Wynik końcowy | VO | linia `wynik_koncowy_ucznia` sekcji `[SPRAWDZENIE_SYMBOLICZNE]` stanu budowanego przez `Lemat.Agenci.Ocenianie.BudowniczyStanuOceny` (10.4.2, `docs/spec/prompty.md` 3.1) | brak kolumny — wyłącznie w `decyzja_modelu.stan` | — | `wynik_koncowy` (wyłącznie w stanie i schemacie odpowiedzi modelu) |
-| 41 | Wynik końcowy wzorcowy | VO | `D.Tresci.WynikKoncowyWzorcowy` (rekord: `Latex`, `PostacSympy`, schemat 7.5.3) | `zadanie_wersja.wynik_koncowy_wzorcowy jsonb` | `WynikKoncowyWzorcowy` | `wynik_koncowy_wzorcowy` |
-| 42 | Typ błędu | EW | `D.Ocenianie.TypBledu { Rachunkowy, Merytoryczny, NiepelneRozwiazanie }` | typ `typ_bledu` | `TypBledu` | `typ_bledu` |
-| 43 | Wskazówka | VO | `D.Ocenianie.Wskazowka` (rekord: `Tresc` ≤ 400 znaków, `Zrodlo : ZrodloWskazowki`); `Ocena.Wskazowka` zapisywana jednokrotnie | `ocena.wskazowka`, `ocena.zrodlo_wskazowki`, typ `zrodlo_wskazowki` | pola `OcenaWyjscie` | `wskazowka`, `zrodlo_wskazowki`, `wskazowka_w_przygotowaniu` |
-| 44 | Ocena wstępna | WA | `D.Ocenianie.StatusOceny.Wstepna` | `status_oceny 'WSTEPNA'` | `StatusOceny` | `"status": "WSTEPNA"` |
-| 45 | Ocena ostateczna | WA | `D.Ocenianie.StatusOceny.Ostateczna` | `status_oceny 'OSTATECZNA'` | `StatusOceny` | `"status": "OSTATECZNA"` |
-| 46 | Kolejka weryfikacji | RM + EW | `A.Weryfikacje.Zapytania.KolejkaWeryfikacji` (zapytanie z regułą odczytu 11.4.2); `D.Weryfikacje.TypKolejkiWeryfikacji { Klasa, Globalna }` | `weryfikacja.typ_kolejki` (typ `typ_kolejki_weryfikacji`), indeks `ix_weryfikacja_kolejka` | `WeryfikacjaNaLiscie`, `TypKolejkiWeryfikacji` | zasób `GET /weryfikacje`, `typ_kolejki` |
-| 47 | Powód weryfikacji | EW | `D.Weryfikacje.PowodWeryfikacji` (8 wartości) | typ `powod_weryfikacji`, kolumna `weryfikacja.powody powod_weryfikacji[]` | `PowodWeryfikacji` | `powody` |
-| 48 | Kontrola losowa | WA | `PowodWeryfikacji.KontrolaLosowa`, `D.Kalibracja.ZrodloProbki.KontrolaLosowa` | `'KONTROLA_LOSOWA'` w `powod_weryfikacji`, `zrodlo_probki` | `PowodWeryfikacji` | `"KONTROLA_LOSOWA"` |
-| 49 | Zgłoszenie błędu odczytu | VO + WA | `D.Weryfikacje.ZgloszenieBleduOdczytu` (rekord, schemat 7.5.4); `PowodWeryfikacji.ZgloszenieBleduOdczytu` | `weryfikacja.zgloszenie jsonb` | `ZgloszenieBleduOdczytuWejscie` | `zgloszenie`; zasób `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu` |
-| 50 | Próbka kalibracyjna | AG | `D.Kalibracja.ProbkaKalibracyjna` (`ProbkaKalibracyjnaId`) | `probka_kalibracyjna` | — (wyłącznie agregaty w `MetrykiKalibracjiWyjscie`) | — (dane do Kalibracji, nieeksponowane pojedynczo) |
-| 51 | Zgodność Oceny | ME | `ProbkaKalibracyjna.Zgodna` (= `PunktyAutomatyczne == PunktyNauczyciela && ZgodnyPierwszyBlednyKrok && ZgodnyBrakujacyKrok`, ADR-027) | `probka_kalibracyjna.zgodna` (kolumna generowana) | pola `MetrykiKalibracjiWyjscie` | `zgodna` |
-| 52 | Kalibrator pewności | AG | `D.Kalibracja.KalibratorPewnosci` (`KalibratorPewnosciId`), `MetodaKalibratora { Tozsamosciowy, IzotonicznyCv5 }`, `ZrodloKalibratora` | `kalibrator_pewnosci`, typ `zrodlo_kalibratora` | `KalibratorPewnosciWyjscie` | `kalibrator_pewnosci_id` |
-| 53 | Opinia pomocnicza | VO | `D.Weryfikacje.OpiniaPomocnicza` (rekord, schemat 10.4.5) | `weryfikacja.opinia_pomocnicza jsonb` | `OpiniaPomocnicza` (w `WeryfikacjaSzczegoly`) | `opinia_pomocnicza` |
-| 54 | Model decyzyjny | PO | `A.Modele.IModelDecyzyjny` | `konfiguracja_modelu.rola IN ('DECYZYJNY_GLOWNY','DECYZYJNY_ZAPASOWY')` | — | — (port wewnętrzny) |
-| 55 | Model zapasowy | AD + WA | `M.Zapasowy.ZapasowyLlmAdapter : IModelDecyzyjny`; `D.Modele.RolaModelu.DecyzyjnyZapasowy` | `rola_modelu 'DECYZYJNY_ZAPASOWY'` | `RolaModelu` | `"rola": "DECYZYJNY_ZAPASOWY"` |
-| 56 | Plan pytań | VO | `D.Modele.PlanPytan`, `PytanieWPlanie`, `WarunekPytania`, `Pytanie` (abstrakcyjny rekord: `PytanieNoul`, `PytanieScore`, `PytanieChoice`), `TypPytania` | `decyzja_modelu.kod_pytania`, typ `typ_pytania` | — | — (kontrakt portu, ADR-026) |
-| 57 | Rekomendacja | AG (niezmienny) | `D.Rekomendacje.Rekomendacja` (`RekomendacjaId`), `StrategiaRekomendacji`, `RegulaRekomendacji` | `rekomendacja`, typ `strategia_rekomendacji` | `RekomendacjaWyjscie`, `Regula` | zasób `/uczniowie/ja/rekomendacje/nastepna`; `regula` (`"R-SERIA"`) |
-| 58 | Powtórka | WA | `D.Rekomendacje.CelElementu.Powtorka` | `cel_elementu 'POWTORKA'` | `CelElementu` | `"cel": "POWTORKA"` |
-| 59 | Seria | VO | `D.Rekomendacje.Seria` (rekord własny `SciezkaNauki`: `UmiejetnoscId`, `RozpoczetaAt`, `LiczbaElementow`, `PoziomTrudnosci`, `KolejnePorazki`) | `sciezka_nauki.seria_*` | `SeriaWyjscie` | `seria`, `w_serii` |
-| 60 | Poziom opanowania | VO | `D.Profil.PoziomOpanowania` (`readonly record struct`, `decimal` 0–1) | `opanowanie_umiejetnosci.poziom_opanowania` | `number` w `ProfilUczniaWyjscie` | `poziom_opanowania` |
-| 61 | Wynik zadania | AG | `D.Profil.WynikZadania` (`WynikZadaniaId`), `ZrodloWyniku`, `PowodUniewaznieniaWyniku`; typ wewnętrzny kontraktu Agenta rekomendującego `A.Agenci.Rekomendacje.WynikZadaniaSkrot` (bez TS) | `wynik_zadania`, typy `zrodlo_wyniku`, `powod_uniewaznienia_wyniku` | `WynikZadaniaWyjscie` (widoki Nauczyciela) | `wynik_zadania` |
-| 62 | Walidacja zadania | AG (niezmienny) | `D.Tresci.WalidacjaZadania` (`WalidacjaZadaniaId`), `RezultatWalidacji` | `walidacja_zadania`, typ `rezultat_walidacji` | `WalidacjaZadaniaWyjscie` | `walidacje`, `rezultat` |
-| 63 | Przegląd zadania | AG (niezmienny) | `D.Tresci.PrzegladZadania` (`PrzegladZadaniaId`), `DecyzjaPrzegladu` | `przeglad_zadania`, typ `decyzja_przegladu` | `PrzegladWejscie` | zasób `POST /zadania/{id}/przeglad` |
-| 64 | Recenzent treści | ME | `Nauczyciel.RecenzentTresci : bool` | `nauczyciel.recenzent_tresci` | `boolean` w `UzytkownikAdminWyjscie` | `recenzent_tresci` |
-| 65 | Zasięg zadania | EW | `D.Tresci.ZasiegZadania { Globalny, Prywatny }` | typ `zasieg_zadania` | `ZasiegZadania` | `zasieg` |
-| 66 | Konfiguracja modelu | AG | `D.Modele.KonfiguracjaModelu` (`KonfiguracjaModeluId`), `RolaModelu`, VO `ParametryModelu` | `konfiguracja_modelu`, typ `rola_modelu` | `KonfiguracjaModeluWyjscie` | zasób `/admin/konfiguracje-modeli` |
-| 67 | Praca w tle | EN (techniczna) | `A.Wspolne.PraceWTle.PracaWTle`, `TypPracy`, `PulaPracy`, `StatusPracy`, `IHandlerPracy`, `IZlecaniePrac` (13.4.1, C6-07) | `praca_w_tle`, typ `status_pracy` | `PracaWTleWyjscie` | zasób `/admin/praca-w-tle`; `typ` (`"ROZPOZNAJ_PISMO"`) |
-| 68 | Element Ścieżki nauki | EN | `D.Rekomendacje.ElementSciezki` (`ElementSciezkiId`), `TypElementuSciezki`, `StatusElementuSciezki` | `element_sciezki` | `ElementSciezkiWyjscie` | `element_sciezki_id`; zasób `/elementy-sciezki` |
-| 69 | Cel elementu | EW | `D.Rekomendacje.CelElementu { Nauka, Powtorka }` | typ `cel_elementu` | `CelElementu` | `cel` |
-| 70 | Przesłanie | VO | `D.Rozwiazania.Przeslanie` (rekord: `Nr` 1–3, zdjęcia 1–5); `Rozwiazanie.LiczbaPrzeslan` | `zdjecie_rozwiazania.przeslanie_nr`, `rozwiazanie.liczba_przeslan` | pola `RozwiazanieWyjscie` | `przeslanie_nr`, `liczba_przeslan` |
-| 71 | Zdjęcie maskowane | ME | `ZdjecieRozwiazania.KluczObiektuMaskowany : string?`; `D.Rozwiazania.WersjaZdjecia { Oryginalna, Maskowana }`; typ wewnętrzny kontraktu Agenta rozpoznającego `A.Agenci.Rozpoznawanie.ZdjecieRef` (bez TS) | `zdjecie_rozwiazania.klucz_obiektu_maskowany` | `ZdjecieRozwiazaniaWyjscie`, `AdresZdjeciaWyjscie`, `WersjaZdjecia = "ORYGINALNA" \| "MASKOWANA"` | `?wersja_zdjecia=MASKOWANA` (wartości `ORYGINALNA`, `MASKOWANA` w 3.5 i 12.3 od wersji 3.1) |
-| 72 | Kopia treningowa | AG | `D.Rozwiazania.KopiaTreningowa` (`KopiaTreningowaId`) | `kopia_treningowa` | — | — (brak zasobu API; sterowana zgodą `zgoda_na_trening`) |
-| 73 | Weryfikator globalny | ME | `Nauczyciel.WeryfikatorGlobalny : bool`, `Nauczyciel.DeklarowaneMinutyWeryfikacji`, `Nauczyciel.UmowaPoufnosciAt`; `NadajWeryfikatoraGlobalnego(…)`, `OdbierzWeryfikatoraGlobalnego(…)` | `nauczyciel.weryfikator_globalny`, `deklarowane_minuty_weryfikacji`, `umowa_poufnosci_at` | `boolean` w `UzytkownikAdminWyjscie` | `weryfikator_globalny` |
-| 74 | Nauczyciel docelowy | ME | `Weryfikacja.NauczycielDocelowyId : NauczycielId?` | `weryfikacja.nauczyciel_docelowy_id` | pole `WeryfikacjaSzczegoly` | `nauczyciel_docelowy_id` |
-| 75 | Blokada weryfikacji | VO | `D.Weryfikacje.BlokadaWeryfikacji` (rekord: `PodjetaPrzez`, `PodjetaAt`, `ZablokowanaDo`; 15 min, łącznie ≤ 2 h) | `weryfikacja.podjeta_przez`, `podjeta_at`, `zablokowana_do` | pola `WeryfikacjaSzczegoly` | `zablokowana_do`; zasoby `…/podjecie`, `…/przedluzenie`, `…/zwolnienie` |
-| 76 | Szkic rozstrzygnięcia | AG | `D.Weryfikacje.SzkicRozstrzygniecia` (klucz `(WeryfikacjaId, NauczycielId)`) | `szkic_rozstrzygniecia` | `SzkicRozstrzygnieciaWejscie` | zasób `PUT /weryfikacje/{id}/szkic` |
-| 77 | Pseudonim Ucznia | VO + SD | `D.Weryfikacje.PseudonimUcznia` (`readonly record struct`, format `U-XXXXXX`); `A.Weryfikacje.IGeneratorPseudonimow` (HMAC-SHA256, sekret z konfiguracji) | brak kolumny (wyliczany przy odczycie) | `string` w `WeryfikacjaSzczegoly` | `uczen_pseudonim` |
-| 78 | Kontrola przyjęć | RM | `A.Weryfikacje.Zapytania.StanKontroliPrzyjec` (`KontrolaPrzyjecAktywna`, `KlasyZKontrolaPrzyjec`) | brak tabeli (wyliczany z `weryfikacja` i parametrów 22) | pola `ObciazenieWeryfikacjiWyjscie` | `kontrola_przyjec_aktywna`, `klasy_z_kontrola_przyjec` |
-| 79 | Tryb pełnej weryfikacji | ME | `ProgPewnosci.TrybPelnejWeryfikacji => Wartosc == 1.000m` | `prog_pewnosci.wartosc = 1.000` | `boolean` w `ProgPewnosciWyjscie` | `tryb_pelnej_weryfikacji` |
-| 80 | Zawieszenie Wyniku zadania | ME + WA | `WynikZadania.Zawies(DateTimeOffset teraz)`; `PowodUniewaznieniaWyniku.ZgloszenieBleduOdczytu` | `wynik_zadania.uniewazniony_at`, `powod_uniewaznienia = 'ZGLOSZENIE_BLEDU_ODCZYTU'` | — | `powod_uniewaznienia` (widoki Nauczyciela) |
-| 81 | Czas systemowy | ME | `Rozwiazanie.CzasSystemowy : TimeSpan?` (utrwalany w ms) | `rozwiazanie.czas_systemowy_ms` | `number` | `czas_systemowy_ms` |
-| 82 | Termin miękki / termin twardy | VO | `D.Ocenianie.TerminyOceny` (rekord: `TerminMiekki`, `TerminTwardy`; wyliczane z `ZatwierdzonoAt` i `t_R`, 14.2) | brak kolumn (wyliczane z `rozwiazanie.zatwierdzono_at`) | — | — (wewnętrzne; metryki 17.3) |
-| 83 | Zlecenie generowania | AG | `D.Tresci.ZlecenieGenerowania` (`ZlecenieGenerowaniaId`), `StatusZlecenia` | `zlecenie_generowania`, typ `status_zlecenia` | `ZlecenieGenerowaniaWyjscie` | zasoby `POST /zadania/generowanie`, `/zlecenia-generowania/{id}` |
-| 84 | Grupa eksperymentu | VO | `D.Konta.GrupaEksperymentu` (`ProcentGrupyEksperymentu` 0–99, metoda `Strategia(int procentJevChoice)`) | `uczen.procent_grupy_eksperymentu` | — | `procent_grupy_eksperymentu` (widoki Administratora) |
-| 85 | Zbiór testowy ZT-1 | ZA | `A.Kalibracja.ZbiorTestowyZt1` (odczyt manifestu przez `IMagazynObiektow`) | bucket `zbiory-testowe/zt1/` (poza bazą) | — | — (praca `EWALUUJ_ZT1`) |
-| 86 | Rejestr Zdarzeń RODO | PO + AD | `A.Konta.Rodo.IRejestrZdarzenRodo`; `I.Rodo.RejestrZdarzenRodoS3` | bucket `rejestr-zdarzen-rodo` (Object Lock) | — | — |
-| 87 | Pewność surowa | VO | `D.Ocenianie.PewnoscSurowa` (`readonly record struct`, `decimal` 0–1) | `ocena.pewnosc_surowa`, `probka_kalibracyjna.pewnosc_surowa` | `number` (widoki Administratora) | `pewnosc_surowa` |
-| 88 | Punkty surowe | ME | `Ocena.PunktySurowe : int?` | `ocena.punkty_surowe` | — | — (nieeksponowane Uczniowi; w danych kalibracji) |
-| 89 | Niespójność | EW | `D.Ocenianie.KodNiespojnosci { N1 … N6 }` z `[JsonStringEnumMemberName("N-1")]` … (ADR-049 p. 4) | brak kolumny: kody w `ocena.uzasadnienie` (szablon 11.7) i metryce `niespojnosci_total{kod}` | `KodNiespojnosci = "N-1" \| … \| "N-6"` | `niespojnosci` (widoki Nauczyciela) |
-| 90 | Rozstrzygnięcie | VO + ME | `D.Weryfikacje.Rozstrzygniecie` (rekord), `Weryfikacja.Rozstrzygnij(...)` | `ocena` (`zrodlo = 'NAUCZYCIEL'`), `weryfikacja.ocena_nauczyciela_id` | `RozstrzygniecieWejscie` | zasób `POST /weryfikacje/{id}/rozstrzygniecie` |
-| 91 | Korekta | SA + WA | `A.Weryfikacje.Komendy.KorygujOcene` (+ `KorygujOceneHandler`); `ZrodloProbki.KorektaNauczyciela` | nowa wersja `ocena`, `zrodlo_probki 'KOREKTA_NAUCZYCIELA'` | `RozstrzygniecieWejscie` | zasób `POST /rozwiazania/{id}/korekty` |
-| 92 | Eskalacja | ME + EW | `Weryfikacja.Eskaluj(PowodEskalacji powod, DateTimeOffset teraz, KalendarzDniRoboczych kalendarz)`; `D.Weryfikacje.PowodEskalacji` | `weryfikacja.eskalowano_at`, `powod_eskalacji` | `PowodEskalacji` | `eskalowano_at`, `odsetek_eskalacji_7d` |
-| 93 | Poprawka Transkrypcji | VO + SD + WA | `D.Rozwiazania.PoprawkaTranskrypcji` (rekord kroku z `NrKrokuAgenta`), `D.Rozwiazania.ZasadyPoprawekTranskrypcji` (limity ADR-036); `ZrodloTranskrypcji.PoprawkaUcznia` | `krok_transkrypcji.nr_kroku_agenta`, `zmieniony_przez_ucznia`; `zrodlo_transkrypcji 'POPRAWKA_UCZNIA'` | `TranskrypcjaWejscie` | zasób `PUT /rozwiazania/{id}/transkrypcja`; `nr_kroku_agenta` |
-| 94 | Zakres poprawek | VO | `D.Rozwiazania.ZakresPoprawek` (rekord: `Zmienione`, `Wstawione`, `KrokiAgenta`, `OdsetekZnakow`) | `transkrypcja.zakres_poprawek jsonb` | `ZakresPoprawek` | `zakres_poprawek` |
-| 95 | Sprawdzenie zgodności poprawek | VO + WA | `D.Rozwiazania.ZgodnoscPoprawek` (rezultat 10.3.3); `A.Wspolne.PraceWTle.TypPracy.SprawdzPoprawkiTranskrypcji` | `transkrypcja.zgodnosc_poprawek jsonb` | — | `zgodnosc_poprawek` (widoki Nauczyciela); typ pracy `"SPRAWDZ_POPRAWKI_TRANSKRYPCJI"` |
-| 96 | Powody początkowe | ME | `Weryfikacja.PowodyPoczatkowe : IReadOnlySet<PowodWeryfikacji>` | `weryfikacja.powody_poczatkowe powod_weryfikacji[]` | pole `WeryfikacjaSzczegoly` | `powody_poczatkowe` |
-| 97 | Zgłoszenie błędu w Zadaniu | AG | `D.Tresci.ZgloszenieBleduZadania` (`ZgloszenieBleduZadaniaId`), `StatusZgloszeniaZadania` | `zgloszenie_bledu_zadania`, typ `status_zgloszenia_zadania` | `ZgloszenieBleduZadaniaWejscie`, `ZgloszenieBleduZadaniaWyjscie` | zasoby `/zadania/{id}/zgloszenia-bledu`, `/zgloszenia-bledu-zadan` |
-| 98 | Wstrzymanie w doborze | AG | `D.Tresci.WstrzymanieWDoborze` (klucz `ZadanieId`; istnienie = wstrzymanie) | `wstrzymanie_w_doborze` | `boolean` w `ZadaniePelneWyjscie` | `wstrzymane_w_doborze` |
-| 99 | Dzień roboczy | SD + EN | `D.Wspolne.KalendarzDniRoboczych.DodajDniRobocze(DateTimeOffset od, int n)`; encja `D.Wspolne.DzienWolny` | `dzien_wolny`, funkcja `dodaj_dni_robocze` | — | — (wpływa na `termin_at`) |
-| 100 | Zdarzenie RODO | AG | `D.Konta.Rodo.ZdarzenieRodo` (`ZdarzenieRodoId`), `TypZdarzeniaRodo`, `ZrodloZdarzeniaRodo` | `zdarzenie_rodo`, typy `typ_zdarzenia_rodo`, `zrodlo_zdarzenia_rodo` | — | — (brak zasobu API) |
-| 101 | Okres karencji | VO | `D.Konta.OkresKarencji` (rekord: `UsuniecieZaplanowaneAt`, `StatusPrzedWnioskiem`; 30 dni) w `Uzytkownik` | `uzytkownik.usuniecie_zaplanowane_at`, `uzytkownik.status_przed_wnioskiem`, `status_konta 'USUWANE'` | pole `SesjaWyjscie`, `UczenWyjscie` | `usuniecie_zaplanowane_at` |
-| 102 | Filtr danych osobowych | SD | `D.Rozwiazania.FiltrDanychOsobowych` (metody `FiltrujOdczytAgenta`, `FiltrujPoprawki`, `FiltrujKopieTreningowa`) | `krok_transkrypcji.zastapienia_danych_osobowych`, `podejrzenie_danych_osobowych`, `tylko_dane_osobowe`; `transkrypcja.dane_osobowe_usuniete`, `konflikt_filtra` | — | znacznik `"[DANE_OSOBOWE]"` w `tekst` kroku |
-| 103 | Przekazanie Klasy | ME | `Klasa.Przekaz(NauczycielId nowy, DateTimeOffset teraz)` | `klasa.nauczyciel_id` (+ `dziennik_audytu`) | `PrzekazanieKlasyWejscie` | zasób `POST /admin/klasy/{id}/przekazanie` |
-| 104 | Bezpiecznik | AG | `D.Kalibracja.StanBezpiecznika : Agregat<KluczBezpiecznika>` (klucz `KluczBezpiecznika(KonfiguracjaModeluId, RodzajZadania, TypBezpiecznika)`, `Version` od 3.1), `TypBezpiecznika { Trafnosc, Poprawki }` | `stan_bezpiecznika` (z `version`), typ `typ_bezpiecznika` | `StanBezpiecznikaWyjscie` | zasób `/admin/bezpieczniki` |
-| 105 | Wniosek o usunięcie konta | WA + ME | `TypZdarzeniaRodo.WniosekOUsuniecie`; `Uzytkownik.ZlozWniosekOUsuniecie(DateTimeOffset teraz)` | `zdarzenie_rodo.typ = 'WNIOSEK_O_USUNIECIE'` | — | zasoby `DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` |
-| 106 | Słownik terminów matematycznych | ZA + SD | `D.Rozwiazania.SlownikTerminowMatematycznych` (zasób osadzony `Rozwiazania/FiltrDanychOsobowych/slownik_matematyczny.txt`, ≈ 4 000 form) | — | — | — |
-| 107 | Obszar kroku | VO | `D.Rozwiazania.ObszarKroku` (dziedziczy `ObszarNaZdjeciu`: `NrZdjecia`, `Ramka`) | `krok_transkrypcji.obszar jsonb` | `ObszarNaZdjeciu` (nowa nazwa TS, lista poniżej) | `obszar` |
-| 108 | Przyjęcie planu | VO | `A.Modele.PrzyjeciePlanu` (rekord: `KonfiguracjaModeluId`, `LiczbyWywolanFal`, `TerminyFal`, `PrzewidywanyKoniec`) | brak kolumn (pamięć procesu; przydział z `limit_szybkosci_modelu`) | — | — |
-| 109 | Dezaktywacja bezpiecznika | ME | `StanBezpiecznika.Dezaktywuj(UzytkownikId administrator, string uzasadnienie, DateTimeOffset teraz)` | `stan_bezpiecznika.dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`, `okno_od` | `DezaktywacjaBezpiecznikaWejscie` | zasób `POST /admin/bezpieczniki/dezaktywacja` |
-| 110 | Blokada obniżania progu | ME | `StanBezpiecznika.BlokadaObnizaniaProgu => Id.Typ == TypBezpiecznika.Trafnosc && Aktywny` | `stan_bezpiecznika.aktywny` przy `typ = 'TRAFNOSC'` | `boolean` w `StanBezpiecznikaWyjscie` | `blokada_obnizania_progu` |
-| 111 | Wstrzymanie | — (pojęcie zbiorcze) | `D.Tresci.WstrzymanieWDoborze`, `D.Ocenianie.WidocznoscOcenyDlaUcznia.WstrzymanaBladOdczytu`, `Uzytkownik.CzyProcesyWstrzymane` (karencja) | `wstrzymanie_w_doborze`; status konta `'USUWANE'` | `WidocznoscOcenyDlaUcznia` | `"widocznosc_dla_ucznia": "WSTRZYMANA_BLAD_ODCZYTU"`, `wstrzymane_w_doborze` |
+| # | Pojęcie | Rodzaj | C# (przestrzeń nazw → typ) | PostgreSQL | TypeScript | JSON API | Nazwa pliku/folderu (EN) |
+|---|---|---|---|---|---|---|---|
+| 26 | Administrator | WA + AG | `D.Accounts.RolaUzytkownika.Administrator`; konto: `D.Accounts.Uzytkownik` | `uzytkownik.rola = 'ADMINISTRATOR'` (bez osobnej tabeli) | `RolaUzytkownika` | `"rola": "ADMINISTRATOR"`; zasoby `/admin/*` | `Administrator` / `administrator` |
+| 27 | Klasa | AG + EN | `D.Classes.Klasa` (`KlasaId`) z encją `CzlonkostwoKlasy` | `klasa`, `czlonkostwo_klasy` | `KlasaWyjscie` | `klasa_id`; zasób `/klasy` | `SchoolClass` / `school-class` |
+| 28 | Rodzaj zadania | EW | `D.Common.RodzajZadania { Zamkniete, OtwarteObliczeniowe, OtwarteZDowodem }` | typ `rodzaj_zadania` | `RodzajZadania` | `rodzaj`, `rodzaj_zadania` | `ExerciseKind` / `exercise-kind` |
+| 29 | Odpowiedź | AG | `D.Solutions.Odpowiedz` (`OdpowiedzId`), VO `WyborOdpowiedzi` | `odpowiedz` | `OdpowiedzWejscie`, `OdpowiedzWyjscie` | `odpowiedz_id`; zasób `/zadania/{id}/odpowiedzi` | `Answer` / `answer` |
+| 30 | Decyzja składowa | VO + AG | `D.Models.DecyzjaSkladowa` (rekord); utrwalenie `D.Models.DecyzjaModelu`; kontekst `D.Models.KontekstDecyzji { Ocena, Rekomendacja, WalidacjaZadania }` (C6-12 p. 5) | `decyzja_modelu` (partycjonowana), typ `kontekst_decyzji` | `DecyzjaSkladowaWyjscie` (wyłącznie widoki Administratora) | `decyzje`, `kontekst` | `ComponentDecision` / `component-decision` |
+| 31 | Poziom matury | EW | `D.Common.PoziomMatury { Podstawowy, Rozszerzony }` | typ `poziom_matury` | `PoziomMatury` | `poziom_matury` | `MaturaLevel` / `matura-level` |
+| 32 | Termin egzaminu | ME | `Uczen.TerminEgzaminu : DateOnly?` | `uczen.termin_egzaminu date` | `string` (ISO `YYYY-MM-DD`) w `UczenWyjscie` | `termin_egzaminu` | `ExamDate` / `exam-date` |
+| 33 | Test diagnostyczny | AG + EN | `D.Profile.TestDiagnostyczny` (`TestDiagnostycznyId`) z encją `PozycjaTestuDiagnostycznego`; `StatusTestu` | `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `TestDiagnostycznyWyjscie` | zasoby `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne` | `DiagnosticTest` / `diagnostic-test` |
+| 34 | Zestaw zadań | AG + EN | `D.Classes.ZestawZadan` (`ZestawZadanId`) z encją `PozycjaZestawu` | `zestaw_zadan`, `pozycja_zestawu` | `ZestawZadanWyjscie` | `zestaw_zadan_id`; zasób `/zestawy-zadan` | `ExerciseSet` / `exercise-set` |
+| 35 | Przypisanie | AG + EN | `D.Classes.Przypisanie` (`PrzypisanieId`) z encją `PrzypisanieUczen` | `przypisanie`, `przypisanie_uczen` | `PrzypisanieWyjscie`, `PostepPrzypisaniaWyjscie` | `przypisanie_id`; zasób `/przypisania` | `Assignment` / `assignment` |
+| 36 | Rozwiązanie wzorcowe | VO | `D.Content.RozwiazanieWzorcowe` (rekord z listą wariantów kroków, schemat 7.5.2) | `zadanie_wersja.rozwiazanie_wzorcowe jsonb` | `RozwiazanieWzorcowe` | `rozwiazanie_wzorcowe` | `ReferenceSolution` / `reference-solution` |
+| 37 | Wariant rozwiązania | VO | `D.Content.WariantRozwiazania` (`readonly record struct`, 1–4) | `kryterium_oceniania.wariant`, `ocena.wariant` | `number` | `wariant` | `SolutionVariant` / `solution-variant` |
+| 38 | Krok rozwiązania | EN | `D.Solutions.KrokTranskrypcji` (numer `Nr`, 1–40) | `krok_transkrypcji` (`nr`) | `KrokTranskrypcji` | `kroki[].nr`, `pierwszy_bledny_krok` | `SolutionStep` / `solution-step` |
+| 39 | Kryterium | EN | `D.Content.KryteriumOceniania` (`NrKryterium` 1–12) | `kryterium_oceniania` (`nr_kryterium`) | `KryteriumOcenianiaWyjscie` | `nr_kryterium` | `Criterion` / `criterion` |
+| 40 | Wynik końcowy | VO | linia `wynik_koncowy_ucznia` sekcji `[SPRAWDZENIE_SYMBOLICZNE]` stanu budowanego przez `Lemat.Agents.Grading.BudowniczyStanuOceny` (10.4.2, `docs/spec/prompts.md` 3.1) | brak kolumny — wyłącznie w `decyzja_modelu.stan` | — | `wynik_koncowy` (wyłącznie w stanie i schemacie odpowiedzi modelu) | `FinalResult` / `final-result` |
+| 41 | Wynik końcowy wzorcowy | VO | `D.Content.WynikKoncowyWzorcowy` (rekord: `Latex`, `PostacSympy`, schemat 7.5.3) | `zadanie_wersja.wynik_koncowy_wzorcowy jsonb` | `WynikKoncowyWzorcowy` | `wynik_koncowy_wzorcowy` | `ReferenceFinalResult` / `reference-final-result` |
+| 42 | Typ błędu | EW | `D.Grading.TypBledu { Rachunkowy, Merytoryczny, NiepelneRozwiazanie }` | typ `typ_bledu` | `TypBledu` | `typ_bledu` | `ErrorType` / `error-type` |
+| 43 | Wskazówka | VO | `D.Grading.Wskazowka` (rekord: `Tresc` ≤ 400 znaków, `Zrodlo : ZrodloWskazowki`); `Ocena.Wskazowka` zapisywana jednokrotnie | `ocena.wskazowka`, `ocena.zrodlo_wskazowki`, typ `zrodlo_wskazowki` | pola `OcenaWyjscie` | `wskazowka`, `zrodlo_wskazowki`, `wskazowka_w_przygotowaniu` | `Hint` / `hint` |
+| 44 | Ocena wstępna | WA | `D.Grading.StatusOceny.Wstepna` | `status_oceny 'WSTEPNA'` | `StatusOceny` | `"status": "WSTEPNA"` | `PreliminaryGrade` / `preliminary-grade` |
+| 45 | Ocena ostateczna | WA | `D.Grading.StatusOceny.Ostateczna` | `status_oceny 'OSTATECZNA'` | `StatusOceny` | `"status": "OSTATECZNA"` | `FinalGrade` / `final-grade` |
+| 46 | Kolejka weryfikacji | RM + EW | `A.Verifications.Queries.KolejkaWeryfikacji` (zapytanie z regułą odczytu 11.4.2); `D.Verifications.TypKolejkiWeryfikacji { Klasa, Globalna }` | `weryfikacja.typ_kolejki` (typ `typ_kolejki_weryfikacji`), indeks `ix_weryfikacja_kolejka` | `WeryfikacjaNaLiscie`, `TypKolejkiWeryfikacji` | zasób `GET /weryfikacje`, `typ_kolejki` | `VerificationQueue` / `verification-queue` |
+| 47 | Powód weryfikacji | EW | `D.Verifications.PowodWeryfikacji` (8 wartości) | typ `powod_weryfikacji`, kolumna `weryfikacja.powody powod_weryfikacji[]` | `PowodWeryfikacji` | `powody` | `VerificationReason` / `verification-reason` |
+| 48 | Kontrola losowa | WA | `PowodWeryfikacji.KontrolaLosowa`, `D.Calibration.ZrodloProbki.KontrolaLosowa` | `'KONTROLA_LOSOWA'` w `powod_weryfikacji`, `zrodlo_probki` | `PowodWeryfikacji` | `"KONTROLA_LOSOWA"` | `RandomCheck` / `random-check` |
+| 49 | Zgłoszenie błędu odczytu | VO + WA | `D.Verifications.ZgloszenieBleduOdczytu` (rekord, schemat 7.5.4); `PowodWeryfikacji.ZgloszenieBleduOdczytu` | `weryfikacja.zgloszenie jsonb` | `ZgloszenieBleduOdczytuWejscie` | `zgloszenie`; zasób `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu` | `ReadingErrorReport` / `reading-error-report` |
+| 50 | Próbka kalibracyjna | AG | `D.Calibration.ProbkaKalibracyjna` (`ProbkaKalibracyjnaId`) | `probka_kalibracyjna` | — (wyłącznie agregaty w `MetrykiKalibracjiWyjscie`) | — (dane do Kalibracji, nieeksponowane pojedynczo) | `CalibrationSample` / `calibration-sample` |
+| 51 | Zgodność Oceny | ME | `ProbkaKalibracyjna.Zgodna` (= `PunktyAutomatyczne == PunktyNauczyciela && ZgodnyPierwszyBlednyKrok && ZgodnyBrakujacyKrok`, ADR-027) | `probka_kalibracyjna.zgodna` (kolumna generowana) | pola `MetrykiKalibracjiWyjscie` | `zgodna` | `GradeAgreement` / `grade-agreement` |
+| 52 | Kalibrator pewności | AG | `D.Calibration.KalibratorPewnosci` (`KalibratorPewnosciId`), `MetodaKalibratora { Tozsamosciowy, IzotonicznyCv5 }`, `ZrodloKalibratora` | `kalibrator_pewnosci`, typ `zrodlo_kalibratora` | `KalibratorPewnosciWyjscie` | `kalibrator_pewnosci_id` | `ConfidenceCalibrator` / `confidence-calibrator` |
+| 53 | Opinia pomocnicza | VO | `D.Verifications.OpiniaPomocnicza` (rekord, schemat 10.4.5) | `weryfikacja.opinia_pomocnicza jsonb` | `OpiniaPomocnicza` (w `WeryfikacjaSzczegoly`) | `opinia_pomocnicza` | `AuxiliaryOpinion` / `auxiliary-opinion` |
+| 54 | Model decyzyjny | PO | `A.Models.IModelDecyzyjny` | `konfiguracja_modelu.rola IN ('DECYZYJNY_GLOWNY','DECYZYJNY_ZAPASOWY')` | — | — (port wewnętrzny) | `DecisionModel` / `decision-model` |
+| 55 | Model zapasowy | AD + WA | `M.Fallback.ZapasowyLlmAdapter : IModelDecyzyjny`; `D.Models.RolaModelu.DecyzyjnyZapasowy` | `rola_modelu 'DECYZYJNY_ZAPASOWY'` | `RolaModelu` | `"rola": "DECYZYJNY_ZAPASOWY"` | `FallbackModel` / `fallback-model` |
+| 56 | Plan pytań | VO | `D.Models.PlanPytan`, `PytanieWPlanie`, `WarunekPytania`, `Pytanie` (abstrakcyjny rekord: `PytanieNoul`, `PytanieScore`, `PytanieChoice`), `TypPytania` | `decyzja_modelu.kod_pytania`, typ `typ_pytania` | — | — (kontrakt portu, ADR-026) | `QuestionPlan` / `question-plan` |
+| 57 | Rekomendacja | AG (niezmienny) | `D.Recommendations.Rekomendacja` (`RekomendacjaId`), `StrategiaRekomendacji`, `RegulaRekomendacji` | `rekomendacja`, typ `strategia_rekomendacji` | `RekomendacjaWyjscie`, `Regula` | zasób `/uczniowie/ja/rekomendacje/nastepna`; `regula` (`"R-SERIA"`) | `Recommendation` / `recommendation` |
+| 58 | Powtórka | WA | `D.Recommendations.CelElementu.Powtorka` | `cel_elementu 'POWTORKA'` | `CelElementu` | `"cel": "POWTORKA"` | `Repetition` / `repetition` |
+| 59 | Seria | VO | `D.Recommendations.Seria` (rekord własny `SciezkaNauki`: `UmiejetnoscId`, `RozpoczetaAt`, `LiczbaElementow`, `PoziomTrudnosci`, `KolejnePorazki`) | `sciezka_nauki.seria_*` | `SeriaWyjscie` | `seria`, `w_serii` | `Series` / `series` |
+| 60 | Poziom opanowania | VO | `D.Profile.PoziomOpanowania` (`readonly record struct`, `decimal` 0–1) | `opanowanie_umiejetnosci.poziom_opanowania` | `number` w `ProfilUczniaWyjscie` | `poziom_opanowania` | `MasteryLevel` / `mastery-level` |
+| 61 | Wynik zadania | AG | `D.Profile.WynikZadania` (`WynikZadaniaId`), `ZrodloWyniku`, `PowodUniewaznieniaWyniku`; typ wewnętrzny kontraktu Agenta rekomendującego `A.Agents.Recommendations.WynikZadaniaSkrot` (bez TS) | `wynik_zadania`, typy `zrodlo_wyniku`, `powod_uniewaznienia_wyniku` | `WynikZadaniaWyjscie` (widoki Nauczyciela) | `wynik_zadania` | `ExerciseResult` / `exercise-result` |
+| 62 | Walidacja zadania | AG (niezmienny) | `D.Content.WalidacjaZadania` (`WalidacjaZadaniaId`), `RezultatWalidacji` | `walidacja_zadania`, typ `rezultat_walidacji` | `WalidacjaZadaniaWyjscie` | `walidacje`, `rezultat` | `ExerciseValidation` / `exercise-validation` |
+| 63 | Przegląd zadania | AG (niezmienny) | `D.Content.PrzegladZadania` (`PrzegladZadaniaId`), `DecyzjaPrzegladu` | `przeglad_zadania`, typ `decyzja_przegladu` | `PrzegladWejscie` | zasób `POST /zadania/{id}/przeglad` | `ExerciseReview` / `exercise-review` |
+| 64 | Recenzent treści | ME | `Nauczyciel.RecenzentTresci : bool` | `nauczyciel.recenzent_tresci` | `boolean` w `UzytkownikAdminWyjscie` | `recenzent_tresci` | `ContentReviewer` / `content-reviewer` |
+| 65 | Zasięg zadania | EW | `D.Content.ZasiegZadania { Globalny, Prywatny }` | typ `zasieg_zadania` | `ZasiegZadania` | `zasieg` | `ExerciseScope` / `exercise-scope` |
+| 66 | Konfiguracja modelu | AG | `D.Models.KonfiguracjaModelu` (`KonfiguracjaModeluId`), `RolaModelu`, VO `ParametryModelu` | `konfiguracja_modelu`, typ `rola_modelu` | `KonfiguracjaModeluWyjscie` | zasób `/admin/konfiguracje-modeli` | `ModelConfiguration` / `model-configuration` |
+| 67 | Praca w tle | EN (techniczna) | `A.Common.BackgroundJobs.PracaWTle`, `TypPracy`, `PulaPracy`, `StatusPracy`, `IHandlerPracy`, `IZlecaniePrac` (13.4.1, C6-07) | `praca_w_tle`, typ `status_pracy` | `PracaWTleWyjscie` | zasób `/admin/praca-w-tle`; `typ` (`"ROZPOZNAJ_PISMO"`) | `BackgroundJob` / `background-job` |
+| 68 | Element Ścieżki nauki | EN | `D.Recommendations.ElementSciezki` (`ElementSciezkiId`), `TypElementuSciezki`, `StatusElementuSciezki` | `element_sciezki` | `ElementSciezkiWyjscie` | `element_sciezki_id`; zasób `/elementy-sciezki` | `LearningPathElement` / `learning-path-element` |
+| 69 | Cel elementu | EW | `D.Recommendations.CelElementu { Nauka, Powtorka }` | typ `cel_elementu` | `CelElementu` | `cel` | `ElementGoal` / `element-goal` |
+| 70 | Przesłanie | VO | `D.Solutions.Przeslanie` (rekord: `Nr` 1–3, zdjęcia 1–5); `Rozwiazanie.LiczbaPrzeslan` | `zdjecie_rozwiazania.przeslanie_nr`, `rozwiazanie.liczba_przeslan` | pola `RozwiazanieWyjscie` | `przeslanie_nr`, `liczba_przeslan` | `Upload` / `upload` |
+| 71 | Zdjęcie maskowane | ME | `ZdjecieRozwiazania.KluczObiektuMaskowany : string?`; `D.Solutions.WersjaZdjecia { Oryginalna, Maskowana }`; typ wewnętrzny kontraktu Agenta rozpoznającego `A.Agents.Recognition.ZdjecieRef` (bez TS) | `zdjecie_rozwiazania.klucz_obiektu_maskowany` | `ZdjecieRozwiazaniaWyjscie`, `AdresZdjeciaWyjscie`, `WersjaZdjecia = "ORYGINALNA" \| "MASKOWANA"` | `?wersja_zdjecia=MASKOWANA` (wartości `ORYGINALNA`, `MASKOWANA` w 3.5 i 12.3 od wersji 3.1) | `MaskedPhoto` / `masked-photo` |
+| 72 | Kopia treningowa | AG | `D.Solutions.KopiaTreningowa` (`KopiaTreningowaId`) | `kopia_treningowa` | — | — (brak zasobu API; sterowana zgodą `zgoda_na_trening`) | `TrainingCopy` / `training-copy` |
+| 73 | Weryfikator globalny | ME | `Nauczyciel.WeryfikatorGlobalny : bool`, `Nauczyciel.DeklarowaneMinutyWeryfikacji`, `Nauczyciel.UmowaPoufnosciAt`; `NadajWeryfikatoraGlobalnego(…)`, `OdbierzWeryfikatoraGlobalnego(…)` | `nauczyciel.weryfikator_globalny`, `deklarowane_minuty_weryfikacji`, `umowa_poufnosci_at` | `boolean` w `UzytkownikAdminWyjscie` | `weryfikator_globalny` | `GlobalVerifier` / `global-verifier` |
+| 74 | Nauczyciel docelowy | ME | `Weryfikacja.NauczycielDocelowyId : NauczycielId?` | `weryfikacja.nauczyciel_docelowy_id` | pole `WeryfikacjaSzczegoly` | `nauczyciel_docelowy_id` | `TargetTeacher` / `target-teacher` |
+| 75 | Blokada weryfikacji | VO | `D.Verifications.BlokadaWeryfikacji` (rekord: `PodjetaPrzez`, `PodjetaAt`, `ZablokowanaDo`; 15 min, łącznie ≤ 2 h) | `weryfikacja.podjeta_przez`, `podjeta_at`, `zablokowana_do` | pola `WeryfikacjaSzczegoly` | `zablokowana_do`; zasoby `…/podjecie`, `…/przedluzenie`, `…/zwolnienie` | `VerificationLock` / `verification-lock` |
+| 76 | Szkic rozstrzygnięcia | AG | `D.Verifications.SzkicRozstrzygniecia` (klucz `(WeryfikacjaId, NauczycielId)`) | `szkic_rozstrzygniecia` | `SzkicRozstrzygnieciaWejscie` | zasób `PUT /weryfikacje/{id}/szkic` | `ResolutionDraft` / `resolution-draft` |
+| 77 | Pseudonim Ucznia | VO + SD | `D.Verifications.PseudonimUcznia` (`readonly record struct`, format `U-XXXXXX`); `A.Verifications.IGeneratorPseudonimow` (HMAC-SHA256, sekret z konfiguracji) | brak kolumny (wyliczany przy odczycie) | `string` w `WeryfikacjaSzczegoly` | `uczen_pseudonim` | `StudentPseudonym` / `student-pseudonym` |
+| 78 | Kontrola przyjęć | RM | `A.Verifications.Queries.StanKontroliPrzyjec` (`KontrolaPrzyjecAktywna`, `KlasyZKontrolaPrzyjec`) | brak tabeli (wyliczany z `weryfikacja` i parametrów 22) | pola `ObciazenieWeryfikacjiWyjscie` | `kontrola_przyjec_aktywna`, `klasy_z_kontrola_przyjec` | `AdmissionControl` / `admission-control` |
+| 79 | Tryb pełnej weryfikacji | ME | `ProgPewnosci.TrybPelnejWeryfikacji => Wartosc == 1.000m` | `prog_pewnosci.wartosc = 1.000` | `boolean` w `ProgPewnosciWyjscie` | `tryb_pelnej_weryfikacji` | `FullVerificationMode` / `full-verification-mode` |
+| 80 | Zawieszenie Wyniku zadania | ME + WA | `WynikZadania.Zawies(DateTimeOffset teraz)`; `PowodUniewaznieniaWyniku.ZgloszenieBleduOdczytu` | `wynik_zadania.uniewazniony_at`, `powod_uniewaznienia = 'ZGLOSZENIE_BLEDU_ODCZYTU'` | — | `powod_uniewaznienia` (widoki Nauczyciela) | `ExerciseResultSuspension` / `exercise-result-suspension` |
+| 81 | Czas systemowy | ME | `Rozwiazanie.CzasSystemowy : TimeSpan?` (utrwalany w ms) | `rozwiazanie.czas_systemowy_ms` | `number` | `czas_systemowy_ms` | `SystemTime` / `system-time` |
+| 82 | Termin miękki / termin twardy | VO | `D.Grading.TerminyOceny` (rekord: `TerminMiekki`, `TerminTwardy`; wyliczane z `ZatwierdzonoAt` i `t_R`, 14.2) | brak kolumn (wyliczane z `rozwiazanie.zatwierdzono_at`) | — | — (wewnętrzne; metryki 17.3) | `SoftAndHardDeadline` / `soft-and-hard-deadline` |
+| 83 | Zlecenie generowania | AG | `D.Content.ZlecenieGenerowania` (`ZlecenieGenerowaniaId`), `StatusZlecenia` | `zlecenie_generowania`, typ `status_zlecenia` | `ZlecenieGenerowaniaWyjscie` | zasoby `POST /zadania/generowanie`, `/zlecenia-generowania/{id}` | `GenerationRequest` / `generation-request` |
+| 84 | Grupa eksperymentu | VO | `D.Accounts.GrupaEksperymentu` (`ProcentGrupyEksperymentu` 0–99, metoda `Strategia(int procentJevChoice)`) | `uczen.procent_grupy_eksperymentu` | — | `procent_grupy_eksperymentu` (widoki Administratora) | `ExperimentGroup` / `experiment-group` |
+| 85 | Zbiór testowy ZT-1 | ZA | `A.Calibration.ZbiorTestowyZt1` (odczyt manifestu przez `IMagazynObiektow`) | bucket `zbiory-testowe/zt1/` (poza bazą) | — | — (praca `EWALUUJ_ZT1`) | `TestSetZt1` / `test-set-zt1` |
+| 86 | Rejestr Zdarzeń RODO | PO + AD | `A.Accounts.Gdpr.IRejestrZdarzenRodo`; `I.Gdpr.RejestrZdarzenRodoS3` | bucket `rejestr-zdarzen-rodo` (Object Lock) | — | — | `GdprEventRegistry` / `gdpr-event-registry` |
+| 87 | Pewność surowa | VO | `D.Grading.PewnoscSurowa` (`readonly record struct`, `decimal` 0–1) | `ocena.pewnosc_surowa`, `probka_kalibracyjna.pewnosc_surowa` | `number` (widoki Administratora) | `pewnosc_surowa` | `RawConfidence` / `raw-confidence` |
+| 88 | Punkty surowe | ME | `Ocena.PunktySurowe : int?` | `ocena.punkty_surowe` | — | — (nieeksponowane Uczniowi; w danych kalibracji) | `RawPoints` / `raw-points` |
+| 89 | Niespójność | EW | `D.Grading.KodNiespojnosci { N1 … N6 }` z `[JsonStringEnumMemberName("N-1")]` … (ADR-049 p. 4) | brak kolumny: kody w `ocena.uzasadnienie` (szablon 11.7) i metryce `niespojnosci_total{kod}` | `KodNiespojnosci = "N-1" \| … \| "N-6"` | `niespojnosci` (widoki Nauczyciela) | `Inconsistency` / `inconsistency` |
+| 90 | Rozstrzygnięcie | VO + ME | `D.Verifications.Rozstrzygniecie` (rekord), `Weryfikacja.Rozstrzygnij(...)` | `ocena` (`zrodlo = 'NAUCZYCIEL'`), `weryfikacja.ocena_nauczyciela_id` | `RozstrzygniecieWejscie` | zasób `POST /weryfikacje/{id}/rozstrzygniecie` | `Resolution` / `resolution` |
+| 91 | Korekta | SA + WA | `A.Verifications.Commands.KorygujOcene` (+ `KorygujOceneHandler`); `ZrodloProbki.KorektaNauczyciela` | nowa wersja `ocena`, `zrodlo_probki 'KOREKTA_NAUCZYCIELA'` | `RozstrzygniecieWejscie` | zasób `POST /rozwiazania/{id}/korekty` | `Correction` / `correction` |
+| 92 | Eskalacja | ME + EW | `Weryfikacja.Eskaluj(PowodEskalacji powod, DateTimeOffset teraz, KalendarzDniRoboczych kalendarz)`; `D.Verifications.PowodEskalacji` | `weryfikacja.eskalowano_at`, `powod_eskalacji` | `PowodEskalacji` | `eskalowano_at`, `odsetek_eskalacji_7d` | `Escalation` / `escalation` |
+| 93 | Poprawka Transkrypcji | VO + SD + WA | `D.Solutions.PoprawkaTranskrypcji` (rekord kroku z `NrKrokuAgenta`), `D.Solutions.ZasadyPoprawekTranskrypcji` (limity ADR-036); `ZrodloTranskrypcji.PoprawkaUcznia` | `krok_transkrypcji.nr_kroku_agenta`, `zmieniony_przez_ucznia`; `zrodlo_transkrypcji 'POPRAWKA_UCZNIA'` | `TranskrypcjaWejscie` | zasób `PUT /rozwiazania/{id}/transkrypcja`; `nr_kroku_agenta` | `TranscriptionEdit` / `transcription-edit` |
+| 94 | Zakres poprawek | VO | `D.Solutions.ZakresPoprawek` (rekord: `Zmienione`, `Wstawione`, `KrokiAgenta`, `OdsetekZnakow`) | `transkrypcja.zakres_poprawek jsonb` | `ZakresPoprawek` | `zakres_poprawek` | `EditScope` / `edit-scope` |
+| 95 | Sprawdzenie zgodności poprawek | VO + WA | `D.Solutions.ZgodnoscPoprawek` (rezultat 10.3.3); `A.Common.BackgroundJobs.TypPracy.SprawdzPoprawkiTranskrypcji` | `transkrypcja.zgodnosc_poprawek jsonb` | — | `zgodnosc_poprawek` (widoki Nauczyciela); typ pracy `"SPRAWDZ_POPRAWKI_TRANSKRYPCJI"` | `EditConsistencyCheck` / `edit-consistency-check` |
+| 96 | Powody początkowe | ME | `Weryfikacja.PowodyPoczatkowe : IReadOnlySet<PowodWeryfikacji>` | `weryfikacja.powody_poczatkowe powod_weryfikacji[]` | pole `WeryfikacjaSzczegoly` | `powody_poczatkowe` | `InitialReasons` / `initial-reasons` |
+| 97 | Zgłoszenie błędu w Zadaniu | AG | `D.Content.ZgloszenieBleduZadania` (`ZgloszenieBleduZadaniaId`), `StatusZgloszeniaZadania` | `zgloszenie_bledu_zadania`, typ `status_zgloszenia_zadania` | `ZgloszenieBleduZadaniaWejscie`, `ZgloszenieBleduZadaniaWyjscie` | zasoby `/zadania/{id}/zgloszenia-bledu`, `/zgloszenia-bledu-zadan` | `ExerciseErrorReport` / `exercise-error-report` |
+| 98 | Wstrzymanie w doborze | AG | `D.Content.WstrzymanieWDoborze` (klucz `ZadanieId`; istnienie = wstrzymanie) | `wstrzymanie_w_doborze` | `boolean` w `ZadaniePelneWyjscie` | `wstrzymane_w_doborze` | `SelectionHold` / `selection-hold` |
+| 99 | Dzień roboczy | SD + EN | `D.Common.KalendarzDniRoboczych.DodajDniRobocze(DateTimeOffset od, int n)`; encja `D.Common.DzienWolny` | `dzien_wolny`, funkcja `dodaj_dni_robocze` | — | — (wpływa na `termin_at`) | `WorkingDay` / `working-day` |
+| 100 | Zdarzenie RODO | AG | `D.Accounts.Gdpr.ZdarzenieRodo` (`ZdarzenieRodoId`), `TypZdarzeniaRodo`, `ZrodloZdarzeniaRodo` | `zdarzenie_rodo`, typy `typ_zdarzenia_rodo`, `zrodlo_zdarzenia_rodo` | — | — (brak zasobu API) | `GdprEvent` / `gdpr-event` |
+| 101 | Okres karencji | VO | `D.Accounts.OkresKarencji` (rekord: `UsuniecieZaplanowaneAt`, `StatusPrzedWnioskiem`; 30 dni) w `Uzytkownik` | `uzytkownik.usuniecie_zaplanowane_at`, `uzytkownik.status_przed_wnioskiem`, `status_konta 'USUWANE'` | pole `SesjaWyjscie`, `UczenWyjscie` | `usuniecie_zaplanowane_at` | `GracePeriod` / `grace-period` |
+| 102 | Filtr danych osobowych | SD | `D.Solutions.PersonalDataFilter.FiltrDanychOsobowych` (metody `FiltrujOdczytAgenta`, `FiltrujPoprawki`, `FiltrujKopieTreningowa`) | `krok_transkrypcji.zastapienia_danych_osobowych`, `podejrzenie_danych_osobowych`, `tylko_dane_osobowe`; `transkrypcja.dane_osobowe_usuniete`, `konflikt_filtra` | — | znacznik `"[DANE_OSOBOWE]"` w `tekst` kroku | `PersonalDataFilter` / `personal-data-filter` |
+| 103 | Przekazanie Klasy | ME | `Klasa.Przekaz(NauczycielId nowy, DateTimeOffset teraz)` | `klasa.nauczyciel_id` (+ `dziennik_audytu`) | `PrzekazanieKlasyWejscie` | zasób `POST /admin/klasy/{id}/przekazanie` | `ClassTransfer` / `class-transfer` |
+| 104 | Bezpiecznik | AG | `D.Calibration.StanBezpiecznika : Agregat<KluczBezpiecznika>` (klucz `KluczBezpiecznika(KonfiguracjaModeluId, RodzajZadania, TypBezpiecznika)`, `Version` od 3.1), `TypBezpiecznika { Trafnosc, Poprawki }` | `stan_bezpiecznika` (z `version`), typ `typ_bezpiecznika` | `StanBezpiecznikaWyjscie` | zasób `/admin/bezpieczniki` | `Safeguard` / `safeguard` |
+| 105 | Wniosek o usunięcie konta | WA + ME | `TypZdarzeniaRodo.WniosekOUsuniecie`; `Uzytkownik.ZlozWniosekOUsuniecie(DateTimeOffset teraz)` | `zdarzenie_rodo.typ = 'WNIOSEK_O_USUNIECIE'` | — | zasoby `DELETE /uczniowie/ja`, `DELETE /nauczyciele/ja`, `POST /admin/uzytkownicy/{id}/usuniecie` | `AccountDeletionRequest` / `account-deletion-request` |
+| 106 | Słownik terminów matematycznych | ZA + SD | `D.Solutions.PersonalDataFilter.SlownikTerminowMatematycznych` (zasób osadzony `Solutions/PersonalDataFilter/math-terms.txt`, ≈ 4 000 form) | — | — | — | `MathTermsDictionary` / `math-terms-dictionary` |
+| 107 | Obszar kroku | VO | `D.Solutions.ObszarKroku` (dziedziczy `ObszarNaZdjeciu`: `NrZdjecia`, `Ramka`) | `krok_transkrypcji.obszar jsonb` | `ObszarNaZdjeciu` (nowa nazwa TS, lista poniżej) | `obszar` | `StepRegion` / `step-region` |
+| 108 | Przyjęcie planu | VO | `A.Models.PrzyjeciePlanu` (rekord: `KonfiguracjaModeluId`, `LiczbyWywolanFal`, `TerminyFal`, `PrzewidywanyKoniec`) | brak kolumn (pamięć procesu; przydział z `limit_szybkosci_modelu`) | — | — | `PlanAdmission` / `plan-admission` |
+| 109 | Dezaktywacja bezpiecznika | ME | `StanBezpiecznika.Dezaktywuj(UzytkownikId administrator, string uzasadnienie, DateTimeOffset teraz)` | `stan_bezpiecznika.dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`, `okno_od` | `DezaktywacjaBezpiecznikaWejscie` | zasób `POST /admin/bezpieczniki/dezaktywacja` | `SafeguardDeactivation` / `safeguard-deactivation` |
+| 110 | Blokada obniżania progu | ME | `StanBezpiecznika.BlokadaObnizaniaProgu => Id.Typ == TypBezpiecznika.Trafnosc && Aktywny` | `stan_bezpiecznika.aktywny` przy `typ = 'TRAFNOSC'` | `boolean` w `StanBezpiecznikaWyjscie` | `blokada_obnizania_progu` | `ThresholdLoweringLock` / `threshold-lowering-lock` |
+| 111 | Wstrzymanie | — (pojęcie zbiorcze) | `D.Content.WstrzymanieWDoborze`, `D.Grading.WidocznoscOcenyDlaUcznia.WstrzymanaBladOdczytu`, `Uzytkownik.CzyProcesyWstrzymane` (karencja) | `wstrzymanie_w_doborze`; status konta `'USUWANE'` | `WidocznoscOcenyDlaUcznia` | `"widocznosc_dla_ucznia": "WSTRZYMANA_BLAD_ODCZYTU"`, `wstrzymane_w_doborze` | `Hold` / `hold` |
 
 Uwagi do braków reprezentacji: pojęcia bez typu TS (Agent, Orkiestrator,
 Model decyzyjny, Plan pytań, Kopia treningowa, Zdarzenie RODO, Przyjęcie
@@ -677,7 +697,7 @@ Od wersji 3.1 (C6-04 … C6-08, C6-15) szkielety `Uzytkownik`, `Nauczyciel`,
 `Rozwiazanie`, `Weryfikacja`, `ProfilUcznia`, `SciezkaNauki` i
 `StanBezpiecznika` mają komplet przejść maszyn stanów 8.x jako metod z
 niezmiennikami; każdy wiersz diagramu 8.1 ma test domeny
-`Lemat.Domain.Tests/Rozwiazania/PrzejsciaRozwiazaniaTests` (teoria xUnit z
+`Lemat.Domain.Tests/Solutions/PrzejsciaRozwiazaniaTests` (teoria xUnit z
 tabelą „stan, operacja → stan albo kod błędu”, 34 przypadki). Zasady wspólne:
 
 1. Agregat dziedziczy `Agregat<TId>`; zmienia stan wyłącznie przez metody,
@@ -702,8 +722,8 @@ tabelą „stan, operacja → stan albo kod błędu”, 34 przypadki). Zasady ws
    domenowy z czytelnym kodem przed zapisem, CHECK jako ostatnia linia).
 
 ```csharp
-// ===== Lemat.Domain.Wspolne =====
-namespace Lemat.Domain.Wspolne;
+// ===== Lemat.Domain.Common =====
+namespace Lemat.Domain.Common;
 
 public abstract class Agregat<TId> where TId : struct
 {
@@ -756,8 +776,8 @@ public readonly record struct PoziomTrudnosci
 ```
 
 ```csharp
-// ===== Lemat.Domain.Konta =====
-namespace Lemat.Domain.Konta;
+// ===== Lemat.Domain.Accounts =====
+namespace Lemat.Domain.Accounts;
 
 public enum RolaUzytkownika { Uczen, Nauczyciel, Administrator }
 public enum StatusKonta { Aktywne, OczekujeNaZatwierdzenie, Zablokowane, Usuwane }
@@ -893,8 +913,8 @@ public sealed record UprawnienieOdebrane(NauczycielId NauczycielId, UprawnienieN
 ```
 
 ```csharp
-// ===== Lemat.Domain.Klasy =====
-namespace Lemat.Domain.Klasy;
+// ===== Lemat.Domain.Classes =====
+namespace Lemat.Domain.Classes;
 
 public sealed class Klasa : Agregat<KlasaId>
 {
@@ -939,8 +959,8 @@ public sealed record KlasaPrzekazana(KlasaId KlasaId, NauczycielId? Poprzedni, N
 ```
 
 ```csharp
-// ===== Lemat.Domain.Tresci =====
-namespace Lemat.Domain.Tresci;
+// ===== Lemat.Domain.Content =====
+namespace Lemat.Domain.Content;
 
 public enum PochodzenieZadania { BazoweArkuszCke, BazoweNauczyciel, Wygenerowane }
 public enum ZasiegZadania { Globalny, Prywatny }
@@ -1019,8 +1039,8 @@ public readonly record struct WariantRozwiazania(int Wartosc);              // 1
 ```
 
 ```csharp
-// ===== Lemat.Domain.Rozwiazania =====
-namespace Lemat.Domain.Rozwiazania;
+// ===== Lemat.Domain.Solutions =====
+namespace Lemat.Domain.Solutions;
 
 public enum StatusRozwiazania { Przeslane, Rozpoznawanie, BladRozpoznawania, TranskrypcjaGotowa, Zatwierdzone,
                                 Ocenianie, OczekujeNaWeryfikacje, Ocenione, Porzucone, Anulowane }
@@ -1282,8 +1302,8 @@ public sealed record KrokTranskrypcji(int Nr, string Tekst, string Latex, decima
 ```
 
 ```csharp
-// ===== Lemat.Domain.Ocenianie =====
-namespace Lemat.Domain.Ocenianie;
+// ===== Lemat.Domain.Grading =====
+namespace Lemat.Domain.Grading;
 
 public enum StatusOceny { Wstepna, Ostateczna, Zastapiona }
 public enum ZrodloOceny { Automatyczna, Nauczyciel }
@@ -1334,7 +1354,7 @@ public sealed class Ocena : Agregat<OcenaId>                               // ni
         Status = StatusOceny.Zastapiona;
     }
     // Fabryki: Ocena.Automatyczna(RozwiazanieId, int wersja, TranskrypcjaId, RezultatOceny r, ProgPewnosciId, KalibratorPewnosciId)
-    //          — RezultatOceny jest typem Lemat.Domain.Ocenianie (10.4.1, C6-15 p. 5); Status = r.Trasa == Trasa.Automatyczna ? Ostateczna : Wstepna;
+    //          — RezultatOceny jest typem Lemat.Domain.Grading (10.4.1, C6-15 p. 5); Status = r.Trasa == Trasa.Automatyczna ? Ostateczna : Wstepna;
     //          Ocena.Nauczyciela(RozwiazanieId, int wersja, TranskrypcjaId, Rozstrzygniecie r, NauczycielId n) — Status = Ostateczna, Zrodlo = Nauczyciel.
     // Obie sprawdzają CHECK 7.3 (punkty w zakresie, spójność TypBledu, pola Automatycznej) i nadają Id = Guid.CreateVersion7().
 }
@@ -1355,8 +1375,8 @@ public sealed record TerminyOceny(DateTimeOffset TerminMiekki, DateTimeOffset Te
 ```
 
 ```csharp
-// ===== Lemat.Domain.Weryfikacje =====
-namespace Lemat.Domain.Weryfikacje;
+// ===== Lemat.Domain.Verifications =====
+namespace Lemat.Domain.Verifications;
 
 public enum StatusWeryfikacji { Oczekuje, WTrakcie, Zakonczona, Anulowana }
 public enum TypKolejkiWeryfikacji { Klasa, Globalna }
@@ -1547,8 +1567,8 @@ public sealed record WeryfikacjaZakonczona(WeryfikacjaId WeryfikacjaId, Rozwiaza
 ```
 
 ```csharp
-// ===== Lemat.Domain.Profil i Lemat.Domain.Rekomendacje =====
-namespace Lemat.Domain.Profil;
+// ===== Lemat.Domain.Profile i Lemat.Domain.Recommendations =====
+namespace Lemat.Domain.Profile;
 
 public enum InicjalizacjaOpanowania { Domyslna, TestDiagnostyczny, PropagacjaZDzialu }
 public enum ZrodloWyniku { Odpowiedz, Ocena }
@@ -1609,7 +1629,7 @@ public sealed class WynikZadania : Agregat<WynikZadaniaId>
 ```
 
 ```csharp
-namespace Lemat.Domain.Rekomendacje;
+namespace Lemat.Domain.Recommendations;
 
 public enum TypElementuSciezki { WkladkaTeoretyczna, Zadanie }
 public enum CelElementu { Nauka, Powtorka }
@@ -1699,8 +1719,8 @@ public sealed record PropozycjaElementu(TypElementuSciezki Typ, CelElementu Cel,
 ```
 
 ```csharp
-// ===== Lemat.Domain.Kalibracja =====
-namespace Lemat.Domain.Kalibracja;
+// ===== Lemat.Domain.Calibration =====
+namespace Lemat.Domain.Calibration;
 
 public enum ZrodloProgu { EwaluacjaZt1, KalibracjaAutomatyczna, Administrator, Bezpiecznik }
 public enum TypBezpiecznika { Trafnosc, Poprawki }
@@ -1922,8 +1942,8 @@ Zmiana wersji głównej wymaga nowego ADR.
 | Uwierzytelnianie | `Microsoft.AspNetCore.Authentication.JwtBearer`; access token JWT ES256 (ECDSA P-256) 15 min w pamięci klienta; refresh token w cookie `lemat_rt`; argon2id przez `Konscious.Security.Cryptography.Argon2` (m = 64 MiB, t = 3, p = 4) | ADR-020 bez zmian merytorycznych; ES256 jest obsługiwany natywnie przez `Microsoft.IdentityModel.*` (EdDSA nie). | ADR-020, ADR-048 |
 | Obserwowalność | OpenTelemetry .NET (instrumentacje ASP.NET Core, HttpClient, Npgsql, EF Core, Microsoft.Extensions.AI) → OTLP → OpenTelemetry Collector → Prometheus, Grafana, Tempo; logi JSON (`AddJsonConsole`); nazwy metryk z 17.3 bez zmian; Next.js — `@vercel/otel` → ten sam Collector | NFR-01, NFR-03, NFR-04; eksporter Prometheus w Collectorze zamiast pakietu w procesie. | ADR-048 |
 | Testy backendu | xUnit v3 (`xunit.v3`), Shouldly, NSubstitute, FsCheck 3 (testy właściwości, zastępuje `hypothesis`), Testcontainers 4 (PostgreSQL 16, MinIO, `lemat-sympy`), `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`), WireMock.Net (kontrakty adapterów Jev i LLM), coverlet | Testy domeny bez infrastruktury; testy integracyjne na prawdziwym PostgreSQL 16 (semantyka `SKIP LOCKED`, triggerów, CHECK). | ADR-048 |
-| Kontrola architektury | Referencje projektów (6.4) + NetArchTest.Rules (reguły 6.5) + `Microsoft.CodeAnalysis.BannedApiAnalyzers` (`BannedSymbols.txt`: SDK dostawców poza `Lemat.Modele`, `DateTime.Now`/`DateTimeOffset.Now` poza `TimeProvider`) + test słownika (3.4, ADR-049) | NFR-06; zastępuje `import-linter`. | ADR-048 |
-| Jakość kodu | `Directory.Build.props`: `Nullable=enable`, `TreatWarningsAsErrors=true`, `AnalysisLevel=latest-recommended`, `ImplicitUsings=enable`; `.editorconfig`; `dotnet format --verify-no-changes` w CI | Jednolite reguły dla wszystkich projektów. | ADR-048 |
+| Kontrola architektury | Referencje projektów (6.4) + NetArchTest.Rules (reguły 6.5) + `Microsoft.CodeAnalysis.BannedApiAnalyzers` (`BannedSymbols.txt`: SDK dostawców poza `Lemat.Models`, `DateTime.Now`/`DateTimeOffset.Now` poza `TimeProvider`) + test słownika (3.4, ADR-049) | NFR-06; zastępuje `import-linter`. | ADR-048 |
+| Jakość kodu | `Directory.Build.props`: `Nullable=enable`, `TreatWarningsAsErrors=true`, `AnalysisLevel=latest-recommended`, `ImplicitUsings=enable`, `EnforceCodeStyleInBuild=true`; `.editorconfig` (6.11.3, ADR-075: IDE0130 błąd, reguły „nazwa pliku = nazwa typu” wyłączone); `dotnet format --verify-no-changes` w CI | Jednolite reguły dla wszystkich projektów. | ADR-048 |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 5.9 (`strict`), Node.js 24 LTS, `output: "standalone"` | NFR-08, NFR-10; jedna baza kodu dla telefonu i komputera. | ADR-054 |
 | PWA | Serwist 9 (`@serwist/next`, budowanie `next build --webpack`, bo Serwist 9 nie obsługuje Turbopacka): precache zasobów statycznych i fontów KaTeX; żądania `/api/*` omijają service worker (brak trasy, dane osobowe nie trafiają do cache, NFR-09; strumienie SSE bez pośrednictwa SW); manifest `app/manifest.ts`; strona `/offline` | Instalacja na ekranie telefonu, szybki start; zastępuje ręczny service worker Vite. | ADR-054, ADR-057 |
 | i18n | next-intl 4, jedna lokalizacja `pl-PL`, bez prefiksu języka w URL; komunikaty `frontend/messages/pl-PL.json` (ICU, polskie formy liczby mnogiej `one`/`few`/`many`); daty i liczby `Intl` `pl-PL`, strefa wyświetlania `Europe/Warsaw` | NFR-10; działa w komponentach serwerowych i klienckich. | ADR-054 |
@@ -1947,7 +1967,7 @@ Zmiana wersji głównej wymaga nowego ADR.
 | `obrazy-api` | `lemat-backend` | `dotnet Lemat.ImageSandbox.dll --rownoleglosc 2` (nadzorca + 2 procesy robocze, ADR-052 uzup. 3.1) | 1 na replikę `api` | 1 / 1,5 GiB (w tym `tmpfs /tmp` 512 MiB) | `/run/lemat/obrazy.sock` (wolumen współdzielony z `api`) |
 | `worker` | `lemat-backend` | `dotnet Lemat.Worker.dll` | 2 | 2 / 2 GiB | brak (tylko `/zdrowie` na 8081) |
 | `obrazy-worker` | `lemat-backend` | `dotnet Lemat.ImageSandbox.dll --rownoleglosc 4` (nadzorca + 4 procesy robocze) | 1 na replikę `worker` | 2 / 3 GiB (w tym `tmpfs /tmp` 1 GiB) | `/run/lemat/obrazy.sock` (wolumen współdzielony z `worker`) |
-| `sympy` | `lemat-sympy` | `uvicorn lemat_sympy.serwer:aplikacja --uds /run/lemat/sympy.sock` | 1 na replikę `worker` | 2 / 2,5 GiB | `/run/lemat/sympy.sock` |
+| `sympy` | `lemat-sympy` | `uvicorn lemat_sympy.server:aplikacja --uds /run/lemat/sympy.sock` | 1 na replikę `worker` | 2 / 2,5 GiB | `/run/lemat/sympy.sock` |
 | `scheduler` | `lemat-backend` | `dotnet Lemat.Scheduler.dll` | 2 (1 aktywna) | 0,5 / 512 MiB | brak (tylko `/zdrowie` na 8081) |
 | `migracje` | `lemat-backend` | `./efbundle --connection $LEMAT_BAZA_MIGRACJE` | 1 (jednorazowo) | 0,5 / 512 MiB | brak |
 
@@ -2026,19 +2046,19 @@ flowchart LR
         POW["Powiadomienia"]
         AUD["Audyt"]
         ORK["Orkiestracja<br/>Orkiestrator, handlery prac w tle"]
-        SYN["Orkiestracja.Synchroniczna<br/>IRekomendacjaSynchroniczna (ADR-023)"]
-        WSP["Wspolne + Wspolne.PraceWTle<br/>IJednostkaPracy, IZlecaniePrac (ADR-056)"]
+        SYN["Orchestration.Synchronous<br/>IRekomendacjaSynchroniczna (ADR-023)"]
+        WSP["Wspolne + Common.BackgroundJobs<br/>IJednostkaPracy, IZlecaniePrac (ADR-056)"]
         PORTY["Modele (porty)<br/>IModelDecyzyjny, IModelGeneratywny (klient czatu per rola),<br/>ISprawdzanieSymboliczne, IPredyktorSukcesu, IOgranicznikSzybkosci,<br/>IMagazynObiektow, IObrobkaObrazow, ISzablonyPromptow"]
     end
     DOM["Lemat.Domain<br/>agregaty, value objects, enumy,<br/>reguły 11 (FR-19…FR-28), Filtr danych osobowych"]
-    subgraph agenci["Lemat.Agenci"]
+    subgraph agenci["Lemat.Agents"]
         AREK["AgentRekomendujacy"]
         AGEN["AgentGenerujacy"]
         AROZ["AgentRozpoznajacy"]
         AOCE["AgentOceniajacy"]
         AWYJ["AgentWyjasniajacy"]
     end
-    subgraph modele["Lemat.Modele (adaptery)"]
+    subgraph modele["Lemat.Models (adaptery)"]
         ACB["CircuitBreakerModeluDecyzyjnego"]
         AJEV["JevAdapter"]
         AZAP["ZapasowyLlmAdapter"]
@@ -2075,40 +2095,40 @@ flowchart LR
 ```
 
 Strzałki ciągłe to wywołania; przerywane — implementacje interfejsów
-zdefiniowanych w `Lemat.Application` (odwrócenie zależności: `Lemat.Modele` i
+zdefiniowanych w `Lemat.Application` (odwrócenie zależności: `Lemat.Models` i
 `Lemat.Infrastructure` zależą od `Lemat.Application`, nie odwrotnie).
-Od wersji 3.1 moduły nie zależą od `Lemat.Application.Orkiestracja`:
+Od wersji 3.1 moduły nie zależą od `Lemat.Application.Orchestration`:
 kontrakty prac w tle i jednostki pracy są w `Wspolne`, a tryb synchroniczny
-rekomendacji — w osobnej przestrzeni `Orkiestracja.Synchroniczna` (C6-07).
+rekomendacji — w osobnej przestrzeni `Orchestration.Synchronous` (C6-07).
 
 ### 6.2 Odpowiedzialności modułów
 
-Moduł to para przestrzeni nazw `Lemat.Domain.<Modul>` (agregaty, reguły) i
-`Lemat.Application.<Modul>` (przypadki użycia, fasada, porty repozytoriów)
-oraz grupa endpointów `Lemat.Api/Endpointy/<Modul>Endpointy.cs`. Nazwy
+Moduł to para przestrzeni nazw `Lemat.Domain.<Module>` (agregaty, reguły) i
+`Lemat.Application.<Module>` (przypadki użycia, fasada, porty repozytoriów)
+oraz grupa endpointów `Lemat.Api/Endpoints/<Module>Endpoints.cs`. Nazwy
 modułów są pojęciami słownika w liczbie mnogiej albo nazwą czynności, aby
 przestrzeń nazw nie kolidowała z nazwą klasy agregatu (ADR-049 p. 6).
 
 | Moduł | Przestrzenie nazw | Odpowiedzialność | Właściciel danych (tabele) | Fasada (jedyne wejście z innych modułów) | Grupa tras API |
 |---|---|---|---|---|---|
-| Konta | `Lemat.Domain.Konta`, `Lemat.Domain.Konta.Rodo`, `Lemat.Application.Konta` | Rejestracja, logowanie, tokeny, role, flagi Nauczyciela (`weryfikator_globalny`, `recenzent_tresci`), statusy kont, usuwanie i przywracanie kont wszystkich ról (ADR-040, ADR-044), Zdarzenia RODO i ich rejestr poza bazą (ADR-041) | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania`, `zdarzenie_rodo` | `IKontaFasada` | `/auth`, `/uczniowie/ja`, `/nauczyciele/ja`, `/admin/uzytkownicy` |
-| Klasy | `Lemat.Domain.Klasy`, `Lemat.Application.Klasy` | Klasy, kody zaproszeń, członkostwo, archiwizacja, Przekazanie Klasy, Zestawy zadań, Przypisania | `klasa`, `czlonkostwo_klasy`, `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` | `IKlasyFasada` | `/klasy`, `/zestawy-zadan`, `/przypisania`, `/admin/klasy` |
-| Tresci | `Lemat.Domain.Tresci`, `Lemat.Application.Tresci` | Zadania i ich wersje, zasięg, Kryteria oceniania, Wkładki teoretyczne, Działy, Umiejętności, import Arkuszy CKE, Walidacja i Przegląd zadań, Zgłoszenia błędu w Zadaniu i wstrzymanie w doborze, pula Zadań diagnostycznych, zlecenia generowania i budżet generowania systemowego, kalibracja Poziomu trudności | `dzial`, `umiejetnosc`, `umiejetnosc_wymagana`, `arkusz_cke`, `import_arkusza`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `zalacznik_zadania`, `wkladka_teoretyczna`, `walidacja_zadania`, `przeglad_zadania`, `zlecenie_generowania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze`, `kalibracja_trudnosci` | `ITresciFasada` | `/dzialy`, `/umiejetnosci`, `/zadania`, `/zlecenia-generowania`, `/zgloszenia-bledu-zadan`, `/wkladki-teoretyczne`, `/admin/arkusze-cke`, `/admin/zadania`, `/admin/pula-diagnostyczna`, `/admin/wkladki-teoretyczne` |
-| Profil | `Lemat.Domain.Profil`, `Lemat.Application.Profil` | Profil ucznia, Wynik zadania, Test diagnostyczny, powtórki, odtwarzanie Profilu | `profil_ucznia`, `opanowanie_umiejetnosci`, `wynik_zadania`, `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `IProfilFasada` | `/uczniowie/{id}/profil`, `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne` |
-| Rekomendacje | `Lemat.Domain.Rekomendacje`, `Lemat.Application.Rekomendacje` | Ścieżka nauki, Seria, Rekomendacje (Agent rekomendujący przez fasadę Orkiestratora, ADR-023) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` | `IRekomendacjeFasada` | `/uczniowie/ja/rekomendacje`, `/uczniowie/ja/sciezka-nauki`, `/elementy-sciezki` |
-| Rozwiazania | `Lemat.Domain.Rozwiazania`, `Lemat.Application.Rozwiazania` | Przyjęcie i normalizacja zdjęć (sidecar `obrazy-api`), maskowanie, Transkrypcja, Poprawki Transkrypcji z limitami i Sprawdzeniem zgodności poprawek (ADR-036), Filtr danych osobowych (ADR-042), Odpowiedzi i kontekst próby (ADR-032), przyjęcie zgłoszenia błędu odczytu, kopie treningowe | `rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `odpowiedz`, `kopia_treningowa` | `IRozwiazaniaFasada` | `/rozwiazania`, `/zadania/{id}/odpowiedzi` |
-| Ocenianie | `Lemat.Domain.Ocenianie`, `Lemat.Application.Ocenianie` | Ocena, reguły FR-20/21/25/26/28, pewność, trasowanie do Weryfikacji (T-1 … T-7), Wskazówki | `ocena`, `ocena_kryterium` | `IOcenianieFasada` | `/rozwiazania/{id}/ocena` |
-| Weryfikacje | `Lemat.Domain.Weryfikacje`, `Lemat.Application.Weryfikacje` | Kolejka weryfikacji, Blokady weryfikacji i ich zwalnianie, szkice rozstrzygnięć, rozstrzygnięcia, korekty, eskalacja, kontrola przyjęć | `weryfikacja`, `szkic_rozstrzygniecia` | `IWeryfikacjeFasada` | `/weryfikacje`, `/rozwiazania/{id}/korekty`, `/rozwiazania/{id}/zgloszenie-bledu-odczytu`, `/admin/obciazenie-weryfikacji` |
-| Kalibracja | `Lemat.Domain.Kalibracja`, `Lemat.Application.Kalibracja` | Próbki kalibracyjne, Kalibratory pewności, Próg pewności, bezpieczniki trafności i poprawek (ADR-046), metryki NFR-02/03/04, ewaluacja ZT-1 | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `stan_bezpiecznika` | `IKalibracjaFasada` | `/admin/progi-pewnosci`, `/admin/kalibracja`, `/admin/bezpieczniki` |
-| Modele | `Lemat.Domain.Modele`, `Lemat.Application.Modele` (porty) | Konfiguracja modeli, plan pytań i decyzje składowe, dziennik decyzji, porty modeli i ogranicznika (implementacje: `Lemat.Modele`, `Lemat.Infrastructure`) | `konfiguracja_modelu`, `decyzja_modelu`, `limit_szybkosci_modelu` | `IModeleFasada` | `/admin/konfiguracje-modeli` |
-| Orkiestracja | `Lemat.Application.Orkiestracja` (Orkiestrator, handlery prac w tle), `Lemat.Application.Orkiestracja.Synchroniczna` (tryb synchroniczny, ADR-023 uzup. 3.1) | Maszyny stanów przepływów wieloagentowych, wykonywanie prac w tle, decyzja rekomendacji synchronicznej (6.3) | `praca_w_tle` (odczyt panelu; zapis — `Wspolne.PraceWTle`) | `IOrkiestrator` (wyłącznie panel Administratora), `IRekomendacjaSynchroniczna` (wyłącznie Rekomendacje) | `/admin/praca-w-tle` |
-| Powiadomienia | `Lemat.Domain.Powiadomienia`, `Lemat.Application.Powiadomienia` | Powiadomienia w aplikacji i ich strumień SSE (ADR-051) | `powiadomienie` | `IPowiadomieniaFasada` | `/powiadomienia` |
-| Audyt | `Lemat.Domain.Audyt`, `Lemat.Application.Audyt` | Dziennik działań Nauczycieli, Administratorów i zmian systemowych | `dziennik_audytu` | `IAudytFasada` | — |
-| Wspolne | `Lemat.Domain.Wspolne`, `Lemat.Application.Wspolne`, `Lemat.Application.Wspolne.PraceWTle` | Jądro współdzielone: identyfikatory silnie typowane, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci`, `Rownowaznosc`, kalendarz dni roboczych (`KalendarzDniRoboczych`, ADR-043), `TimeProvider`, `IJednostkaPracy`, `IZlecaniePrac`, `TypPracy`, `PulaPracy`, `IHandlerPracy` (ADR-056) | `dzien_wolny` | — (typy publiczne) | — |
+| Konta | `Lemat.Domain.Accounts`, `Lemat.Domain.Accounts.Gdpr`, `Lemat.Application.Accounts` | Rejestracja, logowanie, tokeny, role, flagi Nauczyciela (`weryfikator_globalny`, `recenzent_tresci`), statusy kont, usuwanie i przywracanie kont wszystkich ról (ADR-040, ADR-044), Zdarzenia RODO i ich rejestr poza bazą (ADR-041) | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania`, `zdarzenie_rodo` | `IKontaFasada` | `/auth`, `/uczniowie/ja`, `/nauczyciele/ja`, `/admin/uzytkownicy` |
+| Klasy | `Lemat.Domain.Classes`, `Lemat.Application.Classes` | Klasy, kody zaproszeń, członkostwo, archiwizacja, Przekazanie Klasy, Zestawy zadań, Przypisania | `klasa`, `czlonkostwo_klasy`, `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` | `IKlasyFasada` | `/klasy`, `/zestawy-zadan`, `/przypisania`, `/admin/klasy` |
+| Tresci | `Lemat.Domain.Content`, `Lemat.Application.Content` | Zadania i ich wersje, zasięg, Kryteria oceniania, Wkładki teoretyczne, Działy, Umiejętności, import Arkuszy CKE, Walidacja i Przegląd zadań, Zgłoszenia błędu w Zadaniu i wstrzymanie w doborze, pula Zadań diagnostycznych, zlecenia generowania i budżet generowania systemowego, kalibracja Poziomu trudności | `dzial`, `umiejetnosc`, `umiejetnosc_wymagana`, `arkusz_cke`, `import_arkusza`, `zadanie`, `zadanie_wersja`, `zadanie_umiejetnosc`, `kryterium_oceniania`, `zalacznik_zadania`, `wkladka_teoretyczna`, `walidacja_zadania`, `przeglad_zadania`, `zlecenie_generowania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze`, `kalibracja_trudnosci` | `ITresciFasada` | `/dzialy`, `/umiejetnosci`, `/zadania`, `/zlecenia-generowania`, `/zgloszenia-bledu-zadan`, `/wkladki-teoretyczne`, `/admin/arkusze-cke`, `/admin/zadania`, `/admin/pula-diagnostyczna`, `/admin/wkladki-teoretyczne` |
+| Profil | `Lemat.Domain.Profile`, `Lemat.Application.Profile` | Profil ucznia, Wynik zadania, Test diagnostyczny, powtórki, odtwarzanie Profilu | `profil_ucznia`, `opanowanie_umiejetnosci`, `wynik_zadania`, `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `IProfilFasada` | `/uczniowie/{id}/profil`, `/uczniowie/ja/test-diagnostyczny`, `/testy-diagnostyczne` |
+| Rekomendacje | `Lemat.Domain.Recommendations`, `Lemat.Application.Recommendations` | Ścieżka nauki, Seria, Rekomendacje (Agent rekomendujący przez fasadę Orkiestratora, ADR-023) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` | `IRekomendacjeFasada` | `/uczniowie/ja/rekomendacje`, `/uczniowie/ja/sciezka-nauki`, `/elementy-sciezki` |
+| Rozwiazania | `Lemat.Domain.Solutions`, `Lemat.Application.Solutions` | Przyjęcie i normalizacja zdjęć (sidecar `obrazy-api`), maskowanie, Transkrypcja, Poprawki Transkrypcji z limitami i Sprawdzeniem zgodności poprawek (ADR-036), Filtr danych osobowych (ADR-042), Odpowiedzi i kontekst próby (ADR-032), przyjęcie zgłoszenia błędu odczytu, kopie treningowe | `rozwiazanie`, `zdjecie_rozwiazania`, `transkrypcja`, `krok_transkrypcji`, `odpowiedz`, `kopia_treningowa` | `IRozwiazaniaFasada` | `/rozwiazania`, `/zadania/{id}/odpowiedzi` |
+| Ocenianie | `Lemat.Domain.Grading`, `Lemat.Application.Grading` | Ocena, reguły FR-20/21/25/26/28, pewność, trasowanie do Weryfikacji (T-1 … T-7), Wskazówki | `ocena`, `ocena_kryterium` | `IOcenianieFasada` | `/rozwiazania/{id}/ocena` |
+| Weryfikacje | `Lemat.Domain.Verifications`, `Lemat.Application.Verifications` | Kolejka weryfikacji, Blokady weryfikacji i ich zwalnianie, szkice rozstrzygnięć, rozstrzygnięcia, korekty, eskalacja, kontrola przyjęć | `weryfikacja`, `szkic_rozstrzygniecia` | `IWeryfikacjeFasada` | `/weryfikacje`, `/rozwiazania/{id}/korekty`, `/rozwiazania/{id}/zgloszenie-bledu-odczytu`, `/admin/obciazenie-weryfikacji` |
+| Kalibracja | `Lemat.Domain.Calibration`, `Lemat.Application.Calibration` | Próbki kalibracyjne, Kalibratory pewności, Próg pewności, bezpieczniki trafności i poprawek (ADR-046), metryki NFR-02/03/04, ewaluacja ZT-1 | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `stan_bezpiecznika` | `IKalibracjaFasada` | `/admin/progi-pewnosci`, `/admin/kalibracja`, `/admin/bezpieczniki` |
+| Modele | `Lemat.Domain.Models`, `Lemat.Application.Models` (porty) | Konfiguracja modeli, plan pytań i decyzje składowe, dziennik decyzji, porty modeli i ogranicznika (implementacje: `Lemat.Models`, `Lemat.Infrastructure`) | `konfiguracja_modelu`, `decyzja_modelu`, `limit_szybkosci_modelu` | `IModeleFasada` | `/admin/konfiguracje-modeli` |
+| Orkiestracja | `Lemat.Application.Orchestration` (Orkiestrator, handlery prac w tle), `Lemat.Application.Orchestration.Synchronous` (tryb synchroniczny, ADR-023 uzup. 3.1) | Maszyny stanów przepływów wieloagentowych, wykonywanie prac w tle, decyzja rekomendacji synchronicznej (6.3) | `praca_w_tle` (odczyt panelu; zapis — `Common.BackgroundJobs`) | `IOrkiestrator` (wyłącznie panel Administratora), `IRekomendacjaSynchroniczna` (wyłącznie Rekomendacje) | `/admin/praca-w-tle` |
+| Powiadomienia | `Lemat.Domain.Notifications`, `Lemat.Application.Notifications` | Powiadomienia w aplikacji i ich strumień SSE (ADR-051) | `powiadomienie` | `IPowiadomieniaFasada` | `/powiadomienia` |
+| Audyt | `Lemat.Domain.Audit`, `Lemat.Application.Audit` | Dziennik działań Nauczycieli, Administratorów i zmian systemowych | `dziennik_audytu` | `IAudytFasada` | — |
+| Wspolne | `Lemat.Domain.Common`, `Lemat.Application.Common`, `Lemat.Application.Common.BackgroundJobs` | Jądro współdzielone: identyfikatory silnie typowane, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci`, `Rownowaznosc`, kalendarz dni roboczych (`KalendarzDniRoboczych`, ADR-043), `TimeProvider`, `IJednostkaPracy`, `IZlecaniePrac`, `TypPracy`, `PulaPracy`, `IHandlerPracy` (ADR-056) | `dzien_wolny` | — (typy publiczne) | — |
 
 Tabele techniczne `klucz_idempotencji` (filtr endpointów `Lemat.Api`,
 repozytorium w `Lemat.Infrastructure`) i `limit_szybkosci_modelu`
-(`OgranicznikSzybkosci` w `Lemat.Infrastructure.Modele`) nie należą do modułu
+(`OgranicznikSzybkosci` w `Lemat.Infrastructure.Models`) nie należą do modułu
 domenowego. `dzien_wolny` przechodzi z modułu kont (2.4) do jądra
 współdzielonego, bo korzystają z niego Weryfikacje, Tresci (SLA Zgłoszeń) i
 Kalibracja (termin Kontroli).
@@ -2121,16 +2141,16 @@ Reguły zależności między modułami (egzekwowane w 6.5):
 2. Przypadek użycia modułu X korzysta z modułu Y wyłącznie przez interfejs
    fasady `Lemat.Application.Y.I<Y>Fasada` (np. Ocenianie pobiera Kryteria
    oceniania przez `ITresciFasada.PobierzZadanieDoOcenyAsync`).
-3. Orkiestracja (`Lemat.Application.Orkiestracja`) może korzystać z fasad
+3. Orkiestracja (`Lemat.Application.Orchestration`) może korzystać z fasad
    wszystkich modułów; **żaden moduł nie korzysta z
-   `Lemat.Application.Orkiestracja`** (wersja 3.1, C6-07). Zlecenie pracy w
-   bieżącej transakcji jest kontraktem jądra (`Wspolne.PraceWTle.IZlecaniePrac`),
-   a moduł Rekomendacje korzysta z `Orkiestracja.Synchroniczna.IRekomendacjaSynchroniczna`,
+   `Lemat.Application.Orchestration`** (wersja 3.1, C6-07). Zlecenie pracy w
+   bieżącej transakcji jest kontraktem jądra (`Common.BackgroundJobs.IZlecaniePrac`),
+   a moduł Rekomendacje korzysta z `Orchestration.Synchronous.IRekomendacjaSynchroniczna`,
    która zależy wyłącznie od `IAgentRekomendujacy` i fasad odczytu Profil,
    Tresci, Klasy, Konta — nie od `IRekomendacjeFasada`. Test
    `BrakCykliMiedzyModulamiAplikacji` (`Lemat.Architecture.Tests`) buduje
-   graf zależności przestrzeni nazw `Lemat.Application.<Modul>` (węzły: 13
-   modułów z tabeli, `Orkiestracja` i `Orkiestracja.Synchroniczna` osobno,
+   graf zależności przestrzeni nazw `Lemat.Application.<Module>` (węzły: 13
+   modułów z tabeli, `Orkiestracja` i `Orchestration.Synchronous` osobno,
    `Wspolne` pominięte jako jądro) z metadanych typów (Mono.Cecil przez
    NetArchTest) i wymaga, by był acykliczny.
 4. Transakcja obejmuje zmiany agregatów jednego przypadku użycia; zmiany w
@@ -2140,8 +2160,8 @@ Reguły zależności między modułami (egzekwowane w 6.5):
 ### 6.3 Orkiestrator
 
 Orkiestrator nie jest osobnym serwisem, lecz klasą
-`Lemat.Application.Orkiestracja.Orkiestrator` (z handlerami prac w tle w
-`Lemat.Application.Orkiestracja.Handlery`) wykonywaną w dwóch trybach:
+`Lemat.Application.Orchestration.Orkiestrator` (z handlerami prac w tle w
+`Lemat.Application.Orchestration.Handlers`) wykonywaną w dwóch trybach:
 
 - **Tryb asynchroniczny (proces `Lemat.Worker`)** — wszystkie przepływy
   wieloagentowe: rozpoznanie → ocena → wskazówka → aktualizacja Profilu,
@@ -2172,7 +2192,7 @@ Orkiestrator nie jest osobnym serwisem, lecz klasą
      PoWyczerpaniuAsync(…)`; 13.4.1). Zapis wyniku pracy ma warunek
      `wykonawca = @ja AND status = 'W_TOKU'` (C6-15 p. 1).
 - **Tryb synchroniczny (proces `Lemat.Api`)** — jeden przepływ, realizowany
-  przez `IRekomendacjaSynchroniczna` (`Lemat.Application.Orkiestracja.Synchroniczna`,
+  przez `IRekomendacjaSynchroniczna` (`Lemat.Application.Orchestration.Synchronous`,
   implementacja `RekomendacjaSynchroniczna`) wywoływaną przez przypadek
   użycia modułu Rekomendacje `NastepnyElementHandler` przy `GET
   /uczniowie/ja/rekomendacje/nastepna` (C6-07):
@@ -2219,28 +2239,29 @@ Solucja `backend/Lemat.slnx` (format XML solucji, domyślny w .NET 10):
 |---|---|---|---|---|
 | `Lemat.Domain` | biblioteka (`Microsoft.NET.Sdk`) | Agregaty, encje, value objects, enumy, zdarzenia domenowe, reguły czyste (11.1–11.3, Filtr danych osobowych, limity Poprawek, Zgodność Oceny) | — | brak (tylko BCL) |
 | `Lemat.Application` | biblioteka | Przypadki użycia (komendy i zapytania z handlerami), fasady modułów, porty repozytoriów i modeli, Orkiestrator i handlery prac w tle, `IJednostkaPracy`, `IZlecaniePrac`, `LematOpcje` | `Lemat.Domain` | `Microsoft.Extensions.DependencyInjection.Abstractions`, `Microsoft.Extensions.Logging.Abstractions`, `Microsoft.Extensions.Options`, `Microsoft.Extensions.AI.Abstractions` (od 3.1, ADR-058: `IChatClient`, `AIFunction`, `AIJsonUtilities` w kontraktach portów) |
-| `Lemat.Agenci` | biblioteka | Pięciu Agentów (10.1–10.5), szablony promptów systemowych (`SzablonyPromptow : ISzablonyPromptow`), budowniczowie stanów i wiadomości, plugin Semantic Kernel, predyktor Elo | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml` 1.81 (od 3.1, C6-10; bez `PromptTemplates.Handlebars`; metapakiet `Microsoft.SemanticKernel` jest zakazany w `Directory.Packages.props`, bo wciąga `Azure.AI.OpenAI` 2.9.0-beta.1 i daje NU1605 przy `Azure.AI.OpenAI` 2.1.0 — C7-15 p. 6); walidacja odpowiedzi przez port `IWywolanieUstrukturyzowane` (3.2) |
-| `Lemat.Modele` | biblioteka | Adaptery portów modeli: `FabrykaKlientowCzatu : IModelGeneratywny` (potok `ChatClientBuilder`, ADR-058), `WywolanieUstrukturyzowane : IWywolanieUstrukturyzowane` (schemat, walidacja, naprawa — 3.2, C7-08), `JevAdapter`, `ZapasowyLlmAdapter`, `CircuitBreakerModeluDecyzyjnego`, `PredyktorSukcesuGbm`, rejestr adapterów, implementacje Mock | `Lemat.Application`, `Lemat.Domain` | `JsonSchema.Net` (od 3.2), `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI` 10.11 (wymusza `OpenAI` 2.14.0), `Azure.AI.OpenAI` 2.1.0 (zbudowany na `OpenAI` 2.1.0 — zgodność chroni test kontraktu `KontraktWywolaniaOpenAiTests` na WireMock.Net, ADR-058 uzup. 3.2 p. 6), `Microsoft.Extensions.Http`, `Microsoft.ML`, `Microsoft.ML.LightGbm` (od 3.1, C6-12 p. 7) |
+| `Lemat.Agents` | biblioteka | Pięciu Agentów (10.1–10.5), szablony promptów systemowych (`SzablonyPromptow : ISzablonyPromptow`), budowniczowie stanów i wiadomości, plugin Semantic Kernel, predyktor Elo | `Lemat.Application`, `Lemat.Domain` | `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml` 1.81 (od 3.1, C6-10; bez `PromptTemplates.Handlebars`; metapakiet `Microsoft.SemanticKernel` jest zakazany w `Directory.Packages.props`, bo wciąga `Azure.AI.OpenAI` 2.9.0-beta.1 i daje NU1605 przy `Azure.AI.OpenAI` 2.1.0 — C7-15 p. 6); walidacja odpowiedzi przez port `IWywolanieUstrukturyzowane` (3.2) |
+| `Lemat.Models` | biblioteka | Adaptery portów modeli: `FabrykaKlientowCzatu : IModelGeneratywny` (potok `ChatClientBuilder`, ADR-058), `WywolanieUstrukturyzowane : IWywolanieUstrukturyzowane` (schemat, walidacja, naprawa — 3.2, C7-08), `JevAdapter`, `ZapasowyLlmAdapter`, `CircuitBreakerModeluDecyzyjnego`, `PredyktorSukcesuGbm`, rejestr adapterów, implementacje Mock | `Lemat.Application`, `Lemat.Domain` | `JsonSchema.Net` (od 3.2), `Microsoft.Extensions.AI`, `Microsoft.Extensions.AI.OpenAI` 10.11 (wymusza `OpenAI` 2.14.0), `Azure.AI.OpenAI` 2.1.0 (zbudowany na `OpenAI` 2.1.0 — zgodność chroni test kontraktu `KontraktWywolaniaOpenAiTests` na WireMock.Net, ADR-058 uzup. 3.2 p. 6), `Microsoft.Extensions.Http`, `Microsoft.ML`, `Microsoft.ML.LightGbm` (od 3.1, C6-12 p. 7) |
 | `Lemat.Infrastructure` | biblioteka | `LematDbContext`, konfiguracje encji, migracje, `JednostkaPracyEf`, `ZlecaniePracSql`, repozytoria i zapytania, sklep prac w tle (Npgsql), ogranicznik szybkości, magazyn S3, rejestr Zdarzeń RODO, klienci sidecarów, e-mail, tokeny JWT, haszowanie haseł | `Lemat.Application`, `Lemat.Domain` | `Microsoft.EntityFrameworkCore`, `Npgsql.EntityFrameworkCore.PostgreSQL`, `EFCore.NamingConventions`, `Microsoft.EntityFrameworkCore.Design` (`PrivateAssets=all`), `AWSSDK.S3`, `MailKit`, `Konscious.Security.Cryptography.Argon2`, `Microsoft.IdentityModel.JsonWebTokens`, `Microsoft.Extensions.Http.Resilience` (S3, SMTP) |
-| `Lemat.Api` | aplikacja web (`Microsoft.NET.Sdk.Web`) | Punkt kompozycji procesu `api`: endpointy, DTO, walidatory, uwierzytelnianie, idempotencja, SSE, OpenAPI | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | `Microsoft.AspNetCore.OpenApi`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `FluentValidation`, `OpenTelemetry.Extensions.Hosting` |
-| `Lemat.Worker` | usługa robocza (`Microsoft.NET.Sdk.Worker`) | Punkt kompozycji procesu `worker`: hosty pul prac w tle | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele` | `OpenTelemetry.Extensions.Hosting` |
+| `Lemat.Api` | aplikacja web (`Microsoft.NET.Sdk.Web`) | Punkt kompozycji procesu `api`: endpointy, DTO, walidatory, uwierzytelnianie, idempotencja, SSE, OpenAPI | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agents`, `Lemat.Models` | `Microsoft.AspNetCore.OpenApi`, `Microsoft.AspNetCore.Authentication.JwtBearer`, `FluentValidation`, `OpenTelemetry.Extensions.Hosting` |
+| `Lemat.Worker` | usługa robocza (`Microsoft.NET.Sdk.Worker`) | Punkt kompozycji procesu `worker`: hosty pul prac w tle | `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Agents`, `Lemat.Models` | `OpenTelemetry.Extensions.Hosting` |
 | `Lemat.Scheduler` | usługa robocza | Punkt kompozycji procesu `scheduler`: harmonogram 13.5 | `Lemat.Application`, `Lemat.Infrastructure` | `Cronos` |
+| `Lemat.Tools` | aplikacja konsolowa (`Microsoft.NET.Sdk`) | Polecenia administracyjne `seed-dev` (10.0.6, ADR-065 p. 6) i `utworz-administratora` (ADR-071); w wersjach 3.2–3.3 nazwa `Lemat.Narzedzia` (ADR-075) | `Lemat.Application`, `Lemat.Infrastructure` | brak dodatkowych |
 | `Lemat.ImageSandbox` | aplikacja web (Kestrel na gnieździe Unix) | Normalizacja, maskowanie, wycinki zdjęć (ADR-052) | — (celowo bez referencji do kodu Lemat) | `Magick.NET-Q8-AnyCPU` |
 | `Lemat.Domain.Tests` | testy | Testy jednostkowe reguł i niezmienników | `Lemat.Domain` | `xunit.v3`, `Shouldly`, `FsCheck.Xunit.v3` |
-| `Lemat.Application.Tests` | testy | Przypadki użycia na fałszywych repozytoriach i modelach Mock | `Lemat.Application`, `Lemat.Modele` | `xunit.v3`, `NSubstitute`, `Shouldly` |
-| `Lemat.Agenci.Tests` | testy | Agenci z modelami Mock, zgodność szablonów promptów | `Lemat.Agenci`, `Lemat.Modele` | `xunit.v3`, `Shouldly` |
-| `Lemat.Modele.Tests` | testy | Kontrakty adapterów (WireMock.Net), circuit breaker, Mock | `Lemat.Modele` | `WireMock.Net`, `xunit.v3` |
+| `Lemat.Application.Tests` | testy | Przypadki użycia na fałszywych repozytoriach i modelach Mock | `Lemat.Application`, `Lemat.Models` | `xunit.v3`, `NSubstitute`, `Shouldly` |
+| `Lemat.Agents.Tests` | testy | Agenci z modelami Mock, zgodność szablonów promptów | `Lemat.Agents`, `Lemat.Models` | `xunit.v3`, `Shouldly` |
+| `Lemat.Models.Tests` | testy | Kontrakty adapterów (WireMock.Net), circuit breaker, Mock | `Lemat.Models` | `WireMock.Net`, `xunit.v3` |
 | `Lemat.Infrastructure.Tests` | testy integracyjne | PostgreSQL 16, MinIO i `lemat-sympy` w Testcontainers: migracje, triggery, CHECK, `SKIP LOCKED`, ogranicznik, schemat zgodny z DDL | `Lemat.Infrastructure` | `Testcontainers.PostgreSql`, `Testcontainers.Minio` |
 | `Lemat.Api.Tests` | testy integracyjne | Endpointy przez `WebApplicationFactory`, ProblemDetails, ETag/If-Match, idempotencja, SSE, kontrakt OpenAPI | `Lemat.Api` | `Microsoft.AspNetCore.Mvc.Testing`, `Testcontainers.PostgreSql` |
 | `Lemat.Architecture.Tests` | testy | Reguły warstw i modułów (6.5), brak cykli modułów (6.2 reguła 3), kontenery DI `api`/`worker`/`scheduler` (`ValidateOnBuild`, `ValidateScopes`), test słownika (3.4), przestrzenie nazw (ADR-049 p. 11) | wszystkie projekty `src/` | `NetArchTest.Rules`, `YamlDotNet`, `Microsoft.Extensions.Hosting` |
-| `Lemat.Symulacje` | testy (długie, uruchamiane nocą i przed wydaniem) | Symulacje bezpiecznika (11.5.3), ogranicznika (13.2, symulowany zegar nad algorytmem `OgranicznikSzybkosci`), obciążenia (17.7) z ustalonym ziarnem | `Lemat.Domain`, `Lemat.Application`, `Lemat.Infrastructure` (od 3.1, C6-12 p. 7) | `xunit.v3`, `FsCheck.Xunit.v3`, `Microsoft.Extensions.TimeProvider.Testing` |
+| `Lemat.Simulations` | testy (długie, uruchamiane nocą i przed wydaniem) | Symulacje bezpiecznika (11.5.3), ogranicznika (13.2, symulowany zegar nad algorytmem `OgranicznikSzybkosci`), obciążenia (17.7) z ustalonym ziarnem | `Lemat.Domain`, `Lemat.Application`, `Lemat.Infrastructure` (od 3.1, C6-12 p. 7) | `xunit.v3`, `FsCheck.Xunit.v3`, `Microsoft.Extensions.TimeProvider.Testing` |
 
 ```mermaid
 flowchart BT
     DOM["Lemat.Domain"]
     APP["Lemat.Application"]
-    AGE["Lemat.Agenci"]
-    MOD["Lemat.Modele"]
+    AGE["Lemat.Agents"]
+    MOD["Lemat.Models"]
     INF["Lemat.Infrastructure"]
     API["Lemat.Api"]
     WRK["Lemat.Worker"]
@@ -2267,13 +2288,13 @@ procesie testu.
 | Projekt | Może zależeć od | Nie może zależeć od | Egzekwowanie |
 |---|---|---|---|
 | `Lemat.Domain` | BCL | dowolny pakiet NuGet, `System.Net.Http`, `Microsoft.EntityFrameworkCore*`, `Microsoft.AspNetCore*`, `Microsoft.Extensions.AI*`, `Microsoft.SemanticKernel*`, `Npgsql*`; `DateTime.Now`, `DateTimeOffset.UtcNow` (czas przekazywany jako parametr `DateTimeOffset teraz`) | brak `PackageReference` (test `ProjektDomenyBezPakietow`), NetArchTest `DomenaNiezaleznaOdInfrastruktury`, BannedApiAnalyzers |
-| `Lemat.Application` | `Lemat.Domain`, abstrakcje `Microsoft.Extensions.*` (w tym `Microsoft.Extensions.AI.Abstractions`, ADR-058) | EF Core, Npgsql, ASP.NET Core, Semantic Kernel, `Microsoft.Extensions.AI` (implementacje), SDK dostawców modeli, `Lemat.Infrastructure`, `Lemat.Agenci`, `Lemat.Modele`; w kodzie: `ChatClientBuilder`, `AsIChatClient` | referencje projektów, NetArchTest `AplikacjaBezInfrastruktury`, BannedApiAnalyzers |
-| `Lemat.Agenci` | `Lemat.Application`, `Lemat.Domain`, `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml`, `JsonSchema.Net` | EF Core, Npgsql, ASP.NET Core, SDK dostawców (`OpenAI.*`, `Azure.AI.*`), `Lemat.Infrastructure`, `Lemat.Modele`; parametry konstruktorów typu `IChatClient`, `IChatCompletionService`, `Kernel`; `FunctionChoiceBehavior`, `Kernel.InvokePromptAsync` | referencje projektów, BannedApiAnalyzers (`BannedSymbols.txt`), NetArchTest `AgenciTylkoPrzezPorty`, `AgentNieRozwiazujeKlientaCzatuZDi` (ADR-058) |
-| `Lemat.Modele` | `Lemat.Application`, `Lemat.Domain`, Microsoft.Extensions.AI z pakietami dostawców | EF Core, Npgsql, ASP.NET Core, `Lemat.Infrastructure`, `Lemat.Agenci` | referencje projektów, NetArchTest `SdkDostawcowTylkoWModelach` (typy z `OpenAI.*`, `Azure.AI.*` występują wyłącznie w `Lemat.Modele`) |
-| `Lemat.Infrastructure` | `Lemat.Application`, `Lemat.Domain`, pakiety infrastruktury | ASP.NET Core, `Lemat.Agenci`, `Lemat.Modele`, SDK dostawców modeli | referencje projektów, NetArchTest |
+| `Lemat.Application` | `Lemat.Domain`, abstrakcje `Microsoft.Extensions.*` (w tym `Microsoft.Extensions.AI.Abstractions`, ADR-058) | EF Core, Npgsql, ASP.NET Core, Semantic Kernel, `Microsoft.Extensions.AI` (implementacje), SDK dostawców modeli, `Lemat.Infrastructure`, `Lemat.Agents`, `Lemat.Models`; w kodzie: `ChatClientBuilder`, `AsIChatClient` | referencje projektów, NetArchTest `AplikacjaBezInfrastruktury`, BannedApiAnalyzers |
+| `Lemat.Agents` | `Lemat.Application`, `Lemat.Domain`, `Microsoft.Extensions.AI.Abstractions`, `Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml`, `JsonSchema.Net` | EF Core, Npgsql, ASP.NET Core, SDK dostawców (`OpenAI.*`, `Azure.AI.*`), `Lemat.Infrastructure`, `Lemat.Models`; parametry konstruktorów typu `IChatClient`, `IChatCompletionService`, `Kernel`; `FunctionChoiceBehavior`, `Kernel.InvokePromptAsync` | referencje projektów, BannedApiAnalyzers (`BannedSymbols.txt`), NetArchTest `AgenciTylkoPrzezPorty`, `AgentNieRozwiazujeKlientaCzatuZDi` (ADR-058) |
+| `Lemat.Models` | `Lemat.Application`, `Lemat.Domain`, Microsoft.Extensions.AI z pakietami dostawców | EF Core, Npgsql, ASP.NET Core, `Lemat.Infrastructure`, `Lemat.Agents` | referencje projektów, NetArchTest `SdkDostawcowTylkoWModelach` (typy z `OpenAI.*`, `Azure.AI.*` występują wyłącznie w `Lemat.Models`) |
+| `Lemat.Infrastructure` | `Lemat.Application`, `Lemat.Domain`, pakiety infrastruktury | ASP.NET Core, `Lemat.Agents`, `Lemat.Models`, SDK dostawców modeli | referencje projektów, NetArchTest |
 | `Lemat.Api`, `Lemat.Worker`, `Lemat.Scheduler` | wszystkie biblioteki `src/` (punkty kompozycji) | siebie nawzajem; w `Lemat.Api` endpointy nie używają `LematDbContext` ani repozytoriów — wyłącznie handlerów przypadków użycia i fasad | referencje projektów, NetArchTest `EndpointyTylkoPrzezAplikacje` |
 | `Lemat.ImageSandbox` | `Magick.NET-Q8-AnyCPU`, ASP.NET Core | jakikolwiek projekt Lemat, sieć wychodząca | referencje projektów; `network_mode: none` (5.3) |
-| Moduły w `Lemat.Domain` / `Lemat.Application` | 6.2 reguły 1–3 | typy innych modułów poza identyfikatorami, enumami i fasadami; jakikolwiek typ z `Lemat.Application.Orkiestracja` (poza Rekomendacje → `Orkiestracja.Synchroniczna`); cykle między modułami | `BrakCykliMiedzyModulamiAplikacji`; NetArchTest z regułą własną `ZaleznoscMiedzyModulamiTylkoPrzezFasade` (`ICustomRule`: typ z `Lemat.Application.X` może używać z `Lemat.Application.Y` wyłącznie typów z przestrzeni `Lemat.Application.Y` oznaczonych atrybutem `[Fasada]` i ich DTO; typ z `Lemat.Domain.X` może używać z `Lemat.Domain.Y` wyłącznie typów `*Id` i enumów) |
+| Moduły w `Lemat.Domain` / `Lemat.Application` | 6.2 reguły 1–3 | typy innych modułów poza identyfikatorami, enumami i fasadami; jakikolwiek typ z `Lemat.Application.Orchestration` (poza Rekomendacje → `Orchestration.Synchronous`); cykle między modułami | `BrakCykliMiedzyModulamiAplikacji`; NetArchTest z regułą własną `ZaleznoscMiedzyModulamiTylkoPrzezFasade` (`ICustomRule`: typ z `Lemat.Application.X` może używać z `Lemat.Application.Y` wyłącznie typów z przestrzeni `Lemat.Application.Y` oznaczonych atrybutem `[Fasada]` i ich DTO; typ z `Lemat.Domain.X` może używać z `Lemat.Domain.Y` wyłącznie typów `*Id` i enumów) |
 
 Testy architektury są w `backend/tests/Lemat.Architecture.Tests` i działają
 w każdym przebiegu CI; naruszenie kończy budowę błędem (jak `import-linter`
@@ -2283,37 +2304,39 @@ w wersji 2.4).
 
 Pełny opis agentów (kontrakty C#, pluginy, orkiestracja, czas i błędy,
 telemetria, Mock) — sekcja 10; prompty systemowe i schematy odpowiedzi —
-[`docs/spec/prompty.md`](spec/prompty.md); decyzje — ADR-055, ADR-058.
+[`docs/spec/prompts.md`](spec/prompts.md); decyzje — ADR-055, ADR-058.
 
-| Agent (słownik) | Interfejs (`Lemat.Application.Agenci.<Obszar>`) | Implementacja (`Lemat.Agenci`) | Porty | Role `konfiguracja_modelu` | Semantic Kernel | Wywołuje |
+| Agent (słownik) | Interfejs (`Lemat.Application.Agents.<Area>`) | Implementacja (`Lemat.Agents`) | Porty | Role `konfiguracja_modelu` | Semantic Kernel | Wywołuje |
 |---|---|---|---|---|---|---|
-| Agent rekomendujący | `Rekomendacje.IAgentRekomendujacy` | `Rekomendacje.AgentRekomendujacy` (+ `PredyktorSukcesuElo : IPredyktorSukcesu`) | `IDaneDoboru`, `IPredyktorSukcesu`, `IModelDecyzyjny` (wyłącznie Q-RE-01) | `DECYZYJNY_GLOWNY` | brak — uzasadnienie z szablonów (ADR-011) | `IRekomendacjaSynchroniczna` (6.3) |
-| Agent generujący | `Generowanie.IAgentGenerujacy` | `Generowanie.AgentGenerujacy` | `IModelGeneratywny`, `IModelDecyzyjny` (Q-WA-*), `ISprawdzanieSymboliczne` | `GENERATYWNY_ZADANIA`, `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE`, `GENERATYWNY_WKLADKI`, `DECYZYJNY_GLOWNY` | szablony promptów systemowych; plugin `SprawdzanieSymbolicznePlugin` (`[KernelFunction] sprawdz_rownowaznosc`, `postac_liniowa`, rejestrowany jako plugin `sympy` → narzędzia `sympy_sprawdz_rownowaznosc`, `sympy_postac_liniowa`) przekazywany jako `AIFunction` do `ChatOptions.Tools`, pętla w `FunctionInvokingChatClient`, limit 8 wywołań (`FunkcjaZLimitem`, 10.2.4, ADR-058 uzup. 3.2) | handlery `GENERUJ_ZADANIE`, `WALIDUJ_ZADANIE`, `GENERUJ_SZKIC_WKLADKI` |
-| Agent rozpoznający | `Rozpoznawanie.IAgentRozpoznajacy` | `Rozpoznawanie.AgentRozpoznajacy` | `IModelGeneratywny`, `IMagazynObiektow`, `IObrobkaObrazow`, `ISprawdzanieSymboliczne` (poprawność LaTeX) | `ROZPOZNAWANIE_PISMA` | szablony promptów systemowych; bez pluginów (ustrukturyzowane wyjście) | handlery `ROZPOZNAJ_PISMO`, `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`; Filtr danych osobowych i maskowanie stosuje handler po powrocie agenta |
-| Agent oceniający | `Ocenianie.IAgentOceniajacy` | `Ocenianie.AgentOceniajacy` | `IModelDecyzyjny` (`PlanPytan`), `ISprawdzanieSymboliczne`, `IModelGeneratywny` (Opinia pomocnicza, 10.4.5) | `DECYZYJNY_GLOWNY`, `DECYZYJNY_ZAPASOWY`, `GENERATYWNY_OPINIA_POMOCNICZA` | szablon promptu systemowego wyłącznie dla Opinii pomocniczej; stan dla Modelu decyzyjnego (10.4.2) buduje kod C# `BudowniczyStanuOceny` bez SK (C6-10 p. 4); reguły 11 w `Lemat.Domain.Ocenianie` | handlery `OCEN_ROZWIAZANIE`, `PONOW_OCENE`, `OPINIA_POMOCNICZA` |
-| Agent wyjaśniający | `Wyjasnianie.IAgentWyjasniajacy` | `Wyjasnianie.AgentWyjasniajacy` | `IModelGeneratywny`, `ISprawdzanieSymboliczne` (strażnik wycieku) | `GENERATYWNY_WSKAZOWKI` | szablon promptu systemowego; bez pluginów | handler `NAPISZ_WSKAZOWKE` |
+| Agent rekomendujący | `Recommendations.IAgentRekomendujacy` | `Recommendations.AgentRekomendujacy` (+ `PredyktorSukcesuElo : IPredyktorSukcesu`) | `IDaneDoboru`, `IPredyktorSukcesu`, `IModelDecyzyjny` (wyłącznie Q-RE-01) | `DECYZYJNY_GLOWNY` | brak — uzasadnienie z szablonów (ADR-011) | `IRekomendacjaSynchroniczna` (6.3) |
+| Agent generujący | `Generation.IAgentGenerujacy` | `Generation.AgentGenerujacy` | `IModelGeneratywny`, `IModelDecyzyjny` (Q-WA-*), `ISprawdzanieSymboliczne` | `GENERATYWNY_ZADANIA`, `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE`, `GENERATYWNY_WKLADKI`, `DECYZYJNY_GLOWNY` | szablony promptów systemowych; plugin `SprawdzanieSymbolicznePlugin` (`[KernelFunction] sprawdz_rownowaznosc`, `postac_liniowa`, rejestrowany jako plugin `sympy` → narzędzia `sympy_sprawdz_rownowaznosc`, `sympy_postac_liniowa`) przekazywany jako `AIFunction` do `ChatOptions.Tools`, pętla w `FunctionInvokingChatClient`, limit 8 wywołań (`FunkcjaZLimitem`, 10.2.4, ADR-058 uzup. 3.2) | handlery `GENERUJ_ZADANIE`, `WALIDUJ_ZADANIE`, `GENERUJ_SZKIC_WKLADKI` |
+| Agent rozpoznający | `Recognition.IAgentRozpoznajacy` | `Recognition.AgentRozpoznajacy` | `IModelGeneratywny`, `IMagazynObiektow`, `IObrobkaObrazow`, `ISprawdzanieSymboliczne` (poprawność LaTeX) | `ROZPOZNAWANIE_PISMA` | szablony promptów systemowych; bez pluginów (ustrukturyzowane wyjście) | handlery `ROZPOZNAJ_PISMO`, `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`; Filtr danych osobowych i maskowanie stosuje handler po powrocie agenta |
+| Agent oceniający | `Grading.IAgentOceniajacy` | `Grading.AgentOceniajacy` | `IModelDecyzyjny` (`PlanPytan`), `ISprawdzanieSymboliczne`, `IModelGeneratywny` (Opinia pomocnicza, 10.4.5) | `DECYZYJNY_GLOWNY`, `DECYZYJNY_ZAPASOWY`, `GENERATYWNY_OPINIA_POMOCNICZA` | szablon promptu systemowego wyłącznie dla Opinii pomocniczej; stan dla Modelu decyzyjnego (10.4.2) buduje kod C# `BudowniczyStanuOceny` bez SK (C6-10 p. 4); reguły 11 w `Lemat.Domain.Grading` | handlery `OCEN_ROZWIAZANIE`, `PONOW_OCENE`, `OPINIA_POMOCNICZA` |
+| Agent wyjaśniający | `Explanation.IAgentWyjasniajacy` | `Explanation.AgentWyjasniajacy` | `IModelGeneratywny`, `ISprawdzanieSymboliczne` (strażnik wycieku) | `GENERATYWNY_WSKAZOWKI` | szablon promptu systemowego; bez pluginów | handler `NAPISZ_WSKAZOWKE` |
 
-Adaptery portów (`Lemat.Modele`, przestrzeń nazw w nawiasie):
+Adaptery portów (`Lemat.Models`, przestrzeń nazw w nawiasie):
 
-| Port (`Lemat.Application.Modele`) | Adapter | Klucz `konfiguracja_modelu.dostawca` | Uwagi |
+| Port (`Lemat.Application.Models`) | Adapter | Klucz `konfiguracja_modelu.dostawca` | Uwagi |
 |---|---|---|---|
-| `IModelDecyzyjny` | `CircuitBreakerModeluDecyzyjnego` (`Lemat.Modele.Decyzyjne`) — dekorator wybierający model główny albo zapasowy dla całej Oceny (ADR-009) | — | reguły obwodu 13.2: 3 kolejne błędy lub ≥ 50% w 20 s przy ≥ 6 wywołaniach; półotwarty po 60 s; `429` i brak przydziału nie liczą się (ADR-039); implementacja własna (Polly nie ma reguły „3 kolejne błędy”) |
-| `IModelDecyzyjny` | `JevAdapter` (`Lemat.Modele.Jev`) | `typesafe-jev` | typowany `HttpClient`, tryby `WSADOWY` / `POJEDYNCZY` (13.2) |
-| `IModelDecyzyjny` | `ZapasowyLlmAdapter` (`Lemat.Modele.Zapasowy`) | `zapasowy-llm` (z parametrem `dostawca_llm`) | cały `PlanPytan` jednym wywołaniem klienta czatu roli `DECYZYJNY_ZAPASOWY` ze schematem JSON (13.2, prompt `plan-pytan-v1`) |
-| `IModelGeneratywny` | `FabrykaKlientowCzatu` (`Lemat.Modele.Llm`) — zwraca `KlientCzatuRoli` z potokiem `ChatClientBuilder` (OpenTelemetry, limit czasu, koszt, ogranicznik dla rozpoznawania, klasyfikacja błędów, `UseFunctionInvocation`; ADR-058 p. 3) | `azure-openai`, `openai-zgodny`, `mock` | `azure-openai` — wdrożenie Azure OpenAI w strefie danych UE (`Azure.AI.OpenAI`), `openai-zgodny` — dowolny punkt końcowy zgodny z API OpenAI w UE (`Microsoft.Extensions.AI.OpenAI`); wybór dostawcy przy G-6 (A-07); rola `ROZPOZNAWANIE_PISMA` z wejściem obrazowym `DataContent` (`image/jpeg`) i wymuszonym schematem JSON (ADR-004) |
-| wszystkie porty modeli | `MockChatClient : IChatClient` (wewnątrz prawdziwego potoku), `MockModelDecyzyjny` (`Lemat.Modele.Mock`) | `mock` | zachowanie deterministyczne opisane w 10.0.6; aktywacja konfiguracji `mock` w środowisku `Production` → `409 DOSTAWCA_NIEDOZWOLONY`, a start procesu z aktywną konfiguracją `mock` w `Production` kończy się błędem |
-| `ISprawdzanieSymboliczne` | `SympySidecarKlient` (`Lemat.Infrastructure.Piaskownice`) | — | ADR-050; w testach jednostkowych `FalszyweSprawdzanieSymboliczne` |
-| `IObrobkaObrazow` | `ImageSandboxKlient` (`Lemat.Infrastructure.Piaskownice`) | — | ADR-052; w testach jednostkowych `MockObrobkaObrazow` |
-| `IOgranicznikSzybkosci` | `OgranicznikSzybkosci` (`Lemat.Infrastructure.Modele`) | — | tabela `limit_szybkosci_modelu`, blokada doradcza (13.2) |
-| `IPredyktorSukcesu` | `PredyktorSukcesuElo` (`Lemat.Agenci.Rekomendacje`); po 20 000 Wyników zadania eksperymentalnie `PredyktorSukcesuGbm` (`Lemat.Modele.Predyktory`, ML.NET `Microsoft.ML.LightGbm`) | — | ADR-010 |
-| `ISzablonyPromptow` | `SzablonyPromptow` (`Lemat.Agenci.Wspolne`) | — | używany także przez `ZapasowyLlmAdapter` (13.2) |
+| `IModelDecyzyjny` | `CircuitBreakerModeluDecyzyjnego` (`Lemat.Models.Decision`) — dekorator wybierający model główny albo zapasowy dla całej Oceny (ADR-009) | — | reguły obwodu 13.2: 3 kolejne błędy lub ≥ 50% w 20 s przy ≥ 6 wywołaniach; półotwarty po 60 s; `429` i brak przydziału nie liczą się (ADR-039); implementacja własna (Polly nie ma reguły „3 kolejne błędy”) |
+| `IModelDecyzyjny` | `JevAdapter` (`Lemat.Models.Jev`) | `typesafe-jev` | typowany `HttpClient`, tryby `WSADOWY` / `POJEDYNCZY` (13.2) |
+| `IModelDecyzyjny` | `ZapasowyLlmAdapter` (`Lemat.Models.Fallback`) | `zapasowy-llm` (z parametrem `dostawca_llm`) | cały `PlanPytan` jednym wywołaniem klienta czatu roli `DECYZYJNY_ZAPASOWY` ze schematem JSON (13.2, prompt `plan-pytan-v1`) |
+| `IModelGeneratywny` | `FabrykaKlientowCzatu` (`Lemat.Models.Llm`) — zwraca `KlientCzatuRoli` z potokiem `ChatClientBuilder` (OpenTelemetry, limit czasu, koszt, ogranicznik dla rozpoznawania, klasyfikacja błędów, `UseFunctionInvocation`; ADR-058 p. 3) | `azure-openai`, `openai-zgodny`, `mock` | `azure-openai` — wdrożenie Azure OpenAI w strefie danych UE (`Azure.AI.OpenAI`), `openai-zgodny` — dowolny punkt końcowy zgodny z API OpenAI w UE (`Microsoft.Extensions.AI.OpenAI`); wybór dostawcy przy G-6 (A-07); rola `ROZPOZNAWANIE_PISMA` z wejściem obrazowym `DataContent` (`image/jpeg`) i wymuszonym schematem JSON (ADR-004) |
+| wszystkie porty modeli | `MockChatClient : IChatClient` (wewnątrz prawdziwego potoku), `MockModelDecyzyjny` (`Lemat.Models.Mock`) | `mock` | zachowanie deterministyczne opisane w 10.0.6; aktywacja konfiguracji `mock` w środowisku `Production` → `409 DOSTAWCA_NIEDOZWOLONY`, a start procesu z aktywną konfiguracją `mock` w `Production` kończy się błędem |
+| `ISprawdzanieSymboliczne` | `SympySidecarKlient` (`Lemat.Infrastructure.Sandboxes`) | — | ADR-050; w testach jednostkowych `FalszyweSprawdzanieSymboliczne` |
+| `IObrobkaObrazow` | `ImageSandboxKlient` (`Lemat.Infrastructure.Sandboxes`) | — | ADR-052; w testach jednostkowych `MockObrobkaObrazow` |
+| `IOgranicznikSzybkosci` | `OgranicznikSzybkosci` (`Lemat.Infrastructure.Models`) | — | tabela `limit_szybkosci_modelu`, blokada doradcza (13.2) |
+| `IPredyktorSukcesu` | `PredyktorSukcesuElo` (`Lemat.Agents.Recommendations`); po 20 000 Wyników zadania eksperymentalnie `PredyktorSukcesuGbm` (`Lemat.Models.Predictors`, ML.NET `Microsoft.ML.LightGbm`) | — | ADR-010 |
+| `ISzablonyPromptow` | `SzablonyPromptow` (`Lemat.Agents.Common`) | — | używany także przez `ZapasowyLlmAdapter` (13.2) |
 
 Szablony promptów systemowych są plikami Semantic Kernel w formacie YAML
 (`PromptTemplateConfig`, `template_format: semantic-kernel`, składnia
 `{{$zmienna}}`, ładowane `KernelFunctionYaml.ToPromptTemplateConfig`) w
-`backend/src/Lemat.Agenci/Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml`
-(np. `Prompty/GENERATYWNY_WSKAZOWKI/wskazowka-v1.yaml`); wartość
-`konfiguracja_modelu.wersja_promptu` wskazuje plik. Zmienne szablonu są
+`backend/src/Lemat.Agents/Prompts/<role-folder>/<prompt-file>.yaml`
+(np. `Prompts/generative-hints/hint-v1.yaml`); wartość
+`konfiguracja_modelu.wersja_promptu` wskazuje plik przez indeks
+`Prompts/index.yaml` (para rola i wersja promptu → plik; nazwy katalogów ról
+i plików w 6.11, ADR-075). Zmienne szablonu są
 wyłącznie wartościami systemowymi; treść od użytkownika i modeli trafia do
 wiadomości `user` budowanej w C# (ADR-058 p. 4). Pliki są zasobami
 osadzonymi; test `KazdaWersjaPromptuIstnieje` sprawdza, że każda wersja z
@@ -2321,8 +2344,8 @@ migracji danych i każdej aktywnej konfiguracji ma plik, a
 `SzablonBezZmiennychTresci` — listę zmiennych. Schematy JSON
 ustrukturyzowanych odpowiedzi są generowane z rekordów C#
 (`AIJsonUtilities.CreateJsonSchema`) i zapisywane do
-`backend/src/Lemat.Modele/Schematy/*.json`; test porównuje zapisane pliki z
-wygenerowanymi i ze schematami w `docs/spec/prompty.md` (dryf schematu
+`backend/src/Lemat.Models/Schemas/*.json`; test porównuje zapisane pliki z
+wygenerowanymi i ze schematami w `docs/spec/prompts.md` (dryf schematu
 kończy test błędem) i podaje je testowi słownika.
 
 ### 6.7 Struktura katalogów `backend/`
@@ -2330,80 +2353,101 @@ kończy test błędem) i podaje je testowi słownika.
 ```text
 backend/
 ├── Lemat.slnx
-├── global.json                       # SDK 10.0.100, rollForward latestPatch
-├── Directory.Build.props             # Nullable, TreatWarningsAsErrors, AnalysisLevel
-├── Directory.Packages.props          # Central Package Management (wersje 5.2)
-├── BannedSymbols.txt                 # BannedApiAnalyzers (6.5)
-├── .editorconfig
-├── openapi/lemat-v1.json             # generowany przy budowie Lemat.Api; źródło typów frontendu
+├── global.json                         # SDK 10.0.100, rollForward latestPatch
+├── Directory.Build.props               # Nullable, TreatWarningsAsErrors, AnalysisLevel, EnforceCodeStyleInBuild
+├── Directory.Packages.props            # Central Package Management (wersje 5.2)
+├── BannedSymbols.txt                   # BannedApiAnalyzers (6.5)
+├── .editorconfig                       # reguły analizatorów nazw plików i przestrzeni nazw (6.11, ADR-075)
+├── openapi/lemat-v1.json               # generowany przy budowie Lemat.Api; źródło typów frontendu
+├── tools/                              # check_rtm.py (18), extract-ddl.sh (ADR-063)
 ├── src/
 │   ├── Lemat.Domain/
-│   │   ├── Wspolne/                  # Agregat<TId>, IZdarzenieDomenowe, identyfikatory, PoziomMatury, RodzajZadania,
-│   │   │                             # PoziomTrudnosci, KalendarzDniRoboczych, NiezmiennikNaruszonyException
-│   │   ├── Konta/  Konta/Rodo/  Klasy/  Tresci/  Profil/  Rekomendacje/
-│   │   ├── Rozwiazania/              # Rozwiazanie, Transkrypcja, Odpowiedz, KopiaTreningowa, ZasadyPoprawekTranskrypcji
-│   │   │   └── FiltrDanychOsobowych/ # FiltrDanychOsobowych.cs, slownik_matematyczny.txt (zasób osadzony)
-│   │   ├── Ocenianie/                # Ocena, ZasadyOceniania (11.1), PewnoscOceny (11.2), Trasowanie (11.3)
-│   │   ├── Weryfikacje/  Kalibracja/  Modele/  Powiadomienia/  Audyt/
+│   │   ├── Common/                     # Aggregate.cs (Agregat<TId>), DomainEvent.cs (IZdarzenieDomenowe), Identifiers.cs,
+│   │   │                               # MaturaLevel.cs (PoziomMatury), ExerciseKind.cs (RodzajZadania), DifficultyLevel.cs
+│   │   │                               # (PoziomTrudnosci), WorkingDayCalendar.cs (KalendarzDniRoboczych), Errors/
+│   │   ├── Accounts/  Accounts/Gdpr/  Classes/  Content/  Profile/  Recommendations/
+│   │   ├── Solutions/                  # Solution.cs (Rozwiazanie), Transcription.cs (Transkrypcja), Answer.cs (Odpowiedz),
+│   │   │   │                           # TrainingCopy.cs (KopiaTreningowa), TranscriptionEditRules.cs (ZasadyPoprawekTranskrypcji)
+│   │   │   └── PersonalDataFilter/     # PersonalDataFilter.cs (FiltrDanychOsobowych), MathTermsDictionary.cs,
+│   │   │                               # math-terms.txt (zasób osadzony)
+│   │   ├── Grading/                    # Grade.cs (Ocena), GradingRules.cs (ZasadyOceniania, 11.1), GradeConfidence.cs
+│   │   │                               # (PewnoscOceny, 11.2), Routing.cs (Trasowanie, 11.3)
+│   │   └── Verifications/  Calibration/  Models/  Notifications/  Audit/
 │   ├── Lemat.Application/
-│   │   ├── Wspolne/                  # IJednostkaPracy, LematOpcje, TimeProvider, wyjątki aplikacyjne
-│   │   │   └── PraceWTle/            # IZlecaniePrac, ZleceniePracy, TypPracy, PulaPracy, IHandlerPracy, RezultatPracy, KatalogPrac
-│   │   ├── Konta/ … Audyt/           # na moduł: Komendy/, Zapytania/, I<Modul>Fasada.cs, Repozytoria/ (interfejsy)
-│   │   ├── Modele/                   # porty modeli (13.1): IModelDecyzyjny, IModelGeneratywny, KlientCzatuRoli, ISzablonyPromptow, wyjątki
-│   │   ├── Agenci/                   # Rekomendacje/ Generowanie/ Rozpoznawanie/ Ocenianie/ Wyjasnianie/: IAgent*, rekordy wejścia/wyjścia
-│   │   └── Orkiestracja/             # Orkiestrator, Handlery/ (IHandlerPracy na typ pracy), Synchroniczna/ (IRekomendacjaSynchroniczna)
-│   ├── Lemat.Agenci/
-│   │   ├── Rekomendacje/  Generowanie/  Rozpoznawanie/  Ocenianie/  Wyjasnianie/
-│   │   ├── Wspolne/                  # WywolanieCzatu, BudowniczyWiadomosci, SzablonyPromptow, FunkcjaZLimitem
-│   │   ├── Pluginy/                  # SprawdzanieSymbolicznePlugin
-│   │   └── Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml   # docs/spec/prompty.md
-│   ├── Lemat.Modele/
-│   │   ├── Decyzyjne/  Jev/  Zapasowy/  Llm/ (FabrykaKlientowCzatu, potok)  Predyktory/
-│   │   ├── Mock/  Mock/Dane/         # implementacje Mock i ich dane
-│   │   ├── Schematy/                 # schematy JSON ustrukturyzowanych odpowiedzi (generowane, testowane)
-│   │   └── RejestrAdapterow.cs
+│   │   ├── Common/                     # UnitOfWork.cs (IJednostkaPracy), LematOptions.cs (LematOpcje), wyjątki aplikacyjne
+│   │   │   └── BackgroundJobs/         # JobEnqueuing.cs (IZlecaniePrac, ZleceniePracy), JobType.cs (TypPracy), JobPool.cs
+│   │   │                               # (PulaPracy), JobHandler.cs (IHandlerPracy, RezultatPracy), JobCatalog.cs (KatalogPrac)
+│   │   ├── Accounts/ … Audit/          # na moduł: Commands/, Queries/, EventHandlers/, I<Module>Facade.cs, Repositories/
+│   │   ├── Models/                     # porty modeli (13.1): DecisionModel.cs (IModelDecyzyjny), GenerativeModel.cs
+│   │   │                               # (IModelGeneratywny, KlientCzatuRoli), PromptTemplates.cs (ISzablonyPromptow), wyjątki
+│   │   ├── Agents/                     # Recommendations/ Generation/ Recognition/ Grading/ Explanation/: IAgent*, rekordy
+│   │   └── Orchestration/              # Orchestrator.cs (Orkiestrator), Handlers/ (IHandlerPracy na typ pracy),
+│   │                                   # Synchronous/ (IRekomendacjaSynchroniczna)
+│   ├── Lemat.Agents/
+│   │   ├── Recommendations/  Generation/  Recognition/  Grading/  Explanation/
+│   │   │                               # np. Grading/GradingAgent.cs (AgentOceniajacy), Grading/GradingStateBuilder.cs
+│   │   │                               # (BudowniczyStanuOceny); Recommendations/Templates/justifications.pl-PL.yaml
+│   │   ├── Common/                     # ChatInvocation.cs (WywolanieCzatu), MessageBuilder.cs (BudowniczyWiadomosci),
+│   │   │                               # PromptTemplates.cs (SzablonyPromptow), RateLimitedFunction.cs (FunkcjaZLimitem)
+│   │   ├── Plugins/                    # SymbolicCheckPlugin.cs (SprawdzanieSymbolicznePlugin)
+│   │   ├── AgentRegistration.cs        # RejestracjaAgentow.DodajAgentow
+│   │   └── Prompts/<role-folder>/<prompt-file>.yaml   # docs/spec/prompts.md, mapowanie nazw 6.11
+│   ├── Lemat.Models/
+│   │   ├── Decision/  Jev/  Fallback/  Llm/ (ChatClientFactory.cs = FabrykaKlientowCzatu, potok)  Predictors/
+│   │   ├── Mock/  Mock/Data/  Mock/Scenarios/   # implementacje Mock, dane i scenariusze (ADR-065, prompts.md 6)
+│   │   ├── Schemas/                    # schematy JSON ustrukturyzowanych odpowiedzi (generowane, testowane)
+│   │   └── AdapterRegistry.cs          # RejestrAdapterow
 │   ├── Lemat.Infrastructure/
-│   │   ├── Persistence/              # LematDbContext, JednostkaPracyEf, Konfiguracje/<Modul>/<Encja>EntityTypeConfiguration, repozytoria, Schemat/ddl.sql
-│   │   │   └── Migrations/  Migrations/Sql/   # migracje EF Core i pliki SQL (triggery, funkcje, partycje)
-│   │   ├── PraceWTle/                # SklepPracWTle, ZlecaniePracSql, NasluchPowiadomien (LISTEN); PulaPracHostedService w Lemat.Worker
-│   │   ├── Modele/                   # OgranicznikSzybkosci
-│   │   ├── Piaskownice/              # SympySidecarKlient, ImageSandboxKlient (HttpClient na gnieździe Unix)
-│   │   ├── Magazyn/                  # MagazynObiektowS3
-│   │   ├── Rodo/                     # RejestrZdarzenRodoS3
-│   │   ├── Bezpieczenstwo/           # WystawcaTokenow (ES256), HaszowanieHasel (argon2id)
-│   │   └── Email/                    # NadawcaEmail (MailKit)
+│   │   ├── Persistence/                # LematDbContext.cs, UnitOfWorkEf.cs (JednostkaPracyEf), repozytoria,
+│   │   │   │                           # Configurations/<Module>/<Entity>EntityTypeConfiguration.cs, Schema/ddl.sql,
+│   │   │   │                           # Schema/constraints.txt, Data/skills.yaml, PersistenceRegistration.cs
+│   │   │   └── Migrations/  Migrations/Sql/   # migracje EF Core i pliki SQL 0000_schema.sql … 0007_api.sql
+│   │   ├── BackgroundJobs/             # JobStore.cs (SklepPracWTle), SqlJobEnqueuing.cs (ZlecaniePracSql),
+│   │   │                               # NotificationListener.cs (NasluchPowiadomien, LISTEN); PulaPracHostedService w Lemat.Worker
+│   │   ├── Models/                     # RateLimiter.cs (OgranicznikSzybkosci)
+│   │   ├── Sandboxes/                  # SympySidecarClient.cs (SympySidecarKlient), ImageSandboxClient.cs (ImageSandboxKlient)
+│   │   ├── Storage/                    # S3ObjectStorage.cs (MagazynObiektowS3)
+│   │   ├── Gdpr/                       # S3GdprEventRegistry.cs (RejestrZdarzenRodoS3)
+│   │   ├── Security/                   # TokenIssuer.cs (WystawcaTokenow, ES256), PasswordHashing.cs (HaszowanieHasel, argon2id)
+│   │   └── Email/                      # EmailSender.cs (NadawcaEmail, MailKit)
 │   ├── Lemat.Api/
 │   │   ├── Program.cs
-│   │   ├── Endpointy/                # KontaEndpointy.cs … AdminEndpointy.cs (MapGroup per moduł)
-│   │   ├── Kontrakty/<Modul>/        # rekordy DTO: OcenaWyjscie, TranskrypcjaWejscie, …
-│   │   ├── Walidatory/<Modul>/       # FluentValidation (12.5)
-│   │   ├── Strumienie/               # KoncentratorZdarzen, endpointy SSE (ADR-051)
-│   │   └── Infrastruktura/           # ProblemDetails, idempotencja, ETag/If-Match, limity szybkości
-│   ├── Lemat.Worker/                 # Program.cs, PulaPracHostedService
-│   ├── Lemat.Scheduler/              # Program.cs, HarmonogramHostedService, Harmonogram.cs (13.5)
-│   └── Lemat.ImageSandbox/           # Program.cs (nadzorca), ProcesRoboczy.cs, Normalizacja.cs, Maskowanie.cs, Wycinki.cs, polityka.xml
+│   │   ├── Endpoints/                  # AccountsEndpoints.cs … AdminEndpoints.cs (MapGroup per moduł)
+│   │   ├── Contracts/<Module>/         # rekordy DTO: GradeOutput.cs (OcenaWyjscie), TranscriptionInput.cs (TranskrypcjaWejscie), …
+│   │   ├── Validators/<Module>/        # FluentValidation (12.5)
+│   │   ├── Errors/                     # error-catalog.yaml, BindingErrorHandling.cs (ObslugaBledowWiazania)
+│   │   ├── Configuration/              # JsonApi.cs
+│   │   ├── Streams/                    # EventHub.cs (KoncentratorZdarzen), SolutionStream.cs (StrumienRozwiazania), endpointy SSE
+│   │   └── Infrastructure/             # ProblemDetails, idempotencja, ETag/If-Match, limity szybkości
+│   ├── Lemat.Worker/                   # Program.cs, JobPoolHostedService.cs (PulaPracHostedService)
+│   ├── Lemat.Scheduler/                # Program.cs, ScheduleHostedService.cs (HarmonogramHostedService), Schedule.cs (13.5)
+│   ├── Lemat.Tools/                    # Program.cs: polecenia seed-dev (10.0.6), utworz-administratora (ADR-071)
+│   └── Lemat.ImageSandbox/             # Program.cs (nadzorca), WorkerProcess.cs (ProcesRoboczy), Normalization.cs,
+│                                       # Masking.cs, Crops.cs (Wycinki), policy.xml
 ├── sandbox/sympy/
 │   ├── pyproject.toml  uv.lock
-│   ├── lemat_sympy/serwer.py         # Starlette: /v1/postac-liniowa, /v1/rownowaznosc-krokow, /v1/rownowaznosc-wyniku, /zdrowie
-│   ├── lemat_sympy/obliczenia.py     # parse_latex (lark), limity, wynik trójwartościowy
+│   ├── lemat_sympy/server.py           # Starlette: /v1/postac-liniowa, /v1/rownowaznosc-krokow, /v1/rownowaznosc-wyniku, /zdrowie
+│   ├── lemat_sympy/computations.py     # parse_latex (lark), limity, wynik trójwartościowy
 │   ├── Dockerfile
 │   └── tests/
 ├── tests/
-│   ├── Lemat.Domain.Tests/  Lemat.Application.Tests/  Lemat.Agenci.Tests/  Lemat.Modele.Tests/
-│   ├── Lemat.Infrastructure.Tests/  Lemat.Api.Tests/  Lemat.Symulacje/
+│   ├── Lemat.Domain.Tests/  Lemat.Application.Tests/  Lemat.Agents.Tests/  Lemat.Models.Tests/
+│   ├── Lemat.Infrastructure.Tests/  Lemat.Api.Tests/  Lemat.Simulations/
 │   └── Lemat.Architecture.Tests/
-│       └── Slownik/                  # TestSlownika.cs, slownik_tokeny.yaml, slownik_wyjatki.yaml (3.4)
-└── Dockerfile                        # obraz lemat-backend (wszystkie punkty wejścia + efbundle)
+│       └── Glossary/                   # GlossaryTest.cs (TestSlownika), FileNamesTest.cs (TestNazwPlikow, ADR-075),
+│                                       # glossary-tokens.yaml, glossary-exceptions.yaml (3.4), file-names.yaml (6.11)
+└── Dockerfile                          # obraz lemat-backend (wszystkie punkty wejścia + efbundle)
 ```
 
 Odpowiedniki plików testowych wersji 2.4 (nazwy w sekcjach 10–17):
-`tests/test_slownik.py` → `Lemat.Architecture.Tests/Slownik/TestSlownika.cs`;
+`tests/test_slownik.py` → `Lemat.Architecture.Tests/Glossary/GlossaryTest.cs`;
 `tests/modele/test_ogranicznik.py` →
-`Lemat.Infrastructure.Tests/Modele/OgranicznikSzybkosciTests.cs` (testy (a)–(e))
-i `Lemat.Symulacje/OgranicznikSymulacja.cs` (testy (f)–(h) z FsCheck zamiast
+`Lemat.Infrastructure.Tests/Models/RateLimiterTests.cs` (testy (a)–(e))
+i `Lemat.Simulations/RateLimiterSimulation.cs` (testy (f)–(h) z FsCheck zamiast
 `hypothesis`); `tests/kalibracja/symulacja_bezpiecznika.py` →
-`Lemat.Symulacje/BezpiecznikSymulacja.cs`; `test_bezpiecznik.py` →
-`Lemat.Domain.Tests/Kalibracja/BezpiecznikTests.cs`. Litery przypadków
+`Lemat.Simulations/SafeguardSimulation.cs`; `test_bezpiecznik.py` →
+`Lemat.Domain.Tests/Calibration/SafeguardTests.cs`; `tests/kalibracja/test_zrodlo_probki.py` →
+`Lemat.Domain.Tests/Calibration/CalibrationSampleSourceTests.cs`. Litery przypadków
 testowych ((a)–(k) w 11.5.3, (a)–(h) w 13.2) pozostają nazwami metod testów
 (np. `G_Degradacja4ProcentProgNiemalejacy`).
 
@@ -2414,111 +2458,127 @@ frontend/
 ├── package.json  package-lock.json  next.config.ts  tsconfig.json
 ├── eslint.config.mjs  .dependency-cruiser.cjs  vitest.config.ts  playwright.config.ts
 ├── messages/pl-PL.json                  # wszystkie teksty UI (NFR-10); test słownika: zakazane synonimy
-├── public/ikony/                        # ikony PWA
-├── e2e/                                 # Playwright: scenariusze per FR (np. fr16-przeslanie.spec.ts)
+├── public/icons/                        # ikony PWA
+├── tools/                               # generate-errors.ts (ADR-060), generate-events.ts (ADR-061)
+├── e2e/                                 # Playwright: scenariusze przekrojowe (np. session-two-tabs.spec.ts)
+│   └── acceptance/                      # testy akceptacyjne frNN-<slug>.spec.ts (np. fr16-upload.spec.ts, 18)
 └── src/
     ├── proxy.ts                         # Next.js 16 (dawniej middleware.ts): przekierowania wg cookie lemat_rola
     ├── app/
     │   ├── layout.tsx                   # <html lang="pl">, NextIntlClientProvider, style KaTeX, QueryClientProvider
     │   ├── manifest.ts  sw.ts           # manifest PWA, service worker Serwist
     │   ├── offline/page.tsx
-    │   ├── (publiczne)/                 # bez logowania
+    │   ├── (public)/                    # bez logowania
     │   │   ├── page.tsx                 # /
-    │   │   ├── logowanie/page.tsx  rejestracja/page.tsx  rejestracja/nauczyciel/page.tsx
-    │   │   ├── reset-hasla/page.tsx  reset-hasla/potwierdzenie/page.tsx
-    │   │   └── dolacz/[kod]/page.tsx    # dołączenie do Klasy kodem zaproszenia (FR-30); przepływ niżej (C6-14)
-    │   ├── (uczen)/                     # layout: nawigacja Ucznia, strażnik roli UCZEN
+    │   │   ├── login/page.tsx  register/page.tsx  register/teacher/page.tsx
+    │   │   ├── password-reset/page.tsx  password-reset/confirm/page.tsx
+    │   │   └── join/[code]/page.tsx     # dołączenie do Klasy kodem zaproszenia (FR-30); przepływ niżej (C6-14)
+    │   ├── (student)/                   # layout: nawigacja Ucznia, strażnik roli UCZEN
     │   │   ├── layout.tsx
     │   │   ├── start/page.tsx           # następny element Ścieżki nauki (FR-05, FR-10)
-    │   │   ├── test-diagnostyczny/page.tsx                      # FR-03
-    │   │   ├── sciezka-nauki/page.tsx                           # FR-05 … FR-09
-    │   │   ├── wkladki-teoretyczne/[wkladkaId]/page.tsx         # FR-06
-    │   │   ├── zadania/[zadanieId]/page.tsx                     # FR-15 (Odpowiedź), FR-16 (zdjęcia)
-    │   │   ├── rozwiazania/page.tsx  rozwiazania/[rozwiazanieId]/page.tsx   # SSE, Transkrypcja (FR-18), Ocena (FR-27)
-    │   │   ├── profil/page.tsx                                  # FR-04
-    │   │   ├── przypisania/page.tsx                             # FR-32 (widok Ucznia)
-    │   │   ├── klasy/page.tsx                                   # członkostwo w Klasach: lista, dołączenie kodem, opuszczenie (FR-30)
-    │   │   └── ustawienia/page.tsx      # poziom matury, termin (FR-02), zgoda na trening, usunięcie konta (NFR-09)
-    │   ├── (nauczyciel)/nauczyciel/     # layout: nawigacja Nauczyciela, strażnik roli NAUCZYCIEL
+    │   │   ├── diagnostic-test/page.tsx                          # FR-03
+    │   │   ├── learning-path/page.tsx                            # FR-05 … FR-09
+    │   │   ├── theory-inserts/[theoryInsertId]/page.tsx          # FR-06
+    │   │   ├── exercises/[exerciseId]/page.tsx                   # FR-15 (Odpowiedź), FR-16 (zdjęcia)
+    │   │   ├── solutions/page.tsx  solutions/[solutionId]/page.tsx   # SSE, Transkrypcja (FR-18), Ocena (FR-27)
+    │   │   ├── profile/page.tsx                                  # FR-04
+    │   │   ├── assignments/page.tsx                              # FR-32 (widok Ucznia)
+    │   │   ├── classes/page.tsx                                  # członkostwo w Klasach: lista, dołączenie kodem, opuszczenie (FR-30)
+    │   │   └── settings/page.tsx        # poziom matury, termin (FR-02), zgoda na trening, usunięcie konta (NFR-09)
+    │   ├── (teacher)/teacher/           # layout: nawigacja Nauczyciela, strażnik roli NAUCZYCIEL
     │   │   ├── layout.tsx  page.tsx
-    │   │   ├── klasy/page.tsx  klasy/[klasaId]/page.tsx  klasy/[klasaId]/uczniowie/[uczenId]/page.tsx   # FR-30, FR-31
-    │   │   ├── zestawy-zadan/page.tsx  zestawy-zadan/[zestawId]/page.tsx  przypisania/page.tsx           # FR-32
-    │   │   ├── weryfikacje/page.tsx  weryfikacje/[weryfikacjaId]/page.tsx                                # FR-33, FR-34
-    │   │   ├── zadania/page.tsx  zadania/nowe/page.tsx  zadania/generowanie/page.tsx  zadania/[zadanieId]/przeglad/page.tsx  # FR-11, FR-14
-    │   │   ├── zgloszenia-bledu-zadan/page.tsx                  # ADR-038 (recenzent treści)
-    │   │   ├── wkladki-teoretyczne/page.tsx  wkladki-teoretyczne/[wkladkaId]/przeglad/page.tsx   # recenzent treści (ADR-028), strażnik flagi
-    │   │   └── ustawienia/page.tsx
+    │   │   ├── classes/page.tsx  classes/[classId]/page.tsx  classes/[classId]/students/[studentId]/page.tsx   # FR-30, FR-31
+    │   │   ├── solutions/[solutionId]/page.tsx                   # FR-34 (korekta z poziomu Rozwiązania, C8-11)
+    │   │   ├── exercise-sets/page.tsx  exercise-sets/[exerciseSetId]/page.tsx                                # FR-32
+    │   │   ├── assignments/page.tsx  assignments/[assignmentId]/page.tsx                                     # FR-32
+    │   │   ├── verifications/page.tsx  verifications/[verificationId]/page.tsx                               # FR-33, FR-34
+    │   │   ├── exercises/page.tsx  exercises/new/page.tsx  exercises/generate/page.tsx  exercises/[exerciseId]/review/page.tsx  # FR-11, FR-14
+    │   │   ├── exercise-error-reports/page.tsx                   # ADR-038 (recenzent treści)
+    │   │   ├── theory-inserts/page.tsx  theory-inserts/[theoryInsertId]/review/page.tsx   # recenzent treści (ADR-028), strażnik flagi
+    │   │   └── settings/page.tsx
     │   └── (administrator)/admin/       # layout: nawigacja Administratora, strażnik roli ADMINISTRATOR
     │       ├── layout.tsx  page.tsx
-    │       ├── uzytkownicy/page.tsx  klasy/page.tsx  arkusze-cke/page.tsx  arkusze-cke/importy/[importId]/page.tsx  # FR-35
-    │       ├── konfiguracje-modeli/page.tsx  progi-pewnosci/page.tsx  kalibracja/page.tsx  bezpieczniki/page.tsx
-    │       ├── obciazenie-weryfikacji/page.tsx  pula-diagnostyczna/page.tsx  wkladki-teoretyczne/page.tsx
-    │       ├── zadania/page.tsx  zadania/[zadanieId]/page.tsx  zadania/[zadanieId]/przeglad/page.tsx   # FR-11, FR-14, ADR-028, ADR-038
-    │       ├── zgloszenia-bledu-zadan/page.tsx  zlecenia-generowania/page.tsx  zlecenia-generowania/[zlecenieId]/page.tsx
-    │       └── praca-w-tle/page.tsx
+    │       ├── users/page.tsx  classes/page.tsx  classes/[classId]/page.tsx  cke-sheets/page.tsx  cke-sheets/imports/[importId]/page.tsx  # FR-35
+    │       ├── model-configurations/page.tsx  confidence-thresholds/page.tsx  calibration/page.tsx  safeguards/page.tsx
+    │       ├── verification-load/page.tsx  diagnostic-pool/page.tsx  theory-inserts/page.tsx  theory-inserts/[theoryInsertId]/review/page.tsx
+    │       ├── exercises/page.tsx  exercises/[exerciseId]/page.tsx  exercises/[exerciseId]/review/page.tsx   # FR-11, FR-14, ADR-028, ADR-038
+    │       ├── exercise-error-reports/page.tsx  generation-requests/page.tsx  generation-requests/[generationRequestId]/page.tsx
+    │       └── background-jobs/page.tsx
     ├── features/                        # moduły frontendu (granice 6.9); każdy z index.ts (publiczne API)
-    │   ├── konta/  nauka/  rozwiazania/  profil/  klasy/  przypisania/
-    │   ├── weryfikacje/  tresci/  administracja/  powiadomienia/
+    │   ├── accounts/  learning/  solutions/  profile/  classes/  assignments/
+    │   ├── verifications/  content/  administration/  notifications/
+    │   │                                # np. solutions/TranscriptionEditor.tsx (EdytorTranskrypcji), solutions/SheetPhoto.tsx
+    │   │                                # (ZdjecieKartki), solutions/save-queue.ts, <module>/schemas.ts
     ├── lib/
-    │   ├── api/                         # schema.d.ts (generowany), klient.ts (openapi-fetch), typy.ts (aliasy 3.5)
-    │   ├── auth/                        # DostawcaSesji (token w pamięci), odswiezanie.ts (Web Locks + BroadcastChannel, ADR-057), StraznikFlagi
-    │   ├── sse/                         # strumien.ts (fetch + eventsource-parser, Last-Event-ID, odpytywanie), liderPowiadomien.ts (ADR-057 p. 3)
-    │   ├── zdjecia/                     # kompresja.worker.ts, kompresja.ts, adresZdjecia.ts (AdresZdjeciaWyjscie, pamięć 9 min)
-    │   ├── katex/                       # Wzor.tsx, TrescMarkdown.tsx
+    │   ├── api/                         # schema.d.ts (generowany), client.ts (openapi-fetch), types.ts (aliasy 3.5),
+    │   │                                # errors.ts, handle-error.ts
+    │   ├── auth/                        # SessionProvider.tsx (DostawcaSesji, token w pamięci), refresh.ts (Web Locks +
+    │   │                                # BroadcastChannel, ADR-057), FlagGuard.tsx (StraznikFlagi)
+    │   ├── sse/                         # stream.ts (fetch + eventsource-parser, Last-Event-ID, odpytywanie), events.ts,
+    │   │                                # notification-leader.ts (ADR-057 p. 3)
+    │   ├── photos/                      # compression.worker.ts, compression.ts, photo-url.ts (AdresZdjeciaWyjscie, pamięć 9 min)
+    │   ├── katex/                       # Formula.tsx (Wzor), MarkdownContent.tsx (TrescMarkdown)
     │   └── i18n/                        # konfiguracja next-intl (jedna lokalizacja pl-PL)
-    └── ui/                              # komponenty wspólne (Przycisk, Dialog, Lista, Formularz …)
+    └── ui/                              # komponenty wspólne: Button.tsx (Przycisk), Dialog.tsx, List.tsx (Lista), Form.tsx (Formularz) …
 ```
 
-Grupy tras `(publiczne)`, `(uczen)`, `(nauczyciel)` i `(administrator)`
+Grupy tras `(public)`, `(student)`, `(teacher)` i `(administrator)`
 dają każdej roli osobny układ (`layout.tsx`: nawigacja, strażnik roli) bez
 wpływu nawiasu na URL. Trasy Ucznia nie mają prefiksu (najczęstszy ruch,
-krótkie adresy na telefonie), trasy Nauczyciela mają prefiks `/nauczyciel`,
-a Administratora `/admin`, więc segmenty o tej samej nazwie (`zadania`,
-`przypisania`, `klasy`, `ustawienia`) nie kolidują między grupami. Segmenty
-URL są w `kebab-case` po polsku (ADR-049), parametry dynamiczne w
-`camelCase` z sufiksem `Id` (`[rozwiazanieId]`), bo są zmiennymi TypeScript.
+krótkie adresy na telefonie), trasy Nauczyciela mają prefiks `/teacher`,
+a Administratora `/admin`, więc segmenty o tej samej nazwie (`exercises`,
+`assignments`, `classes`, `settings`) nie kolidują między grupami. Od wersji
+3.4 segmenty tras (katalogi App Router) są angielskie w `kebab-case`
+(ADR-075; pełne mapowanie dawnych polskich URL-i stron w 6.11), więc
+adresy stron frontendu są angielskie, a ścieżki REST API .NET pozostają
+polskie (ADR-049). Parametry dynamiczne mają nazwy angielskie w
+`camelCase` z sufiksem `Id` (`[solutionId]`), bo nazwa katalogu jest
+jednocześnie kluczem obiektu `params`; strona przypisuje je od razu do
+zmiennych o nazwach ze słownika (`const { solutionId: rozwiazanieId } =
+await params;`), a test słownika dopuszcza klucze `params` wyłącznie z
+listy 6.11.
 
 Strażnik roli działa w dwóch warstwach: `src/proxy.ts` odczytuje cookie
 `lemat_rola` (`HttpOnly; Secure; SameSite=Strict; Path=/`, wartość
 `UCZEN`/`NAUCZYCIEL`/`ADMINISTRATOR`, ustawiane przez `POST /auth/logowanie`
 i `POST /auth/odswiezenie`, usuwane przez `POST /auth/wylogowanie`) i
-przekierowuje do `/logowanie` albo do strony startowej właściwej roli; jest
+przekierowuje do `/login` albo do strony startowej właściwej roli; jest
 to wyłącznie wygoda nawigacji, bo cookie nie jest poświadczeniem.
 Autoryzację wykonuje API (rola z JWT, uprawnienia obiektowe 12.8): brak
 uprawnień → `403`, a klient pokazuje stronę „Brak dostępu”.
 
 **Strażnik flagi i ekrany ról uzupełniające (wersja 3.1, C6-14).** Ekrany
-recenzenta treści (`(nauczyciel)/nauczyciel/wkladki-teoretyczne/**`,
-`zgloszenia-bledu-zadan`, Przegląd Zadań globalnych) są opakowane
+recenzenta treści (`(teacher)/teacher/theory-inserts/**`,
+`exercise-error-reports`, Przegląd Zadań globalnych) są opakowane
 komponentem `StraznikFlagi flaga="recenzent_tresci"`, który czyta flagi z
 `SesjaWyjscie.uzytkownik.flagi` (pole dodane w wersji 3.1, zwracane przez
 `POST /auth/logowanie` i `POST /auth/odswiezenie` razem z access tokenem);
 brak flagi → strona „Brak dostępu”, a API i tak zwraca `403`. Administrator
-ma własne ekrany Zadań (`/admin/zadania`, Przegląd, wycofanie), Zgłoszeń
+ma własne ekrany Zadań (strona `/admin/exercises`, Przegląd, wycofanie), Zgłoszeń
 błędu w Zadaniu i zleceń generowania (z postępem przez SSE
 `/zlecenia-generowania/{id}/strumien`).
 
-**Przepływ `dolacz/[kod]` (FR-30).** Strona publiczna odczytuje sesję z
+**Przepływ `join/[code]` (FR-30).** Strona publiczna odczytuje sesję z
 `DostawcaSesji` (próba odświeżenia tokenu, ADR-057): (a) zalogowany Uczeń →
 przycisk „Dołącz do Klasy” (`POST /klasy/dolaczenie` z `kod_zaproszenia`,
 odpowiedź `KlasaSkrot` z nazwą Klasy i Nauczycielem), potem przekierowanie
-do `/klasy`; (b) niezalogowany → wybór „Mam konto”
-(`/logowanie?powrot=/dolacz/{kod}`) albo „Załóż konto”
-(`/rejestracja?kod={kod}`, kod przekazywany w `POST /auth/rejestracja`); (c)
+do strony `/classes`; (b) niezalogowany → wybór „Mam konto”
+(`/login?powrot=/join/{kod}`) albo „Załóż konto”
+(`/register?kod={kod}`, kod przekazywany w `POST /auth/rejestracja`); (c)
 zalogowany Nauczyciel albo Administrator → komunikat „Kod zaproszenia jest
 przeznaczony dla Uczniów”; (d) kod nieważny → `404 KOD_ZAPROSZENIA_NIEWAZNY`
 (odpowiedź `POST /klasy/dolaczenie`) i komunikat z prośbą o nowy kod od
 Nauczyciela.
 
 **Zdjęcia kartek bez BFF (C6-14 p. 2).** `<img>` nie wysyła nagłówka
-`Authorization`, więc komponent `ZdjecieKartki` (moduł `rozwiazania`)
-pobiera przez `klient.ts` `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres?wersja_zdjecia=ORYGINALNA|MASKOWANA`
+`Authorization`, więc komponent `ZdjecieKartki` (plik `SheetPhoto.tsx`, moduł `solutions`)
+pobiera przez `client.ts` `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres?wersja_zdjecia=ORYGINALNA|MASKOWANA`
 (`AdresZdjeciaWyjscie { url, wygasa_at }`, podpisany URL ważny 10 min) i
 renderuje `<img src={url}>` bezpośrednio z magazynu (CSP `img-src` zawiera
 domenę magazynu, bez CORS i bez `blob:`); TanStack Query trzyma adres
 `staleTime` 9 min i pobiera nowy przed `wygasa_at`. Testy: Vitest
-`ZdjecieKartki.test.tsx` (odświeżenie adresu po 9 min, `410` → komunikat
-„Zdjęcie usunięte”), Playwright `fr33-weryfikacja-zdjecia.spec.ts`
+`SheetPhoto.test.tsx` (odświeżenie adresu po 9 min, `410` → komunikat
+„Zdjęcie usunięte”), Playwright `fr33-verification-photos.spec.ts`
 (Nauczyciel widzi zdjęcie, obcy weryfikator — wersję maskowaną).
 
 **Budowanie (ADR-054 uzup. 3.1):** `npm run build` = `next build --webpack`
@@ -2537,27 +2597,27 @@ buforowane przez Next.js (`cache: "no-store"` w kliencie).
 
 | Moduł (`src/features/`) | Zawartość | Może importować | Ekrany (`src/app/`) |
 |---|---|---|---|
-| `konta` | logowanie, rejestracja, reset hasła, ustawienia konta, usunięcie konta | `lib/*`, `ui` | `(publiczne)/*`, `*/ustawienia` |
-| `nauka` | następny element, Ścieżka nauki, Wkładki teoretyczne, Test diagnostyczny, Odpowiedź w Zadaniu zamkniętym | `lib/*`, `ui`, `rozwiazania` (przez `index.ts`: przycisk „Prześlij zdjęcia”) | `(uczen)/start`, `sciezka-nauki`, `wkladki-teoretyczne`, `test-diagnostyczny`, `zadania` |
-| `rozwiazania` | aparat i kompresja, przesłanie, status przez SSE, edycja Transkrypcji i Poprawki, Ocena i Wskazówka, zgłoszenie błędu odczytu | `lib/*`, `ui` | `(uczen)/rozwiazania`, `(uczen)/zadania` |
-| `profil` | Profil ucznia (FR-04), postępy | `lib/*`, `ui` | `(uczen)/profil`, `(nauczyciel)/nauczyciel/klasy/[klasaId]/uczniowie/[uczenId]` |
-| `klasy` | Klasy, kody zaproszeń, członkostwo (Nauczyciel i Uczeń), postępy klasy | `lib/*`, `ui`, `profil` | `(nauczyciel)/nauczyciel/klasy`, `(uczen)/klasy`, `(publiczne)/dolacz` |
-| `przypisania` | Zestawy zadań, Przypisania, postęp Przypisania, lista Przypisań Ucznia | `lib/*`, `ui` | `(nauczyciel)/nauczyciel/zestawy-zadan`, `przypisania`, `(uczen)/przypisania` |
-| `weryfikacje` | Kolejka weryfikacji, podjęcie i przedłużanie Blokady weryfikacji, szkic, rozstrzygnięcie, korekta | `lib/*`, `ui`, `rozwiazania` (komponent podglądu Transkrypcji i zdjęć) | `(nauczyciel)/nauczyciel/weryfikacje` |
-| `tresci` | Zadania, generowanie, Przegląd, Zgłoszenia błędu w Zadaniu, Wkładki do przeglądu, zlecenia generowania | `lib/*`, `ui` | `(nauczyciel)/nauczyciel/zadania`, `zgloszenia-bledu-zadan`, `wkladki-teoretyczne`; `(administrator)/admin/zadania`, `zgloszenia-bledu-zadan`, `zlecenia-generowania`, `wkladki-teoretyczne` |
-| `administracja` | użytkownicy, Przekazanie Klasy, Arkusze CKE, Konfiguracje modeli, progi, kalibracja, bezpieczniki, obciążenie, pula diagnostyczna, prace w tle | `lib/*`, `ui`, `tresci` | `(administrator)/admin/*` |
-| `powiadomienia` | lista i strumień SSE powiadomień (jeden strumień na przeglądarkę — karta-lider, ADR-057) | `lib/*`, `ui` | układy wszystkich ról |
+| `accounts` | logowanie, rejestracja, reset hasła, ustawienia konta, usunięcie konta | `lib/*`, `ui` | `(public)/*`, `*/settings` |
+| `learning` | następny element, Ścieżka nauki, Wkładki teoretyczne, Test diagnostyczny, Odpowiedź w Zadaniu zamkniętym | `lib/*`, `ui`, `solutions` (przez `index.ts`: przycisk „Prześlij zdjęcia”) | `(student)/start`, `learning-path`, `theory-inserts`, `diagnostic-test`, `exercises` |
+| `solutions` | aparat i kompresja, przesłanie, status przez SSE, edycja Transkrypcji i Poprawki, Ocena i Wskazówka, zgłoszenie błędu odczytu | `lib/*`, `ui` | `(student)/solutions`, `(student)/exercises` |
+| `profile` | Profil ucznia (FR-04), postępy | `lib/*`, `ui` | `(student)/profile`, `(teacher)/teacher/classes/[classId]/students/[studentId]` |
+| `classes` | Klasy, kody zaproszeń, członkostwo (Nauczyciel i Uczeń), postępy klasy | `lib/*`, `ui`, `profile` | `(teacher)/teacher/classes`, `(student)/classes`, `(public)/join` |
+| `assignments` | Zestawy zadań, Przypisania, postęp Przypisania, lista Przypisań Ucznia | `lib/*`, `ui` | `(teacher)/teacher/exercise-sets`, `assignments`, `(student)/assignments` |
+| `verifications` | Kolejka weryfikacji, podjęcie i przedłużanie Blokady weryfikacji, szkic, rozstrzygnięcie, korekta | `lib/*`, `ui`, `solutions` (komponent podglądu Transkrypcji i zdjęć) | `(teacher)/teacher/verifications` |
+| `content` | Zadania, generowanie, Przegląd, Zgłoszenia błędu w Zadaniu, Wkładki do przeglądu, zlecenia generowania | `lib/*`, `ui` | `(teacher)/teacher/exercises`, `exercise-error-reports`, `theory-inserts`; `(administrator)/admin/exercises`, `exercise-error-reports`, `generation-requests`, `theory-inserts` |
+| `administration` | użytkownicy, Przekazanie Klasy, Arkusze CKE, Konfiguracje modeli, progi, kalibracja, bezpieczniki, obciążenie, pula diagnostyczna, prace w tle | `lib/*`, `ui`, `content` | `(administrator)/admin/*` |
+| `notifications` | lista i strumień SSE powiadomień (jeden strumień na przeglądarkę — karta-lider, ADR-057) | `lib/*`, `ui` | układy wszystkich ról |
 
 Reguły dependency-cruiser (`.dependency-cruiser.cjs`, błąd w CI): (1)
-`src/app/**` importuje z `src/features/<modul>` wyłącznie plik `index.ts`;
+`src/app/**` importuje z `src/features/<module>` wyłącznie plik `index.ts`;
 (2) moduł `features/X` importuje z `features/Y` wyłącznie `index.ts` i tylko
 pary z kolumny „Może importować”; (3) `src/lib/**` i `src/ui/**` nie
 importują z `src/features/**` ani `src/app/**`; (4) wyłącznie
-`src/lib/api/klient.ts` używa `fetch` do `/api/*` (pozostały kod korzysta z
-klienta), a wyłącznie `src/lib/sse/strumien.ts` otwiera strumienie SSE;
-wyłącznie `src/lib/auth/odswiezanie.ts` i `src/lib/sse/liderPowiadomien.ts`
+`src/lib/api/client.ts` używa `fetch` do `/api/*` (pozostały kod korzysta z
+klienta), a wyłącznie `src/lib/sse/stream.ts` otwiera strumienie SSE;
+wyłącznie `src/lib/auth/refresh.ts` i `src/lib/sse/notification-leader.ts`
 używają `navigator.locks` i `BroadcastChannel`; zdjęcia kartek wyłącznie
-przez `adresZdjecia.ts` (podpisany URL, nigdy `<img src="/api/…">`); (5)
+przez `photo-url.ts` (podpisany URL, nigdy `<img src="/api/…">`); (5)
 `src/lib/api/schema.d.ts` nie jest edytowany ręcznie (CI generuje go
 ponownie i porównuje).
 
@@ -2568,26 +2628,364 @@ mapowanie:
 
 | Wersja 2.4 | Wersja 3.0 |
 |---|---|
-| `lemat.http` | `Lemat.Api` (`Endpointy/`, `Kontrakty/`, `Walidatory/`, `Infrastruktura/`, `Strumienie/`) |
-| `lemat.konta` | `Lemat.Domain.Konta`, `Lemat.Domain.Konta.Rodo`, `Lemat.Application.Konta`, `Lemat.Infrastructure.Rodo`, `Lemat.Infrastructure.Bezpieczenstwo` |
-| `lemat.klasy` | `Lemat.Domain.Klasy`, `Lemat.Application.Klasy` |
-| `lemat.tresci` | `Lemat.Domain.Tresci`, `Lemat.Application.Tresci` |
-| `lemat.profil` | `Lemat.Domain.Profil`, `Lemat.Application.Profil` |
-| `lemat.rekomendacje` | `Lemat.Domain.Rekomendacje`, `Lemat.Application.Rekomendacje` |
-| `lemat.rozwiazania` | `Lemat.Domain.Rozwiazania`, `Lemat.Application.Rozwiazania` |
-| `lemat.rozpoznawanie` (Słownik terminów matematycznych) | `Lemat.Domain.Rozwiazania.FiltrDanychOsobowych` (`slownik_matematyczny.txt` jako zasób osadzony) |
-| `lemat.ocenianie` | `Lemat.Domain.Ocenianie`, `Lemat.Application.Ocenianie` |
-| `lemat.weryfikacja` | `Lemat.Domain.Weryfikacje`, `Lemat.Application.Weryfikacje` |
-| `lemat.kalibracja` | `Lemat.Domain.Kalibracja`, `Lemat.Application.Kalibracja` |
-| `lemat.modele` (porty) | `Lemat.Application.Modele` |
-| `lemat.modele.adaptery`, `lemat.modele.rejestr` | `Lemat.Modele` (`RejestrAdapterow`) |
-| `lemat/modele/schematy/*.json` | `backend/src/Lemat.Modele/Schematy/*.json` (generowane z rekordów C#) |
-| `lemat.agenci.*` | `Lemat.Agenci` |
-| `lemat.orkiestrator` | `Lemat.Application.Orkiestracja` (+ hosting w `Lemat.Worker` i `Lemat.Scheduler`) |
-| `lemat.powiadomienia` | `Lemat.Domain.Powiadomienia`, `Lemat.Application.Powiadomienia` |
-| `lemat.audyt` | `Lemat.Domain.Audyt`, `Lemat.Application.Audyt` |
-| `lemat/konfiguracja.py` | `Lemat.Application.Wspolne.LematOpcje` |
+| `lemat.http` | `Lemat.Api` (`Endpoints/`, `Contracts/`, `Validators/`, `Infrastructure/`, `Streams/`) |
+| `lemat.konta` | `Lemat.Domain.Accounts`, `Lemat.Domain.Accounts.Gdpr`, `Lemat.Application.Accounts`, `Lemat.Infrastructure.Gdpr`, `Lemat.Infrastructure.Security` |
+| `lemat.klasy` | `Lemat.Domain.Classes`, `Lemat.Application.Classes` |
+| `lemat.tresci` | `Lemat.Domain.Content`, `Lemat.Application.Content` |
+| `lemat.profil` | `Lemat.Domain.Profile`, `Lemat.Application.Profile` |
+| `lemat.rekomendacje` | `Lemat.Domain.Recommendations`, `Lemat.Application.Recommendations` |
+| `lemat.rozwiazania` | `Lemat.Domain.Solutions`, `Lemat.Application.Solutions` |
+| `lemat.rozpoznawanie` (Słownik terminów matematycznych) | `Lemat.Domain.Solutions.PersonalDataFilter` (`math-terms.txt` jako zasób osadzony) |
+| `lemat.ocenianie` | `Lemat.Domain.Grading`, `Lemat.Application.Grading` |
+| `lemat.weryfikacja` | `Lemat.Domain.Verifications`, `Lemat.Application.Verifications` |
+| `lemat.kalibracja` | `Lemat.Domain.Calibration`, `Lemat.Application.Calibration` |
+| `lemat.modele` (porty) | `Lemat.Application.Models` |
+| `lemat.modele.adaptery`, `lemat.modele.rejestr` | `Lemat.Models` (`RejestrAdapterow`) |
+| `lemat/modele/schematy/*.json` | `backend/src/Lemat.Models/Schemas/*.json` (generowane z rekordów C#) |
+| `lemat.agenci.*` | `Lemat.Agents` |
+| `lemat.orkiestrator` | `Lemat.Application.Orchestration` (+ hosting w `Lemat.Worker` i `Lemat.Scheduler`) |
+| `lemat.powiadomienia` | `Lemat.Domain.Notifications`, `Lemat.Application.Notifications` |
+| `lemat.audyt` | `Lemat.Domain.Audit`, `Lemat.Application.Audit` |
+| `lemat/konfiguracja.py` | `Lemat.Application.Common.LematOpcje` |
 | PWA (React + Vite) | `frontend/` (Next.js, 6.8) |
+
+### 6.11 Nazwy plików i katalogów (wersja 3.4, ADR-075)
+
+**Zasada.** Wszystkie nazwy katalogów i plików w repozytorium są angielskie
+i ASCII: dokumentacja, projekty i katalogi .NET, pliki `.cs`, katalogi i
+pliki `frontend/` (w tym segmenty tras App Router), testy, skrypty, pliki
+SQL migracji, konfiguracje, prompty i dane Mock. **Identyfikatory w kodzie
+nie zmieniają się** i pozostają zgodne ze słownikiem (ADR-016, ADR-049):
+typy, właściwości i członkowie enumów C#/TS, tabele, kolumny i typy
+PostgreSQL, nazwy JSON, ścieżki REST API .NET (`/rozwiazania/{id}/ocena`),
+nazwy zdarzeń SSE, kody błędów, typy prac w tle, wartości `wersja_promptu`
+i identyfikatory scenariuszy Mock. Zakazane synonimy z 3.1 p. 4 (CLAUDE.md
+§5 p. 4) dotyczą identyfikatorów, nie nazw plików i katalogów.
+
+**Poza zakresem (nie są plikami repozytorium albo nazwy narzuca zewnętrzny
+kontrakt):** klucze obiektów i nazwy bucketów magazynu
+(`rejestr-zdarzen-rodo/zdarzenia/…`, `zdjecia/{uczen_id}/…`,
+`zbior-treningowy/…` — dane w S3, 16.4); zawartość archiwum ZIP importu
+(`arkusz.json`, `rys/` — format wymiany `ArkuszImportV1`, 12.9); kod
+lokalizacji w `messages/pl-PL.json` (BCP 47); nazwy narzucone przez
+narzędzia (`page.tsx`, `layout.tsx`, `error.tsx`, `Program.cs`,
+`GlobalUsings.cs`, `appsettings.json`, `Directory.Build.props`); nazwy
+wersji 2.4 cytowane historycznie z dopiskiem „w 2.4” albo w tabelach
+odpowiedników (5.5, 6.7, 6.10).
+
+#### 6.11.1 Projekty .NET i przestrzenie nazw
+
+Przestrzeń nazw = ścieżka katalogu względem projektu
+(`dotnet_style_namespace_match_folder = true`, IDE0130 jako błąd), więc
+przestrzenie nazw są angielskie, a typy w nich — polskie
+(`Lemat.Domain.Grading.Ocena`, plik `src/Lemat.Domain/Grading/Grade.cs`).
+
+| Wersja 3.3 (projekt) | Wersja 3.4 (projekt, katalog, `RootNamespace`) |
+|---|---|
+| `Lemat.Domain`, `Lemat.Application`, `Lemat.Infrastructure`, `Lemat.Api`, `Lemat.Worker`, `Lemat.Scheduler`, `Lemat.ImageSandbox` | bez zmian |
+| `Lemat.Agenci` | `Lemat.Agents` |
+| `Lemat.Modele` | `Lemat.Models` |
+| `Lemat.Narzedzia` | `Lemat.Tools` |
+| `Lemat.Agenci.Tests`, `Lemat.Modele.Tests` | `Lemat.Agents.Tests`, `Lemat.Models.Tests` |
+| `Lemat.Symulacje` | `Lemat.Simulations` |
+| `Lemat.Domain.Tests`, `Lemat.Application.Tests`, `Lemat.Infrastructure.Tests`, `Lemat.Api.Tests`, `Lemat.Architecture.Tests`, `Lemat.ImageSandbox.Tests` | bez zmian |
+
+Segmenty przestrzeni nazw i katalogów C# (jedno tłumaczenie dla każdego
+segmentu we wszystkich projektach; moduły 6.2 zachowują w prozie polskie
+nazwy):
+
+| Segment 3.3 | Segment 3.4 | Segment 3.3 | Segment 3.4 |
+|---|---|---|---|
+| `Wspolne` | `Common` | `Orkiestracja` | `Orchestration` |
+| `Konta` | `Accounts` | `Synchroniczna` | `Synchronous` |
+| `Konta.Rodo` | `Accounts.Gdpr` | `Handlery` | `Handlers` |
+| `Klasy` | `Classes` | `PraceWTle` | `BackgroundJobs` |
+| `Tresci` | `Content` | `Komendy` | `Commands` |
+| `Profil` | `Profile` | `Zapytania` | `Queries` |
+| `Rekomendacje` | `Recommendations` | `Repozytoria` | `Repositories` |
+| `Rozwiazania` | `Solutions` | `Obslugi` | `EventHandlers` |
+| `Rozwiazania.FiltrDanychOsobowych` | `Solutions.PersonalDataFilter` | `Agenci` (w `Lemat.Application`) | `Agents` |
+| `Ocenianie` | `Grading` | `Generowanie` | `Generation` |
+| `Weryfikacje` | `Verifications` | `Rozpoznawanie` | `Recognition` |
+| `Kalibracja` | `Calibration` | `Wyjasnianie` | `Explanation` |
+| `Modele` | `Models` | `Pluginy` | `Plugins` |
+| `Powiadomienia` | `Notifications` | `Prompty` | `Prompts` |
+| `Audyt` | `Audit` | `Szablony` | `Templates` |
+| `Bledy` | `Errors` | `Decyzyjne` | `Decision` |
+| `Zapasowy` | `Fallback` | `Predyktory` | `Predictors` |
+| `Schematy` | `Schemas` | `Dane` | `Data` |
+| `Scenariusze` | `Scenarios` | `Piaskownice` | `Sandboxes` |
+| `Magazyn` | `Storage` | `Bezpieczenstwo` | `Security` |
+| `Rodo` (w `Lemat.Infrastructure`) | `Gdpr` | `Konfiguracje` | `Configurations` |
+| `Schemat` | `Schema` | `Endpointy` | `Endpoints` |
+| `Kontrakty` | `Contracts` | `Walidatory` | `Validators` |
+| `Strumienie` | `Streams` | `Infrastruktura` (w `Lemat.Api`) | `Infrastructure` |
+| `Konfiguracja` (w `Lemat.Api`) | `Configuration` | `Generatory` | `Generators` |
+| `Slownik` (testy) | `Glossary` | `Kontrakt` (testy) | `Contract` |
+| `Idempotencja` (testy) | `Idempotency` | `Limity` (testy) | `RateLimits` |
+| `Uprawnienia` (testy) | `Permissions` | `Jev`, `Llm`, `Mock`, `Persistence`, `Migrations`, `Sql`, `Email` | bez zmian |
+
+Skutek uboczny: reguła ADR-049 p. 6 (przestrzeń nazw różna od nazwy klasy)
+jest spełniona przez konstrukcję — angielski segment nie może być równy
+polskiej nazwie typu — więc typ `FiltrDanychOsobowych` jest w przestrzeni
+`Lemat.Domain.Solutions.PersonalDataFilter` (katalog z 6.7).
+
+#### 6.11.2 Nazwy plików `.cs`
+
+1. **Jeden plik — jeden typ najwyższego poziomu** (typy zagnieżdżone i
+   prywatne rekordy pomocnicze w tym samym pliku są dozwolone).
+2. **Typ realizujący pojęcie z 3.5:** nazwa pliku = nazwa EN pojęcia z
+   kolumny „Nazwa pliku/folderu (EN)” (forma `PascalCase`), opcjonalnie z
+   jednym przyrostkiem roli z zamkniętej listy: `Id`, `Status`, `Source`
+   (`Zrodlo*`), `Type` (`Typ*`), `Reason` (`Powod*`), `Kind` (`Rodzaj*`),
+   `Input` (`*Wejscie`), `Output` (`*Wyjscie`), `Summary` (`*Skrot`),
+   `Details` (`*Szczegoly`), `Rules` (`Zasady*`), `Builder`
+   (`Budowniczy*`), `Handler`, `Facade` (`I*Fasada`), `Repository`
+   (`*Repozytorium`), `Endpoints` (`*Endpointy`), `Validator`
+   (`*Walidator`), `EntityTypeConfiguration`, `Agent` (`Agent*`), `Plugin`,
+   `Adapter`, `Client` (`*Klient`), `Factory` (`Fabryka*`), `Registry`
+   (`Rejestr*`), `Exception`, `Tests`, `Simulation` (`*Symulacja`).
+   Przykłady: `Rozwiazanie` → `Solution.cs`, `StatusRozwiazania` →
+   `SolutionStatus.cs`, `RozwiazanieId` → `SolutionId.cs`, `OcenaWyjscie` →
+   `GradeOutput.cs`, `IRozwiazaniaFasada` → `ISolutionsFacade.cs`,
+   `AgentOceniajacy` → `GradingAgent.cs`, `KalibratorPewnosci` →
+   `ConfidenceCalibrator.cs`, `StanBezpiecznika` → `SafeguardState.cs`.
+3. **Typ techniczny bez pojęcia w 3.5** (np. `OgranicznikSzybkosci`,
+   `KoncentratorZdarzen`, `ZasobSql`): nazwa pliku = angielskie tłumaczenie
+   nazwy typu zapisane w manifeście
+   `backend/tests/Lemat.Architecture.Tests/Glossary/file-names.yaml`
+   (`OgranicznikSzybkosci` → `RateLimiter.cs`, `KoncentratorZdarzen` →
+   `EventHub.cs`, `ZasobSql` → `SqlResource.cs`).
+4. **Manifest `file-names.yaml`** zawiera wpis dla każdego pliku `.cs` w
+   `backend/src` i `backend/tests` (`- plik: src/Lemat.Domain/Solutions/Solution.cs`,
+   `typ: Lemat.Domain.Solutions.Rozwiazanie`); wyjątki bez wpisu:
+   `Program.cs`, `GlobalUsings.cs`, `AssemblyInfo.cs`. Test
+   `TestNazwPlikow` (plik `FileNamesTest.cs`) sprawdza: (a) każdy plik ma
+   wpis i deklaruje dokładnie wskazany typ najwyższego poziomu; (b)
+   przestrzeń nazw typu = katalog; (c) nazwa pliku typu z 3.5 jest
+   zbudowana z nazwy EN pojęcia i przyrostka z listy p. 2; (d) nazwy plików
+   są unikalne w obrębie projektu; (e) w żadnej nazwie pliku ani katalogu
+   repozytorium (`git ls-files`, poza wyjątkami z akapitu „Poza zakresem”)
+   nie występuje token polski — zbiór tokenów to rdzenie ≥ 4 znaków form
+   bazowych z kolumny PostgreSQL tabeli 3.5 (`rozwiazanie`, `zadanie`,
+   `weryfikacja`, `ocena`, `transkrypcja` …) minus tokeny wspólne z
+   angielskim z listy `wspolne_tokeny` manifestu (`test`, `admin`, `mock`,
+   `jev`, `import`, `start`); (f) każdy segment ścieżki jest ASCII z
+   alfabetu `[A-Za-z0-9._()\[\]-]`.
+5. **Migracje EF Core:** plik `0001_InitialSchema.cs` zawiera klasę
+   `SchematPoczatkowy` z atrybutem `[Migration("0001_SchematPoczatkowy")]`;
+   identyfikator migracji (wiersz `__EFMigrationsHistory`) nie zmienia się
+   (7.7). Pliki SQL: `0000_schema.sql`, `0001_functions.sql`,
+   `0002_invariant_triggers.sql`, `0003_notifications.sql`,
+   `0004_partitions.sql`, `0005_permissions.sql`,
+   `0006_background_jobs.sql`, `0007_api.sql`; dane deweloperskie
+   `Persistence/Data/0001_mock_configurations.sql` (ADR-065).
+
+#### 6.11.3 Analizatory (`backend/.editorconfig`)
+
+Konwencja „nazwa pliku = nazwa typu” jest wyłączona, a zgodność przestrzeni
+nazw z katalogiem — wymuszona. Reguły nazw identyfikatorów (IDE1006,
+`PascalCase` z polskimi nazwami ze słownika) obowiązują bez zmian, bo
+IDE1006 nie dotyczy nazw plików.
+
+```ini
+root = true
+
+[*.cs]
+# ADR-075: nazwa pliku jest angielska, typ w środku polski — reguły "nazwa pliku = nazwa typu" wyłączone
+dotnet_diagnostic.SA1649.severity = none      # StyleCop: File name should match first type name
+dotnet_diagnostic.MA0048.severity = none      # Meziantou: File name must match type name
+dotnet_diagnostic.RCS1060.severity = none     # Roslynator: Declare each type in separate file (zastąpione testem TestNazwPlikow)
+# ADR-075: przestrzeń nazw = katalog (angielski)
+dotnet_style_namespace_match_folder = true
+dotnet_diagnostic.IDE0130.severity = error
+# ADR-049: nazewnictwo identyfikatorów (PascalCase, I-prefiks, _camelCase) — bez zmian
+dotnet_diagnostic.IDE1006.severity = error
+dotnet_naming_rule.typy_pascal.symbols = typy
+dotnet_naming_rule.typy_pascal.style = pascal
+dotnet_naming_rule.typy_pascal.severity = error
+dotnet_naming_symbols.typy.applicable_kinds = class, struct, interface, enum, delegate, property, method, event
+dotnet_naming_style.pascal.capitalization = pascal_case
+dotnet_naming_rule.interfejsy_i.symbols = interfejsy
+dotnet_naming_rule.interfejsy_i.style = prefiks_i
+dotnet_naming_rule.interfejsy_i.severity = error
+dotnet_naming_symbols.interfejsy.applicable_kinds = interface
+dotnet_naming_style.prefiks_i.required_prefix = I
+dotnet_naming_style.prefiks_i.capitalization = pascal_case
+dotnet_naming_rule.pola_prywatne.symbols = pola_prywatne
+dotnet_naming_rule.pola_prywatne.style = podkreslnik_camel
+dotnet_naming_rule.pola_prywatne.severity = error
+dotnet_naming_symbols.pola_prywatne.applicable_kinds = field
+dotnet_naming_symbols.pola_prywatne.applicable_accessibilities = private
+dotnet_naming_style.podkreslnik_camel.required_prefix = _
+dotnet_naming_style.podkreslnik_camel.capitalization = camel_case
+
+```
+
+`Directory.Build.props` ustawia `EnforceCodeStyleInBuild=true`, więc IDE0130
+i IDE1006 działają w `dotnet build` w CI (z `TreatWarningsAsErrors`).
+StyleCop, Meziantou i Roslynator nie są zależnościami projektu (5.2);
+wpisy `none` zabezpieczają przed ich przypadkowym dodaniem. Frontend nie
+ma analizatora nazw plików: ten sam test `TestNazwPlikow` (p. 4e–4f)
+przegląda `frontend/` i `docs/`.
+
+#### 6.11.4 Frontend: trasy App Router, moduły i pliki
+
+Segmenty tras są katalogami, więc są angielskie; **adresy stron frontendu
+zmieniają się** (akceptowane przez właściciela projektu), a ścieżki REST
+API nie. Mapowanie adresów stron (grupy w nawiasach nie wchodzą do URL):
+
+| Strona 3.3 (URL) | Strona 3.4 (URL) | Katalog 3.4 (`src/app`) |
+|---|---|---|
+| `/logowanie` | `/login` | `(public)/login` |
+| `/rejestracja`, `/rejestracja/nauczyciel` | `/register`, `/register/teacher` | `(public)/register` |
+| `/reset-hasla`, `/reset-hasla/potwierdzenie` | `/password-reset`, `/password-reset/confirm` | `(public)/password-reset` |
+| `/dolacz/{kod}` | `/join/{kod}` | `(public)/join/[code]` |
+| `/start` | `/start` | `(student)/start` |
+| `/test-diagnostyczny` | `/diagnostic-test` | `(student)/diagnostic-test` |
+| `/sciezka-nauki` | `/learning-path` | `(student)/learning-path` |
+| `/wkladki-teoretyczne/{id}` | `/theory-inserts/{id}` | `(student)/theory-inserts/[theoryInsertId]` |
+| `/zadania/{id}` | `/exercises/{id}` | `(student)/exercises/[exerciseId]` |
+| `/rozwiazania`, `/rozwiazania/{id}` | `/solutions`, `/solutions/{id}` | `(student)/solutions/[solutionId]` |
+| `/profil`, `/przypisania`, `/klasy`, `/ustawienia` | `/profile`, `/assignments`, `/classes`, `/settings` | `(student)/…` |
+| `/nauczyciel` | `/teacher` | `(teacher)/teacher` |
+| `/nauczyciel/klasy/{id}/uczniowie/{id}` | `/teacher/classes/{id}/students/{id}` | `(teacher)/teacher/classes/[classId]/students/[studentId]` |
+| `/nauczyciel/rozwiazania/{id}` | `/teacher/solutions/{id}` | `(teacher)/teacher/solutions/[solutionId]` |
+| `/nauczyciel/zestawy-zadan/{id}` | `/teacher/exercise-sets/{id}` | `(teacher)/teacher/exercise-sets/[exerciseSetId]` |
+| `/nauczyciel/przypisania/{id}` | `/teacher/assignments/{id}` | `(teacher)/teacher/assignments/[assignmentId]` |
+| `/nauczyciel/weryfikacje/{id}` | `/teacher/verifications/{id}` | `(teacher)/teacher/verifications/[verificationId]` |
+| `/nauczyciel/zadania`, `…/nowe`, `…/generowanie`, `…/{id}/przeglad` | `/teacher/exercises`, `…/new`, `…/generate`, `…/{id}/review` | `(teacher)/teacher/exercises` |
+| `/nauczyciel/zgloszenia-bledu-zadan` | `/teacher/exercise-error-reports` | `(teacher)/teacher/exercise-error-reports` |
+| `/nauczyciel/wkladki-teoretyczne/{id}/przeglad` | `/teacher/theory-inserts/{id}/review` | `(teacher)/teacher/theory-inserts/[theoryInsertId]/review` |
+| `/nauczyciel/ustawienia` | `/teacher/settings` | `(teacher)/teacher/settings` |
+| `/admin/uzytkownicy`, `/admin/klasy/{id}` | `/admin/users`, `/admin/classes/{id}` | `(administrator)/admin/users`, `…/classes/[classId]` |
+| `/admin/arkusze-cke/importy/{id}` | `/admin/cke-sheets/imports/{id}` | `(administrator)/admin/cke-sheets/imports/[importId]` |
+| `/admin/konfiguracje-modeli`, `/admin/progi-pewnosci`, `/admin/kalibracja`, `/admin/bezpieczniki` | `/admin/model-configurations`, `/admin/confidence-thresholds`, `/admin/calibration`, `/admin/safeguards` | `(administrator)/admin/…` |
+| `/admin/obciazenie-weryfikacji`, `/admin/pula-diagnostyczna` | `/admin/verification-load`, `/admin/diagnostic-pool` | `(administrator)/admin/…` |
+| `/admin/zadania/{id}/przeglad`, `/admin/zgloszenia-bledu-zadan` | `/admin/exercises/{id}/review`, `/admin/exercise-error-reports` | `(administrator)/admin/…` |
+| `/admin/zlecenia-generowania/{id}`, `/admin/wkladki-teoretyczne`, `/admin/praca-w-tle` | `/admin/generation-requests/{id}`, `/admin/theory-inserts`, `/admin/background-jobs` | `(administrator)/admin/…` |
+
+Parametry zapytań stron (`?powrot=`, `?kod=`, `?element=`,
+`?przypisanie=`) są zmiennymi TS i zostają polskie. Klucze `params` z
+segmentów dynamicznych są angielskie (`code`, `theoryInsertId`,
+`exerciseId`, `solutionId`, `assignmentId`, `classId`, `studentId`,
+`exerciseSetId`, `verificationId`, `importId`, `generationRequestId`) i
+występują wyłącznie w destrukturyzacji w `page.tsx` (`const { solutionId:
+rozwiazanieId } = await params;`); test słownika (3.4) ma je na zamkniętej
+liście wyjątków. Wiadomości e-mail z linkami do stron (reset hasła,
+zaproszenie) używają nowych adresów; przekierowania ze starych adresów nie
+są potrzebne, bo system nie był uruchomiony produkcyjnie.
+
+Moduły `src/features/` i katalogi `src/lib/`:
+
+| 3.3 | 3.4 | 3.3 | 3.4 |
+|---|---|---|---|
+| `features/konta` | `features/accounts` | `features/weryfikacje` | `features/verifications` |
+| `features/nauka` | `features/learning` | `features/tresci` | `features/content` |
+| `features/rozwiazania` | `features/solutions` | `features/administracja` | `features/administration` |
+| `features/profil` | `features/profile` | `features/powiadomienia` | `features/notifications` |
+| `features/klasy` | `features/classes` | `lib/zdjecia` | `lib/photos` |
+| `features/przypisania` | `features/assignments` | `public/ikony`, `narzedzia/`, `e2e/akceptacja` | `public/icons`, `tools/`, `e2e/acceptance` |
+
+Pliki: komponent React = plik `PascalCase.tsx` z nazwą EN (komponent w
+środku zachowuje nazwę polską: `EdytorTranskrypcji` w
+`TranscriptionEditor.tsx`, `ZdjecieKartki` w `SheetPhoto.tsx`,
+`DostawcaSesji` w `SessionProvider.tsx`, `StraznikFlagi` w `FlagGuard.tsx`,
+`Wzor` w `Formula.tsx`, `TrescMarkdown` w `MarkdownContent.tsx`); pozostałe
+pliki TS = `kebab-case.ts` (`klient.ts` → `client.ts`, `typy.ts` →
+`types.ts`, `bledy.ts` → `errors.ts`, `obsluzBlad.ts` → `handle-error.ts`,
+`odswiezanie.ts` → `refresh.ts`, `strumien.ts` → `stream.ts`,
+`zdarzenia.ts` → `events.ts`, `liderPowiadomien.ts` →
+`notification-leader.ts`, `kompresja.ts` → `compression.ts`,
+`kompresja.worker.ts` → `compression.worker.ts`, `adresZdjecia.ts` →
+`photo-url.ts`, `kolejkaZapisow.ts` → `save-queue.ts`, `schematy.ts` →
+`schemas.ts`, `generuj-bledy.ts` → `generate-errors.ts`,
+`generuj-zdarzenia.ts` → `generate-events.ts`); testy Vitest dziedziczą
+nazwę pliku (`stream.test.ts`, `refresh.test.ts`, `save-queue.test.ts`,
+`compression.test.ts`, `clock-skew.test.ts`, `SheetPhoto.test.tsx`).
+
+Testy Playwright (`frontend/e2e/acceptance/` dla `frNN-*`, `frontend/e2e/`
+dla pozostałych):
+
+| 3.3 | 3.4 | 3.3 | 3.4 |
+|---|---|---|---|
+| `fr01-konto` | `fr01-account` | `fr21-wynikanie-krokow` | `fr21-step-entailment` |
+| `fr02-poziom-termin` | `fr02-level-exam-date` | `fr22-pewnosc` | `fr22-confidence` |
+| `fr03-test-diagnostyczny` | `fr03-diagnostic-test` | `fr23-auto` | `fr23-auto` |
+| `fr04-profil` | `fr04-profile` | `fr24-ocena-wstepna` | `fr24-preliminary-grade` |
+| `fr05-rekomendacja` | `fr05-recommendation` | `fr25-wynik-bledne-kroki` | `fr25-result-wrong-steps` |
+| `fr06-wkladka` | `fr06-theory-insert` | `fr26-dowod` | `fr26-proof` |
+| `fr07-trudnosc` | `fr07-difficulty` | `fr27-wskazowka` | `fr27-hint` |
+| `fr08-powtorki` | `fr08-repetitions` | `fr28-blad-odczytu` | `fr28-reading-error` |
+| `fr09-wybor-dzialu` | `fr09-section-choice` | `fr29-profil-po-ocenie` | `fr29-profile-after-grade` |
+| `fr10-uzasadnienie` | `fr10-justification` | `fr30-klasa` | `fr30-class` |
+| `fr11-generowanie` | `fr11-generation` | `fr31-postepy` | `fr31-progress` |
+| `fr12-tresc-kryteria` | `fr12-content-criteria` | `fr32-przypisania` | `fr32-assignments` |
+| `fr13-walidacja` | `fr13-validation` | `fr33-weryfikacja-zdjecia` | `fr33-verification-photos` |
+| `fr14-przeglad` | `fr14-review` | `fr34-korekta` | `fr34-correction` |
+| `fr15-zamkniete` | `fr15-closed` | `fr35-import` | `fr35-import` |
+| `fr16-przeslanie` | `fr16-upload` | `fr36-otagowanie` | `fr36-tagging` |
+| `fr19-ocena-krokowa` | `fr19-step-grading` | `sesja-dwie-karty`, `sesja-wygasla` | `session-two-tabs`, `session-expired` |
+| `fr20-wynik-z-rozumowania` | `fr20-result-from-reasoning` | `powiadomienia-dwie-karty`, `klasa-za-nat` | `notifications-two-tabs`, `class-behind-nat` |
+| `aparat-przeladowanie`, `siec-komorkowa` | `camera-reload`, `cellular-network` | `autozapis-wolna-siec`, `podwojne-klikniecie` | `autosave-slow-network`, `double-click` |
+| `sse-zapasowe-odpytywanie` | `sse-fallback-polling` | `kontrakt-api` | `api-contract` |
+
+#### 6.11.5 Pliki, których nazwa wynikała z identyfikatora
+
+Gdy nazwa pliku była wartością identyfikatora (rola modelu, wersja promptu,
+scenariusz Mock, identyfikator migracji), plik dostaje nazwę angielską, a
+identyfikator przechodzi do indeksu albo atrybutu; wartość w bazie, JSON i
+nagłówkach się nie zmienia.
+
+| Rola (`RolaModelu`) | Katalog promptów i plik roli Mock |
+|---|---|
+| `ROZPOZNAWANIE_PISMA` | `handwriting-recognition` |
+| `GENERATYWNY_ZADANIA` | `generative-exercises` |
+| `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE` | `generative-independent-solver` |
+| `GENERATYWNY_WKLADKI` | `generative-theory-inserts` |
+| `GENERATYWNY_WSKAZOWKI` | `generative-hints` |
+| `GENERATYWNY_OPINIA_POMOCNICZA` | `generative-auxiliary-opinion` |
+| `DECYZYJNY_GLOWNY` | `decision-primary` |
+| `DECYZYJNY_ZAPASOWY` | `decision-fallback` |
+
+- **Prompty:** `backend/src/Lemat.Agents/Prompts/<katalog roli>/<plik>.yaml`;
+  indeks `Prompts/index.yaml` wiąże (`rola_modelu`, `wersja_promptu`) z
+  plikiem (`docs/spec/prompts.md` 2: `rozpoznanie-v1` →
+  `recognition-v1.yaml`, `sprawdzenie-poprawek-v2` → `edit-check-v2.yaml`,
+  `zadanie-v1` → `exercise-v1.yaml`, `rozwiazanie-niezalezne-v1` →
+  `independent-solution-v1.yaml`, `wkladka-v1` → `theory-insert-v1.yaml`,
+  `wskazowka-v1` → `hint-v1.yaml`, `opinia-pomocnicza-v1` →
+  `auxiliary-opinion-v1.yaml`, `plan-pytan-v1` → `question-plan-v1.yaml`,
+  `plan-pytan-walidacji-v1` → `validation-question-plan-v1.yaml`).
+- **Scenariusze Mock:** `Lemat.Models/Mock/Scenarios/<katalog>/<plik roli>.json`,
+  indeks `Mock/Scenarios/index.yaml` (identyfikator scenariusza → katalog;
+  pełna lista w `docs/spec/prompts.md` 6); dane: `Mock/Data/<katalog
+  roli>/<plik promptu bez .yaml>/*.json`, `Mock/Data/default.json`.
+- **Szablony stanów i dane testów agentów:**
+  `Lemat.Agents.Tests/Data/grading-state-v1/*.txt` (szablon `stan-oceny-v1`),
+  `Lemat.Agents.Tests/Data/grading/*.json`.
+- **Szablony uzasadnień:** `Lemat.Agents/Recommendations/Templates/justifications.pl-PL.yaml`.
+- **Pozostałe pliki danych i konfiguracji:** `umiejetnosci.yaml` →
+  `skills.yaml`, `slownik_matematyczny.txt` → `math-terms.txt`,
+  `slownik_tokeny.yaml` → `glossary-tokens.yaml`, `slownik_wyjatki.yaml` →
+  `glossary-exceptions.yaml`, `katalog-bledow.yaml` → `error-catalog.yaml`,
+  `macierz-12-8.yaml` → `matrix-12-8.yaml`, `ograniczenia.txt` →
+  `constraints.txt`, `polityka.xml` → `policy.xml`, `wyodrebnij-ddl.sh` →
+  `extract-ddl.sh`, `sprawdz_rtm.py` → `check_rtm.py`,
+  `lemat_sympy/serwer.py` → `lemat_sympy/server.py` (moduł uvicorn
+  `lemat_sympy.server:aplikacja`), `lemat_sympy/obliczenia.py` →
+  `lemat_sympy/computations.py`.
+
+#### 6.11.6 Dokumentacja
+
+Pliki `docs/adr/ADR-NNN-<english-slug>.md` (slug: angielskie tłumaczenie
+tytułu, małe litery, łączniki, ≤ 60 znaków; tytuł i treść ADR pozostają po
+polsku), `docs/spec/prompts.md` (dawniej `prompty.md`),
+`docs/spec/tools/check_rtm.py` (dawniej `narzedzia/sprawdz_rtm.py` w `docs/spec/`).
+Sprawdzenie wersji 3.4: 73 pliki ADR przemianowane (ADR-054 miał już
+angielski slug), 0 martwych odnośników do plików w `docs/`, `CLAUDE.md`,
+`HANDOFF.md`, `TASKS.md`, `README.md` (skrypt sprawdzający cele odnośników
+Markdown i ścieżki `docs/…` w kodzie inline).
 
 ---
 
@@ -2700,7 +3098,7 @@ erDiagram
   Klucze główne, pozostałe klucze obce, UNIQUE i CHECK mają nazwy domyślne
   PostgreSQL (`<tabela>_pkey`, `<tabela>_<kolumna>_fkey`,
   `<tabela>_<kolumny>_key`, `<tabela>_<kolumna>_check`,
-  `<tabela>_check[N]`), utrwalone w `Persistence/Schemat/ograniczenia.txt`
+  `<tabela>_check[N]`), utrwalone w `Persistence/Schema/constraints.txt`
   i porównywane w CI (wersja 3.2, ADR-063 p. 4; prefiks `ck_` z wersji 3.1
   nie obowiązuje, bo model EF Core nie tworzy CHECK-ów).
 - Klucze obce `uczen.uzytkownik_id` i `nauczyciel.uzytkownik_id` są
@@ -2736,15 +3134,15 @@ w tej sekcji; od wersji 3.1 sekcja zawiera wyłącznie zmiany i decyzje.
 | `max_prob` → `maks_prob` | `praca_w_tle` | C7-06 p. 7, ADR-049 p. 14 |
 | klucz obcy do `uzytkownik` `DEFERRABLE INITIALLY DEFERRED` | `uczen`, `nauczyciel` | C7-06 p. 1, ADR-063 |
 | nowa tabela | `przebieg_harmonogramu` | C7-13, ADR-066 |
-| `ponow_prace`, `odzyskaj_dzierzawy` (`0006_prace_w_tle.sql`) | funkcje | C7-03, ADR-066 |
-| blok `DO` tworzący role `NOLOGIN` | `0005_uprawnienia.sql` | C7-15 p. 4 |
+| `ponow_prace`, `odzyskaj_dzierzawy` (`0006_background_jobs.sql`) | funkcje | C7-03, ADR-066 |
+| blok `DO` tworzący role `NOLOGIN` | `0005_permissions.sql` | C7-15 p. 4 |
 
 Sprawdzenie wersji 3.2: bloki A i B ładują się bez błędów na czystej bazie
 PostgreSQL 16.15 (60 tabel + 4 partycje, 43 typy wyliczeniowe, 15
 triggerów, 142 CHECK, 124 FK, 21 UNIQUE).
 
 Typ wyliczeniowy `kontekst_decyzji` ma odpowiednik
-`Lemat.Domain.Modele.KontekstDecyzji { Ocena, Rekomendacja, WalidacjaZadania }`
+`Lemat.Domain.Models.KontekstDecyzji { Ocena, Rekomendacja, WalidacjaZadania }`
 (3.5 #30, C6-12 p. 5).
 
 ### 7.4 Dane referencyjne: Działy (A-04)
@@ -2766,7 +3164,7 @@ Typ wyliczeniowy `kontekst_decyzji` ma odpowiednik
 | 13 | XIII | Optymalizacja i rachunek różniczkowy | tak |
 
 Umiejętności są ładowane migracją danych z pliku
-`backend/src/Lemat.Infrastructure/Persistence/Dane/umiejetnosci.yaml` (wersja 2.4: `src/lemat/tresci/dane/umiejetnosci.yaml`) (jeden wpis = jeden punkt wymagań
+`backend/src/Lemat.Infrastructure/Persistence/Data/skills.yaml` (wersja 2.4: `src/lemat/tresci/dane/umiejetnosci.yaml`) (jeden wpis = jeden punkt wymagań
 szczegółowych podstawy programowej; kod `P.V.9` / `R.XIII.2`). Wagi
 egzaminacyjne = udział punktów danej Umiejętności w Arkuszach CKE 2023–2026
 (wyliczane skryptem przy imporcie, normalizowane w obrębie poziomu matury).
@@ -2847,7 +3245,7 @@ Szczegóły i kod konfiguracji: [`docs/spec/ef-core.md`](spec/ef-core.md).
 
 | Zagadnienie | Decyzja |
 |---|---|
-| Kontekst | jeden `LematDbContext` dla wszystkich modułów (modularny monolit, jedna baza); konfiguracje `<Encja>EntityTypeConfiguration` w `Persistence/Konfiguracje/<Modul>/` ładowane `ApplyConfigurationsFromAssembly`; `DbSet<T>` niepubliczne |
+| Kontekst | jeden `LematDbContext` dla wszystkich modułów (modularny monolit, jedna baza); konfiguracje `<Entity>EntityTypeConfiguration` w `Persistence/Configurations/<Module>/` ładowane `ApplyConfigurationsFromAssembly`; `DbSet<T>` niepubliczne |
 | Źródło schematu | DDL (ADR-063): model EF Core jest mapowaniem, nie generuje migracji; bez `HasCheckConstraint`, `HasMaxLength`, `HasTrigger`; test `ModelEfZgodnyZKatalogiem` |
 | Nazwy kolumn | `EFCore.NamingConventions` (`UseSnakeCaseNamingConvention`), nazwy tabel jawne, `HasColumnName` dla nazw z cyframi (`oswiadczenie_wieku_16`, ADR-049 p. 14) i kluczy współdzielonych z PK (`uzytkownik_id`, `uczen_id`) |
 | Relacje | wewnątrz agregatu — `OwnsMany`/`HasMany` z nawigacją po polu prywatnym; między agregatami — relacja bez nawigacji (`HasOne<T>().WithMany().HasForeignKey(…)`) dla porządku poleceń; klucze kont o różnych typach identyfikatorów — bez relacji, FK odroczony w DDL (ADR-063 p. 3) |
@@ -2860,19 +3258,23 @@ Szczegóły i kod konfiguracji: [`docs/spec/ef-core.md`](spec/ef-core.md).
 | Współbieżność | 15.2; `WersjaAgregatuInterceptor` podnosi `version` korzenia przy zmianie dowolnego wiersza agregatu (C7-06 p. 8); `DbUpdateConcurrencyException` → `412 KONFLIKT_WERSJI` (z `If-Match`), `409 KONFLIKT_WSPOLBIEZNOSCI` (bez) albo `rezultat_przestarzaly` (worker) |
 | Triggery | wyłącznie w plikach SQL migracji; lista 15 triggerów w `KatalogTriggerow` porównywana z `pg_trigger` (`KazdyTriggerWKatalogu`); `HasTrigger` nie jest używane (Npgsql nie zmienia SQL zapisu, ADR-063 p. 5) |
 | Operacje atomowe | `ExecuteUpdateAsync`/SQL zamiast śledzenia zmian (wyniki `RETURNING` przez `SqlQuery<T>(…).ToListAsync()`, polecenie przed wczytaniem agregatu z `AsTracking()` albo `ReloadAsync()` po nim, 15.2): podjęcie, przedłużenie i zwolnienie Weryfikacji, kalibracja Poziomu trudności, zapis `zgodnosc_poprawek`, rotacja refresh tokenu, zlecanie i wynik prac w tle, ogranicznik szybkości |
-| Partycje | `decyzja_modelu` — tabela nadrzędna i partycje w SQL (`0004_partycje.sql`) |
+| Partycje | `decyzja_modelu` — tabela nadrzędna i partycje w SQL (`0004_partitions.sql`) |
 | Transakcje | wyłącznie przez `IJednostkaPracy` (jawna transakcja, ADR-056); bez `EnableRetryOnFailure` |
 
 ### 7.7 Strategia migracji (wersja 3.2, ADR-063)
 
-1. **Jedno źródło:** `docs/spec/ddl.md` → skrypt `wyodrebnij-ddl.sh` →
-   `Persistence/Migrations/Sql/0000_schemat.sql` (blok A) i
-   `0001_funkcje.sql` … `0006_prace_w_tle.sql` (blok B); CI sprawdza brak
+1. **Jedno źródło:** `docs/spec/ddl.md` → skrypt `extract-ddl.sh` →
+   `Persistence/Migrations/Sql/0000_schema.sql` (blok A) i
+   `0001_functions.sql` … `0006_background_jobs.sql` (blok B); CI sprawdza brak
    różnic po ponownym wycięciu.
 2. **Migracje** są klasami EF Core `Migration` zawierającymi wyłącznie
    `migrationBuilder.Sql(ZasobSql.Wczytaj(…))`: `0001_SchematPoczatkowy`
    wykonuje pliki `0000` … `0006` w kolejności; kolejne migracje —
-   `NNNN_<opis>` z jednym plikiem SQL. `dotnet ef migrations add` nie jest
+   `NNNN_<opis>` z jednym plikiem SQL. Od wersji 3.4 (ADR-075) plik klasy
+   migracji i plik SQL mają nazwę angielską (`0001_InitialSchema.cs`,
+   `NNNN_<english-description>.cs` i `.sql`), a identyfikator migracji w
+   atrybucie `[Migration("0001_SchematPoczatkowy")]` i w
+   `__EFMigrationsHistory` pozostaje bez zmian (6.11). `dotnet ef migrations add` nie jest
    używane; migawki modelu (`*ModelSnapshot.cs`) nie ma (test
    `ZadnaMigracjaNieGenerujeSchematu` odrzuca pliki migracji z
    `CreateTable`/`AddColumn`).
@@ -2894,7 +3296,7 @@ Szczegóły i kod konfiguracji: [`docs/spec/ef-core.md`](spec/ef-core.md).
    CONFLICT`; sprawdzony na fragmencie schematu — wykrył rozbieżność
    `NULL` i dał 0 różnic po poprawce), `KazdyKluczObcyMaRelacjeAlboJestOdroczony`,
    `KazdyTriggerWKatalogu` (15), `OgraniczeniaZgodneZMigawka`
-   (`ograniczenia.txt`), `KazdaTabelaDdlMaWlasciciela` (60 tabel),
+   (`constraints.txt`), `KazdaTabelaDdlMaWlasciciela` (60 tabel),
    `KazdyTypWyliczeniowyDdlJestZmapowany` (43 typy),
    `MigracjeNaPustejBazieBezRolIBezMock` (czysta baza bez ról → migracje
    kończą się sukcesem, brak konfiguracji `mock`).
@@ -3256,7 +3658,7 @@ sequenceDiagram
     participant PWA
     participant API
     participant NEH as NastepnyElementHandler (Rekomendacje, api)
-    participant SYN as IRekomendacjaSynchroniczna (Orkiestracja.Synchroniczna)
+    participant SYN as IRekomendacjaSynchroniczna (Orchestration.Synchronous)
     participant REK as Agent rekomendujący
     participant DB
     participant JEV
@@ -3901,16 +4303,16 @@ nie nadpisze jego pracy (C-23). Od wersji 2.2 podjęcie nie zmienia
 
 ## 10. Agenci — kontrakty, algorytmy, pytania do Jev
 
-Agenci są klasami C# w projekcie `Lemat.Agenci` implementującymi interfejsy
-z `Lemat.Application.Agenci` (6.6). Przyjmują i zwracają rekordy C#
+Agenci są klasami C# w projekcie `Lemat.Agents` implementującymi interfejsy
+z `Lemat.Application.Agents` (6.6). Przyjmują i zwracają rekordy C#
 (niezmienne, z typami z `Lemat.Domain`), **nie wykonują zapisów w bazie**
 (handlery prac w tle i przypadki użycia dostarczają dane i zapisują wyniki
 w jednostce pracy, ADR-056) i korzystają wyłącznie z portów
-`Lemat.Application.Modele` (13.1). Dzięki temu są testowalni bez bazy i
+`Lemat.Application.Models` (13.1). Dzięki temu są testowalni bez bazy i
 bez sieci (implementacje Mock, 10.0.6). Zasada **Z-1 („Jev decyduje, LLM
 pisze”)** obowiązuje bez zmian: punkty, trasa i Pewność oceny wynikają
 wyłącznie z decyzji Modelu decyzyjnego (Jev albo model zapasowy) i reguł
-11 w `Lemat.Domain.Ocenianie`; sygnały modeli generatywnych (ramki danych
+11 w `Lemat.Domain.Grading`; sygnały modeli generatywnych (ramki danych
 osobowych, `zgodnosc_z_zadaniem`, `czytelne`, Sprawdzenie zgodności
 poprawek, Opinia pomocnicza, niezależne rozwiązanie W-3) działają
 wyłącznie w kierunku bezpiecznym — zatrzymują, ostrzegają albo kierują do
@@ -3925,17 +4327,17 @@ automatycznej.
 flowchart LR
     subgraph app["Lemat.Application"]
         H["Handlery prac w tle<br/>(Orkiestracja.Handlery)"]
-        RS["IRekomendacjaSynchroniczna<br/>(Orkiestracja.Synchroniczna)"]
+        RS["IRekomendacjaSynchroniczna<br/>(Orchestration.Synchronous)"]
         IA["IAgentRekomendujacy · IAgentGenerujacy ·<br/>IAgentRozpoznajacy · IAgentOceniajacy · IAgentWyjasniajacy"]
         P["Porty Modele: IModelDecyzyjny, IModelGeneratywny,<br/>ISprawdzanieSymboliczne, IPredyktorSukcesu,<br/>IOgranicznikSzybkosci, IMagazynObiektow, IObrobkaObrazow"]
     end
-    subgraph ag["Lemat.Agenci"]
+    subgraph ag["Lemat.Agents"]
         A["Agent*<br/>(logika agenta, plany pytań, strażniki)"]
         W["Wspolne: WywolanieCzatu,<br/>BudowniczyWiadomosci, SzablonyPromptow"]
         PL["Pluginy SK: SprawdzanieSymbolicznePlugin<br/>[KernelFunction] → AIFunction"]
         ST["BudowniczyStanuOceny /<br/>Walidacji / Rekomendacji (C#)"]
     end
-    subgraph mo["Lemat.Modele"]
+    subgraph mo["Lemat.Models"]
         F["FabrykaKlientowCzatu : IModelGeneratywny<br/>potok ChatClientBuilder"]
         CB["CircuitBreakerModeluDecyzyjnego : IModelDecyzyjny"]
         J["JevAdapter (HttpClient)"]
@@ -3957,14 +4359,14 @@ flowchart LR
 Agent dostaje klienta czatu wyłącznie przez
 `IModelGeneratywny.DlaRoliAsync(RolaModelu, CancellationToken)`, który
 zwraca `KlientCzatuRoli` z aktywną Konfiguracją modelu roli i gotowym
-potokiem `IChatClient` (ADR-058). Żaden typ `Lemat.Agenci` nie przyjmuje
+potokiem `IChatClient` (ADR-058). Żaden typ `Lemat.Agents` nie przyjmuje
 `IChatClient`, `IChatCompletionService` ani `Kernel` w konstruktorze
 (NetArchTest `AgentNieRozwiazujeKlientaCzatuZDi`).
 
 #### 10.0.2 Kontrakty wspólne (C#)
 
 ```csharp
-namespace Lemat.Application.Modele;
+namespace Lemat.Application.Models;
 
 public sealed record KlientCzatuRoli(RolaModelu Rola, KonfiguracjaModeluId KonfiguracjaModeluId, string Dostawca,
                                      string Model, string WersjaPromptu, ParametryModelu Parametry, IChatClient Czat);
@@ -3982,7 +4384,7 @@ public sealed record ObrazWejsciowy(int NrZdjecia, ReadOnlyMemory<byte> Jpeg, in
 public sealed record RezultatWywolaniaModelu<T>(T Wartosc, KonfiguracjaModeluId KonfiguracjaModeluId,
                                                 int TokenyWejscie, int TokenyWyjscie, decimal KosztPln, TimeSpan Czas);
 
-// ----- Lemat.Application.Agenci -----
+// ----- Lemat.Application.Agents -----
 
 public sealed record WywolanieNarzedzia(int Nr, string Funkcja, string ArgumentyJson, byte[] ArgumentySha256,
                                         string Rezultat, TimeSpan Czas);            // ślad NFR-05 (ADR-058 p. 6)
@@ -3997,9 +4399,9 @@ zależą od `Lemat.Application` (C6-15 p. 5).
 #### 10.0.3 Wywołanie modelu generatywnego
 
 ```csharp
-namespace Lemat.Agenci.Wspolne;
+namespace Lemat.Agents.Common;
 
-public sealed class SzablonyPromptow : ISzablonyPromptow                   // port Lemat.Application.Modele; pliki Prompty/<ROLA>/<wersja>.yaml, zasoby osadzone
+public sealed class SzablonyPromptow : ISzablonyPromptow                   // port Lemat.Application.Models; pliki Prompts/<role-folder>/<prompt-file>.yaml, zasoby osadzone
 {
     public Task<string> RenderujSystemowyAsync(RolaModelu rola, string wersjaPromptu,
                                                IReadOnlyDictionary<string, object> zmienne, CancellationToken ct);
@@ -4022,13 +4424,13 @@ public sealed class BudowniczyWiadomosci
 public sealed class WywolanieCzatu(IWywolanieUstrukturyzowane ustrukturyzowane, TimeProvider czas, ILogger<WywolanieCzatu> log)
 {
     /// Nakładka agenta (3.2, ADR-058 uzup. p. 5): termin całego wywołania agenta, wykrycie nieznanego narzędzia;
-    /// schemat, walidacja i 1 próba naprawy — port IWywolanieUstrukturyzowane (implementacja w Lemat.Modele.Llm).
+    /// schemat, walidacja i 1 próba naprawy — port IWywolanieUstrukturyzowane (implementacja w Lemat.Models.Llm).
     public Task<RezultatWywolaniaModelu<T>> GenerujJsonAsync<T>(
         KlientCzatuRoli klient, IReadOnlyList<ChatMessage> wiadomosci, DateTimeOffset termin,
         IReadOnlyList<AIFunction>? narzedzia, CancellationToken ct) where T : class;
 }
 
-// ----- Lemat.Application.Modele (port, 3.2, C7-08) -----
+// ----- Lemat.Application.Models (port, 3.2, C7-08) -----
 public interface IWywolanieUstrukturyzowane
 {
     Task<RezultatWywolaniaModelu<T>> WykonajAsync<T>(KlientCzatuRoli klient, IReadOnlyList<ChatMessage> wiadomosci,
@@ -4053,10 +4455,10 @@ sprawdza brak `FunctionCallContent` (nieznane narzędzie →
 oraz atrybutami rekordu. Schemat pochodzi z
 `AIJsonUtilities.CreateJsonSchema(typeof(T), BudowniczyWiadomosci.Json,
 inferenceOptions: new() { TransformOptions = new() { DisallowAdditionalProperties = true,
-RequireAllProperties = true } })` i jest migawką w `Lemat.Modele/Schematy/`
+RequireAllProperties = true } })` i jest migawką w `Lemat.Models/Schemas/`
 (C7-09). Przy
 niezgodności dopisuje do rozmowy odpowiedź modelu i wiadomość naprawczą
-(`docs/spec/prompty.md`, 1 p. 3) i ponawia raz; drugie niepowodzenie →
+(`docs/spec/prompts.md`, 1 p. 3) i ponawia raz; drugie niepowodzenie →
 `BladModeluTrwalyException("ODPOWIEDZ_NIEZGODNA_ZE_SCHEMATEM")`.
 
 #### 10.0.4 Czas, ponowienia, błędy i model zapasowy
@@ -4094,9 +4496,9 @@ nie dla modeli (ADR-055 p. 7).
 
 | Źródło | Spany | Atrybuty (bez treści, `EnableSensitiveData = false`) | Metryki |
 |---|---|---|---|
-| `Microsoft.Extensions.AI` (`UseOpenTelemetry` wewnątrz `UseFunctionInvocation`, nazwa źródła `Lemat.Modele`) | `chat {model}` per żądanie do dostawcy, `execute_tool {funkcja}` (np. `execute_tool sympy_sprawdz_rownowaznosc`), `orchestrate_tools` (pętla wywołań) — zmierzone: 2 wywołania funkcji → 3 × `chat`, 2 × `execute_tool`, 1 × `orchestrate_tools` | `gen_ai.operation.name`, `gen_ai.system` (= `dostawca`), `gen_ai.request.model`, `gen_ai.response.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.finish_reasons` + własne `lemat.rola_modelu`, `lemat.konfiguracja_modelu_id`, `lemat.wersja_promptu` | `gen_ai.client.operation.duration`, `gen_ai.client.token.usage` |
-| `Lemat.Agenci` (`ActivitySource`) | `invoke_agent {agent}` (np. `invoke_agent agent_oceniajacy`) jako rodzic wywołań modeli | `gen_ai.operation.name = invoke_agent`, `gen_ai.agent.name`, `lemat.praca_w_tle.typ`, `lemat.trasa` (Ocena), `lemat.wynik` (`SUKCES`, `BLAD_PRZEJSCIOWY`, `BLAD_TRWALY`, `SZABLON`, `POLITYKA_ELO`) | `agent_czas_sekundy{agent,wynik}`, `wywolania_funkcji_total{funkcja,wynik}`, `koszt_modeli_pln_total{rola}` |
-| `Lemat.Modele.Jev` (`ActivitySource`) | `jev.decisions` (runda albo wywołanie fali) | `gen_ai.system = typesafe-jev`, `lemat.tryb_jev`, `lemat.runda`, `lemat.liczba_pytan` | nazwy z 17.3 (`jev_wywolania_http_total`, `jev_czas_sekundy`, `jev_ograniczenie_lokalne_total`, `obwod_stan{konfiguracja}`) |
+| `Microsoft.Extensions.AI` (`UseOpenTelemetry` wewnątrz `UseFunctionInvocation`, nazwa źródła `Lemat.Models`) | `chat {model}` per żądanie do dostawcy, `execute_tool {funkcja}` (np. `execute_tool sympy_sprawdz_rownowaznosc`), `orchestrate_tools` (pętla wywołań) — zmierzone: 2 wywołania funkcji → 3 × `chat`, 2 × `execute_tool`, 1 × `orchestrate_tools` | `gen_ai.operation.name`, `gen_ai.system` (= `dostawca`), `gen_ai.request.model`, `gen_ai.response.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.finish_reasons` + własne `lemat.rola_modelu`, `lemat.konfiguracja_modelu_id`, `lemat.wersja_promptu` | `gen_ai.client.operation.duration`, `gen_ai.client.token.usage` |
+| `Lemat.Agents` (`ActivitySource`) | `invoke_agent {agent}` (np. `invoke_agent agent_oceniajacy`) jako rodzic wywołań modeli | `gen_ai.operation.name = invoke_agent`, `gen_ai.agent.name`, `lemat.praca_w_tle.typ`, `lemat.trasa` (Ocena), `lemat.wynik` (`SUKCES`, `BLAD_PRZEJSCIOWY`, `BLAD_TRWALY`, `SZABLON`, `POLITYKA_ELO`) | `agent_czas_sekundy{agent,wynik}`, `wywolania_funkcji_total{funkcja,wynik}`, `koszt_modeli_pln_total{rola}` |
+| `Lemat.Models.Jev` (`ActivitySource`) | `jev.decisions` (runda albo wywołanie fali) | `gen_ai.system = typesafe-jev`, `lemat.tryb_jev`, `lemat.runda`, `lemat.liczba_pytan` | nazwy z 17.3 (`jev_wywolania_http_total`, `jev_czas_sekundy`, `jev_ograniczenie_lokalne_total`, `obwod_stan{konfiguracja}`) |
 
 Identyfikatory Ucznia, treści promptów, Transkrypcje i odpowiedzi modeli nie
 trafiają do atrybutów ani logów (16.3); `trace_id` łączy span z pracą w tle
@@ -4106,14 +4508,14 @@ trafiają do atrybutów ani logów (16.3); `trace_id` łączy span z pracą w tl
 #### 10.0.6 Implementacje Mock (praca offline, testy, E2E) — wersja 3.2 (ADR-065)
 
 Dostawca `mock` w `konfiguracja_modelu` (zakazany w `Production`, ADR-055
-p. 6) wybiera implementacje z `Lemat.Modele.Mock`. Wszystkie są
+p. 6) wybiera implementacje z `Lemat.Models.Mock`. Wszystkie są
 deterministyczne, a odpowiedź wybiera **jawny scenariusz**, nie skrót
 treści (C7-07).
 
 | Mock | Zastępuje | Zachowanie |
 |---|---|---|
-| `MockChatClient : IChatClient` | adapter dostawcy LLM w potoku `FabrykaKlientowCzatu` (potok — wywoływanie funkcji, telemetria, klasyfikacja, limit czasu, koszt — pozostaje prawdziwy) | Scenariusz z `IKontekstScenariuszaMock` (nagłówek `X-Lemat-Mock-Scenariusz` przeniesiony przez `praca_w_tle.ladunek.mock_scenariusz`, ADR-065 p. 1) → plik `Mock/Scenariusze/<nazwa>/<ROLA_MODELU>.json` (odpowiedź; dla `GENERATYWNY_ZADANIA` — sekwencja żądań wywołań `sympy_*`, potem odpowiedź końcowa; pole `"blad": "PRZEJSCIOWY" \| "TRWALY" \| "TIMEOUT"` wymusza błąd). Bez scenariusza — **odpowiedź domyślna roli** prowadząca trasą automatyczną: rozpoznanie `czytelne = true`, `przekroczono_limit_krokow = false`, `zgodnosc_z_zadaniem = 0.95`, kroki z `tekst_alternatywny_rysunkow` albo 3 kroki `x = 1` z `pewnosc_odczytu = 0.95`, ramki = całe zdjęcie; `sprawdzenie-poprawek-v2` — `p_zgodna_z_poprawka = 0.97`; `wskazowka-v1` — „Sprawdź jeszcze raz krok {n}.”; pozostałe pola z generatora ADR-065 p. 3 (liczby = `minimum` albo 0, napisy z `[PrzykladMock]`, tablice = `minItems`, unie z `null` = `null`, `boolean` = `false`). Tryb ścisły (`Lemat:Mock:TrybScisly`, środowisko `E2E`): nieznany scenariusz albo brak pliku roli → `BladModeluTrwalyException("MOCK_SCENARIUSZ_NIEZNANY")`. Opóźnienie: `LEMAT_MOCK_OPOZNIENIE_MS` (domyślnie 0; E2E 300). |
-| `MockModelDecyzyjny : IModelDecyzyjny` | `JevAdapter` (`DECYZYJNY_GLOWNY`) i `ZapasowyLlmAdapter` (gdy ta rola też ma `mock`) | Scenariusz → `Mock/Scenariusze/<nazwa>/DECYZYJNY_GLOWNY.json` (rozkład per `kod_pytania`, wzorce `Q-OC-05.*`); bez scenariusza — masa **0,995** na opcji wzorcowej (`KatalogPytan.OpcjaWzorcowa`: Q-OC-01 `tak`, Q-OC-02 maks. punktów, Q-OC-03 `BRAK_BLEDU`, Q-OC-05 `tak`, Q-OC-06 `nie`, Q-WA — opcja „poprawne”, Q-RE-01 — pierwsza akcja polityki Elo), reszta po równo; pytania warunkowe według ADR-026. Przy progu 0,95 i kalibratorze tożsamościowym domyślna Ocena jest automatyczna. Rozkład nie zależy od daty ani od treści stanu. |
+| `MockChatClient : IChatClient` | adapter dostawcy LLM w potoku `FabrykaKlientowCzatu` (potok — wywoływanie funkcji, telemetria, klasyfikacja, limit czasu, koszt — pozostaje prawdziwy) | Scenariusz z `IKontekstScenariuszaMock` (nagłówek `X-Lemat-Mock-Scenariusz` przeniesiony przez `praca_w_tle.ladunek.mock_scenariusz`, ADR-065 p. 1) → plik `Mock/Scenarios/<scenario-folder>/<role-file>.json` (odpowiedź; dla `GENERATYWNY_ZADANIA` — sekwencja żądań wywołań `sympy_*`, potem odpowiedź końcowa; pole `"blad": "PRZEJSCIOWY" \| "TRWALY" \| "TIMEOUT"` wymusza błąd). Bez scenariusza — **odpowiedź domyślna roli** prowadząca trasą automatyczną: rozpoznanie `czytelne = true`, `przekroczono_limit_krokow = false`, `zgodnosc_z_zadaniem = 0.95`, kroki z `tekst_alternatywny_rysunkow` albo 3 kroki `x = 1` z `pewnosc_odczytu = 0.95`, ramki = całe zdjęcie; `sprawdzenie-poprawek-v2` — `p_zgodna_z_poprawka = 0.97`; `wskazowka-v1` — „Sprawdź jeszcze raz krok {n}.”; pozostałe pola z generatora ADR-065 p. 3 (liczby = `minimum` albo 0, napisy z `[PrzykladMock]`, tablice = `minItems`, unie z `null` = `null`, `boolean` = `false`). Tryb ścisły (`Lemat:Mock:TrybScisly`, środowisko `E2E`): nieznany scenariusz albo brak pliku roli → `BladModeluTrwalyException("MOCK_SCENARIUSZ_NIEZNANY")`. Opóźnienie: `LEMAT_MOCK_OPOZNIENIE_MS` (domyślnie 0; E2E 300). |
+| `MockModelDecyzyjny : IModelDecyzyjny` | `JevAdapter` (`DECYZYJNY_GLOWNY`) i `ZapasowyLlmAdapter` (gdy ta rola też ma `mock`) | Scenariusz → `Mock/Scenarios/<scenario-folder>/decision-primary.json` (rozkład per `kod_pytania`, wzorce `Q-OC-05.*`); bez scenariusza — masa **0,995** na opcji wzorcowej (`KatalogPytan.OpcjaWzorcowa`: Q-OC-01 `tak`, Q-OC-02 maks. punktów, Q-OC-03 `BRAK_BLEDU`, Q-OC-05 `tak`, Q-OC-06 `nie`, Q-WA — opcja „poprawne”, Q-RE-01 — pierwsza akcja polityki Elo), reszta po równo; pytania warunkowe według ADR-026. Przy progu 0,95 i kalibratorze tożsamościowym domyślna Ocena jest automatyczna. Rozkład nie zależy od daty ani od treści stanu. |
 | `FalszyweSprawdzanieSymboliczne : ISprawdzanieSymboliczne` | `SympySidecarKlient` w testach jednostkowych (w E2E działa prawdziwy sidecar) | Porównanie tekstowe po normalizacji (usunięte spacje, `\cdot` → `*`, `\frac{a}{b}` → `(a)/(b)`): równe → `ROWNOWAZNE`, w przeciwnym razie `NIEROZSTRZYGNIETE`; `PostacLiniowaAsync` zwraca znormalizowany tekst. |
 | `PredyktorSukcesuElo` | — (implementacja domyślna i deterministyczna) | 10.1.3 |
 | `MockObrobkaObrazow : IObrobkaObrazow` | `ImageSandboxKlient` w testach jednostkowych | Zwraca wejście bez zmian; wycinki = całe zdjęcie. |
@@ -4124,7 +4526,7 @@ Q-RE-01 (`dni_do_egzaminu`, „dni temu”) i terminy SLA są w E2E stałe.
 
 **Dane deweloperskie (C7-12):** migracje nie wstawiają konfiguracji
 `mock`. `docker compose --profile dev up` uruchamia po kontenerze
-`migracje` usługę `seed` (`dotnet Lemat.Narzedzia.dll seed-dev`), która
+`migracje` usługę `seed` (`dotnet Lemat.Tools.dll seed-dev`), która
 tworzy aktywne Konfiguracje modelu `mock` dla 8 ról, próg 0,95, kalibrator
 tożsamościowy i dane demonstracyjne; polecenie odmawia działania przy
 `LEMAT_SRODOWISKO = Production`. Cały przepływ „przesłanie → rozpoznanie →
@@ -4132,15 +4534,15 @@ zatwierdzenie → Ocena automatyczna → Wskazówka → Profil” działa wtedy
 offline bez kluczy dostawców. Macierz 15 scenariuszy E2E (trasa
 automatyczna, każdy powód Weryfikacji, Kontrola losowa, T-6, T-7, błąd
 przejściowy, timeout, generowanie z narzędziami i limit wywołań) — ADR-065
-p. 7, dane w `docs/spec/prompty.md` 6.
+p. 7, dane w `docs/spec/prompts.md` 6.
 
 #### 10.0.7 Rejestracja i testy agentów
 
-`Lemat.Agenci.RejestracjaAgentow.DodajAgentow(IServiceCollection)` rejestruje
+`Lemat.Agents.RejestracjaAgentow.DodajAgentow(IServiceCollection)` rejestruje
 agentów jako `Scoped` (jeden na pracę w tle albo żądanie), `SzablonyPromptow` i
 `BudowniczyWiadomosci` jako `Singleton`; `FabrykaKlientowCzatu`,
 `CircuitBreakerModeluDecyzyjnego`, `PamiecKonfiguracjiModeli` i
-`WywolanieUstrukturyzowane` są `Singleton` (`Lemat.Modele`). **Współbieżność
+`WywolanieUstrukturyzowane` są `Singleton` (`Lemat.Models`). **Współbieżność
 (C7-10):** agenci wykonują sprawdzenia równolegle (`Task.WhenAll` w
 Walidacji, równoległe pobranie zdjęć), więc ani agenci, ani porty
 wywoływane z agentów nie używają `LematDbContext` z zakresu: odczyty idą
@@ -4149,7 +4551,7 @@ przez `NpgsqlDataSource` (nowe połączenie z puli na zapytanie) albo
 `DlaRoliAsync` czyta wyłącznie pamięć `PamiecKonfiguracjiModeli`
 (odświeżaną `NOTIFY konfiguracja_modelu` i co 30 s przez hosta w tle).
 Test architektury `AgenciIPortyAgentowNieZalezaOdLematDbContext` i test
-`WalidacjaRownoleglaBezBledowKontekstu` (ADR-058 uzup. 3.2 p. 7). Testy `Lemat.Agenci.Tests` używają
+`WalidacjaRownoleglaBezBledowKontekstu` (ADR-058 uzup. 3.2 p. 7). Testy `Lemat.Agents.Tests` używają
 prawdziwego potoku `FabrykaKlientowCzatu` z `MockChatClient` (bez sieci):
 każdy agent ma testy kontraktu (wejście → wyjście z danych Mock), ścieżki
 naprawy odpowiedzi, błędów przejściowych i trwałych, terminu (sztuczny
@@ -4161,7 +4563,7 @@ p. 7).
 #### 10.1.1 Kontrakt
 
 ```csharp
-namespace Lemat.Application.Agenci.Rekomendacje;
+namespace Lemat.Application.Agents.Recommendations;
 
 public interface IAgentRekomendujacy
 {
@@ -4202,7 +4604,7 @@ public sealed record WejscieRekomendacji(
     StrategiaRekomendacji Strategia,                                        // PolitykaElo | JevChoice
     DateTimeOffset Teraz);
 
-/// Port odczytu katalogu doboru (implementacja: adapter nad ITresciFasada w Orkiestracja.Synchroniczna).
+/// Port odczytu katalogu doboru (implementacja: adapter nad ITresciFasada w Orchestration.Synchronous).
 public interface IDaneDoboru
 {
     Task<IReadOnlyList<UmiejetnoscDoDoboru>> UmiejetnosciAsync(PoziomMatury poziom, DzialId? dzial, CancellationToken ct);
@@ -4502,8 +4904,8 @@ części zaczniesz serię zadań z rosnącym poziomem trudności.”.
 
 `IPredyktorSukcesu.PSukcesu(IReadOnlyDictionary<UmiejetnoscId, decimal> theta,
 ZadanieDoDoboru zadanie) → decimal` ma implementację `PredyktorSukcesuElo`
-(`Lemat.Agenci.Rekomendacje`, domyślną). `PredyktorSukcesuGbm`
-(`Lemat.Modele.Predyktory`, ML.NET `Microsoft.ML.LightGbm`; cechy: θ Umiejętności,
+(`Lemat.Agents.Recommendations`, domyślną). `PredyktorSukcesuGbm`
+(`Lemat.Models.Predictors`, ML.NET `Microsoft.ML.LightGbm`; cechy: θ Umiejętności,
 `trudnosc_b`, rodzaj, liczba Wyników, dni od ostatniej próby, średni `ulamek`
 z 5 ostatnich) jest trenowany offline, gdy liczba Wyników zadania ≥ 20 000;
 zastępuje `PredyktorSukcesuElo` tylko, jeśli na zbiorze z ostatnich 30 dni ma
@@ -4512,12 +4914,12 @@ Konfigurację modelu).
 
 #### 10.1.8 Realizacja w .NET
 
-- **Klasa:** `Lemat.Agenci.Rekomendacje.AgentRekomendujacy : IAgentRekomendujacy`;
+- **Klasa:** `Lemat.Agents.Recommendations.AgentRekomendujacy : IAgentRekomendujacy`;
   zależności: `IDaneDoboru`, `IPredyktorSukcesu`, `IModelDecyzyjny`
   (wyłącznie Q-RE-01), `GeneratorUzasadnien` (szablony 10.1.5 z
-  `Rekomendacje/Szablony/uzasadnienia.pl-PL.yaml`, odmiana liczebników
+  `Recommendations/Templates/justifications.pl-PL.yaml`, odmiana liczebników
   `Odmiana.Liczebnika(n, "zadanie", "zadania", "zadań")`),
-  `BudowniczyStanuRekomendacji` (`docs/spec/prompty.md` 3.3), `TimeProvider`.
+  `BudowniczyStanuRekomendacji` (`docs/spec/prompts.md` 3.3), `TimeProvider`.
 - **Algorytm:** kroki 10.1.2 jako osobne klasy `IKrokPolityki`
   (`KrokPrzypisania`, `KrokSerii`, `KrokPowtorki`, `KrokWyboruUmiejetnosci`,
   `KrokWkladki`, `KrokZadania`, `KrokBrakuZadan`) wywoływane w kolejności;
@@ -4534,7 +4936,7 @@ Konfigurację modelu).
   timeout albo `max(rozkład) < 0,5` → `POLITYKA_ELO` i
   `PowrotDoPolityki`.
 - **Mock:** `MockModelDecyzyjny` dla Q-RE-01; `PredyktorSukcesuElo` jest
-  deterministyczny; testy `Lemat.Agenci.Tests/Rekomendacje` pokrywają każdą
+  deterministyczny; testy `Lemat.Agents.Tests/Recommendations` pokrywają każdą
   wartość `RegulaRekomendacji` i `BrakElementu` (test pokrycia szablonów).
 - **Telemetria:** span `invoke_agent agent_rekomendujacy` z
   `lemat.regula`, `lemat.strategia`; metryka
@@ -4546,7 +4948,7 @@ Konfigurację modelu).
 #### 10.2.1 Kontrakt
 
 ```csharp
-namespace Lemat.Application.Agenci.Generowanie;
+namespace Lemat.Application.Agents.Generation;
 
 public interface IAgentGenerujacy
 {
@@ -4610,7 +5012,7 @@ otrzymują recenzenci treści i Administratorzy.
 
 | Kod | Sprawdzenie | Kryterium pozytywne | Dotyczy |
 |---|---|---|---|
-| W-1 | Schemat i spójność (walidacja schematu odpowiedzi i `ZasadyKryteriow` z `Lemat.Domain.Tresci`: suma kryteriów = `punkty_max` per wariant, ≤ 1 kryterium wyniku końcowego, łącznie ≤ 24 kryteria) | brak błędów | wszystkie |
+| W-1 | Schemat i spójność (walidacja schematu odpowiedzi i `ZasadyKryteriow` z `Lemat.Domain.Content`: suma kryteriów = `punkty_max` per wariant, ≤ 1 kryterium wyniku końcowego, łącznie ≤ 24 kryteria) | brak błędów | wszystkie |
 | W-2 | `wynik_koncowy_wzorcowy.sympy` i opcje zamknięte parsują się w SymPy (sidecar `lemat-sympy`, `sympify(strict=True)` na danych z modelu, nie od Ucznia) | parsowanie OK | poza dowodem |
 | W-3 | Niezależne rozwiązanie: LLM w roli `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE` dostaje tylko treść (i opcje) | wynik równoważny `wynik_koncowy_wzorcowy` (SymPy) lub ta sama opcja | poza dowodem |
 | W-4 | Ciągłość Rozwiązania wzorcowego: pary kroków `NIEROWNOWAZNE`/`NIEROZSTRZYGNIETE` sprawdzane NOUL `Q-WA-04` „Czy krok k+1 wynika z kroku k?” | każde `p_tak ≥ 0.80` | wszystkie otwarte |
@@ -4637,7 +5039,7 @@ sidecara → `"NIEROZSTRZYGNIETE"`), a ich wywołania są liczone i zapisywane
 (`WywolanieNarzedzia`).
 
 ```csharp
-namespace Lemat.Agenci.Pluginy;
+namespace Lemat.Agents.Plugins;
 
 public sealed class SprawdzanieSymbolicznePlugin(ISprawdzanieSymboliczne sympy)
 {
@@ -4665,7 +5067,7 @@ public sealed class SprawdzanieSymbolicznePlugin(ISprawdzanieSymboliczne sympy)
         => latex.Length > 2000 ? "BLAD_PARSOWANIA" : await sympy.PostacLiniowaAsync(latex, ct) ?? "BLAD_PARSOWANIA";
 }
 
-// Lemat.Agenci.Generowanie — przygotowanie narzędzi dla jednego generowania
+// Lemat.Agents.Generation — przygotowanie narzędzi dla jednego generowania
 var kernel = new Kernel(uslugi);                                             // lekki Kernel: wyłącznie logowanie i ISprawdzanieSymboliczne
 var plugin = KernelPluginFactory.CreateFromObject(new SprawdzanieSymbolicznePlugin(sympy), "sympy");
 var licznik = new LicznikWywolanFunkcji(limit: klient.Parametry.MaksIteracjiFunkcji ?? 8);
@@ -4746,7 +5148,7 @@ par kroków z rezultatem SymPy `NIEROWNOWAZNE`/`NIEROZSTRZYGNIETE`, maks. 12
 par (jak Q-OC-05). Koszt wszystkich wywołań (raport potoku, 10.0.2) jest
 sumowany do `zlecenie_generowania.koszt_pln` i budżetu 12.7.
 
-- **Mock:** `MockChatClient` z danymi `Mock/Dane/GENERATYWNY_ZADANIA/zadanie-v1/*.json`
+- **Mock:** `MockChatClient` z danymi `Mock/Data/generative-exercises/exercise-v1/*.json`
   (z sekwencją wywołań funkcji) i `MockModelDecyzyjny` dla Q-WA dają
   deterministyczne Zadanie i Walidację (scenariusze
   `generowanie-z-narzedziami`, `generowanie-limit-wywolan`, ADR-065); test
@@ -4759,7 +5161,7 @@ sumowany do `zlecenie_generowania.koszt_pln` i budżetu 12.7.
   `chat {model}` per żądanie, `execute_tool sympy_sprawdz_rownowaznosc` /
   `execute_tool sympy_postac_liniowa` i `orchestrate_tools` z
   `Microsoft.Extensions.AI` (kolejność potoku ADR-058 uzup. 3.2 p. 3; test
-  `Lemat.Modele.Tests/SpanyPotokuGenerowania`: 2 wywołania → 3 spany `chat`
+  `Lemat.Models.Tests/SpanyPotokuGenerowania`: 2 wywołania → 3 spany `chat`
   i 2 `execute_tool`).
 
 ### 10.3 Agent rozpoznający
@@ -4767,7 +5169,7 @@ sumowany do `zlecenie_generowania.koszt_pln` i budżetu 12.7.
 #### 10.3.1 Kontrakt i przetwarzanie
 
 ```csharp
-namespace Lemat.Application.Agenci.Rozpoznawanie;
+namespace Lemat.Application.Agents.Recognition;
 
 public interface IAgentRozpoznajacy
 {
@@ -4785,7 +5187,7 @@ public sealed record WejscieRozpoznawania(
     DateTimeOffset Termin);                                                 // początek bieżącej próby pracy ROZPOZNAJ_PISMO + 14 s (17.2);
                                                                             // liczony per próba (ostatnie_rozpoznanie_od_at + 14 s mogło minąć, S-7)
 
-// Lemat.Domain.Rozwiazania (typy z 3.6): ObszarNaZdjeciu(int NrZdjecia, Ramka Ramka); ObszarKroku : ObszarNaZdjeciu;
+// Lemat.Domain.Solutions (typy z 3.6): ObszarNaZdjeciu(int NrZdjecia, Ramka Ramka); ObszarKroku : ObszarNaZdjeciu;
 // ObszarDanychOsobowych : ObszarNaZdjeciu; Ramka(int X, int Y, int Szerokosc, int Wysokosc) w pikselach znormalizowanego zdjęcia
 
 public sealed record KrokOdczytany(int Nr, string Tekst, string Latex, decimal PewnoscOdczytu, ObszarKroku Obszar,
@@ -4831,7 +5233,7 @@ Przetwarzanie:
    dłuższy bok ≤ 2560 px, odrzucenie duplikatów (SHA-256) w obrębie
    Rozwiązania.
 2. Wywołanie modelu roli `ROZPOZNAWANIE_PISMA` (`IModelGeneratywny.DlaRoliAsync`)
-   z promptem `rozpoznanie-v1` (pełny tekst i schemat: `docs/spec/prompty.md`
+   z promptem `rozpoznanie-v1` (pełny tekst i schemat: `docs/spec/prompts.md`
    4.1) wymagającym: przepisania dosłownego (bez poprawiania błędów
    Ucznia), podziału na kroki (krok = jedna linia przekształcenia albo jedno
    zdanie wniosku), LaTeX dla wzorów, oznaczenia niepewnych fragmentów z
@@ -4896,7 +5298,7 @@ Przetwarzanie:
    Ocena idzie do Weryfikacji albo krok nie jest krokiem rozwiązania). W
    pozostałych przypadkach (np. „Pole trójkąta jest równe 12” poza ramką
    danych osobowych) token Słownika nie jest zastępowany, także gdy jest
-   równy nazwisku Ucznia; słownik `slownik_matematyczny.txt` (od wersji 3.0 zasób osadzony `Lemat.Domain/Rozwiazania/FiltrDanychOsobowych/`) zawiera ≈ 350
+   równy nazwisku Ucznia; słownik `math-terms.txt` (od wersji 3.0 zasób osadzony `Lemat.Domain/Solutions/PersonalDataFilter/`) zawiera ≈ 350
    lematów terminów z podstawy programowej i nazw funkcji (sin, cos, log)
    rozwiniętych do wszystkich form odmiany (słownik fleksyjny generowany przy
    budowie obrazu, ≈ 4 000 form); (c) ciągi 11 cyfr (PESEL) i adresy e-mail
@@ -4963,7 +5365,7 @@ każdego kroku także `"obszar": {"zdjecie": 1, "ramka": [380, 860, 1420, 96]}`
 Praca `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (pula S — od wersji 2.3, C3-05;
 poprawka redakcyjna 2.4, C4-06 p. 1; zlecana przez `PUT …/transkrypcja`) wywołuje `IAgentRozpoznajacy.SprawdzPoprawkiAsync` z
 aktywną konfiguracją roli `ROZPOZNAWANIE_PISMA` i promptem
-`sprawdzenie-poprawek-v2` (wersja 2.3, C3-05; `docs/spec/prompty.md` 4.2): model dostaje zdjęcie
+`sprawdzenie-poprawek-v2` (wersja 2.3, C3-05; `docs/spec/prompts.md` 4.2): model dostaje zdjęcie
 poglądowe każdej strony (dłuższy bok 1024 px) oraz dla każdego zmienionego
 kroku wycinek `obszar` powiększony o 40 px, odczyt agenta i Poprawkę Ucznia,
 a dla każdego kroku wstawionego wycinek obszaru między krokiem agenta
@@ -4996,7 +5398,7 @@ wynika z modelu T-7 w 17.7).
 
 #### 10.3.4 Realizacja w .NET
 
-- **Klasa:** `Lemat.Agenci.Rozpoznawanie.AgentRozpoznajacy : IAgentRozpoznajacy`;
+- **Klasa:** `Lemat.Agents.Recognition.AgentRozpoznajacy : IAgentRozpoznajacy`;
   zależności: `IModelGeneratywny` (rola `ROZPOZNAWANIE_PISMA`),
   `IMagazynObiektow` (bajty zdjęć), `IObrobkaObrazow` (wycinki i zdjęcia
   poglądowe 1024 px przez `obrazy-worker`), `ISprawdzanieSymboliczne`,
@@ -5033,7 +5435,7 @@ wynika z modelu T-7 w 17.7).
 #### 10.4.1 Kontrakt
 
 ```csharp
-namespace Lemat.Application.Agenci.Ocenianie;
+namespace Lemat.Application.Agents.Grading;
 
 public interface IAgentOceniajacy
 {
@@ -5059,7 +5461,7 @@ public sealed record KontekstOceny(
     bool KazdaPoprawkaDoWeryfikacji,                                        // StanBezpiecznika POPRAWKI aktywny (T-7)
     TerminyOceny Terminy);                                                  // 14.2: miękki, twardy = zatwierdzono_at + 120 s
 
-// Lemat.Domain.Ocenianie — rezultat reguł 11 (czysta funkcja ZasadyOceniania.Ocen), typ domenowy (C6-15 p. 5)
+// Lemat.Domain.Grading — rezultat reguł 11 (czysta funkcja ZasadyOceniania.Ocen), typ domenowy (C6-15 p. 5)
 public sealed record RezultatOceny(
     WariantRozwiazania Wariant,
     IReadOnlyDictionary<int, int> PunktyKryteriow,                          // nr_kryterium → punkty
@@ -5149,7 +5551,7 @@ wywołań na Ocenę.
 #### 10.4.4 Plan pytań Oceny (ADR-026)
 
 ```csharp
-// Lemat.Agenci.Ocenianie.FabrykaPlanuOceny — jedyny kontrakt Agent oceniający ↔ Model decyzyjny (ADR-026)
+// Lemat.Agents.Grading.FabrykaPlanuOceny — jedyny kontrakt Agent oceniający ↔ Model decyzyjny (ADR-026)
 public static PlanPytan Zbuduj(KontekstOceny k, IReadOnlyList<int> paryDoSprawdzenia /* i: para (i, i+1), już ≤ 12 */)
 {
     var warianty = k.Kryteria.Select(x => x.Wariant).Distinct().Order().ToList();
@@ -5199,13 +5601,13 @@ zespół „Jev + opinia pomocnicza” może dostać własny kalibrator.
 
 #### 10.4.6 Realizacja w .NET
 
-- **Klasa:** `Lemat.Agenci.Ocenianie.AgentOceniajacy : IAgentOceniajacy`;
+- **Klasa:** `Lemat.Agents.Grading.AgentOceniajacy : IAgentOceniajacy`;
   zależności: `IModelDecyzyjny` (dekorator `CircuitBreakerModeluDecyzyjnego`),
-  `ISprawdzanieSymboliczne`, `BudowniczyStanuOceny` (`docs/spec/prompty.md`
+  `ISprawdzanieSymboliczne`, `BudowniczyStanuOceny` (`docs/spec/prompts.md`
   3.1), `FabrykaPlanuOceny` (10.4.4), `IModelGeneratywny` (wyłącznie
   `OpiniaPomocniczaAsync`, rola `GENERATYWNY_OPINIA_POMOCNICZA`),
   `TimeProvider`. Reguły 11.1–11.3 wykonuje czysta funkcja
-  `Lemat.Domain.Ocenianie.ZasadyOceniania.Ocen(RezultatPytan, DaneDoReguł,
+  `Lemat.Domain.Grading.ZasadyOceniania.Ocen(RezultatPytan, DaneDoReguł,
   MigawkaProgu, MigawkaKalibratora, ILosowanieKontroli)` — agent nie zawiera
   reguł oceniania (Z-1).
 - **Kolejność i równoległość w `OcenAsync`:**
@@ -5244,14 +5646,14 @@ zespół „Jev + opinia pomocnicza” może dostać własny kalibrator.
   `BladModeluPrzejsciowyException` (ponowienie pracy 0,5 s / 2 s / 5 s);
   po terminie twardym → handler wykonuje T-6 (14.2), nie agent.
 - **`OpiniaPomocniczaAsync`:** stan 10.4.2 jako wiadomość `user`, prompt
-  `opinia-pomocnicza-v1` (`docs/spec/prompty.md` 4.7), wynik zapisywany do
+  `opinia-pomocnicza-v1` (`docs/spec/prompts.md` 4.7), wynik zapisywany do
   `weryfikacja.opinia_pomocnicza` warunkowo (C-10); nie zmienia Oceny ani
   trasy (ADR-008).
 - **Mock:** `MockModelDecyzyjny` (rozkłady z plików albo z ziarna stanu) +
   `FalszyweSprawdzanieSymboliczne` w testach jednostkowych; testy
-  `Lemat.Agenci.Tests/Ocenianie` dla każdego wiersza tabel 10.4.3 i każdej
+  `Lemat.Agents.Tests/Grading` dla każdego wiersza tabel 10.4.3 i każdej
   niespójności N-1 … N-6 (dane: plany i rozkłady w
-  `Dane/ocenianie/*.json`).
+  `Data/grading/*.json`).
 - **Telemetria:** span `invoke_agent agent_oceniajacy` z `lemat.trasa`,
   `lemat.model_decyzyjny` (`GLOWNY`/`ZAPASOWY`), `lemat.liczba_pytan`;
   metryki 17.3 (`ocena_czas_sekundy`, `czas_systemowy_ms`, `obwod_stan`).
@@ -5261,7 +5663,7 @@ zespół „Jev + opinia pomocnicza” może dostać własny kalibrator.
 #### 10.5.1 Kontrakt
 
 ```csharp
-namespace Lemat.Application.Agenci.Wyjasnianie;
+namespace Lemat.Application.Agents.Explanation;
 
 public interface IAgentWyjasniajacy
 {
@@ -5280,7 +5682,7 @@ public sealed record WejscieWskazowki(
     IReadOnlyDictionary<int, int> PunktyKryteriow,                          // nr_kryterium → punkty
     DateTimeOffset Termin);                                                 // początek próby + 8 s
 
-// Lemat.Domain.Ocenianie.Wskazowka(string Tresc ≤ 400, ZrodloWskazowki Zrodlo ∈ {AgentWyjasniajacy, Szablon}) — 3.6
+// Lemat.Domain.Grading.Wskazowka(string Tresc ≤ 400, ZrodloWskazowki Zrodlo ∈ {AgentWyjasniajacy, Szablon}) — 3.6
 ```
 
 Agent działa w pracy w tle `NAPISZ_WSKAZOWKE` **po** zapisaniu Oceny, poza
@@ -5301,8 +5703,8 @@ Wskazówkę.
   sprawdzić; maks. 400 znaków; język polski; forma bezosobowa lub 2. osoba
   liczby pojedynczej bez form rodzajowych.
 - Nie podaje wyniku końcowego ani kolejnych kroków Rozwiązania wzorcowego.
-- Pełny prompt systemowy i schemat odpowiedzi: `docs/spec/prompty.md` 4.6
-  (`GENERATYWNY_WSKAZOWKI/wskazowka-v1`).
+- Pełny prompt systemowy i schemat odpowiedzi: `docs/spec/prompts.md` 4.6
+  (`generative-hints/hint-v1`).
 
 #### 10.5.3 Strażnik wycieku rozwiązania (FR-27)
 
@@ -5320,7 +5722,7 @@ Wskazówkę.
 
 #### 10.5.4 Realizacja w .NET
 
-- **Klasa:** `Lemat.Agenci.Wyjasnianie.AgentWyjasniajacy : IAgentWyjasniajacy`;
+- **Klasa:** `Lemat.Agents.Explanation.AgentWyjasniajacy : IAgentWyjasniajacy`;
   zależności: `IModelGeneratywny` (rola `GENERATYWNY_WSKAZOWKI`),
   `ISprawdzanieSymboliczne` (strażnik wycieku), `WywolanieCzatu`,
   `SzablonyPromptow`, `SzablonyWskazowek` (10.5.3 p. 4).
@@ -5331,7 +5733,7 @@ Wskazówkę.
   fragmentów `$…$` i liczb (wyrażenie `-?\d+([.,]\d+)?`), równoległe
   `RownowaznoscWynikuAsync`/`RownowaznoscKrokowAsync` z budżetem 2 s; (3)
   wyciek albo > 400 znaków → jedno ponowienie z dopiskiem
-  (`docs/spec/prompty.md` 4.6); (4) kolejne niepowodzenie, błąd modelu albo
+  (`docs/spec/prompts.md` 4.6); (4) kolejne niepowodzenie, błąd modelu albo
   przekroczenie terminu → `Wskazowka(szablon, ZrodloWskazowki.Szablon)`.
   Agent nigdy nie rzuca wyjątku na zewnątrz poza anulowaniem przez
   zamknięcie procesu — zawsze zwraca Wskazówkę (10.5.1).
@@ -5348,7 +5750,7 @@ Wskazówkę.
 ## 11. Reguły decyzyjne oceniania i kierowania do Weryfikacji
 
 Reguły 11.1–11.3 są wykonywane w podanej kolejności przez czystą funkcję
-`Lemat.Domain.Ocenianie.ZasadyOceniania.Ocen(RezultatPytan, DaneDoReguł, MigawkaProgu, MigawkaKalibratora, ILosowanieKontroli) → RezultatOceny` (wersja 2.4: `lemat.ocenianie.reguly.ocen_decyzje`)
+`Lemat.Domain.Grading.ZasadyOceniania.Ocen(RezultatPytan, DaneDoReguł, MigawkaProgu, MigawkaKalibratora, ILosowanieKontroli) → RezultatOceny` (wersja 2.4: `lemat.ocenianie.reguly.ocen_decyzje`)
 (testy jednostkowe dla każdej reguły i każdej niespójności).
 
 ### 11.1 Punkty i błędy (FR-19, FR-20, FR-21, FR-27, FR-28)
@@ -5701,7 +6103,7 @@ braki (Uczniowie zgłaszają głównie niskie Oceny), które zaniżałyby
 | każdy inny zbiór (np. {`NISKA_PEWNOSC`, `POPRAWNY_WYNIK_BLEDNE_KROKI`}, {`POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`}, {`ZGLOSZENIE_BLEDU_ODCZYTU`}) | `WERYFIKACJA_INNY_POWOD` | nie (te Rozwiązania nie byłyby zaliczone automatycznie albo dobór nie był losowy) |
 | korekta bez otwartej Weryfikacji | `KOREKTA_NAUCZYCIELA` | nie (silna selekcja); tylko raporty |
 
-Test jednostkowy `tests/kalibracja/test_zrodlo_probki.py` sprawdza każdy
+Test jednostkowy `backend/tests/Lemat.Domain.Tests/Calibration/CalibrationSampleSourceTests.cs` (w 2.4 `tests/kalibracja/test_zrodlo_probki.py`) sprawdza każdy
 wiersz tabeli, w tym przypadki „{`NISKA_PEWNOSC`} + dopisane
 `ZGLOSZENIE_BLEDU_ODCZYTU`” → `WERYFIKACJA_NISKA_PEWNOSC`, „{`KONTROLA_LOSOWA`}
 + dopisane zgłoszenie” → `KONTROLA_LOSOWA` oraz „`PONOW_OCENE` z trasą
@@ -5896,7 +6298,7 @@ e = 2% (symulacja dynamiki niżej): **1,1**; przy e ≤ 1%: ≤ 0,01.
 
 Ocena codzienna na kroczącym oknie 30 dni (symulacja 2 000 przebiegów po 90
 dni, napływ zakończonych Kontroli: start 100/dobę, faza ustalona 35/dobę,
-model zapasowy podczas awarii Jev 10/dobę; `tests/kalibracja/symulacja_bezpiecznika.py`):
+model zapasowy podczas awarii Jev 10/dobę; `backend/tests/Lemat.Simulations/SafeguardSimulation.cs`):
 
 | Rzeczywisty błąd `e` | Start (100/dobę): P(≥ 1 wyzwolenie w 90 dni) / mediana dnia wyzwolenia | Faza ustalona (35/dobę) | Model zapasowy (10/dobę) |
 |---|---|---|---|
@@ -5921,7 +6323,7 @@ wykrywany szybko przez bezpiecznik — chroni przed nim reguła wyboru progu
 reguła 3 blokuje obniżanie) oraz alert `gorna_granica_bledu_30d > 0,02`.
 
 **Symulacja dynamiki progu (wersja 2.4, C4-02;
-`tests/kalibracja/symulacja_bezpiecznika.py --dynamika`).** Założenia: faza
+`backend/tests/Lemat.Simulations/SafeguardSimulation.cs`, przypadek dynamiki progu).** Założenia: faza
 ustalona, 1 200 Ocen obliczeniowych na dobę, pewność skalibrowana z rozkładem
 `1 − p ~ Exp(0,0631)` (auto 67% przy progu 0,930; 54,7% przy 0,950; 37,8% przy
 0,970; 14,7% przy 0,990), Kontrola 5%, wykonanie 0,9 (≈ 36 Kontroli/dobę przy
@@ -5965,7 +6367,7 @@ weryfikacji wywołanego bezpiecznikiem) — próg obniża potem krok 4 (o ≤ 0,
 na dobę, z testem 30 dni). Bezpiecznik trafności nie zmienia trasy Oceny
 bezpośrednio: działa przez rekord `prog_pewnosci` (`zrodlo = BEZPIECZNIK`).
 
-**Testy jednostkowe** `tests/kalibracja/test_bezpiecznik.py`: (a) 0 błędów
+**Testy jednostkowe** `backend/tests/Lemat.Domain.Tests/Calibration/SafeguardTests.cs`: (a) 0 błędów
 dla każdego n = 50 … 188 oraz n ∈ {189, 335, 500, 1 000, 2 000} → brak
 wyzwolenia (oba typy); (b) dla n ∈ {50, 100, 189, 500, 1 000}: `k_min − 1`
 błędów → brak, `k_min` → wyzwolenie (wartości z tabeli wyżej); (c)
@@ -6075,9 +6477,9 @@ endpointów, kod klienta, kontrakty zdarzeń, mapowanie stron) są w
 ```mermaid
 flowchart LR
     subgraph przegladarka["Przeglądarka (Next.js, komponenty klienckie)"]
-        Q["TanStack Query<br/>features/*"] --> K["lib/api/klient.ts<br/>openapi-fetch + schema.d.ts"]
-        S["lib/sse/strumien.ts<br/>fetch + eventsource-parser"]
-        T["lib/auth/odswiezanie.ts<br/>Web Locks + BroadcastChannel"]
+        Q["TanStack Query<br/>features/*"] --> K["lib/api/client.ts<br/>openapi-fetch + schema.d.ts"]
+        S["lib/sse/stream.ts<br/>fetch + eventsource-parser"]
+        T["lib/auth/refresh.ts<br/>Web Locks + BroadcastChannel"]
         K --> T
         S --> T
     end
@@ -6134,7 +6536,7 @@ flowchart LR
 Kształt sprawdzony na ASP.NET Core 10.0.14 (`IExceptionHandler` +
 `IProblemDetailsService`): `Content-Type: application/problem+json`, pola
 `type`, `title`, `status`, `detail`, `instance`, `kod`, `trace_id`. Rekord
-C# `ProblemDetailsLemat` i katalog `katalog-bledow.yaml` — api.md 2.
+C# `ProblemDetailsLemat` i katalog `error-catalog.yaml` — api.md 2.
 Wspólne kody każdego endpointu (niepowtarzane w 12.3): `401
 NIEUWIERZYTELNIONY`, `403 BRAK_UPRAWNIEN`/`KONTO_NIEAKTYWNE`, `429
 LIMIT_PRZEKROCZONY` (RateLimiter), `500 BLAD_WEWNETRZNY`, `503
@@ -6203,7 +6605,7 @@ KLUCZ_IDEMPOTENCJI_KONFLIKT`, `428 WYMAGANY_IDEMPOTENCY_KEY`; strona —
 | `WYMAGANY_IF_MATCH` | 428 | — | Brak `If-Match` | — |
 | `LIMIT_PRZEKROCZONY` | 429 | E-30 (generowanie) | Limit szybkości (nagłówek `Retry-After`) | `{zakres, limit, okno_s}` + `Retry-After` |
 | `ZA_DUZO_STRUMIENI` | 429 | E-42 | Limit strumieni SSE repliki (≤ 4 na użytkownika i zasób, ≤ 12 na użytkownika, ADR-057 p. 4), `Retry-After: 30` | — |
-| `BLAD_BRAMY` | 502/503/504 (tylko klient) | E-14 | Odpowiedź bez `application/problem+json` (Caddy przy wdrożeniu albo awarii `api`); nadawany przez `klient.ts`, nie przez API (ADR-067 p. 7) | — |
+| `BLAD_BRAMY` | 502/503/504 (tylko klient) | E-14 | Odpowiedź bez `application/problem+json` (Caddy przy wdrożeniu albo awarii `api`); nadawany przez `client.ts`, nie przez API (ADR-067 p. 7) | — |
 | `SESJA_TYMCZASOWO_NIEDOSTEPNA` | — (tylko klient) | E-40 | Odświeżenie tokenu nieudane z powodu `429`/`5xx`/sieci po ponowieniach; bez wylogowania (ADR-070 p. 4) | — |
 | `BLAD_WEWNETRZNY` | 500 | E-25, E-45 | Nieobsłużony wyjątek; `instance` zawiera `trace_id`, bez szczegółów technicznych | — |
 | `BAZA_NIEDOSTEPNA` | 503 | E-14 | Błąd połączenia z PostgreSQL albo przekroczony czas oczekiwania na połączenie z puli (ADR-056 p. 1, ADR-059), `Retry-After: 2` | — |
@@ -6265,7 +6667,7 @@ w TS). Identyfikator operacji OpenAPI = `WithName` według ADR-049 p. 15.
 | POST | `/rozwiazania/{id}/zgloszenie-bledu-odczytu` | `Uczen` | R | tak | FR-28 | `ZgloszenieBleduOdczytuWejscie` → `201 {weryfikacja: WeryfikacjaUcznia}` | `409 ZGLOSZENIE_NIEDOSTEPNE`, `429 LIMIT_PRZEKROCZONY` |
 | GET | `/rozwiazania/{id}/ocena` | `UczenLubNauczyciel` (U (własne), N (wg 12.8)) | — | — | FR-24, FR-27 | → `OcenaWyjscie` (aktualna) | — |
 | GET | `/rozwiazania/{id}/ocena/historia` | `UczenLubNauczyciel` (U (własne), N (wg 12.8)) | — | — | FR-27, FR-34 | `?kursor` → `Strona<OcenaWyjscie>` (wersje Oceny od najnowszej; C8-12 p. 9) | — |
-| POST | `/rozwiazania/{id}/korekty` | `Nauczyciel` | R | — | FR-34 | `RozstrzygniecieWejscie` → `201 OcenaWyjscie` (9.6.3; korekta Oceny ostatecznej także bez Weryfikacji — strona `nauczyciel/rozwiazania/[rozwiazanieId]`, C8-11 p. 1) / `409 KONTO_UCZNIA_NIEAKTYWNE` | `409 KONTO_UCZNIA_NIEAKTYWNE`, `409 WERYFIKACJA_ZAJETA` |
+| POST | `/rozwiazania/{id}/korekty` | `Nauczyciel` | R | — | FR-34 | `RozstrzygniecieWejscie` → `201 OcenaWyjscie` (9.6.3; korekta Oceny ostatecznej także bez Weryfikacji — strona `teacher/solutions/[solutionId]`, C8-11 p. 1) / `409 KONTO_UCZNIA_NIEAKTYWNE` | `409 KONTO_UCZNIA_NIEAKTYWNE`, `409 WERYFIKACJA_ZAJETA` |
 | POST | `/klasy` | `Nauczyciel` | — | tak | FR-30 | `KlasaWejscie {nazwa, poziom_matury}` → `201 KlasaWyjscie` (z `kod_zaproszenia`) | — |
 | GET | `/klasy` | `Nauczyciel` | — | — | FR-30 | `?zarchiwizowane=false&kursor` → `Strona<KlasaWyjscie>` (własne; C8-12 p. 9) | — |
 | GET | `/klasy/{id}` | `Nauczyciel` | — | — | FR-30 | → `KlasaWyjscie` z `czlonkowie` i `version` | — |
@@ -6339,13 +6741,13 @@ w TS). Identyfikator operacji OpenAPI = `WithName` według ADR-049 p. 15.
 | GET | `/admin/harmonogram` | `Administrator` | — | — | — | → `PrzebiegHarmonogramuWyjscie[]` (ADR-066 p. 5) | — |
 ### 12.4 Typy DTO (rekordy C# → OpenAPI → TypeScript)
 
-Rekordy C# wszystkich kontraktów są w api.md 3 (`Lemat.Api.Kontrakty.<Modul>`),
+Rekordy C# wszystkich kontraktów są w api.md 3 (`Lemat.Api.Contracts.<Module>`),
 a typy TypeScript są generowane (`schema.d.ts`), więc ręcznie pisanych DTO
 nie ma. Listing niżej jest **referencją semantyki pól** (komentarze reguł
 domenowych) w postaci, jaką daje generator (pola `snake_case`, `null`
 jawne); test `TypyReferencyjneZgodneZSchematem` (Vitest + `tsd`) sprawdza
 przypisywalność listingu do wygenerowanych typów. Aliasy w
-`frontend/src/lib/api/typy.ts` (`export type RozwiazanieWyjscie =
+`frontend/src/lib/api/types.ts` (`export type RozwiazanieWyjscie =
 components["schemas"]["RozwiazanieWyjscie"];`).
 
 ```ts
@@ -6672,7 +7074,7 @@ interface ObciazenieWeryfikacjiWyjscie {
 
 ### 12.5 Reguły walidacji wejścia (wybrane)
 
-Reguły są walidatorami FluentValidation 12 (`<Rekord>Walidator`, filtr `FiltrWalidacji<T>`, błąd `422 WALIDACJA` z `bledy_pol`) dla reguł bez stanu i metodami agregatów albo przypadków użycia dla reguł zależnych od stanu (kody 409). Ten sam zestaw reguł bezstanowych frontend odwzorowuje schematami zod 4 (`features/<modul>/schematy.ts`); serwer pozostaje źródłem prawdy.
+Reguły są walidatorami FluentValidation 12 (`<Rekord>Walidator`, filtr `FiltrWalidacji<T>`, błąd `422 WALIDACJA` z `bledy_pol`) dla reguł bez stanu i metodami agregatów albo przypadków użycia dla reguł zależnych od stanu (kody 409). Ten sam zestaw reguł bezstanowych frontend odwzorowuje schematami zod 4 (`features/<module>/schemas.ts`); serwer pozostaje źródłem prawdy.
 
 | Endpoint | Reguła | Błąd |
 |---|---|---|
@@ -6904,14 +7306,14 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
 
 ### 12.11 Klient Next.js
 
-- **`lib/api/klient.ts`** — `openapi-fetch` z middleware: nagłówek
+- **`lib/api/client.ts`** — `openapi-fetch` z middleware: nagłówek
   `Authorization` z `pobierzToken()` (odświeżenie 60 s przed `exp`),
   zamiana odpowiedzi `!ok` na `BladApi { status, kod, problem, retryAfterS }`,
   błędy sieci → `kod = "BLAD_SIECI"`, przerwanie → `"PRZERWANO"`;
   `wywolaj(operacja)` ponawia raz po `401 NIEUWIERZYTELNIONY` po
   odświeżeniu tokenu (operacja jest wywoływana ponownie, więc ciało
   multipart jest budowane od nowa); `cache: "no-store"` (api.md 6.1).
-- **`lib/auth/odswiezanie.ts`** — single-flight w Web Locks
+- **`lib/auth/refresh.ts`** — single-flight w Web Locks
   `lemat-odswiezenie` i `BroadcastChannel("lemat-sesja")`; różnica zegara
   z nagłówka `Date` (`roznicaZegara`); wyłącznie `401` z odświeżenia →
   `WYLOGOWANIE` do wszystkich kart; `429`/`5xx`/sieć → ponowienia i
@@ -6928,15 +7330,15 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
   locie, `If-Match` z poprzedniej odpowiedzi, api.md 6.4); `412` →
   odświeżenie zapytania i dialog „Dane zmieniły się w międzyczasie” z
   aktualną wersją (`szczegoly.aktualny`).
-- **Granice błędów:** `app/error.tsx` (globalna), `(uczen)/error.tsx`,
-  `(nauczyciel)/nauczyciel/error.tsx`, `(administrator)/admin/error.tsx`
+- **Granice błędów:** `app/error.tsx` (globalna), `(student)/error.tsx`,
+  `(teacher)/teacher/error.tsx`, `(administrator)/admin/error.tsx`
   dla `5xx` i błędów sieci; `app/not-found.tsx` dla `404`; `4xx` —
   obsługa lokalna (`obsluzBlad`, 14.4).
 - **Generowanie typów:** `npm run api:typy` (`openapi-typescript
   ../backend/openapi/lemat-v1.json -o src/lib/api/schema.d.ts`) i `npm run
   api:zdarzenia` (typy zdarzeń SSE z `x-lemat-zdarzenia`); sprawdzone:
-  wygenerowany `schema.d.ts` i moduły `klient.ts`, `odswiezanie.ts`,
-  `strumien.ts` z api.md przechodzą `tsc --strict` (TypeScript 5.9.3,
+  wygenerowany `schema.d.ts` i moduły `client.ts`, `refresh.ts`,
+  `stream.ts` z api.md przechodzą `tsc --strict` (TypeScript 5.9.3,
   `openapi-fetch` 0.14.1, `eventsource-parser` 3).
 - **Mapowanie stron App Router na endpointy** — api.md 7.
 
@@ -6947,28 +7349,28 @@ bazowych z Arkusza CKE wynika ze wskaźnika łatwości ze sprawozdania CKE
 | `OpenApiBezDryfu` | CI (krok budowy) | wygenerowany `lemat-v1.json` = plik w repozytorium; `schema.d.ts` = wynik `openapi-typescript` |
 | `oasdiff breaking main..HEAD` | CI | brak zmian niekompatybilnych w `v1` (ADR-062 p. 1) |
 | `KazdyEndpointMaPolitykeIKody` | `Lemat.Api.Tests` | każdy endpoint z `EndpointDataSource` jest w katalogu 12.3 z tą samą polityką, metadanymi `Idempotentny`/`WymagaIfMatch` i `x-lemat-kody-bledow` ⊇ kody specyficzne z 12.3 |
-| `KatalogBledowKompletny` | `Lemat.Api.Tests` + Vitest | `KodBledu` = `katalog-bledow.yaml` = klucze `bledy.*` w `messages/pl-PL.json` |
+| `KatalogBledowKompletny` | `Lemat.Api.Tests` + Vitest | `KodBledu` = `error-catalog.yaml` = klucze `bledy.*` w `messages/pl-PL.json` |
 | `ProblemDetailsDlaKazdegoKodu` | `Lemat.Api.Tests` (`WebApplicationFactory`) | dla każdego `KodBledu` wyjątek domenowy daje odpowiedź z właściwym `status`, `type`, `kod`, `trace_id` |
 | `IdempotencjaPodwojneZadanie` | `Lemat.Api.Tests` | dwa równoległe `POST /rozwiazania` z tym samym kluczem → jedno Rozwiązanie, druga odpowiedź `409 IDEMPOTENCJA_W_TOKU` albo powtórka z `Idempotent-Replayed` |
-| `StrumienieSse*` | `Lemat.Api.Tests/Strumienie` | ADR-064 p. 9 |
-| `PrzeslanieMultipartZKlientaOpenApi` | `Lemat.Api.Tests/Rozwiazania` | formularz zbudowany z `components.schemas.RozwiazanieWejscie` wygenerowanego `lemat-v1.json`: element → `202`, Przypisanie → `202`, brak kontekstu → `422 WALIDACJA` z `bledy_pol` (ADR-067) |
-| `SchematFormularzaZgodnyZWiazaniem`, `NazwyJsonZgodneZKolumnamiDdl`, `EnumyZMyslnikiemMajaAtrybutNaKazdymCzlonku` | `Lemat.Api.Tests/Kontrakt` | nazwy pól formularzy = `FromForm.Name` = `NazwyLemat`; JSON rekordów 1:1 = kolumny DDL; atrybuty enumów (ADR-067 p. 2–4) |
+| `StrumienieSse*` | `Lemat.Api.Tests/Streams` | ADR-064 p. 9 |
+| `PrzeslanieMultipartZKlientaOpenApi` | `Lemat.Api.Tests/Solutions` | formularz zbudowany z `components.schemas.RozwiazanieWejscie` wygenerowanego `lemat-v1.json`: element → `202`, Przypisanie → `202`, brak kontekstu → `422 WALIDACJA` z `bledy_pol` (ADR-067) |
+| `SchematFormularzaZgodnyZWiazaniem`, `NazwyJsonZgodneZKolumnamiDdl`, `EnumyZMyslnikiemMajaAtrybutNaKazdymCzlonku` | `Lemat.Api.Tests/Contract` | nazwy pól formularzy = `FromForm.Name` = `NazwyLemat`; JSON rekordów 1:1 = kolumny DDL; atrybuty enumów (ADR-067 p. 2–4) |
 | `KazdaOdpowiedzBleduMaKod` | `Lemat.Api.Tests` | niepoprawny JSON (`400`), nieznane pole, brak dyskryminatora, zły typ (`422`), zła trasa (`404`), zła metoda (`405`), zły `Content-Type` (`415`) → `application/problem+json` z `kod` z katalogu (ADR-067 p. 6–7) |
-| `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`, `Konflikt40P01NieJestZapisywanyWKluczu`, `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` | `Lemat.Api.Tests/Idempotencja` (Testcontainers) | ADR-068 |
+| `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`, `Konflikt40P01NieJestZapisywanyWKluczu`, `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` | `Lemat.Api.Tests/Idempotency` (Testcontainers) | ADR-068 |
 | `OdpytywanieWidziWskazowke`, `BrakNaglowkaEtagWOdczytach`, `KazdaOperacjaIfMatchMaZrodloWersji` | `Lemat.Api.Tests` | ADR-069 |
-| `KazdyEndpointZIdMaTestIdor`, `MacierzUprawnienPokrywaKatalog` | `Lemat.Api.Tests/Uprawnienia` | ADR-071 p. 1, p. 8 |
-| `ZmianaUczniaWyczyszczenieDzialu`, `RejestracjaUczniaZwracaSesje`, `RejestracjaNauczycielaBezSesji` | `Lemat.Api.Tests/Konta` | ADR-072 |
-| `WznowienieZawszeWysylaPierwszyStan` | `Lemat.Api.Tests/Strumienie` | ADR-064 uzup. 3.3 p. 1 |
-| `strumien.test.ts`, `odswiezanie.test.ts`, `kolejkaZapisow.test.ts` | Vitest | ADR-064 uzup. 3.3 p. 6, ADR-070, ADR-073 |
-| `klasa-za-nat.spec.ts`, `autozapis-wolna-siec.spec.ts` | Playwright | ADR-070, ADR-073 |
-| `kontrakt-api.spec.ts` | Playwright (E2E) | przepływ FR-16 … FR-27 przez `klient.ts` na Docker Compose z Mock (ADR-065), w tym zerwanie SSE i powrót odpytywaniem |
+| `KazdyEndpointZIdMaTestIdor`, `MacierzUprawnienPokrywaKatalog` | `Lemat.Api.Tests/Permissions` | ADR-071 p. 1, p. 8 |
+| `ZmianaUczniaWyczyszczenieDzialu`, `RejestracjaUczniaZwracaSesje`, `RejestracjaNauczycielaBezSesji` | `Lemat.Api.Tests/Accounts` | ADR-072 |
+| `WznowienieZawszeWysylaPierwszyStan` | `Lemat.Api.Tests/Streams` | ADR-064 uzup. 3.3 p. 1 |
+| `stream.test.ts`, `refresh.test.ts`, `save-queue.test.ts` | Vitest | ADR-064 uzup. 3.3 p. 6, ADR-070, ADR-073 |
+| `class-behind-nat.spec.ts`, `autosave-slow-network.spec.ts` | Playwright | ADR-070, ADR-073 |
+| `api-contract.spec.ts` | Playwright (E2E) | przepływ FR-16 … FR-27 przez `client.ts` na Docker Compose z Mock (ADR-065), w tym zerwanie SSE i powrót odpytywaniem |
 
 ---
 
 ## 13. Kontrakty wewnętrzne (porty) i prace w tle
 
 Porty są interfejsami C# w `Lemat.Application` (`Modele`, `Wspolne`,
-`Wspolne.PraceWTle`); implementacje są w `Lemat.Modele` (modele) i
+`Common.BackgroundJobs`); implementacje są w `Lemat.Models` (modele) i
 `Lemat.Infrastructure` (baza, magazyn, sidecary, ogranicznik). Prace w tle
 wykonuje `Lemat.Worker` (`BackgroundService` na pulę, ADR-053), harmonogram
 — `Lemat.Scheduler`, a zlecanie i `NOTIFY` działają według ADR-056.
@@ -6976,8 +7378,8 @@ wykonuje `Lemat.Worker` (`BackgroundService` na pulę, ADR-053), harmonogram
 ### 13.1 Porty modeli (NFR-06)
 
 ```csharp
-// ===== Lemat.Domain.Modele — Plan pytań i decyzje (ADR-026, 3.5 #30, #56) =====
-namespace Lemat.Domain.Modele;
+// ===== Lemat.Domain.Models — Plan pytań i decyzje (ADR-026, 3.5 #30, #56) =====
+namespace Lemat.Domain.Models;
 
 public enum TypPytania { Noul, Score, Choice }
 public enum KontekstDecyzji { Ocena, Rekomendacja, WalidacjaZadania }
@@ -7033,8 +7435,8 @@ public enum PrzyczynaZapasowego { ObwodOtwarty, OgraniczenieLokalne, BladGlowneg
 ```
 
 ```csharp
-// ===== Lemat.Application.Modele — porty =====
-namespace Lemat.Application.Modele;
+// ===== Lemat.Application.Models — porty =====
+namespace Lemat.Application.Models;
 
 public sealed record TerminPlanu(DateTimeOffset Miekki, DateTimeOffset Twardy, bool BezModeluZapasowego = false);
 
@@ -7049,7 +7451,7 @@ public interface IModelGeneratywny                                          // M
     Task<KlientCzatuRoli> DlaRoliAsync(RolaModelu rola, CancellationToken ct);
 }
 
-public enum Rownowaznosc { Rownowazne, Nierownowazne, Nierozstrzygniete }  // Lemat.Domain.Wspolne; JSON UPPER_SNAKE
+public enum Rownowaznosc { Rownowazne, Nierownowazne, Nierozstrzygniete }  // Lemat.Domain.Common; JSON UPPER_SNAKE
 
 public interface ISprawdzanieSymboliczne                                    // sidecar lemat-sympy (ADR-050)
 {
@@ -7101,7 +7503,7 @@ public interface IObrobkaObrazow                                            // s
 public sealed record ObrazZnormalizowany(byte[] Jpeg, int Szerokosc, int Wysokosc, byte[] Sha256, bool ZHeic);
 public sealed record WycinkiZdjecia(IReadOnlyList<byte[]> Wycinki, byte[] Poglad);
 
-// Wyjątki wspólne dla adapterów (Lemat.Application.Modele):
+// Wyjątki wspólne dla adapterów (Lemat.Application.Models):
 public sealed class BladModeluPrzejsciowyException(string kod, Exception? wewn = null) : Exception(kod, wewn);
     // timeout, 429, 5xx, zerwane połączenie, OGRANICZENIE_LOKALNE → ponawiane według 13.3
 public sealed class BladModeluTrwalyException(string kod, Exception? wewn = null) : Exception(kod, wewn);
@@ -7124,7 +7526,7 @@ odrzuca konfigurację, której `retencja_dostawcy_dni` przekracza A-07 (0 dla
 a konfigurację `mock` w środowisku `Production` → `409
 DOSTAWCA_NIEDOZWOLONY`.
 
-**Rejestr adapterów** (`Lemat.Modele.RejestrAdapterow`) mapuje
+**Rejestr adapterów** (`Lemat.Models.RejestrAdapterow`) mapuje
 `konfiguracja_modelu.dostawca` na fabrykę adaptera: `typesafe-jev` →
 `JevAdapter`; `zapasowy-llm` → `ZapasowyLlmAdapter`, którego klient czatu
 roli `DECYZYJNY_ZAPASOWY` buduje `FabrykaKlientowCzatu` z
@@ -7243,7 +7645,7 @@ Jev zmniejsza przydział procesu o połowę na 30 s (`ZmniejszPrzydzial`), jest
 ponawiana jak inne błędy przejściowe, ale również **nie** jest liczona do
 otwarcia obwodu; obwód otwierają wyłącznie timeouty, `5xx`, błędy połączenia
 i odpowiedzi niezgodne ze schematem. Test jednostkowy
-`Lemat.Infrastructure.Tests/Modele/OgranicznikSzybkosciTests` ((a)–(e), (g), (h)) i `Lemat.Symulacje/OgranicznikSymulacja` ((f), FsCheck): (a) pusty system — fala 16 wywołań
+`Lemat.Infrastructure.Tests/Models/OgranicznikSzybkosciTests` ((a)–(e), (g), (h)) i `Lemat.Simulations/OgranicznikSymulacja` ((f), FsCheck): (a) pusty system — fala 16 wywołań
 dostaje 16 tokenów w chwili 0; (b) przy pustym kubełku 16 wywołań kończy się
 w 0,88 s ± 0,01 s; (c) fale ≥ 2 wyprzedzają fale 1 złożone wcześniej; (d) plan
 z przewidywanym końcem > termin miękki jest odrzucany bez zużycia tokenów;
@@ -7306,7 +7708,7 @@ NFR-01, ale Ocena powstaje). Protokół pytań zależnych (C1-07):
    komplet kodów bezwarunkowych, klucze rozkładu = dozwolone opcje, wartości
    w [0, 1]; suma normalizowana do 1 (odchylenie > 0.05 →
    `BladModeluTrwalyException`). Prompt systemowy `plan-pytan-v1` i schemat
-   `OdpowiedzPlanuModelu`: `docs/spec/prompty.md` 4.8.
+   `OdpowiedzPlanuModelu`: `docs/spec/prompts.md` 4.8.
 
 **`CircuitBreakerModeluDecyzyjnego`**: stan obwodu per proces; otwarcie po
 3 kolejnych błędach albo przy ≥ 50% błędów w oknie 20 s przy ≥ 6
@@ -7316,7 +7718,7 @@ do modelu zapasowego). Ponowienie nieudanych pytań Jev następuje tylko,
 gdy do terminu miękkiego (`max(10 s, 28 s − t_R)`) zostało ≥ 13 s
 (ponowienie 2 s + model zapasowy 9 s + zapas 2 s; 9.9, 17.2).
 
-**Klasy adapterów (C#, `Lemat.Modele`).**
+**Klasy adapterów (C#, `Lemat.Models`).**
 
 ```csharp
 public sealed class CircuitBreakerModeluDecyzyjnego(JevAdapter glowny, ZapasowyLlmAdapter zapasowy, StanObwodu obwod,
@@ -7350,12 +7752,12 @@ public sealed class ZapasowyLlmAdapter(IModelGeneratywny modele, ISzablonyPrompt
 // CircuitBreakerModeluDecyzyjnego.WykonajPlanAsync(stan, plan, termin, kontekst, ct) przekazuje kontekst do obu adapterów.
 ```
 
-`ZapasowyLlmAdapter` renderuje prompt `Prompty/DECYZYJNY_ZAPASOWY/plan-pytan-v1.yaml`
-(albo `plan-pytan-walidacji-v1.yaml` dla Walidacji)
-przez port `ISzablonyPromptow` (`Lemat.Application.Modele`), którego
-implementacją jest `SzablonyPromptow` z `Lemat.Agenci` (10.0.3,
-rejestrowana w punkcie kompozycji), więc `Lemat.Modele` nie zależy od
-`Lemat.Agenci`.
+`ZapasowyLlmAdapter` renderuje prompt `Prompts/decision-fallback/question-plan-v1.yaml`
+(albo `validation-question-plan-v1.yaml` dla Walidacji)
+przez port `ISzablonyPromptow` (`Lemat.Application.Models`), którego
+implementacją jest `SzablonyPromptow` z `Lemat.Agents` (10.0.3,
+rejestrowana w punkcie kompozycji), więc `Lemat.Models` nie zależy od
+`Lemat.Agents`.
 
 ### 13.3 Katalog prac w tle
 
@@ -7413,8 +7815,8 @@ zdjęć; `praca_w_tle.proby` liczy wyłącznie próby techniczne jednej pracy
 #### 13.4.1 Kontrakty (C#)
 
 ```csharp
-// ===== Lemat.Application.Wspolne.PraceWTle (ADR-023 uzup. 3.1: poza Orkiestracja, brak cykli modułów) =====
-namespace Lemat.Application.Wspolne.PraceWTle;
+// ===== Lemat.Application.Common.BackgroundJobs (ADR-023 uzup. 3.1: poza Orkiestracja, brak cykli modułów) =====
+namespace Lemat.Application.Common.BackgroundJobs;
 
 public enum PulaPracy { Rozpoznawanie, Sprawdzanie, Ocenianie, Pomocnicza, Wolna }   // kolumna text, UPPER_SNAKE
 public enum StatusPracy { Oczekuje, WToku, Zakonczona, Martwa }
@@ -7470,7 +7872,7 @@ public interface IKontekstPracy                                             // u
 ```
 
 ```csharp
-// ===== Lemat.Infrastructure.PraceWTle =====
+// ===== Lemat.Infrastructure.BackgroundJobs =====
 public interface ISklepPracWTle
 {
     Task<PracaWTle?> PobierzAsync(PulaPracy pula, string wykonawca, CancellationToken ct);       // SQL „Pobranie” niżej
@@ -7711,7 +8113,7 @@ Zdarzenia są rekordami C# implementującymi `IZdarzenieDomenowe` (3.6),
 zgłaszanymi przez agregaty (`Agregat<TId>.Zglos`). `JednostkaPracyEf`
 zbiera je z agregatów śledzonych przez `ChangeTracker` i przed
 `SaveChanges` przekazuje do obsług `IObslugaZdarzenia<TZdarzenie>`
-(`Lemat.Application.<Modul>.Obslugi`), które w tej samej transakcji zlecają
+(`Lemat.Application.<Module>.EventHandlers`), które w tej samej transakcji zlecają
 prace w tle (`IZlecaniePrac`), tworzą powiadomienia albo zmieniają agregaty
 innych modułów przez ich fasady (ADR-056 p. 1). Nie ma zewnętrznego
 brokera. Obsługa nie może wywoływać modeli ani usług zewnętrznych (test
@@ -7722,7 +8124,7 @@ public interface IObslugaZdarzenia<in TZdarzenie> where TZdarzenie : IZdarzenieD
 {
     Task ObsluzAsync(TZdarzenie zdarzenie, CancellationToken ct);
 }
-// przykład: Lemat.Application.Rozwiazania.Obslugi.RozwiazaniePrzeslaneObsluga
+// przykład: Lemat.Application.Solutions.EventHandlers.RozwiazaniePrzeslaneObsluga
 //   → ZlecAsync(new(TypPracy.RozpoznajPismo, new { rozwiazanie_id, przeslanie_nr, ponowienie_nr },
 //                   $"{rozwiazanieId}:{przeslanieNr}:{ponowienieNr}"))
 ```
@@ -7764,7 +8166,7 @@ flowchart LR
     X["inny wyjątek"] --> N["ObslugaWyjatkowNieoczekiwanych<br/>500 BLAD_WEWNETRZNY + log Error"]
     H --> PD["IProblemDetailsService<br/>application/problem+json {kod, trace_id}"]
     N --> PD
-    PD --> K["klient.ts: BladApi {status, kod}"]
+    PD --> K["client.ts: BladApi {status, kod}"]
     K --> O["obsluzBlad(kod): akcja lokalna / toast<br/>bledy.KOD (next-intl)"]
     K --> EB["error.tsx (5xx, BLAD_SIECI)"]
     W["worker: wyjątek w handlerze"] --> R["PulaPracHostedService.Klasyfikuj<br/>Ponow / Trwaly / RezultatPrzestarzaly"]
@@ -7773,7 +8175,7 @@ flowchart LR
 ### 14.1 Hierarchia wyjątków domenowych (C#)
 
 ```csharp
-namespace Lemat.Domain.Wspolne.Bledy;
+namespace Lemat.Domain.Common.Errors;
 
 public abstract class WyjatekDomenowy(KodBledu kod, string? szczegolyTekst = null, object? szczegoly = null)
     : Exception(szczegolyTekst ?? kod.ToString())
@@ -7795,11 +8197,11 @@ public sealed class LimitPrzekroczonyException(KodBledu kod, TimeSpan retryAfter
 public sealed class UslugaNiedostepnaException(KodBledu kod, TimeSpan retryAfter) : WyjatekDomenowy(kod)
 { public TimeSpan RetryAfter { get; } = retryAfter; }                                                                     // 503
 
-// Lemat.Application.Modele — błędy modeli (nie trafiają do HTTP; klasyfikuje je pętla prac, 14.3)
+// Lemat.Application.Models — błędy modeli (nie trafiają do HTTP; klasyfikuje je pętla prac, 14.3)
 public sealed class BladModeluPrzejsciowyException(string kod, Exception? przyczyna = null) : Exception(kod, przyczyna);
 public sealed class BladModeluTrwalyException(string kod, Exception? przyczyna = null) : Exception(kod, przyczyna);
 public sealed class ModelNiedostepnyException(RolaModelu rola) : Exception($"BRAK_AKTYWNEJ_KONFIGURACJI:{rola}");
-// Lemat.Application.Wspolne.PraceWTle
+// Lemat.Application.Common.BackgroundJobs
 public sealed class UtrataDzierzawyException() : Exception("DZIERZAWA_UTRACONA");
 public sealed class TerminMinalException(string termin) : Exception(termin);
 ```
@@ -7846,7 +8248,7 @@ Wskazówki). Kody przyczyn w `praca_w_tle.ostatni_blad`:
 
 - **Komunikaty** — `messages/pl-PL.json`: `bledy.<KOD>.tytul`,
   `bledy.<KOD>.akcja` (dla każdego kodu 12.2, generowane z
-  `katalog-bledow.yaml`) i `bledy.E-xx` (kolumna „Komunikat pl-PL” 14.5);
+  `error-catalog.yaml`) i `bledy.E-xx` (kolumna „Komunikat pl-PL” 14.5);
   `BLAD_SIECI` — „Brak połączenia z internetem. Sprawdź sieć — spróbujemy
   ponownie.”, `PRZERWANO` — bez komunikatu.
 - **`obsluzBlad(e, reakcje)`** — reakcja lokalna dla kodów obsługiwanych
@@ -7915,7 +8317,7 @@ Wskazówki). Kody przyczyn w `praca_w_tle.ostatni_blad`:
 | E-39 | Access token wygasł w trakcie pracy (karta w tle, uśpiony telefon) | `401 NIEUWIERZYTELNIONY` z `JwtBearer` | klient: `odswiezToken()` (single-flight) i jedno ponowienie operacji (`wywolaj`) | brak (operacja kończy się po odświeżeniu) | brak komunikatu |
 | E-40 | Sesja unieważniona albo wygasła (30 dni, ponowne użycie tokenu, blokada konta) | `401 SESJA_UNIEWAZNIONA` z `POST /auth/odswiezenie` (wyłącznie `401`; `429`/`5xx`/sieć → ponowienia bez wylogowania, `SESJA_TYMCZASOWO_NIEDOSTEPNA`, ADR-070 p. 4) | `BroadcastChannel` `WYLOGOWANIE` do wszystkich kart; `lemat_rola` usuwane; powrót po zalogowaniu na tę samą trasę (`?powrot=`) | przejście do logowania; szkic Poprawek Transkrypcji zapisany autozapisem (≤ 1,5 s, ADR-073) nie ginie | „Sesja wygasła. Zaloguj się ponownie — Twoje zapisane zmiany są bezpieczne.” |
 | E-41 | Podwójne kliknięcie albo ponowienie żądania w toku z tym samym `Idempotency-Key`; ten sam klucz z innym ciałem | `FiltrIdempotencji` | `409 IDEMPOTENCJA_W_TOKU` (`Retry-After` ≤ 60 s do końca rezerwacji, ADR-068) → klient czeka i ponawia tym samym kluczem najwyżej 2 razy (dostaje zapisaną odpowiedź albo — po awarii procesu — przejmuje klucz po 60 s); `422 KLUCZ_IDEMPOTENCJI_KONFLIKT` → nowy klucz tylko po decyzji użytkownika | jedno Rozwiązanie / jedna Odpowiedź | brak komunikatu (409); „Ta operacja została już wysłana z innymi danymi. Odśwież stronę.” (422) |
-| E-42 | Strumień SSE niedostępny (proxy buforujące, sieć komórkowa, `429 ZA_DUZO_STRUMIENI`) | `strumien.ts`: 2 porażki w 10 s, brak pierwszego zdarzenia w 5 s, `429` | odpytywanie `GET` co `max(1000, nastepne_odpytanie_ms)` ms, `null` → koniec odpytywania i powrót do SSE, próba SSE co 60 s (ADR-064 p. 8 i uzup. 3.3) | postęp aktualizowany co 1 s zamiast natychmiast | brak komunikatu |
+| E-42 | Strumień SSE niedostępny (proxy buforujące, sieć komórkowa, `429 ZA_DUZO_STRUMIENI`) | `stream.ts`: 2 porażki w 10 s, brak pierwszego zdarzenia w 5 s, `429` | odpytywanie `GET` co `max(1000, nastepne_odpytanie_ms)` ms, `null` → koniec odpytywania i powrót do SSE, próba SSE co 60 s (ADR-064 p. 8 i uzup. 3.3) | postęp aktualizowany co 1 s zamiast natychmiast | brak komunikatu |
 | E-43 | Przerwane przesyłanie zdjęć (utrata sieci w trakcie `multipart`) | `IOException`/`BadHttpRequestException` przy odczycie ciała w Kestrel; klient: `TypeError` w `fetch` | żaden obiekt nie jest zapisany przed pełnym odczytem i walidacją wszystkich plików; rezerwacja `klucz_idempotencji` jest usuwana przy błędzie odczytu, a gdy usunięcie się nie uda — wygasa po 60 s (ADR-068); klient ponawia z tym samym kluczem (3 próby, 2 s, 5 s, 15 s), potem przycisk „Wyślij ponownie” | zdjęcia pozostają w pamięci strony do sukcesu (bez zapisu na urządzeniu, NFR-09) | „Przesyłanie przerwane — brak połączenia. Wyślemy zdjęcia ponownie, gdy wróci sieć.” |
 | E-44 | Frontend starszy niż API (wdrożenie w trakcie sesji) | `X-Lemat-Wersja-Api` wyższej wersji głównej niż w buildzie albo `ChunkLoadError` Next.js | baner z przyciskiem „Odśwież”; service worker aktywuje nową wersję po odświeżeniu | jedno przeładowanie strony | „Dostępna jest nowa wersja aplikacji. Odśwież stronę.” |
 | E-45 | Naruszenie ograniczenia bazy niewykryte walidacją (`23514` CHECK, `23503` FK) | `TlumaczBledowInfrastruktury` (ADR-063 p. 4) | `500 BLAD_WEWNETRZNY`, log `NARUSZENIE_SCHEMATU {ograniczenie}`, metryka; brak zapisu (rollback) | jak E-25 | jak E-25 |
@@ -7947,7 +8349,7 @@ Wskazówki). Kody przyczyn w `praca_w_tle.ostatni_blad`:
   przypadkach powstaje Wynik zadania według 10.1.3, ustawiane jest
   `ocena_wystawiona_at` i wysyłane powiadomienie `OCENA_WYSTAWIONA`.
 
-Realizacja .NET: `TerminyOceny` (rekord w `Lemat.Domain.Ocenianie`) liczy
+Realizacja .NET: `TerminyOceny` (rekord w `Lemat.Domain.Grading`) liczy
 oba terminy z `TimeProvider`; `OcenRozwiazanieHandler.TerminTwardy(praca)`
 zwraca `zatwierdzono_at + 120 s` dla klasyfikacji ADR-066 p. 1, a
 `PoWyczerpaniuAsync` wykonuje T-6 w jednostce pracy przejścia do `MARTWA`.
@@ -7956,16 +8358,16 @@ zwraca `zatwierdzono_at + 120 s` dla klasyfikacji ADR-066 p. 1, a
 
 | Przypadek | Przeglądarka / Next.js | Sieć, Caddy | `api` (.NET) | `worker`, baza | Test |
 |---|---|---|---|---|---|
-| **Sieć komórkowa: zmiana stacji, chwilowa utrata, wysokie opóźnienie** | `strumien.ts`: ping co 15 s, cisza 45 s → ponowne połączenie, przejście na odpytywanie (E-42); TanStack Query `retry` dla `BLAD_SIECI`; `onlineManager` wstrzymuje mutacje offline | HTTP/2 z jednym połączeniem TCP; `flush_interval -1` | `RequestTimeouts` 30 s; SSE zamykane po 10 min (`wznow`) | brak wpływu | Playwright `siec-komorkowa.spec.ts` (emulacja `offline` 20 s w trakcie oceniania, potem stan końcowy bez przeładowania) |
-| **Duże zdjęcia (do 10 MB, 12 Mpx+)** | `kompresja.worker.ts`: dłuższy bok ≤ 2560 px, JPEG 0,85 (typowo 0,6–1,2 MB); plik > 10 MB po kompresji → komunikat E-01 bez wysyłki | `request_body max_size 52MB` | `MaxRequestBodySize` 52 MB, `MultipartBodyLengthLimit` 10 MB/plik, strumieniowy zapis do pliku tymczasowego (`IFormFile` > 64 kB na dysk), normalizacja w `Lemat.ImageSandbox` z limitami (E-35) | normalizacja nie w `worker` (ADR-052) | Vitest `kompresja.test.ts` (12 Mpx → ≤ 2560 px); `Lemat.Api.Tests/PrzeslanieDuzegoZdjecia` (10 MB, 5 plików) |
+| **Sieć komórkowa: zmiana stacji, chwilowa utrata, wysokie opóźnienie** | `stream.ts`: ping co 15 s, cisza 45 s → ponowne połączenie, przejście na odpytywanie (E-42); TanStack Query `retry` dla `BLAD_SIECI`; `onlineManager` wstrzymuje mutacje offline | HTTP/2 z jednym połączeniem TCP; `flush_interval -1` | `RequestTimeouts` 30 s; SSE zamykane po 10 min (`wznow`) | brak wpływu | Playwright `cellular-network.spec.ts` (emulacja `offline` 20 s w trakcie oceniania, potem stan końcowy bez przeładowania) |
+| **Duże zdjęcia (do 10 MB, 12 Mpx+)** | `compression.worker.ts`: dłuższy bok ≤ 2560 px, JPEG 0,85 (typowo 0,6–1,2 MB); plik > 10 MB po kompresji → komunikat E-01 bez wysyłki | `request_body max_size 52MB` | `MaxRequestBodySize` 52 MB, `MultipartBodyLengthLimit` 10 MB/plik, strumieniowy zapis do pliku tymczasowego (`IFormFile` > 64 kB na dysk), normalizacja w `Lemat.ImageSandbox` z limitami (E-35) | normalizacja nie w `worker` (ADR-052) | Vitest `compression.test.ts` (12 Mpx → ≤ 2560 px); `Lemat.Api.Tests/PrzeslanieDuzegoZdjecia` (10 MB, 5 plików) |
 | **HEIC (iPhone)** | Safari dekoduje HEIC (`createImageBitmap`) → kompresja do JPEG w przeglądarce; Chrome/Firefox bez dekodera → plik wysyłany bez kompresji (≤ 10 MB) z `Content-Type: image/heic` | — | sygnatura `ftypheic`/`ftypmif1` akceptowana; `Lemat.ImageSandbox` (Magick.NET z libheif) konwertuje do JPEG; plik HEIC > 10 MB → `413 ZDJECIE_ZA_DUZE` | — | `Lemat.ImageSandbox.Tests/HeicDoJpeg`; Playwright WebKit (iPhone 15) przesłanie HEIC |
 | **Przerwane przesyłanie zdjęć** | zdjęcia trzymane w pamięci strony do sukcesu; ponowienie z tym samym `Idempotency-Key` (3 próby, potem przycisk) — E-43 | połączenie zerwane | odczyt ciała → `IOException`; nic nie zapisano w S3 ani w bazie; wiersz `klucz_idempotencji` usunięty | obiekty zapisane częściowo (awaria po zapisie S3, przed `COMMIT`) usuwa `SPRZATAJ_OSIEROCONE_OBIEKTY` (ADR-047) | `Lemat.Api.Tests/PrzerwanePrzeslanie` (strumień ciała przerwany w połowie → brak wierszy i obiektów; ponowienie tym samym kluczem → `202`) |
-| **Wygasła sesja w trakcie pracy** | access token: odświeżenie proaktywne 60 s przed `exp` i reaktywne po `401` (E-39); refresh token nieważny → wylogowanie wszystkich kart z powrotem na trasę (E-40); autozapis szkicu Poprawek (`PUT …/transkrypcja/szkic` z debounce 1,5 s, ADR-073) i szkicu rozstrzygnięcia (`PUT …/szkic` z debounce 3 s) ogranicza utratę do ostatnich sekund | — | `JwtBearer` `ClockSkew` 30 s; SSE zamykane w chwili `exp` zdarzeniem `wznow` | blokada Weryfikacji trwa do `zablokowana_do`, szkic w bazie (C-08) | Playwright `sesja-wygasla.spec.ts` (zegar +16 min w trakcie edycji Transkrypcji → zapis udany po odświeżeniu; refresh token unieważniony → logowanie i powrót) |
-| **Podwójne kliknięcie** | przycisk zablokowany od kliknięcia do odpowiedzi; jeden `Idempotency-Key` na intencję | — | `FiltrIdempotencji`: drugie żądanie → `409 IDEMPOTENCJA_W_TOKU` albo zapisana odpowiedź (E-41); operacje z `If-Match` → drugie `412`/`409` | `ux_*` indeksy częściowe (C-01, C-02) | `IdempotencjaPodwojneZadanie` (12.12); Playwright `podwojne-klikniecie.spec.ts` |
-| **Wiele kart / wiele urządzeń** | single-flight odświeżania (Web Locks), jeden strumień powiadomień na przeglądarkę (karta-lider), `BroadcastChannel` dla tokenu i wylogowania (ADR-057); w drugiej karcie `412` → dialog z aktualną wersją | — | okno tolerancji rotacji 30 s; limity strumieni 4/12 bez zamykania istniejących | `If-Match` + tokeny współbieżności (15.2), C-03, C-04, C-41 … C-43 | `sesja-dwie-karty.spec.ts`, `powiadomienia-dwie-karty.spec.ts`, `Lemat.Api.Tests/Rozwiazania/PoprawkaKontraZatwierdzenieTests` |
-| **Przeładowanie karty przez system (iOS po uruchomieniu aparatu)** | stan formularza przesyłania w `sessionStorage` wyłącznie bez zdjęć i danych osobowych (identyfikator elementu, liczba zdjęć); po powrocie ekran prosi o ponowne wybranie zdjęć | — | — | — | Playwright WebKit `aparat-przeladowanie.spec.ts` |
-| **Zegar urządzenia niezgodny z serwerem** | czasy z serwera (`wygasa_at`, `termin_at`) przeliczane względem nagłówka `Date` odpowiedzi (`roznicaZegara`); odświeżenie tokenu liczone od `wygasa_at − roznicaZegara` | — | wszystkie terminy liczone w UTC na serwerze | — | Vitest `roznicaZegara.test.ts` (zegar −10 min) |
-| **Utrata uprawnień w trakcie (usunięcie z Klasy, blokada konta)** | `403`/`404` → strona „Brak dostępu”; SSE `blad` → zamknięcie strumienia | — | uprawnienie sprawdzane przy każdym odczycie stanu SSE; blokada konta unieważnia refresh tokeny | — | `Lemat.Api.Tests/Strumienie/UtrataUprawnienWTrakcie` |
+| **Wygasła sesja w trakcie pracy** | access token: odświeżenie proaktywne 60 s przed `exp` i reaktywne po `401` (E-39); refresh token nieważny → wylogowanie wszystkich kart z powrotem na trasę (E-40); autozapis szkicu Poprawek (`PUT …/transkrypcja/szkic` z debounce 1,5 s, ADR-073) i szkicu rozstrzygnięcia (`PUT …/szkic` z debounce 3 s) ogranicza utratę do ostatnich sekund | — | `JwtBearer` `ClockSkew` 30 s; SSE zamykane w chwili `exp` zdarzeniem `wznow` | blokada Weryfikacji trwa do `zablokowana_do`, szkic w bazie (C-08) | Playwright `session-expired.spec.ts` (zegar +16 min w trakcie edycji Transkrypcji → zapis udany po odświeżeniu; refresh token unieważniony → logowanie i powrót) |
+| **Podwójne kliknięcie** | przycisk zablokowany od kliknięcia do odpowiedzi; jeden `Idempotency-Key` na intencję | — | `FiltrIdempotencji`: drugie żądanie → `409 IDEMPOTENCJA_W_TOKU` albo zapisana odpowiedź (E-41); operacje z `If-Match` → drugie `412`/`409` | `ux_*` indeksy częściowe (C-01, C-02) | `IdempotencjaPodwojneZadanie` (12.12); Playwright `double-click.spec.ts` |
+| **Wiele kart / wiele urządzeń** | single-flight odświeżania (Web Locks), jeden strumień powiadomień na przeglądarkę (karta-lider), `BroadcastChannel` dla tokenu i wylogowania (ADR-057); w drugiej karcie `412` → dialog z aktualną wersją | — | okno tolerancji rotacji 30 s; limity strumieni 4/12 bez zamykania istniejących | `If-Match` + tokeny współbieżności (15.2), C-03, C-04, C-41 … C-43 | `session-two-tabs.spec.ts`, `notifications-two-tabs.spec.ts`, `Lemat.Api.Tests/Solutions/PoprawkaKontraZatwierdzenieTests` |
+| **Przeładowanie karty przez system (iOS po uruchomieniu aparatu)** | stan formularza przesyłania w `sessionStorage` wyłącznie bez zdjęć i danych osobowych (identyfikator elementu, liczba zdjęć); po powrocie ekran prosi o ponowne wybranie zdjęć | — | — | — | Playwright WebKit `camera-reload.spec.ts` |
+| **Zegar urządzenia niezgodny z serwerem** | czasy z serwera (`wygasa_at`, `termin_at`) przeliczane względem nagłówka `Date` odpowiedzi (`roznicaZegara`); odświeżenie tokenu liczone od `wygasa_at − roznicaZegara` | — | wszystkie terminy liczone w UTC na serwerze | — | Vitest `clock-skew.test.ts` (zegar −10 min) |
+| **Utrata uprawnień w trakcie (usunięcie z Klasy, blokada konta)** | `403`/`404` → strona „Brak dostępu”; SSE `blad` → zamknięcie strumienia | — | uprawnienie sprawdzane przy każdym odczycie stanu SSE; blokada konta unieważnia refresh tokeny | — | `Lemat.Api.Tests/Streams/UtrataUprawnienWTrakcie` |
 | **Wdrożenie w trakcie sesji** | `X-Lemat-Wersja-Api` / `ChunkLoadError` → baner „Odśwież” (E-44) | Caddy kieruje do nowych replik; SSE dostaje `wznow` (`ZAMYKANIE_SERWERA`) | `ShutdownTimeout` 30 s, zamykanie strumieni przy `ApplicationStopping` | dzierżawy wygasają i są odzyskiwane (ADR-066) | test dymny wdrożenia 17.5 |
 
 ---
@@ -8101,10 +8503,10 @@ p. 1); `40P01`/`40001` → E-47.
 | C-38 | Autozapis Poprawki (`PUT`) w trakcie wykonywania `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` dla poprzedniej wersji (C3-05) | deduplikacja po `rozwiazanie_id` tylko wśród `OCZEKUJE` (nowa praca zlecana obok pracy `W_TOKU`); zapis rezultatu `UPDATE transkrypcja … WHERE id = :transkrypcja_id AND zgodnosc_poprawek IS NULL` i warunek „najnowsza wersja” | rezultat dla starszej wersji jest odrzucany (rezultat przestarzały); Ocena czeka na rezultat wersji zatwierdzonej |
 | C-39 | Odtworzenie bazy z PITR do punktu `T` w trakcie `USUN_KONTO` (po kroku 1, przed krokiem 5) albo w trakcie usunięcia konta Nauczyciela (C4-01) | dla `USUNIECIE_WYKONANE` kryterium zastosowania = „wiersz `uzytkownik` nie istnieje”, a nie „wiersz `zdarzenie_rodo` istnieje”; `ponow_zdarzenia_rodo` przegląda cały prefiks `wykonane/` i wykonuje idempotentne kroki właściwe dla `dane.rola` tymi samymi funkcjami domenowymi co `USUN_KONTO` (16.4) | konto usunięte przed startem workerów, dane Nauczyciela spseudonimizowane w uzasadnieniach rekomendacji; G-6 (a3), (a4) |
 | C-40 | Start 3. repliki workera w szczycie „koniec lekcji”, gdy 2 workery i 2 `api` wykorzystują pełny przydział (C4-05) | odnowienia wierszy `limit_szybkosci_modelu` pod `pg_advisory_xact_lock` klucza; nowy wiersz: pusty kubełek, `r = min(formuła, 0,8 × limit − Σ przydziałów pozostałych)` i `B = min(formuła, B_całk − Σ pojemności pozostałych)`; zmniejszenia stosowane przed `COMMIT`, zwiększenia po | Σ przydziałów ≤ 40/s i Σ pojemności ≤ 34 w każdej chwili, ≤ 74 wywołania w dowolnym oknie 1 s; nowa replika osiąga 12,5/s po ≤ 12 s; test 13.2 (f)–(h), G-3 (c) |
-| C-41 | Dwie karty (albo React Strict Mode, ponowienie TanStack Query) jednocześnie odświeżają access token tym samym cookie `lemat_rt` (C6-02) | klient: sekcja krytyczna Web Locks `lemat-odswiezenie` + `BroadcastChannel("lemat-sesja")` — druga karta używa tokenu rozgłoszonego przez pierwszą; serwer: `UPDATE token_odswiezania … WHERE zastapiony_at IS NULL AND uniewazniony_at IS NULL RETURNING`; drugie żądanie w oknie 30 s z tym samym `skrot_klienta_http` → nowy access token bez `Set-Cookie` (ADR-057) | obie karty zalogowane; jedna rotacja; rodzina unieważniana wyłącznie poza oknem albo z innego klienta HTTP; test Playwright `sesja-dwie-karty.spec.ts`, `OknoTolerancjiTests` |
-| C-42 | Dwie karty z otwartym strumieniem powiadomień i strumieniami dwóch Rozwiązań (C6-09) | strumień powiadomień tylko w karcie-liderze (Web Locks `lemat-powiadomienia-lider`), limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar `429` bez zamykania istniejących | brak pętli ponownych połączeń; przejęcie strumienia po zamknięciu lidera z migawką nieprzeczytanych (ADR-064 p. 3); test `powiadomienia-dwie-karty.spec.ts` |
-| C-43 | Uczeń zapisuje Poprawkę w karcie A (`PUT …/transkrypcja` → wersja 2), a w karcie B zatwierdza widoczną wersję 1 (C6-04 p. 4) | `PUT` zmienia `rozwiazanie.version` (ETag); `Rozwiazanie.Zatwierdz(transkrypcja, wersjaTranskrypcji, oczekiwanaWersjaRozwiazania)` sprawdza `If-Match` i to, że zatwierdzana Transkrypcja jest `najnowsza_transkrypcja_id` | karta B: `412 KONFLIKT_WERSJI` (ETag nieaktualny) albo `409 TRANSKRYPCJA_NIEAKTUALNA`; oceniana jest wyłącznie Transkrypcja, którą Uczeń widział i zatwierdził; test `Lemat.Api.Tests/Rozwiazania/PoprawkaKontraZatwierdzenieTests` |
-| C-44 | `KALIBRUJ` liczy bezpieczniki (do 10 min), a Administrator w tym czasie dezaktywuje bezpiecznik (C6-08) | `stan_bezpiecznika.version` jako token współbieżności; dezaktywacja z `If-Match`; `KALIBRUJ` zapisuje stan z wersją odczytaną na starcie — konflikt → ponowny odczyt i ponowna ocena tylko kroku bezpieczników (maks. 3 próby); `StanBezpiecznika.DezaktywowanyPo(startPrzebiegu)` → dezaktywacja wygrywa: przebieg nie wyzwala bezpiecznika ponownie na danych sprzed `okno_od` i loguje `rezultat_przestarzaly` | decyzja Administratora nie ginie; dezaktywacja po zapisie przebiegu dostaje `412` z aktualnym stanem i jest ponawiana świadomie; test `Lemat.Infrastructure.Tests/Kalibracja/KalibrujKontraDezaktywacjaTests` |
+| C-41 | Dwie karty (albo React Strict Mode, ponowienie TanStack Query) jednocześnie odświeżają access token tym samym cookie `lemat_rt` (C6-02) | klient: sekcja krytyczna Web Locks `lemat-odswiezenie` + `BroadcastChannel("lemat-sesja")` — druga karta używa tokenu rozgłoszonego przez pierwszą; serwer: `UPDATE token_odswiezania … WHERE zastapiony_at IS NULL AND uniewazniony_at IS NULL RETURNING`; drugie żądanie w oknie 30 s z tym samym `skrot_klienta_http` → nowy access token bez `Set-Cookie` (ADR-057) | obie karty zalogowane; jedna rotacja; rodzina unieważniana wyłącznie poza oknem albo z innego klienta HTTP; test Playwright `session-two-tabs.spec.ts`, `OknoTolerancjiTests` |
+| C-42 | Dwie karty z otwartym strumieniem powiadomień i strumieniami dwóch Rozwiązań (C6-09) | strumień powiadomień tylko w karcie-liderze (Web Locks `lemat-powiadomienia-lider`), limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika, nadmiar `429` bez zamykania istniejących | brak pętli ponownych połączeń; przejęcie strumienia po zamknięciu lidera z migawką nieprzeczytanych (ADR-064 p. 3); test `notifications-two-tabs.spec.ts` |
+| C-43 | Uczeń zapisuje Poprawkę w karcie A (`PUT …/transkrypcja` → wersja 2), a w karcie B zatwierdza widoczną wersję 1 (C6-04 p. 4) | `PUT` zmienia `rozwiazanie.version` (ETag); `Rozwiazanie.Zatwierdz(transkrypcja, wersjaTranskrypcji, oczekiwanaWersjaRozwiazania)` sprawdza `If-Match` i to, że zatwierdzana Transkrypcja jest `najnowsza_transkrypcja_id` | karta B: `412 KONFLIKT_WERSJI` (ETag nieaktualny) albo `409 TRANSKRYPCJA_NIEAKTUALNA`; oceniana jest wyłącznie Transkrypcja, którą Uczeń widział i zatwierdził; test `Lemat.Api.Tests/Solutions/PoprawkaKontraZatwierdzenieTests` |
+| C-44 | `KALIBRUJ` liczy bezpieczniki (do 10 min), a Administrator w tym czasie dezaktywuje bezpiecznik (C6-08) | `stan_bezpiecznika.version` jako token współbieżności; dezaktywacja z `If-Match`; `KALIBRUJ` zapisuje stan z wersją odczytaną na starcie — konflikt → ponowny odczyt i ponowna ocena tylko kroku bezpieczników (maks. 3 próby); `StanBezpiecznika.DezaktywowanyPo(startPrzebiegu)` → dezaktywacja wygrywa: przebieg nie wyzwala bezpiecznika ponownie na danych sprzed `okno_od` i loguje `rezultat_przestarzaly` | decyzja Administratora nie ginie; dezaktywacja po zapisie przebiegu dostaje `412` z aktualnym stanem i jest ponawiana świadomie; test `Lemat.Infrastructure.Tests/Calibration/KalibrujKontraDezaktywacjaTests` |
 | C-45 | Worker po pauzie GC traci dzierżawę, inny worker przejmuje pracę, pierwszy kończy i zapisuje wynik (C6-15 p. 1) | jednostka pracy handlera: `SELECT … FROM praca_w_tle WHERE id = @id AND wykonawca = @ja AND status = 'W_TOKU' FOR UPDATE` przed `COMMIT`; zapis wyniku z tym samym warunkiem (ADR-056 p. 4) | zmiany domenowe pierwszego workera wycofane (`UtrataDzierzawyException`), wynik odrzucony, `praca_zapis_po_utracie_dzierzawy_total` + 1; praca kończy się raz |
 | C-46 | Ta sama praca zlecana dwa razy w jednej albo dwóch transakcjach (ponowiony `PUT …/transkrypcja`, dwa handlery) (C6-01) | `ZlecaniePracSql`: `INSERT … ON CONFLICT … DO NOTHING` / `DO UPDATE SET ladunek` (`SPRAWDZ_POPRAWKI_TRANSKRYPCJI`); `NOTIFY` z triggera po `COMMIT` | przypadek użycia nie jest wycofywany; jedna praca `OCZEKUJE` z ładunkiem najnowszego `PUT`; worker budzi się dopiero po `COMMIT` |
 | C-47 | Ponowienie pracy `AKTUALIZUJ_PROFIL`/`SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, gdy istnieje już praca `OCZEKUJE` z tym samym kluczem (C7-03) | `ponow_prace` (blok `EXCEPTION` na `unique_violation`) | praca ponawiana kończy się `ZAKONCZONA` z `ZASTAPIONA_NOWSZA`; praca oczekująca wykonuje się z nowszym ładunkiem; test (g) ADR-066 |
@@ -8116,7 +8518,7 @@ p. 1); `40P01`/`40001` → E-47.
 | C-53 | Przejęcie roli harmonogramu w trakcie wystąpienia (restart o 02:59:58, nowa instancja aktywna o 03:00:07) (C7-13) | `przebieg_harmonogramu` + nadrabianie ≤ 24 h, klucz deduplikacji z datą | `KALIBRUJ` zlecona raz dla bieżącej daty; test (l) ADR-066 |
 | C-54 | Podwójne kliknięcie „Zatwierdź” (dwa żądania z tym samym `If-Match`) | pierwsze zmienia stan i `version`; drugie: `412 KONFLIKT_WERSJI` albo `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`; klient blokuje przycisk | jedna praca `OCEN_ROZWIAZANIE` (deduplikacja `OczekujaceIWToku`); UI pokazuje stan po pierwszym żądaniu |
 | C-55 | Proces `api` ginie po rezerwacji `Idempotency-Key` (wdrożenie, OOM) albo `DELETE` rezerwacji po `503` nie dochodzi do bazy (C8-03) | rezerwacja z `w_toku_do = now() + 60 s`; odpowiedź `2xx` zapisywana w transakcji skutku z warunkiem `rezerwacja = @moja` (ADR-068) | ponowienie w 60 s → `409 IDEMPOTENCJA_W_TOKU` z `Retry-After`; po 60 s przejęcie i jedno wykonanie; spóźnione zatwierdzenie starej rezerwacji → `ROLLBACK`; testy `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany`, `BladZapisuOdpowiedziNieDajeDrugiegoSkutku` |
-| C-56 | Autozapis Poprawek w jednej karcie: drugi zapis wysłany przed odpowiedzią pierwszego; zdarzenie `stan` przychodzi w trakcie pisania (C8-10) | szkic bez `If-Match` z `numer_zapisu` (starszy pomijany), `KolejkaZapisowRozwiazania` (jedno żądanie w locie, `If-Match` z poprzedniej odpowiedzi), edytor ignoruje `transkrypcja.kroki` z `stan` przy niezapisanych zmianach (ADR-073) | 0 dialogów `412` na własnej edycji, brak utraty znaków; test `autozapis-wolna-siec.spec.ts` |
+| C-56 | Autozapis Poprawek w jednej karcie: drugi zapis wysłany przed odpowiedzią pierwszego; zdarzenie `stan` przychodzi w trakcie pisania (C8-10) | szkic bez `If-Match` z `numer_zapisu` (starszy pomijany), `KolejkaZapisowRozwiazania` (jedno żądanie w locie, `If-Match` z poprzedniej odpowiedzi), edytor ignoruje `transkrypcja.kroki` z `stan` przy niezapisanych zmianach (ADR-073) | 0 dialogów `412` na własnej edycji, brak utraty znaków; test `autosave-slow-network.spec.ts` |
 
 ---
 
@@ -8544,7 +8946,7 @@ Czasy serwerowe (bez odpytywania klienta); termin miękki fazy O =
 | S-3 | Jak S-1, rozpoznanie trwające pełny timeout 14 s (`t_R` = 16.5 s, termin miękki 11.5 s) | po timeoutcie Jev zostało 7.3 s → model zapasowy z timeoutem 7.3 s; przebieg p95: 0.6 + 0.1 + 1.5 + 2 + 6.5 + 0.2 = 10.9 s; gdy model zapasowy przekroczy 7.3 s, praca jest ponawiana (0.5 s): Jev ponownie 2 s (timeout), model zapasowy 9 s (pozostało < 6 s) → t_O ≈ 25 s | 10.9 s (≈ 25 s) | 16.5 s | 27.4 s (≈ 41.5 s) | p95 spełnione; wariant z przekroczeniem — naruszenie, łączne prawdopodobieństwo < 0,05% (w granicy 1% SLO) |
 | S-4 | Obwód otwarty (praca ciągła na modelu zapasowym) | 0.6 + 0.1 + 1.5 + 6.5 + 0.2 | 8.9 s | 11.5 s | 20.4 s | spełnione |
 | S-5 | Oba modele decyzyjne niedostępne | ponowienia do 120 s → T-6 | — | — | — | naruszenie; Ocena później przez `PONOW_OCENE` |
-| S-6 | „Koniec lekcji” (wersja 2.3, C3-04; popyt ujednolicony w wersji 2.4, C4-06 p. 9): 90 zatwierdzeń w 120 s, z czego 30 w pierwszych 20 s (1,5 Oceny/s × 28 wywołań planu budżetowego 16 + 11 + 1 = 42 wywołania/s), Jev w trybie pojedynczym, przydział workerów 2 × 18,18 = 36,36/s, kubełek 16, fale ≥ 2 z pierwszeństwem | Jev: 0.6 + 0.1 + 1.5 + ≤ 3,7 (oczekiwanie łącznie, maksimum z symulacji) + 3.6 + 0.2; `t_R` ≤ 16,5 s | ≤ 9.7 s | ≤ 16,5 s | ≤ 26,2 s | spełnione: 0/90 do modelu zapasowego, 0/90 naruszeń (symulacja `tests/obciazenie/symulacja_ogranicznika.py`, tabela 17.4) |
+| S-6 | „Koniec lekcji” (wersja 2.3, C3-04; popyt ujednolicony w wersji 2.4, C4-06 p. 9): 90 zatwierdzeń w 120 s, z czego 30 w pierwszych 20 s (1,5 Oceny/s × 28 wywołań planu budżetowego 16 + 11 + 1 = 42 wywołania/s), Jev w trybie pojedynczym, przydział workerów 2 × 18,18 = 36,36/s, kubełek 16, fale ≥ 2 z pierwszeństwem | Jev: 0.6 + 0.1 + 1.5 + ≤ 3,7 (oczekiwanie łącznie, maksimum z symulacji) + 3.6 + 0.2; `t_R` ≤ 16,5 s | ≤ 9.7 s | ≤ 16,5 s | ≤ 26,2 s | spełnione: 0/90 do modelu zapasowego, 0/90 naruszeń (symulacja `backend/tests/Lemat.Simulations/RateLimiterSimulation.cs`, tabela 17.4) |
 | S-6b | Jak S-6, ale fala zatwierdzeń zbiega się z nasyceniem puli R (`t_R` = 18,5 s, termin miękki 10 s) | plany z przewidywanym końcem > 10 s idą od razu do modelu zapasowego (0.6 + 0.1 + 1.5 + 6.5 + 0.2 = 8,9 s); pozostałe Jev | ≤ 9,7 s | 18,5 s | ≤ 28,2 s | 3/90 naruszeń (o ≤ 0,2 s) w takim szczycie; przy ≤ 1 zbiegu na dobę ≤ 3/1 500 = 0,2% dobowego wolumenu — pozycja w budżecie 1% SLO (S-7) |
 | S-7 | Rozpoznanie: 1. próba kończy się timeoutem 14 s, 2. próba udana (p95 9 s) | faza R: 1.5 + 0.5 + 14 + 1 (odstęp) + 9 + 0.5 = 26.5 s; faza O z terminem miękkim `max(10, 28 − 26.5)` = 10 s: 0.6 + 0.1 + 1.5 + 3.6 + 0.2 | 6.0 s | 26.5 s | 32.5 s | **naruszenie** (liczone w SLO); dopuszczalne wyłącznie dzięki wymaganiu A-08 (≤ 0,3% wywołań rozpoznawania z błędem lub timeoutem). Budżet 1% SLO (wersja 2.3): S-7 ≤ 0,3% + S-3 < 0,05% + T-6 ≤ 0,2% + S-6b ≤ 0,2% + ogon rozkładu czasu normalnej pracy ≤ 0,25% |
 
@@ -8877,76 +9279,81 @@ Wersja 3.3 (C8, iteracja 4) zastępuje mapowanie wersji 2.4 macierzą RTM na
 projekty .NET 10, Agentów, tabele DDL, endpointy, strony App Router, reguły
 i testy akceptacyjne. Konwencje kolumn:
 
-- **Moduł / projekt .NET** — moduł z 6.2 (przestrzenie `Lemat.Domain.<Modul>`
-  i `Lemat.Application.<Modul>`) i projekt z 6.4; w nawiasie typ pracy w tle
+- **Moduł / projekt .NET** — moduł z 6.2 (przestrzenie `Lemat.Domain.<Module>`
+  i `Lemat.Application.<Module>`) i projekt z 6.4; w nawiasie typ pracy w tle
   z 13.3, gdy wymaganie realizuje `Lemat.Worker`.
 - **Agent / plugin AI** — interfejs Agenta z 10.0 (implementacja w
-  `Lemat.Agenci`), plugin Semantic Kernel, identyfikator promptu systemowego
-  z `docs/spec/prompty.md` albo port modelu z 13.1.
+  `Lemat.Agents`), plugin Semantic Kernel, identyfikator promptu systemowego
+  z `docs/spec/prompts.md` albo port modelu z 13.1.
 - **Encje / tabele** — tabele `docs/spec/ddl.md` (encje EF Core:
   `docs/spec/ef-core.md` 7).
 - **Endpointy** — ścieżki względem `/api/v1` z katalogu 12.3.
 - **Strony** — trasy z mapowania `docs/spec/api.md` 7 (grupy tras 6.8).
 - **Weryfikacja** — bramka G-x z 17.6 albo test akceptacyjny. Testy
   Playwright `frNN-*.spec.ts` są katalogiem testów akceptacyjnych
-  (`frontend/e2e/akceptacja/`, Docker Compose z Mock, ADR-065); każdy
+  (`frontend/e2e/acceptance/`, Docker Compose z Mock, ADR-065); każdy
   sprawdza kryterium wymagania przez UI i API, a pozostałe nazwy to testy
   z 12.12 i ADR.
 
-**Sprawdzenie macierzy** (skrypt [`docs/spec/narzedzia/sprawdz_rtm.py`](spec/narzedzia/sprawdz_rtm.py);
-po utworzeniu `backend/` uruchamiany w CI jako `backend/narzedzia/sprawdz_rtm.py`; sprawdzone na wersji 3.3): (1) każde FR-01 … FR-36 i
+**Sprawdzenie macierzy** (skrypt [`docs/spec/tools/check_rtm.py`](spec/tools/check_rtm.py);
+po utworzeniu `backend/` uruchamiany w CI jako `backend/tools/check_rtm.py`; sprawdzone na wersji 3.4): (1) każde FR-01 … FR-36 i
 NFR-01 … NFR-10 z `docs/requirements.md` ma dokładnie jeden wiersz; (2)
 każdy endpoint istnieje w katalogu 12.3 (metoda i ścieżka); (3) każda tabela
 istnieje w `CREATE TABLE` `docs/spec/ddl.md`; (4) każda strona istnieje w
 mapowaniu `api.md` 7; (5) każdy ADR ma plik w `docs/adr/`; (6) każda
 bramka G-x istnieje w 17.6; (7) każde pojęcie słownika ma wiersz macierzy
 odwrotnej, a jego identyfikatory występują w dokumencie lub DDL; (8) każde
-wymaganie z macierzy odwrotnej istnieje. Wynik dla wersji 3.3: 46/46
+wymaganie z macierzy odwrotnej istnieje; od wersji 3.4 (ADR-075): (9) każda
+strona i każdy test `*.spec.ts` w macierzy ma nazwę angielską (żaden
+segment trasy ani token nazwy pliku nie pochodzi z polskich nazw wersji
+3.3, 6.11.4); (10) każdy odnośnik Markdown w `docs/` wskazuje istniejący
+plik. Wynik dla wersji 3.4 (taki sam jak dla 3.3, bo zmieniły się wyłącznie
+nazwy plików i stron): 46/46
 wymagań z jednym wierszem; sprawdzonych odwołań: 140 endpointów, 114
 tabel, 80 stron, 96 ADR, 15 bramek, 107 identyfikatorów; 25/25 pojęć
-słownika; 0 błędów. Macierz odwrotna pokrywa 45 z 46 wymagań — NFR-10
+słownika; 0 martwych odnośników; 0 błędów. Macierz odwrotna pokrywa 45 z 46 wymagań — NFR-10
 (język interfejsu) nie odpowiada żadnemu pojęciu słownika.
 
 ### 18.1 Wymagania funkcjonalne
 
 | ID | Wymaganie (skrót) | Moduł / projekt .NET | Agent / plugin AI | Encje / tabele | Endpointy REST / SSE | Strony Next.js (`src/app`) | Reguły / ADR | Weryfikacja (bramka / test akceptacyjny) |
 |---|---|---|---|---|---|---|---|---|
-| FR-01 | Konto i logowanie Ucznia | Konta: `Lemat.Domain.Konta`, `Lemat.Application.Konta`, `Lemat.Api` | — | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania` | `POST /auth/rejestracja`<br>`POST /auth/logowanie`<br>`POST /auth/odswiezenie`<br>`POST /auth/wylogowanie`<br>`POST /auth/reset-hasla`<br>`POST /auth/reset-hasla/potwierdzenie`<br>`GET /admin/uzytkownicy`<br>`PATCH /admin/uzytkownicy/{id}` | `(publiczne)/logowanie`<br>`(publiczne)/rejestracja`<br>`rejestracja/nauczyciel`<br>`(publiczne)/reset-hasla`<br>`(administrator)/admin/uzytkownicy` | 9.1, 16.1; ADR-020, ADR-057, ADR-070, ADR-071, ADR-072 | `fr01-konto.spec.ts`, `sesja-dwie-karty.spec.ts`, `klasa-za-nat.spec.ts`, `RejestracjaUczniaZwracaSesje` |
-| FR-02 | Poziom matury i termin egzaminu | Konta, Profil: `Lemat.Application.Konta`, `Lemat.Api` | — | `uczen` | `GET /uczniowie/ja`<br>`PATCH /uczniowie/ja` | `(uczen)/start`<br>`(uczen)/ustawienia` | 9.1 (zmiana poziomu); ADR-072 | `fr02-poziom-termin.spec.ts`, `ZmianaUczniaWyczyszczenieDzialu` |
-| FR-03 | Test diagnostyczny → początkowy Profil | Profil, Tresci (pula): `Lemat.Application.Profil`, `Lemat.Worker` (`AKTUALIZUJ_PROFIL`) | `IAgentRekomendujacy` (inicjalizacja Profilu, 10.1.3) | `test_diagnostyczny`, `pozycja_testu_diagnostycznego`, `odpowiedz`, `wynik_zadania`, `opanowanie_umiejetnosci` | `POST /uczniowie/ja/test-diagnostyczny`<br>`GET /testy-diagnostyczne/{id}`<br>`POST /testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz`<br>`POST /testy-diagnostyczne/{id}/zakonczenie`<br>`POST /testy-diagnostyczne/{id}/pominiecie`<br>`PUT /admin/zadania/{id}/diagnostyczne`<br>`GET /admin/pula-diagnostyczna` | `(uczen)/test-diagnostyczny`<br>`admin/pula-diagnostyczna` | 9.1, 10.1.3; ADR-010, ADR-074 p. 3 | G-5; `fr03-test-diagnostyczny.spec.ts`, `PonownaOdpowiedzWTescieNadpisuje` |
-| FR-04 | Widok Profilu ucznia (Działy, Umiejętności) | Profil: `Lemat.Application.Profil`, `Lemat.Api` | — | `profil_ucznia`, `opanowanie_umiejetnosci`, `dzial`, `umiejetnosc` | `GET /uczniowie/ja/profil`<br>`GET /dzialy`<br>`GET /umiejetnosci` | `(uczen)/profil` | 10.1.3; ADR-010 | `fr04-profil.spec.ts` |
-| FR-05 | Propozycja kolejnego Zadania z Profilu | Rekomendacje: `Lemat.Application.Rekomendacje`, `Lemat.Application.Orkiestracja.Synchroniczna` | `IAgentRekomendujacy` (`AgentRekomendujacy`, `PredyktorSukcesuElo`, Q-RE-01 `stan-rekomendacji-v1`) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` | `GET /uczniowie/ja/rekomendacje/nastepna`<br>`GET /uczniowie/ja/sciezka-nauki`<br>`POST /elementy-sciezki/{id}/rozpoczecie`<br>`POST /elementy-sciezki/{id}/pominiecie` | `(uczen)/start`<br>`(uczen)/sciezka-nauki` | 9.2, 10.1.2; ADR-010, ADR-023 | `fr05-rekomendacja.spec.ts` |
-| FR-06 | Wkładka teoretyczna przed Zadaniami słabej Umiejętności | Rekomendacje, Tresci | `IAgentRekomendujacy` (reguły `R-WKLADKA`), `IAgentGenerujacy` (rola `GENERATYWNY_WKLADKI`) | `wkladka_teoretyczna`, `element_sciezki` | `GET /wkladki-teoretyczne/{id}`<br>`GET /wkladki-teoretyczne`<br>`PUT /wkladki-teoretyczne/{id}`<br>`POST /elementy-sciezki/{id}/przeczytanie`<br>`POST /admin/wkladki-teoretyczne/szkice` | `(uczen)/wkladki-teoretyczne/[wkladkaId]`<br>`nauczyciel/wkladki-teoretyczne`<br>`admin/wkladki-teoretyczne` | 10.1.2 krok 6; ADR-015, ADR-030 | G-5; `fr06-wkladka.spec.ts` |
-| FR-07 | Rosnąca trudność Zadań | Rekomendacje, Tresci (`kalibracja_trudnosci`) | `IAgentRekomendujacy` (Elo, Seria) | `kalibracja_trudnosci`, `opanowanie_umiejetnosci`, `sciezka_nauki` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/start` | 10.1.2 kroki 3 i 7; ADR-010, ADR-029, ADR-030 | `fr07-trudnosc.spec.ts` |
-| FR-08 | Powtórki opanowanych Działów | Rekomendacje, Profil | `IAgentRekomendujacy` (`R-POWTORKA`) | `opanowanie_umiejetnosci`, `element_sciezki` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/start` | 10.1.2 kroki 4 i 5b; ADR-010 | `fr08-powtorki.spec.ts` |
-| FR-09 | Samodzielny wybór Działu | Konta, Rekomendacje | `IAgentRekomendujacy` (10.1.2 krok 2) | `uczen` | `PATCH /uczniowie/ja`<br>`GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/ustawienia` | 10.1.2 krok 2; ADR-072 (`wybrany_dzial_id: null`) | `fr09-wybor-dzialu.spec.ts`, `ZmianaUczniaWyczyszczenieDzialu` |
-| FR-10 | Uzasadnienie rekomendacji | Rekomendacje | `IAgentRekomendujacy` (szablony 10.1.5, bez LLM) | `rekomendacja` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(uczen)/start` | 10.1.5; ADR-011 | `fr10-uzasadnienie.spec.ts` |
-| FR-11 | Generowanie Zadania dla Umiejętności i Poziomu trudności | Tresci: `Lemat.Application.Tresci`, `Lemat.Worker` (`GENERUJ_ZADANIE`) | `IAgentGenerujacy`, plugin `SprawdzanieSymbolicznePlugin` | `zlecenie_generowania`, `zadanie`, `zadanie_wersja` | `POST /zadania/generowanie`<br>`GET /zlecenia-generowania/{id}`<br>`GET /zlecenia-generowania`<br>`GET /zlecenia-generowania/{id}/strumien` | `nauczyciel/zadania/generowanie`<br>`admin/zlecenia-generowania` | 9.7, 10.2; ADR-015, ADR-058, ADR-064 | `fr11-generowanie.spec.ts` |
-| FR-12 | Treść, rozwiązanie wzorcowe i Kryteria oceniania | Tresci | `IAgentGenerujacy` (`rozwiazanie-niezalezne-v1`) | `zadanie_wersja`, `kryterium_oceniania` | `GET /zadania/{id}` | `nauczyciel/zadania/[zadanieId]/przeglad` | 10.2.1; ADR-012 | `fr12-tresc-kryteria.spec.ts` |
-| FR-13 | Walidacja Zadania przed udostępnieniem | Tresci, `Lemat.Worker` (`WALIDUJ_ZADANIE`) | `IAgentGenerujacy` (`plan-pytan-walidacji-v1`, `stan-walidacji-v1`, Q-WA-*), plugin `SprawdzanieSymbolicznePlugin` | `walidacja_zadania`, `zadanie` | `GET /zlecenia-generowania/{id}`<br>`GET /zlecenia-generowania/{id}/strumien` | `nauczyciel/zadania/generowanie` | 9.7, 10.2.2; ADR-015, ADR-050 | `fr13-walidacja.spec.ts` |
-| FR-14 | Przegląd, poprawa i odrzucenie Zadania wygenerowanego | Tresci | — | `przeglad_zadania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze`, `zadanie` | `GET /zadania`<br>`POST /zadania/{id}/przeglad`<br>`POST /zadania/{id}/wycofanie`<br>`POST /zadania/{id}/zgloszenia-bledu`<br>`GET /zgloszenia-bledu-zadan`<br>`POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` | `nauczyciel/zadania/[zadanieId]/przeglad`<br>`nauczyciel/zgloszenia-bledu-zadan`<br>`admin/zgloszenia-bledu-zadan` | 8.4; ADR-028, ADR-038, ADR-069 p. 3 | `fr14-przeglad.spec.ts` |
-| FR-15 | Zadanie zamknięte zaznaczane na platformie | Rozwiazania | — | `odpowiedz`, `element_sciezki` | `GET /zadania/{id}`<br>`POST /zadania/{id}/odpowiedzi` | `(uczen)/zadania/[zadanieId]` | 9.3, 12.5; ADR-032, ADR-071 p. 3 | `fr15-zamkniete.spec.ts` |
-| FR-16 | Rozwiązanie zadania otwartego jako zdjęcia | Rozwiazania: `Lemat.Application.Rozwiazania`, `Lemat.Api`, `Lemat.ImageSandbox` | — | `rozwiazanie`, `zdjecie_rozwiazania`, `klucz_idempotencji` | `POST /rozwiazania`<br>`POST /rozwiazania/{id}/zdjecia`<br>`POST /rozwiazania/{id}/porzucenie`<br>`GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `(uczen)/zadania/[zadanieId]`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 9.4; ADR-024, ADR-052, ADR-067, ADR-068 | `fr16-przeslanie.spec.ts`, `podwojne-klikniecie.spec.ts`, `PrzeslanieMultipartZKlientaOpenApi` |
-| FR-17 | Odczyt pisma i podział na kroki | Rozwiazania, `Lemat.Worker` (`ROZPOZNAJ_PISMO`) | `IAgentRozpoznajacy` (rola `ROZPOZNAWANIE_PISMA`) | `transkrypcja`, `krok_transkrypcji` | `GET /rozwiazania/{id}`<br>`GET /rozwiazania/{id}/strumien`<br>`POST /rozwiazania/{id}/ponowienie-rozpoznania` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.4, 10.3; ADR-004, ADR-042, ADR-064 | G-2; `kontrakt-api.spec.ts` |
-| FR-18 | Poprawa Transkrypcji przed oceną | Rozwiazania | `IAgentRozpoznajacy` (`sprawdzenie-poprawek-v2`) | `szkic_transkrypcji`, `transkrypcja`, `krok_transkrypcji` | `PUT /rozwiazania/{id}/transkrypcja/szkic`<br>`PUT /rozwiazania/{id}/transkrypcja`<br>`POST /rozwiazania/{id}/zatwierdzenie` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.4, 11.3 T-7; ADR-017, ADR-036, ADR-073 | `autozapis-wolna-siec.spec.ts`, `LimitWersjiTranskrypcji` |
-| FR-19 | Ocena krok po kroku z punktami cząstkowymi | Ocenianie: `Lemat.Application.Ocenianie`, `Lemat.Worker` (`OCEN_ROZWIAZANIE`) | `IAgentOceniajacy` (`plan-pytan-v1`, `stan-oceny-v1`; Jev przez `JevAdapter`) | `ocena`, `ocena_kryterium`, `decyzja_modelu` | `GET /rozwiazania/{id}/ocena` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.5, 11.1; ADR-005, ADR-026 | G-1; `fr19-ocena-krokowa.spec.ts` |
-| FR-20 | Punkty za wynik tylko z rozumowania | Ocenianie | `IAgentOceniajacy` | `ocena_kryterium` | `GET /rozwiazania/{id}/ocena` | `(uczen)/rozwiazania/[rozwiazanieId]` | 11.1 p. 5; ADR-005 | G-1; `fr20-wynik-z-rozumowania.spec.ts` |
-| FR-21 | Wynikanie kolejnych kroków | Ocenianie | `IAgentOceniajacy` + `ISprawdzanieSymboliczne` (sidecar SymPy) | `decyzja_modelu` | `GET /rozwiazania/{id}/ocena` | `(uczen)/rozwiazania/[rozwiazanieId]` | 10.4.3, 11.1 p. 8; ADR-050 | G-1; `fr21-wynikanie-krokow.spec.ts` |
-| FR-22 | Pewność oceny | Ocenianie, Kalibracja | `IAgentOceniajacy` | `ocena`, `kalibrator_pewnosci` | `GET /rozwiazania/{id}/ocena`<br>`GET /admin/kalibracja` | `nauczyciel/weryfikacje/[weryfikacjaId]` | 11.2; ADR-006, ADR-027 | G-1; `fr22-pewnosc.spec.ts` |
-| FR-23 | Ocena automatyczna powyżej Progu pewności | Ocenianie | `IAgentOceniajacy` | `ocena`, `prog_pewnosci` | `GET /rozwiazania/{id}` | `(uczen)/rozwiazania/[rozwiazanieId]` | 11.3 T-4; ADR-007 | G-1; `fr23-auto.spec.ts` |
-| FR-24 | Poniżej progu → Weryfikacja, Uczeń widzi Ocenę wstępną | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja`, `ocena` | `GET /rozwiazania/{id}`<br>`GET /rozwiazania`<br>`GET /rozwiazania/{id}/strumien`<br>`GET /powiadomienia` | `(uczen)/rozwiazania`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 8.2, 11.3; ADR-018, ADR-025 | `fr24-ocena-wstepna.spec.ts`, `OdpytywanieWidziWskazowke` |
-| FR-25 | Poprawny wynik przy błędnym/brakującym kroku → zawsze Weryfikacja | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja` | `GET /weryfikacje` | `nauczyciel/weryfikacje` | 11.3 T-2; ADR-027 | `fr25-wynik-bledne-kroki.spec.ts` |
-| FR-26 | Zadanie z dowodem: Ocena wstępna i zawsze Weryfikacja | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja`, `prog_pewnosci` | `GET /weryfikacje` | `nauczyciel/weryfikacje` | 11.3 T-1; ADR-008 | `fr26-dowod.spec.ts` |
-| FR-27 | Pierwszy błędny krok, typ błędu, Wskazówka | Ocenianie, `Lemat.Worker` (`NAPISZ_WSKAZOWKE`) | `IAgentOceniajacy`, `IAgentWyjasniajacy` (rola `GENERATYWNY_WSKAZOWKI`) | `ocena` | `GET /rozwiazania/{id}/ocena`<br>`GET /rozwiazania/{id}/ocena/historia` | `(uczen)/rozwiazania/[rozwiazanieId]` | 9.6.2, 10.5, 11.7; ADR-025 | `fr27-wskazowka.spec.ts` |
-| FR-28 | Błąd odczytu nie obniża Oceny | Rozwiazania, Ocenianie, Weryfikacje | `IAgentRozpoznajacy`, `IAgentOceniajacy` | `weryfikacja`, `ocena`, `wynik_zadania` | `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu`<br>`POST /weryfikacje/{id}/rozstrzygniecie` | `(uczen)/rozwiazania/[rozwiazanieId]`<br>`nauczyciel/weryfikacje/[weryfikacjaId]` | 9.12, 11.6, 11.8; ADR-022, ADR-036 | `fr28-blad-odczytu.spec.ts` |
-| FR-29 | Wynik Oceny aktualizuje Profil ucznia | Profil, `Lemat.Worker` (`AKTUALIZUJ_PROFIL`) | `IAgentRekomendujacy` (model Elo, 10.1.3) | `wynik_zadania`, `opanowanie_umiejetnosci`, `profil_ucznia` | `GET /uczniowie/ja/profil` | `(uczen)/profil` | 9.3, 9.5, 10.1.3; ADR-010, ADR-018 | `fr29-profil-po-ocenie.spec.ts` |
-| FR-30 | Klasa i zaproszenia Uczniów | Klasy: `Lemat.Application.Klasy` | — | `klasa`, `czlonkostwo_klasy` | `POST /klasy`<br>`GET /klasy`<br>`GET /klasy/{id}`<br>`POST /klasy/{id}/kod-zaproszenia`<br>`POST /klasy/{id}/archiwizacja`<br>`POST /klasy/dolaczenie`<br>`DELETE /klasy/{id}/uczniowie/{uczen_id}`<br>`DELETE /uczniowie/ja/klasy/{id}`<br>`GET /admin/klasy`<br>`GET /admin/klasy/{id}`<br>`POST /admin/klasy/{id}/przekazanie` | `nauczyciel/klasy`<br>`(publiczne)/dolacz/[kod]`<br>`(uczen)/klasy`<br>`admin/klasy` | 16.4; ADR-044, ADR-071 p. 5 | `fr30-klasa.spec.ts` |
-| FR-31 | Postępy Klasy i Uczniów | Klasy, Profil | — | `klasa`, `opanowanie_umiejetnosci`, `wynik_zadania` | `GET /klasy/{id}/postepy`<br>`GET /uczniowie/{id}/profil`<br>`GET /klasy/{id}/uczniowie/{uczen_id}/rozwiazania`<br>`GET /przypisania/{id}/postep` | `nauczyciel/klasy/[klasaId]/uczniowie/[uczenId]`<br>`nauczyciel/rozwiazania/[rozwiazanieId]` | 12.8; ADR-071 | `fr31-postepy.spec.ts`, `KazdyEndpointZIdMaTestIdor` |
-| FR-32 | Przypisania Zadań i Zestawów zadań | Klasy | `IAgentRekomendujacy` (`R-PRZYPISANIE`) | `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` | `POST /zestawy-zadan`<br>`GET /zestawy-zadan`<br>`PUT /zestawy-zadan/{id}`<br>`DELETE /zestawy-zadan/{id}`<br>`POST /przypisania`<br>`GET /przypisania`<br>`PATCH /przypisania/{id}`<br>`POST /przypisania/{id}/wycofanie`<br>`GET /uczniowie/ja/przypisania` | `nauczyciel/zestawy-zadan`<br>`nauczyciel/przypisania`<br>`(uczen)/przypisania` | 8.5, 12.5; ADR-032, ADR-074 | `fr32-przypisania.spec.ts`, `WycofanieNieUjawniaKlucza` |
-| FR-33 | Kolejka weryfikacji z powodem | Weryfikacje: `Lemat.Application.Weryfikacje` | — | `weryfikacja`, `szkic_rozstrzygniecia` | `GET /weryfikacje`<br>`GET /weryfikacje/{id}`<br>`POST /weryfikacje/{id}/podjecie`<br>`POST /weryfikacje/{id}/przedluzenie`<br>`PUT /weryfikacje/{id}/szkic`<br>`POST /weryfikacje/{id}/zwolnienie`<br>`GET /admin/obciazenie-weryfikacji` | `nauczyciel/weryfikacje`<br>`nauczyciel/weryfikacje/[weryfikacjaId]`<br>`admin/obciazenie-weryfikacji` | 9.6.1, 11.4, 17.7; ADR-021, ADR-031, ADR-033, ADR-034, ADR-043 | G-7; `fr33-weryfikacja-zdjecia.spec.ts` |
-| FR-34 | Korekty Ocen → kalibracja Progu pewności | Weryfikacje, Kalibracja, `Lemat.Worker` (`KALIBRUJ`) | — | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `ocena` | `POST /weryfikacje/{id}/rozstrzygniecie`<br>`POST /rozwiazania/{id}/korekty`<br>`GET /admin/progi-pewnosci`<br>`POST /admin/progi-pewnosci` | `nauczyciel/weryfikacje/[weryfikacjaId]`<br>`nauczyciel/rozwiazania/[rozwiazanieId]`<br>`admin/progi-pewnosci` | 9.6.2, 9.6.3, 9.8, 11.5; ADR-007, ADR-046, ADR-069 | `fr34-korekta.spec.ts` |
-| FR-35 | Import Arkuszy CKE z Kryteriami oceniania | Tresci, `Lemat.Worker` (`IMPORTUJ_ARKUSZ`) | — | `arkusz_cke`, `import_arkusza`, `zadanie`, `kryterium_oceniania` | `POST /admin/arkusze-cke/importy`<br>`GET /admin/arkusze-cke/importy/{id}`<br>`GET /admin/arkusze-cke/importy/{id}/strumien` | `admin/arkusze-cke` | 9.11, 12.9; ADR-067 p. 1 | `fr35-import.spec.ts` |
-| FR-36 | Otagowanie Zadania: rodzaj, Dział, Umiejętności, Poziom trudności | Tresci | — | `zadanie`, `zadanie_umiejetnosc`, `kalibracja_trudnosci`, `dzial`, `umiejetnosc` | `POST /zadania`<br>`GET /zadania`<br>`PUT /admin/zadania/{id}/otagowanie`<br>`PUT /admin/zadania/{id}/diagnostyczne` | `nauczyciel/zadania`<br>`admin/zadania` | 9.11; ADR-012, ADR-071 p. 6 | `fr36-otagowanie.spec.ts` |
+| FR-01 | Konto i logowanie Ucznia | Konta: `Lemat.Domain.Accounts`, `Lemat.Application.Accounts`, `Lemat.Api` | — | `uzytkownik`, `uczen`, `nauczyciel`, `token_odswiezania`, `proba_logowania` | `POST /auth/rejestracja`<br>`POST /auth/logowanie`<br>`POST /auth/odswiezenie`<br>`POST /auth/wylogowanie`<br>`POST /auth/reset-hasla`<br>`POST /auth/reset-hasla/potwierdzenie`<br>`GET /admin/uzytkownicy`<br>`PATCH /admin/uzytkownicy/{id}` | `(public)/login`<br>`(public)/register`<br>`register/teacher`<br>`(public)/password-reset`<br>`(administrator)/admin/users` | 9.1, 16.1; ADR-020, ADR-057, ADR-070, ADR-071, ADR-072 | `fr01-account.spec.ts`, `session-two-tabs.spec.ts`, `class-behind-nat.spec.ts`, `RejestracjaUczniaZwracaSesje` |
+| FR-02 | Poziom matury i termin egzaminu | Konta, Profil: `Lemat.Application.Accounts`, `Lemat.Api` | — | `uczen` | `GET /uczniowie/ja`<br>`PATCH /uczniowie/ja` | `(student)/start`<br>`(student)/settings` | 9.1 (zmiana poziomu); ADR-072 | `fr02-level-exam-date.spec.ts`, `ZmianaUczniaWyczyszczenieDzialu` |
+| FR-03 | Test diagnostyczny → początkowy Profil | Profil, Tresci (pula): `Lemat.Application.Profile`, `Lemat.Worker` (`AKTUALIZUJ_PROFIL`) | `IAgentRekomendujacy` (inicjalizacja Profilu, 10.1.3) | `test_diagnostyczny`, `pozycja_testu_diagnostycznego`, `odpowiedz`, `wynik_zadania`, `opanowanie_umiejetnosci` | `POST /uczniowie/ja/test-diagnostyczny`<br>`GET /testy-diagnostyczne/{id}`<br>`POST /testy-diagnostyczne/{id}/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz`<br>`POST /testy-diagnostyczne/{id}/zakonczenie`<br>`POST /testy-diagnostyczne/{id}/pominiecie`<br>`PUT /admin/zadania/{id}/diagnostyczne`<br>`GET /admin/pula-diagnostyczna` | `(student)/diagnostic-test`<br>`admin/diagnostic-pool` | 9.1, 10.1.3; ADR-010, ADR-074 p. 3 | G-5; `fr03-diagnostic-test.spec.ts`, `PonownaOdpowiedzWTescieNadpisuje` |
+| FR-04 | Widok Profilu ucznia (Działy, Umiejętności) | Profil: `Lemat.Application.Profile`, `Lemat.Api` | — | `profil_ucznia`, `opanowanie_umiejetnosci`, `dzial`, `umiejetnosc` | `GET /uczniowie/ja/profil`<br>`GET /dzialy`<br>`GET /umiejetnosci` | `(student)/profile` | 10.1.3; ADR-010 | `fr04-profile.spec.ts` |
+| FR-05 | Propozycja kolejnego Zadania z Profilu | Rekomendacje: `Lemat.Application.Recommendations`, `Lemat.Application.Orchestration.Synchronous` | `IAgentRekomendujacy` (`AgentRekomendujacy`, `PredyktorSukcesuElo`, Q-RE-01 `stan-rekomendacji-v1`) | `sciezka_nauki`, `element_sciezki`, `rekomendacja` | `GET /uczniowie/ja/rekomendacje/nastepna`<br>`GET /uczniowie/ja/sciezka-nauki`<br>`POST /elementy-sciezki/{id}/rozpoczecie`<br>`POST /elementy-sciezki/{id}/pominiecie` | `(student)/start`<br>`(student)/learning-path` | 9.2, 10.1.2; ADR-010, ADR-023 | `fr05-recommendation.spec.ts` |
+| FR-06 | Wkładka teoretyczna przed Zadaniami słabej Umiejętności | Rekomendacje, Tresci | `IAgentRekomendujacy` (reguły `R-WKLADKA`), `IAgentGenerujacy` (rola `GENERATYWNY_WKLADKI`) | `wkladka_teoretyczna`, `element_sciezki` | `GET /wkladki-teoretyczne/{id}`<br>`GET /wkladki-teoretyczne`<br>`PUT /wkladki-teoretyczne/{id}`<br>`POST /elementy-sciezki/{id}/przeczytanie`<br>`POST /admin/wkladki-teoretyczne/szkice` | `(student)/theory-inserts/[theoryInsertId]`<br>`teacher/theory-inserts`<br>`admin/theory-inserts` | 10.1.2 krok 6; ADR-015, ADR-030 | G-5; `fr06-theory-insert.spec.ts` |
+| FR-07 | Rosnąca trudność Zadań | Rekomendacje, Tresci (`kalibracja_trudnosci`) | `IAgentRekomendujacy` (Elo, Seria) | `kalibracja_trudnosci`, `opanowanie_umiejetnosci`, `sciezka_nauki` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(student)/start` | 10.1.2 kroki 3 i 7; ADR-010, ADR-029, ADR-030 | `fr07-difficulty.spec.ts` |
+| FR-08 | Powtórki opanowanych Działów | Rekomendacje, Profil | `IAgentRekomendujacy` (`R-POWTORKA`) | `opanowanie_umiejetnosci`, `element_sciezki` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(student)/start` | 10.1.2 kroki 4 i 5b; ADR-010 | `fr08-repetitions.spec.ts` |
+| FR-09 | Samodzielny wybór Działu | Konta, Rekomendacje | `IAgentRekomendujacy` (10.1.2 krok 2) | `uczen` | `PATCH /uczniowie/ja`<br>`GET /uczniowie/ja/rekomendacje/nastepna` | `(student)/settings` | 10.1.2 krok 2; ADR-072 (`wybrany_dzial_id: null`) | `fr09-section-choice.spec.ts`, `ZmianaUczniaWyczyszczenieDzialu` |
+| FR-10 | Uzasadnienie rekomendacji | Rekomendacje | `IAgentRekomendujacy` (szablony 10.1.5, bez LLM) | `rekomendacja` | `GET /uczniowie/ja/rekomendacje/nastepna` | `(student)/start` | 10.1.5; ADR-011 | `fr10-justification.spec.ts` |
+| FR-11 | Generowanie Zadania dla Umiejętności i Poziomu trudności | Tresci: `Lemat.Application.Content`, `Lemat.Worker` (`GENERUJ_ZADANIE`) | `IAgentGenerujacy`, plugin `SprawdzanieSymbolicznePlugin` | `zlecenie_generowania`, `zadanie`, `zadanie_wersja` | `POST /zadania/generowanie`<br>`GET /zlecenia-generowania/{id}`<br>`GET /zlecenia-generowania`<br>`GET /zlecenia-generowania/{id}/strumien` | `teacher/exercises/generate`<br>`admin/generation-requests` | 9.7, 10.2; ADR-015, ADR-058, ADR-064 | `fr11-generation.spec.ts` |
+| FR-12 | Treść, rozwiązanie wzorcowe i Kryteria oceniania | Tresci | `IAgentGenerujacy` (`rozwiazanie-niezalezne-v1`) | `zadanie_wersja`, `kryterium_oceniania` | `GET /zadania/{id}` | `teacher/exercises/[exerciseId]/review` | 10.2.1; ADR-012 | `fr12-content-criteria.spec.ts` |
+| FR-13 | Walidacja Zadania przed udostępnieniem | Tresci, `Lemat.Worker` (`WALIDUJ_ZADANIE`) | `IAgentGenerujacy` (`plan-pytan-walidacji-v1`, `stan-walidacji-v1`, Q-WA-*), plugin `SprawdzanieSymbolicznePlugin` | `walidacja_zadania`, `zadanie` | `GET /zlecenia-generowania/{id}`<br>`GET /zlecenia-generowania/{id}/strumien` | `teacher/exercises/generate` | 9.7, 10.2.2; ADR-015, ADR-050 | `fr13-validation.spec.ts` |
+| FR-14 | Przegląd, poprawa i odrzucenie Zadania wygenerowanego | Tresci | — | `przeglad_zadania`, `zgloszenie_bledu_zadania`, `wstrzymanie_w_doborze`, `zadanie` | `GET /zadania`<br>`POST /zadania/{id}/przeglad`<br>`POST /zadania/{id}/wycofanie`<br>`POST /zadania/{id}/zgloszenia-bledu`<br>`GET /zgloszenia-bledu-zadan`<br>`POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` | `teacher/exercises/[exerciseId]/review`<br>`teacher/exercise-error-reports`<br>`admin/exercise-error-reports` | 8.4; ADR-028, ADR-038, ADR-069 p. 3 | `fr14-review.spec.ts` |
+| FR-15 | Zadanie zamknięte zaznaczane na platformie | Rozwiazania | — | `odpowiedz`, `element_sciezki` | `GET /zadania/{id}`<br>`POST /zadania/{id}/odpowiedzi` | `(student)/exercises/[exerciseId]` | 9.3, 12.5; ADR-032, ADR-071 p. 3 | `fr15-closed.spec.ts` |
+| FR-16 | Rozwiązanie zadania otwartego jako zdjęcia | Rozwiazania: `Lemat.Application.Solutions`, `Lemat.Api`, `Lemat.ImageSandbox` | — | `rozwiazanie`, `zdjecie_rozwiazania`, `klucz_idempotencji` | `POST /rozwiazania`<br>`POST /rozwiazania/{id}/zdjecia`<br>`POST /rozwiazania/{id}/porzucenie`<br>`GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `(student)/exercises/[exerciseId]`<br>`(student)/solutions/[solutionId]` | 9.4; ADR-024, ADR-052, ADR-067, ADR-068 | `fr16-upload.spec.ts`, `double-click.spec.ts`, `PrzeslanieMultipartZKlientaOpenApi` |
+| FR-17 | Odczyt pisma i podział na kroki | Rozwiazania, `Lemat.Worker` (`ROZPOZNAJ_PISMO`) | `IAgentRozpoznajacy` (rola `ROZPOZNAWANIE_PISMA`) | `transkrypcja`, `krok_transkrypcji` | `GET /rozwiazania/{id}`<br>`GET /rozwiazania/{id}/strumien`<br>`POST /rozwiazania/{id}/ponowienie-rozpoznania` | `(student)/solutions/[solutionId]` | 9.4, 10.3; ADR-004, ADR-042, ADR-064 | G-2; `api-contract.spec.ts` |
+| FR-18 | Poprawa Transkrypcji przed oceną | Rozwiazania | `IAgentRozpoznajacy` (`sprawdzenie-poprawek-v2`) | `szkic_transkrypcji`, `transkrypcja`, `krok_transkrypcji` | `PUT /rozwiazania/{id}/transkrypcja/szkic`<br>`PUT /rozwiazania/{id}/transkrypcja`<br>`POST /rozwiazania/{id}/zatwierdzenie` | `(student)/solutions/[solutionId]` | 9.4, 11.3 T-7; ADR-017, ADR-036, ADR-073 | `autosave-slow-network.spec.ts`, `LimitWersjiTranskrypcji` |
+| FR-19 | Ocena krok po kroku z punktami cząstkowymi | Ocenianie: `Lemat.Application.Grading`, `Lemat.Worker` (`OCEN_ROZWIAZANIE`) | `IAgentOceniajacy` (`plan-pytan-v1`, `stan-oceny-v1`; Jev przez `JevAdapter`) | `ocena`, `ocena_kryterium`, `decyzja_modelu` | `GET /rozwiazania/{id}/ocena` | `(student)/solutions/[solutionId]` | 9.5, 11.1; ADR-005, ADR-026 | G-1; `fr19-step-grading.spec.ts` |
+| FR-20 | Punkty za wynik tylko z rozumowania | Ocenianie | `IAgentOceniajacy` | `ocena_kryterium` | `GET /rozwiazania/{id}/ocena` | `(student)/solutions/[solutionId]` | 11.1 p. 5; ADR-005 | G-1; `fr20-result-from-reasoning.spec.ts` |
+| FR-21 | Wynikanie kolejnych kroków | Ocenianie | `IAgentOceniajacy` + `ISprawdzanieSymboliczne` (sidecar SymPy) | `decyzja_modelu` | `GET /rozwiazania/{id}/ocena` | `(student)/solutions/[solutionId]` | 10.4.3, 11.1 p. 8; ADR-050 | G-1; `fr21-step-entailment.spec.ts` |
+| FR-22 | Pewność oceny | Ocenianie, Kalibracja | `IAgentOceniajacy` | `ocena`, `kalibrator_pewnosci` | `GET /rozwiazania/{id}/ocena`<br>`GET /admin/kalibracja` | `teacher/verifications/[verificationId]` | 11.2; ADR-006, ADR-027 | G-1; `fr22-confidence.spec.ts` |
+| FR-23 | Ocena automatyczna powyżej Progu pewności | Ocenianie | `IAgentOceniajacy` | `ocena`, `prog_pewnosci` | `GET /rozwiazania/{id}` | `(student)/solutions/[solutionId]` | 11.3 T-4; ADR-007 | G-1; `fr23-auto.spec.ts` |
+| FR-24 | Poniżej progu → Weryfikacja, Uczeń widzi Ocenę wstępną | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja`, `ocena` | `GET /rozwiazania/{id}`<br>`GET /rozwiazania`<br>`GET /rozwiazania/{id}/strumien`<br>`GET /powiadomienia` | `(student)/solutions`<br>`(student)/solutions/[solutionId]` | 8.2, 11.3; ADR-018, ADR-025 | `fr24-preliminary-grade.spec.ts`, `OdpytywanieWidziWskazowke` |
+| FR-25 | Poprawny wynik przy błędnym/brakującym kroku → zawsze Weryfikacja | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja` | `GET /weryfikacje` | `teacher/verifications` | 11.3 T-2; ADR-027 | `fr25-result-wrong-steps.spec.ts` |
+| FR-26 | Zadanie z dowodem: Ocena wstępna i zawsze Weryfikacja | Ocenianie, Weryfikacje | `IAgentOceniajacy` | `weryfikacja`, `prog_pewnosci` | `GET /weryfikacje` | `teacher/verifications` | 11.3 T-1; ADR-008 | `fr26-proof.spec.ts` |
+| FR-27 | Pierwszy błędny krok, typ błędu, Wskazówka | Ocenianie, `Lemat.Worker` (`NAPISZ_WSKAZOWKE`) | `IAgentOceniajacy`, `IAgentWyjasniajacy` (rola `GENERATYWNY_WSKAZOWKI`) | `ocena` | `GET /rozwiazania/{id}/ocena`<br>`GET /rozwiazania/{id}/ocena/historia` | `(student)/solutions/[solutionId]` | 9.6.2, 10.5, 11.7; ADR-025 | `fr27-hint.spec.ts` |
+| FR-28 | Błąd odczytu nie obniża Oceny | Rozwiazania, Ocenianie, Weryfikacje | `IAgentRozpoznajacy`, `IAgentOceniajacy` | `weryfikacja`, `ocena`, `wynik_zadania` | `POST /rozwiazania/{id}/zgloszenie-bledu-odczytu`<br>`POST /weryfikacje/{id}/rozstrzygniecie` | `(student)/solutions/[solutionId]`<br>`teacher/verifications/[verificationId]` | 9.12, 11.6, 11.8; ADR-022, ADR-036 | `fr28-reading-error.spec.ts` |
+| FR-29 | Wynik Oceny aktualizuje Profil ucznia | Profil, `Lemat.Worker` (`AKTUALIZUJ_PROFIL`) | `IAgentRekomendujacy` (model Elo, 10.1.3) | `wynik_zadania`, `opanowanie_umiejetnosci`, `profil_ucznia` | `GET /uczniowie/ja/profil` | `(student)/profile` | 9.3, 9.5, 10.1.3; ADR-010, ADR-018 | `fr29-profile-after-grade.spec.ts` |
+| FR-30 | Klasa i zaproszenia Uczniów | Klasy: `Lemat.Application.Classes` | — | `klasa`, `czlonkostwo_klasy` | `POST /klasy`<br>`GET /klasy`<br>`GET /klasy/{id}`<br>`POST /klasy/{id}/kod-zaproszenia`<br>`POST /klasy/{id}/archiwizacja`<br>`POST /klasy/dolaczenie`<br>`DELETE /klasy/{id}/uczniowie/{uczen_id}`<br>`DELETE /uczniowie/ja/klasy/{id}`<br>`GET /admin/klasy`<br>`GET /admin/klasy/{id}`<br>`POST /admin/klasy/{id}/przekazanie` | `teacher/classes`<br>`(public)/join/[code]`<br>`(student)/classes`<br>`admin/classes` | 16.4; ADR-044, ADR-071 p. 5 | `fr30-class.spec.ts` |
+| FR-31 | Postępy Klasy i Uczniów | Klasy, Profil | — | `klasa`, `opanowanie_umiejetnosci`, `wynik_zadania` | `GET /klasy/{id}/postepy`<br>`GET /uczniowie/{id}/profil`<br>`GET /klasy/{id}/uczniowie/{uczen_id}/rozwiazania`<br>`GET /przypisania/{id}/postep` | `teacher/classes/[classId]/students/[studentId]`<br>`teacher/solutions/[solutionId]` | 12.8; ADR-071 | `fr31-progress.spec.ts`, `KazdyEndpointZIdMaTestIdor` |
+| FR-32 | Przypisania Zadań i Zestawów zadań | Klasy | `IAgentRekomendujacy` (`R-PRZYPISANIE`) | `zestaw_zadan`, `pozycja_zestawu`, `przypisanie`, `przypisanie_uczen` | `POST /zestawy-zadan`<br>`GET /zestawy-zadan`<br>`PUT /zestawy-zadan/{id}`<br>`DELETE /zestawy-zadan/{id}`<br>`POST /przypisania`<br>`GET /przypisania`<br>`PATCH /przypisania/{id}`<br>`POST /przypisania/{id}/wycofanie`<br>`GET /uczniowie/ja/przypisania` | `teacher/exercise-sets`<br>`teacher/assignments`<br>`(student)/assignments` | 8.5, 12.5; ADR-032, ADR-074 | `fr32-assignments.spec.ts`, `WycofanieNieUjawniaKlucza` |
+| FR-33 | Kolejka weryfikacji z powodem | Weryfikacje: `Lemat.Application.Verifications` | — | `weryfikacja`, `szkic_rozstrzygniecia` | `GET /weryfikacje`<br>`GET /weryfikacje/{id}`<br>`POST /weryfikacje/{id}/podjecie`<br>`POST /weryfikacje/{id}/przedluzenie`<br>`PUT /weryfikacje/{id}/szkic`<br>`POST /weryfikacje/{id}/zwolnienie`<br>`GET /admin/obciazenie-weryfikacji` | `teacher/verifications`<br>`teacher/verifications/[verificationId]`<br>`admin/verification-load` | 9.6.1, 11.4, 17.7; ADR-021, ADR-031, ADR-033, ADR-034, ADR-043 | G-7; `fr33-verification-photos.spec.ts` |
+| FR-34 | Korekty Ocen → kalibracja Progu pewności | Weryfikacje, Kalibracja, `Lemat.Worker` (`KALIBRUJ`) | — | `probka_kalibracyjna`, `kalibrator_pewnosci`, `prog_pewnosci`, `ocena` | `POST /weryfikacje/{id}/rozstrzygniecie`<br>`POST /rozwiazania/{id}/korekty`<br>`GET /admin/progi-pewnosci`<br>`POST /admin/progi-pewnosci` | `teacher/verifications/[verificationId]`<br>`teacher/solutions/[solutionId]`<br>`admin/confidence-thresholds` | 9.6.2, 9.6.3, 9.8, 11.5; ADR-007, ADR-046, ADR-069 | `fr34-correction.spec.ts` |
+| FR-35 | Import Arkuszy CKE z Kryteriami oceniania | Tresci, `Lemat.Worker` (`IMPORTUJ_ARKUSZ`) | — | `arkusz_cke`, `import_arkusza`, `zadanie`, `kryterium_oceniania` | `POST /admin/arkusze-cke/importy`<br>`GET /admin/arkusze-cke/importy/{id}`<br>`GET /admin/arkusze-cke/importy/{id}/strumien` | `admin/cke-sheets` | 9.11, 12.9; ADR-067 p. 1 | `fr35-import.spec.ts` |
+| FR-36 | Otagowanie Zadania: rodzaj, Dział, Umiejętności, Poziom trudności | Tresci | — | `zadanie`, `zadanie_umiejetnosc`, `kalibracja_trudnosci`, `dzial`, `umiejetnosc` | `POST /zadania`<br>`GET /zadania`<br>`PUT /admin/zadania/{id}/otagowanie`<br>`PUT /admin/zadania/{id}/diagnostyczne` | `teacher/exercises`<br>`admin/exercises` | 9.11; ADR-012, ADR-071 p. 6 | `fr36-tagging.spec.ts` |
 
 ### 18.2 Wymagania niefunkcjonalne
 
@@ -8954,16 +9361,16 @@ Budżety i realizacja NFR — 17.1, 17.2; bramki — 17.6.
 
 | ID | Wymaganie (skrót) | Moduł / projekt .NET | Agent / plugin AI | Encje / tabele | Endpointy REST / SSE | Strony Next.js (`src/app`) | Reguły / ADR | Weryfikacja (bramka / test akceptacyjny) |
 |---|---|---|---|---|---|---|---|---|
-| NFR-01 | Ocena ≤ 30 s | Orkiestracja: `Lemat.Application.Orkiestracja`, `Lemat.Worker` (pule `R`, `O`, `S`) | `IAgentRozpoznajacy`, `IAgentOceniajacy` | `rozwiazanie`, `praca_w_tle` | `GET /rozwiazania/{id}/strumien`<br>`GET /rozwiazania/{id}` | `(uczen)/rozwiazania/[rozwiazanieId]` | 14.6, 17.2; ADR-025, ADR-039, ADR-064 | G-3; `sse-zapasowe-odpytywanie.spec.ts` |
-| NFR-02 | Zgodność z Nauczycielem ≥ 90% | Kalibracja, `Lemat.Worker` (`EWALUUJ_ZT1`) | `IAgentOceniajacy` | `probka_kalibracyjna`, `decyzja_modelu` | `POST /admin/konfiguracje-modeli/{id}/ewaluacja-zt1`<br>`GET /admin/kalibracja` | `admin/konfiguracje-modeli`<br>`admin/kalibracja` | 11.5; ADR-027 | G-1 |
-| NFR-03 | Błędne zaliczenia automatyczne ≤ 2% | Kalibracja | `IAgentOceniajacy` | `stan_bezpiecznika`, `prog_pewnosci`, `probka_kalibracyjna` | `GET /admin/bezpieczniki`<br>`POST /admin/bezpieczniki/dezaktywacja`<br>`GET /admin/kalibracja` | `admin/bezpieczniki`<br>`admin/kalibracja` | 11.5.3; ADR-007, ADR-046 | G-1; `Lemat.Symulacje` (symulacje bezpiecznika) |
-| NFR-04 | Kalibracja Pewności oceny | Kalibracja, `Lemat.Worker` (`KALIBRUJ`) | `IAgentOceniajacy` | `kalibrator_pewnosci`, `probka_kalibracyjna` | `GET /admin/kalibracja` | `admin/kalibracja` | 11.2, 11.5; ADR-006 | G-1 |
-| NFR-05 | Wyjaśnialność Ocen i rekomendacji | Modele, Ocenianie, Rekomendacje | `IAgentWyjasniajacy`, `IAgentRekomendujacy` | `decyzja_modelu`, `rekomendacja`, `ocena` | `GET /weryfikacje/{id}`<br>`GET /rozwiazania/{id}/ocena`<br>`GET /uczniowie/ja/rekomendacje/nastepna` | `nauczyciel/weryfikacje/[weryfikacjaId]`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 10.0, 11.7; ADR-011, ADR-026 | `fr27-wskazowka.spec.ts`, `fr10-uzasadnienie.spec.ts` |
-| NFR-06 | Wymienne Modele AI | Modele: `Lemat.Modele`, `Lemat.Application.Modele` | porty `IModelGeneratywny`, `IModelDecyzyjny`; Mock każdego dostawcy | `konfiguracja_modelu` | `GET /admin/konfiguracje-modeli`<br>`POST /admin/konfiguracje-modeli`<br>`POST /admin/konfiguracje-modeli/{id}/aktywacja` | `admin/konfiguracje-modeli` | 13.1; ADR-003, ADR-055, ADR-058, ADR-065 | `AgentNieRozwiazujeKlientaCzatuZDi`, `Lemat.Architecture.Tests` |
-| NFR-07 | Model zapasowy przy niedostępności Modelu decyzyjnego | Modele: `Lemat.Modele` | `CircuitBreakerModeluDecyzyjnego` (rola `DECYZYJNY_ZAPASOWY`) | `konfiguracja_modelu`, `decyzja_modelu` | `GET /admin/kalibracja` | `admin/kalibracja`<br>`admin/konfiguracje-modeli` | 9.9, 13.2; ADR-009 | G-4 |
-| NFR-08 | Przeglądarka na telefonie i komputerze, zdjęcie z aplikacji | frontend Next.js (PWA, `features/rozwiazania`) | — | `zdjecie_rozwiazania` | `POST /rozwiazania` | `(uczen)/zadania/[zadanieId]`<br>`(uczen)/rozwiazania/[rozwiazanieId]` | 6.8; ADR-054 | `aparat-przeladowanie.spec.ts`, `siec-komorkowa.spec.ts` |
-| NFR-09 | RODO i usuwanie zdjęć po czasie | Konta (`Lemat.Domain.Konta.Rodo`), Rozwiazania, `Lemat.Scheduler` | `IAgentRozpoznajacy` (Filtr danych osobowych) | `zdarzenie_rodo`, `zdjecie_rozwiazania`, `kopia_treningowa`, `dziennik_audytu`, `szkic_transkrypcji` | `DELETE /uczniowie/ja`<br>`DELETE /nauczyciele/ja`<br>`GET /uczniowie/ja/eksport-danych`<br>`POST /admin/uzytkownicy/{id}/przywrocenie`<br>`POST /admin/uzytkownicy/{id}/usuniecie`<br>`GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `(uczen)/ustawienia`<br>`nauczyciel/ustawienia` | 9.10, 16.3, 16.4; ADR-019, ADR-035, ADR-040, ADR-041, ADR-042, ADR-044, ADR-047, ADR-071 p. 5 | G-6 |
-| NFR-10 | Interfejs po polsku | `Lemat.Api` (`katalog-bledow.yaml`), frontend (`messages/pl-PL.json`) | — | — | — | `(uczen)/start`<br>`(nauczyciel)/nauczyciel`<br>`(administrator)/admin/uzytkownicy` | 12.1, 14.4; ADR-060 | `KatalogBledowKompletny` |
+| NFR-01 | Ocena ≤ 30 s | Orkiestracja: `Lemat.Application.Orchestration`, `Lemat.Worker` (pule `R`, `O`, `S`) | `IAgentRozpoznajacy`, `IAgentOceniajacy` | `rozwiazanie`, `praca_w_tle` | `GET /rozwiazania/{id}/strumien`<br>`GET /rozwiazania/{id}` | `(student)/solutions/[solutionId]` | 14.6, 17.2; ADR-025, ADR-039, ADR-064 | G-3; `sse-fallback-polling.spec.ts` |
+| NFR-02 | Zgodność z Nauczycielem ≥ 90% | Kalibracja, `Lemat.Worker` (`EWALUUJ_ZT1`) | `IAgentOceniajacy` | `probka_kalibracyjna`, `decyzja_modelu` | `POST /admin/konfiguracje-modeli/{id}/ewaluacja-zt1`<br>`GET /admin/kalibracja` | `admin/model-configurations`<br>`admin/calibration` | 11.5; ADR-027 | G-1 |
+| NFR-03 | Błędne zaliczenia automatyczne ≤ 2% | Kalibracja | `IAgentOceniajacy` | `stan_bezpiecznika`, `prog_pewnosci`, `probka_kalibracyjna` | `GET /admin/bezpieczniki`<br>`POST /admin/bezpieczniki/dezaktywacja`<br>`GET /admin/kalibracja` | `admin/safeguards`<br>`admin/calibration` | 11.5.3; ADR-007, ADR-046 | G-1; `Lemat.Simulations` (symulacje bezpiecznika) |
+| NFR-04 | Kalibracja Pewności oceny | Kalibracja, `Lemat.Worker` (`KALIBRUJ`) | `IAgentOceniajacy` | `kalibrator_pewnosci`, `probka_kalibracyjna` | `GET /admin/kalibracja` | `admin/calibration` | 11.2, 11.5; ADR-006 | G-1 |
+| NFR-05 | Wyjaśnialność Ocen i rekomendacji | Modele, Ocenianie, Rekomendacje | `IAgentWyjasniajacy`, `IAgentRekomendujacy` | `decyzja_modelu`, `rekomendacja`, `ocena` | `GET /weryfikacje/{id}`<br>`GET /rozwiazania/{id}/ocena`<br>`GET /uczniowie/ja/rekomendacje/nastepna` | `teacher/verifications/[verificationId]`<br>`(student)/solutions/[solutionId]` | 10.0, 11.7; ADR-011, ADR-026 | `fr27-hint.spec.ts`, `fr10-justification.spec.ts` |
+| NFR-06 | Wymienne Modele AI | Modele: `Lemat.Models`, `Lemat.Application.Models` | porty `IModelGeneratywny`, `IModelDecyzyjny`; Mock każdego dostawcy | `konfiguracja_modelu` | `GET /admin/konfiguracje-modeli`<br>`POST /admin/konfiguracje-modeli`<br>`POST /admin/konfiguracje-modeli/{id}/aktywacja` | `admin/model-configurations` | 13.1; ADR-003, ADR-055, ADR-058, ADR-065 | `AgentNieRozwiazujeKlientaCzatuZDi`, `Lemat.Architecture.Tests` |
+| NFR-07 | Model zapasowy przy niedostępności Modelu decyzyjnego | Modele: `Lemat.Models` | `CircuitBreakerModeluDecyzyjnego` (rola `DECYZYJNY_ZAPASOWY`) | `konfiguracja_modelu`, `decyzja_modelu` | `GET /admin/kalibracja` | `admin/calibration`<br>`admin/model-configurations` | 9.9, 13.2; ADR-009 | G-4 |
+| NFR-08 | Przeglądarka na telefonie i komputerze, zdjęcie z aplikacji | frontend Next.js (PWA, `features/solutions`) | — | `zdjecie_rozwiazania` | `POST /rozwiazania` | `(student)/exercises/[exerciseId]`<br>`(student)/solutions/[solutionId]` | 6.8; ADR-054 | `camera-reload.spec.ts`, `cellular-network.spec.ts` |
+| NFR-09 | RODO i usuwanie zdjęć po czasie | Konta (`Lemat.Domain.Accounts.Gdpr`), Rozwiazania, `Lemat.Scheduler` | `IAgentRozpoznajacy` (Filtr danych osobowych) | `zdarzenie_rodo`, `zdjecie_rozwiazania`, `kopia_treningowa`, `dziennik_audytu`, `szkic_transkrypcji` | `DELETE /uczniowie/ja`<br>`DELETE /nauczyciele/ja`<br>`GET /uczniowie/ja/eksport-danych`<br>`POST /admin/uzytkownicy/{id}/przywrocenie`<br>`POST /admin/uzytkownicy/{id}/usuniecie`<br>`GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `(student)/settings`<br>`teacher/settings` | 9.10, 16.3, 16.4; ADR-019, ADR-035, ADR-040, ADR-041, ADR-042, ADR-044, ADR-047, ADR-071 p. 5 | G-6 |
+| NFR-10 | Interfejs po polsku | `Lemat.Api` (`error-catalog.yaml`), frontend (`messages/pl-PL.json`) | — | — | — | `(student)/start`<br>`(teacher)/teacher`<br>`(administrator)/admin/users` | 12.1, 14.4; ADR-060 | `KatalogBledowKompletny` |
 
 ### 18.3 Rodzaje zadań
 
@@ -9016,8 +9423,8 @@ obowiązkowymi (sprawdzanymi przez krytyka przy weryfikacji pokrycia planu):
 
 | Uwaga | Wymaganie dla nowego planu | Sprawdzenie |
 |---|---|---|
-| C5-06 | Zadanie Filtra danych osobowych opisuje reguły dokładnie jak 10.3.1 p. 3a: (a) ramka i **wyłączenia** (imię, nazwisko, inicjały, oznaczenie klasy nie są treścią matematyczną; nie są zastępowane tą regułą), (b) zastępowanie imienia, nazwiska i części lokalnej e-maila z regułami b1, b1-i, b2, (c) PESEL i e-mail. DoD: test każdego wiersza tabeli „Działanie filtra na Poprawkach” (krok niezmieniony, zmieniony, przywrócony `tylko_dane_osobowe`, wstawiony), test G-2 „50 przywróceń bez ponownego maskowania i ze Sprawdzeniem zgodności poprawek”, zestaw C5-01 („Pole P”, „prosta k”, „suma S”, „Pole P.” w kroku z treścią matematyczną) oraz test przywrócenia słowa w miejscu znacznika. Testy w `Lemat.Domain.Tests/Rozwiazania/FiltrDanychOsobowychTests.cs`. | opis i DoD zawierają identyfikatory reguł `a`, `b1`, `b1-i`, `b2`, `c` i 4 wiersze tabeli |
-| C5-07 | DoD zadania bezpiecznika wymienia testy (a)–(m) z 11.5.3 (w tym dane deterministyczne testu (g) i testy (l), (m) z wersji 3.0) w `Lemat.Domain.Tests/Kalibracja/BezpiecznikTests.cs`; DoD zadania ogranicznika — testy (a)–(h) z 13.2 (z asercją `pojemnosc = 0` po `INSERT` w (g), C5-03) w `OgranicznikSzybkosciTests.cs` i `OgranicznikSymulacja.cs`; DoD zadania odtworzenia po PITR — G-6 (a1)–(a4) i (b)–(d) jako testy automatyczne w `Lemat.Infrastructure.Tests` (Testcontainers), w tym konto Nauczyciela z asercją „0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie`”; protokół G-6 jest osobnym DoD, a nie jedynym. | każda litera testu występuje w DoD dokładnie jednego zadania |
+| C5-06 | Zadanie Filtra danych osobowych opisuje reguły dokładnie jak 10.3.1 p. 3a: (a) ramka i **wyłączenia** (imię, nazwisko, inicjały, oznaczenie klasy nie są treścią matematyczną; nie są zastępowane tą regułą), (b) zastępowanie imienia, nazwiska i części lokalnej e-maila z regułami b1, b1-i, b2, (c) PESEL i e-mail. DoD: test każdego wiersza tabeli „Działanie filtra na Poprawkach” (krok niezmieniony, zmieniony, przywrócony `tylko_dane_osobowe`, wstawiony), test G-2 „50 przywróceń bez ponownego maskowania i ze Sprawdzeniem zgodności poprawek”, zestaw C5-01 („Pole P”, „prosta k”, „suma S”, „Pole P.” w kroku z treścią matematyczną) oraz test przywrócenia słowa w miejscu znacznika. Testy w `Lemat.Domain.Tests/Solutions/PersonalDataFilterTests.cs`. | opis i DoD zawierają identyfikatory reguł `a`, `b1`, `b1-i`, `b2`, `c` i 4 wiersze tabeli |
+| C5-07 | DoD zadania bezpiecznika wymienia testy (a)–(m) z 11.5.3 (w tym dane deterministyczne testu (g) i testy (l), (m) z wersji 3.0) w `Lemat.Domain.Tests/Calibration/SafeguardTests.cs`; DoD zadania ogranicznika — testy (a)–(h) z 13.2 (z asercją `pojemnosc = 0` po `INSERT` w (g), C5-03) w `RateLimiterTests.cs` i `RateLimiterSimulation.cs`; DoD zadania odtworzenia po PITR — G-6 (a1)–(a4) i (b)–(d) jako testy automatyczne w `Lemat.Infrastructure.Tests` (Testcontainers), w tym konto Nauczyciela z asercją „0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie`”; protokół G-6 jest osobnym DoD, a nie jedynym. | każda litera testu występuje w DoD dokładnie jednego zadania |
 | C5-08 | Kolejność zależności zgodna z implementacją: (1) ocena bezpieczników (populacja, LB/UB, klasyfikacja 1–4, Blokada obniżania progu) jest osobnym zadaniem zależnym od zadania Próbek kalibracyjnych i wag IPW, a zadanie „Wynik dnia KALIBRUJ” (kroki 1–6) zależy od niego; (2) każde zadanie tworzące tabelę z kluczem obcym zależy (bezpośrednio albo przez przodka) od zadania tworzącego tabelę wskazywaną — w szczególności zadanie `klucz_idempotencji`/`powiadomienie` od zadania `uzytkownik`; w stosie .NET kolejność migracji EF Core jest kolejnością zadań. | test acykliczności i test „FK → przodek” krytyka; dodatkowo test logiczny: DoD nie odwołuje się do zachowania zadania niebędącego przodkiem |
 | C5-09 | (1) Odwołania między zadaniami wyłącznie identyfikatorami `TASK-NNN`, bez nazw roboczych; (2) DoD bez odwołań „zgodnie z sekcją X” — kryterium sprawdzalne wprost (np. dla adapterów: które błędy są `ModelNiedostepnyException`, które przejściowe, według wierszy E-09 macierzy 14.1); (3) słownictwo zgodne z 3.1 p. 5: „prace w tle”, nigdy „kolejka prac”; „dzierżawa”, nigdy „blokada pracy”; (4) `HANDOFF.md` aktualizowany po pętli 3.x: stan przeglądu wersji 3.0, stos .NET/Next.js, mapowanie 6.10, bez stwierdzeń o braku przeglądu wersji 2.4. | test słownika uruchamiany także na `TASKS.md`, `HANDOFF.md` i `CLAUDE.md` (część 4 — zakazane synonimy; część 3 — `kolejk*` z listą dozwolonych użyć) |
 
@@ -9037,8 +9444,8 @@ API i Playwright; (g) zadanie warstwy AI tworzy `FabrykaKlientowCzatu`,
 `WywolanieCzatu`, `SzablonyPromptow`, `MockChatClient` i
 `MockModelDecyzyjny` przed pierwszym agentem, a DoD każdego agenta wymienia
 testy z jego podsekcji „Realizacja w .NET” (10.1.8, 10.2.5, 10.3.4, 10.4.6,
-10.5.4); (h) prompty z `docs/spec/prompty.md` są plikami YAML w
-`Lemat.Agenci/Prompty` z testami `KazdaWersjaPromptuIstnieje` i
+10.5.4); (h) prompty z `docs/spec/prompts.md` są plikami YAML w
+`Lemat.Agents/Prompts` z testami `KazdaWersjaPromptuIstnieje` i
 `SzablonBezZmiennychTresci`; (i) migracja `0001_SchematPoczatkowy` (wyłącznie SQL, ADR-063) i test
 `ModelEfZgodnyZKatalogiem` są w jednym zadaniu, zależnym od wycięcia DDL z
 `docs/spec/ddl.md`; (j) testy przejść `Rozwiazanie` (34 przypadki, 3.6) i
@@ -9062,80 +9469,81 @@ produktu (23.4).
 
 | ID | Tytuł | Status | G-0 | Plik |
 |---|---|---|---|---|
-| ADR-001 | Modularny monolit z osobnymi procesami `api`, `worker`, `scheduler` | Zastąpiony przez ADR-048 | — | [ADR-001-modularny-monolit-z-osobnymi-procesami-api-worker-scheduler.md](adr/ADR-001-modularny-monolit-z-osobnymi-procesami-api-worker-scheduler.md) |
-| ADR-002 | PostgreSQL jako jedyne źródło prawdy i mechanizm prac w tle | Zmieniona (it. 2); realizacja: ADR-048 | — | [ADR-002-postgresql-jako-jedyne-zrodlo-prawdy-i-mechanizm-prac-w-tle.md](adr/ADR-002-postgresql-jako-jedyne-zrodlo-prawdy-i-mechanizm-prac-w-tle.md) |
-| ADR-003 | Porty i adaptery dla modeli AI, konfiguracja w bazie | Przyjęta; realizacja: ADR-048 | — | [ADR-003-porty-i-adaptery-dla-modeli-ai-konfiguracja-w-bazie.md](adr/ADR-003-porty-i-adaptery-dla-modeli-ai-konfiguracja-w-bazie.md) |
-| ADR-004 | Agent rozpoznający oparty na multimodalnym LLM ze strukturyzowanym wyjściem | Zmieniona (it. 2) | — | [ADR-004-agent-rozpoznajacy-oparty-na-multimodalnym-llm-ze.md](adr/ADR-004-agent-rozpoznajacy-oparty-na-multimodalnym-llm-ze.md) |
-| ADR-005 | Ocena per kryterium osobnymi pytaniami | Zmieniona (it. 2) | — | [ADR-005-ocena-per-kryterium-osobnymi-pytaniami.md](adr/ADR-005-ocena-per-kryterium-osobnymi-pytaniami.md) |
-| ADR-006 | Pewność oceny = minimum prawdopodobieństw + kalibracja izotoniczna | Zmieniona (it. 2) | — | [ADR-006-pewnosc-oceny-minimum-prawdopodobienstw-kalibracja.md](adr/ADR-006-pewnosc-oceny-minimum-prawdopodobienstw-kalibracja.md) |
-| ADR-007 | Próg pewności z górnej granicy Wilsona, Kontroli losowej z wagami IPW i analizy mocy | Zmieniona (it. 2) | — | [ADR-007-prog-pewnosci-z-gornej-granicy-wilsona-kontroli-losowej-z.md](adr/ADR-007-prog-pewnosci-z-gornej-granicy-wilsona-kontroli-losowej-z.md) |
-| ADR-008 | Opinia pomocnicza LLM nie zmienia trasy Oceny | Przyjęta | — | [ADR-008-opinia-pomocnicza-llm-nie-zmienia-trasy-oceny.md](adr/ADR-008-opinia-pomocnicza-llm-nie-zmienia-trasy-oceny.md) |
-| ADR-009 | Model zapasowy: LLM ze strukturyzowaną odpowiedzią + circuit breaker + osobna kalibracja | Zmieniona (it. 2) | — | [ADR-009-model-zapasowy-llm-ze-strukturyzowana-odpowiedzia-circuit.md](adr/ADR-009-model-zapasowy-llm-ze-strukturyzowana-odpowiedzia-circuit.md) |
-| ADR-010 | Profil ucznia jako model Elo per Umiejętność; model drzewiasty jako eksperyment | Zmieniona (it. 2) | — | [ADR-010-profil-ucznia-jako-model-elo-per-umiejetnosc-model.md](adr/ADR-010-profil-ucznia-jako-model-elo-per-umiejetnosc-model.md) |
-| ADR-011 | Uzasadnienie rekomendacji z szablonów, nie z LLM | Zmieniona (it. 2) | — | [ADR-011-uzasadnienie-rekomendacji-z-szablonow-nie-z-llm.md](adr/ADR-011-uzasadnienie-rekomendacji-z-szablonow-nie-z-llm.md) |
-| ADR-012 | Wersjonowanie Zadań i niezmienność Ocen | Zmieniona (it. 2) | — | [ADR-012-wersjonowanie-zadan-i-niezmiennosc-ocen.md](adr/ADR-012-wersjonowanie-zadan-i-niezmiennosc-ocen.md) |
-| ADR-013 | SymPy w piaskownicy procesowej | Zastąpiony przez ADR-048 | — | [ADR-013-sympy-w-piaskownicy-procesowej.md](adr/ADR-013-sympy-w-piaskownicy-procesowej.md) |
-| ADR-014 | Odpytywanie (polling) zamiast WebSocket/SSE | Zastąpiony przez ADR-048 | — | [ADR-014-odpytywanie-polling-zamiast-websocket-sse.md](adr/ADR-014-odpytywanie-polling-zamiast-websocket-sse.md) |
-| ADR-015 | Publikacja Zadań wygenerowanych po Walidacji; Wkładki i dowody tylko po przeglądzie | Zmieniona (it. 2) | — | [ADR-015-publikacja-zadan-wygenerowanych-po-walidacji-wkladki-i.md](adr/ADR-015-publikacja-zadan-wygenerowanych-po-walidacji-wkladki-i.md) |
-| ADR-016 | Identyfikatory domenowe po polsku, zgodne ze słownikiem | Zmieniona (it. 2); realizacja: ADR-048 | — | [ADR-016-identyfikatory-domenowe-po-polsku-zgodne-ze-slownikiem.md](adr/ADR-016-identyfikatory-domenowe-po-polsku-zgodne-ze-slownikiem.md) |
-| ADR-017 | Obowiązkowe zatwierdzenie Transkrypcji przez Ucznia | Zmieniona (it. 2) | — | [ADR-017-obowiazkowe-zatwierdzenie-transkrypcji-przez-ucznia.md](adr/ADR-017-obowiazkowe-zatwierdzenie-transkrypcji-przez-ucznia.md) |
-| ADR-018 | Wynik zadania z Oceny wstępnej z wagą 0,5; bez Wyniku przy podejrzeniu błędu odczytu | Zmieniona (it. 2) | — | [ADR-018-wynik-zadania-z-oceny-wstepnej-z-waga-0-5-bez-wyniku-przy.md](adr/ADR-018-wynik-zadania-z-oceny-wstepnej-z-waga-0-5-bez-wyniku-przy.md) |
-| ADR-019 | Retencja zdjęć sterowana przejściami stanów, maks. 90 dni | Zmieniona (it. 2) | — | [ADR-019-retencja-zdjec-sterowana-przejsciami-stanow-maks-90-dni.md](adr/ADR-019-retencja-zdjec-sterowana-przejsciami-stanow-maks-90-dni.md) |
-| ADR-020 | JWT krótkotrwały + rotowany refresh token w cookie | Przyjęta; realizacja: ADR-048; uzupełnienie 3.1 (ADR-057) | — | [ADR-020-jwt-krotkotrwaly-rotowany-refresh-token-w-cookie.md](adr/ADR-020-jwt-krotkotrwaly-rotowany-refresh-token-w-cookie.md) |
-| ADR-021 | Kolejka weryfikacji globalna dla Uczniów bez Klasy | Zmieniona (it. 2) | tak | [ADR-021-kolejka-weryfikacji-globalna-dla-uczniow-bez-klasy.md](adr/ADR-021-kolejka-weryfikacji-globalna-dla-uczniow-bez-klasy.md) |
-| ADR-022 | Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu i zgłoszenie Ucznia | Nowa (it. 2) | tak | [ADR-022-ocena-wstepna-wstrzymana-przy-podejrzeniu-bledu-odczytu-i.md](adr/ADR-022-ocena-wstepna-wstrzymana-przy-podejrzeniu-bledu-odczytu-i.md) |
-| ADR-023 | Rekomendacja synchroniczna w procesie `api` przez fasadę Orkiestratora | Nowa (it. 2); uzupełnienie 3.1 (C6-07) | — | [ADR-023-rekomendacja-synchroniczna-w-procesie-api-przez-fasade.md](adr/ADR-023-rekomendacja-synchroniczna-w-procesie-api-przez-fasade.md) |
-| ADR-024 | Brak wpisu ręcznego Rozwiązania | Nowa (it. 2) | tak | [ADR-024-brak-wpisu-recznego-rozwiazania.md](adr/ADR-024-brak-wpisu-recznego-rozwiazania.md) |
-| ADR-025 | NFR-01 jako czas systemowy; termin miękki i twardy; Wskazówka asynchroniczna | Nowa (it. 2) | tak | [ADR-025-nfr-01-jako-czas-systemowy-termin-miekki-i-twardy-wskazowka.md](adr/ADR-025-nfr-01-jako-czas-systemowy-termin-miekki-i-twardy-wskazowka.md) |
-| ADR-026 | Plan pytań z zależnościami jako kontrakt portu `ModelDecyzyjny` | Nowa (it. 2) | — | [ADR-026-plan-pytan-z-zaleznosciami-jako-kontrakt-portu.md](adr/ADR-026-plan-pytan-z-zaleznosciami-jako-kontrakt-portu.md) |
-| ADR-027 | Zgodność Oceny = punkty + pierwszy błędny krok + brakujący krok | Nowa (it. 2) | tak | [ADR-027-zgodnosc-oceny-punkty-pierwszy-bledny-krok-brakujacy-krok.md](adr/ADR-027-zgodnosc-oceny-punkty-pierwszy-bledny-krok-brakujacy-krok.md) |
-| ADR-028 | Zasięg Zadań i recenzent treści | Nowa (it. 2) | tak | [ADR-028-zasieg-zadan-i-recenzent-tresci.md](adr/ADR-028-zasieg-zadan-i-recenzent-tresci.md) |
-| ADR-029 | Kalibracja Poziomu trudności w osobnej tabeli z atomową aktualizacją | Nowa (it. 2) | — | [ADR-029-kalibracja-poziomu-trudnosci-w-osobnej-tabeli-z-atomowa.md](adr/ADR-029-kalibracja-poziomu-trudnosci-w-osobnej-tabeli-z-atomowa.md) |
-| ADR-030 | Seria nauki po Wkładce teoretycznej | Nowa (it. 2) | — | [ADR-030-seria-nauki-po-wkladce-teoretycznej.md](adr/ADR-030-seria-nauki-po-wkladce-teoretycznej.md) |
-| ADR-031 | Pseudonimizacja i maskowanie zdjęć w kolejce globalnej | Nowa (it. 2); realizacja: ADR-048 | tak | [ADR-031-pseudonimizacja-i-maskowanie-zdjec-w-kolejce-globalnej.md](adr/ADR-031-pseudonimizacja-i-maskowanie-zdjec-w-kolejce-globalnej.md) |
-| ADR-032 | Jeden kontekst na próbę, wielokrotne próby i ujawnianie klucza po terminie | Nowa (it. 2) | — | [ADR-032-jeden-kontekst-na-probe-wielokrotne-proby-i-ujawnianie.md](adr/ADR-032-jeden-kontekst-na-probe-wielokrotne-proby-i-ujawnianie.md) |
-| ADR-033 | Weryfikacja: SLA, zwalnianie wygasłych blokad, przedłużanie i szkice | Nowa (it. 2) | — | [ADR-033-weryfikacja-sla-zwalnianie-wygaslych-blokad-przedluzanie-i.md](adr/ADR-033-weryfikacja-sla-zwalnianie-wygaslych-blokad-przedluzanie-i.md) |
-| ADR-034 | Pula weryfikatorów globalnych: Nauczyciele bez Klas + Nauczyciele współpracujący | Nowa (it. 3) | tak | [ADR-034-pula-weryfikatorow-globalnych-nauczyciele-bez-klas.md](adr/ADR-034-pula-weryfikatorow-globalnych-nauczyciele-bez-klas.md) |
-| ADR-035 | Kopie treningowe z rejestrem powiązań w bazie | Nowa (it. 3) | tak | [ADR-035-kopie-treningowe-z-rejestrem-powiazan-w-bazie.md](adr/ADR-035-kopie-treningowe-z-rejestrem-powiazan-w-bazie.md) |
-| ADR-036 | Poprawki Transkrypcji ograniczone i sprawdzane ze zdjęciem | Nowa (it. 4) | tak | [ADR-036-poprawki-transkrypcji-ograniczone-i-sprawdzane-ze-zdjeciem.md](adr/ADR-036-poprawki-transkrypcji-ograniczone-i-sprawdzane-ze-zdjeciem.md) |
-| ADR-037 | Wersja treści Weryfikacji oddzielona od blokady | Nowa (it. 4) | — | [ADR-037-wersja-tresci-weryfikacji-oddzielona-od-blokady.md](adr/ADR-037-wersja-tresci-weryfikacji-oddzielona-od-blokady.md) |
-| ADR-038 | Przegląd Zadań zleconych przez Nauczyciela i Zgłoszenia błędu w Zadaniu | Nowa (it. 4) | tak | [ADR-038-przeglad-zadan-zleconych-przez-nauczyciela-i-zgloszenia.md](adr/ADR-038-przeglad-zadan-zleconych-przez-nauczyciela-i-zgloszenia.md) |
-| ADR-039 | Tryb wsadowy Jev i globalny ogranicznik szybkości | Nowa (it. 4) | — | [ADR-039-tryb-wsadowy-jev-i-globalny-ogranicznik-szybkosci.md](adr/ADR-039-tryb-wsadowy-jev-i-globalny-ogranicznik-szybkosci.md) |
-| ADR-040 | Okres karencji usunięcia konta: procesy wstrzymane, nie anulowane | Nowa (it. 4) | — | [ADR-040-okres-karencji-usuniecia-konta-procesy-wstrzymane-nie.md](adr/ADR-040-okres-karencji-usuniecia-konta-procesy-wstrzymane-nie.md) |
-| ADR-041 | Rejestr wszystkich Zdarzeń RODO w Object Lock przed transakcją | Nowa (it. 4) | — | [ADR-041-rejestr-wszystkich-zdarzen-rodo-w-object-lock-przed.md](adr/ADR-041-rejestr-wszystkich-zdarzen-rodo-w-object-lock-przed.md) |
-| ADR-042 | Filtr danych osobowych w Transkrypcji | Nowa (it. 4) | — | [ADR-042-filtr-danych-osobowych-w-transkrypcji.md](adr/ADR-042-filtr-danych-osobowych-w-transkrypcji.md) |
-| ADR-043 | SLA w dniach roboczych i tygodniowy model obciążenia z eskalacjami | Nowa (it. 4) | tak | [ADR-043-sla-w-dniach-roboczych-i-tygodniowy-model-obciazenia-z.md](adr/ADR-043-sla-w-dniach-roboczych-i-tygodniowy-model-obciazenia-z.md) |
-| ADR-044 | Usuwanie kont Nauczycieli i Administratorów | Nowa (it. 4) | — | [ADR-044-usuwanie-kont-nauczycieli-i-administratorow.md](adr/ADR-044-usuwanie-kont-nauczycieli-i-administratorow.md) |
-| ADR-045 | Normalizacja zdjęć w piaskownicy procesowej `api` | Zastąpiony przez ADR-048 | — | [ADR-045-normalizacja-zdjec-w-piaskownicy-procesowej-api.md](adr/ADR-045-normalizacja-zdjec-w-piaskownicy-procesowej-api.md) |
-| ADR-046 | Bezpieczniki trafności i poprawek reagujące na dowód przekroczenia | Nowa (it. 5) | — | [ADR-046-bezpieczniki-trafnosci-i-poprawek-reagujace-na-dowod.md](adr/ADR-046-bezpieczniki-trafnosci-i-poprawek-reagujace-na-dowod.md) |
-| ADR-047 | Sprzątanie osieroconych obiektów magazynu | Nowa (it. 5) | — | [ADR-047-sprzatanie-osieroconych-obiektow-magazynu.md](adr/ADR-047-sprzatanie-osieroconych-obiektow-magazynu.md) |
-| ADR-048 | Zmiana stosu na .NET 10 + Next.js | Przyjęta (wersja 3.0) | — | [ADR-048-zmiana-stosu-na-net-10-next-js.md](adr/ADR-048-zmiana-stosu-na-net-10-next-js.md) |
-| ADR-049 | Transliteracja i konwencje nazw identyfikatorów w C#, PostgreSQL, JSON, URL i TypeScript | Przyjęta (wersja 3.0); uzupełnienia 3.1 (p. 11–12) i 3.2 (p. 13–15) | — | [ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md](adr/ADR-049-transliteracja-i-konwencje-nazw-identyfikatorow.md) |
-| ADR-050 | Obliczenia symboliczne — sidecar SymPy w piaskownicy zamiast biblioteki .NET | Przyjęta (wersja 3.0) | — | [ADR-050-obliczenia-symboliczne-sidecar-sympy.md](adr/ADR-050-obliczenia-symboliczne-sidecar-sympy.md) |
-| ADR-051 | SSE dla postępu długotrwałych operacji; odpytywanie jako ścieżka zapasowa | Przyjęta (wersja 3.0); uzupełnienia 3.1 (ADR-056, ADR-057) i 3.2 (ADR-064) | — | [ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md](adr/ADR-051-sse-dla-postepu-dlugotrwalych-operacji.md) |
-| ADR-052 | Przetwarzanie obrazów — Magick.NET w osobnym procesie `Lemat.ImageSandbox` | Przyjęta (wersja 3.0); uzupełnienie 3.1 (C6-11) | — | [ADR-052-przetwarzanie-obrazow-magick-net-w-piaskownicy.md](adr/ADR-052-przetwarzanie-obrazow-magick-net-w-piaskownicy.md) |
-| ADR-053 | Prace w tle w .NET — `BackgroundService` na pulę i `FOR UPDATE SKIP LOCKED` | Przyjęta (wersja 3.0); uzupełnienia 3.1 (ADR-056) i 3.2 (ADR-066) | — | [ADR-053-prace-w-tle-backgroundservice-skip-locked.md](adr/ADR-053-prace-w-tle-backgroundservice-skip-locked.md) |
+| ADR-001 | Modularny monolit z osobnymi procesami `api`, `worker`, `scheduler` | Zastąpiony przez ADR-048 | — | [ADR-001-modular-monolith-with-api-worker-scheduler-processes.md](adr/ADR-001-modular-monolith-with-api-worker-scheduler-processes.md) |
+| ADR-002 | PostgreSQL jako jedyne źródło prawdy i mechanizm prac w tle | Zmieniona (it. 2); realizacja: ADR-048 | — | [ADR-002-postgresql-as-single-source-of-truth-and-background-jobs.md](adr/ADR-002-postgresql-as-single-source-of-truth-and-background-jobs.md) |
+| ADR-003 | Porty i adaptery dla modeli AI, konfiguracja w bazie | Przyjęta; realizacja: ADR-048 | — | [ADR-003-ports-and-adapters-for-ai-models-configuration-in-database.md](adr/ADR-003-ports-and-adapters-for-ai-models-configuration-in-database.md) |
+| ADR-004 | Agent rozpoznający oparty na multimodalnym LLM ze strukturyzowanym wyjściem | Zmieniona (it. 2) | — | [ADR-004-recognition-agent-based-on-multimodal-llm-structured-output.md](adr/ADR-004-recognition-agent-based-on-multimodal-llm-structured-output.md) |
+| ADR-005 | Ocena per kryterium osobnymi pytaniami | Zmieniona (it. 2) | — | [ADR-005-grade-per-criterion-with-separate-questions.md](adr/ADR-005-grade-per-criterion-with-separate-questions.md) |
+| ADR-006 | Pewność oceny = minimum prawdopodobieństw + kalibracja izotoniczna | Zmieniona (it. 2) | — | [ADR-006-grade-confidence-minimum-probabilities-isotonic-calibration.md](adr/ADR-006-grade-confidence-minimum-probabilities-isotonic-calibration.md) |
+| ADR-007 | Próg pewności z górnej granicy Wilsona, Kontroli losowej z wagami IPW i analizy mocy | Zmieniona (it. 2) | — | [ADR-007-confidence-threshold-wilson-upper-bound-random-check-ipw.md](adr/ADR-007-confidence-threshold-wilson-upper-bound-random-check-ipw.md) |
+| ADR-008 | Opinia pomocnicza LLM nie zmienia trasy Oceny | Przyjęta | — | [ADR-008-auxiliary-llm-opinion-does-not-change-grade-route.md](adr/ADR-008-auxiliary-llm-opinion-does-not-change-grade-route.md) |
+| ADR-009 | Model zapasowy: LLM ze strukturyzowaną odpowiedzią + circuit breaker + osobna kalibracja | Zmieniona (it. 2) | — | [ADR-009-fallback-model-structured-llm-circuit-breaker.md](adr/ADR-009-fallback-model-structured-llm-circuit-breaker.md) |
+| ADR-010 | Profil ucznia jako model Elo per Umiejętność; model drzewiasty jako eksperyment | Zmieniona (it. 2) | — | [ADR-010-student-profile-elo-per-skill-tree-model-experiment.md](adr/ADR-010-student-profile-elo-per-skill-tree-model-experiment.md) |
+| ADR-011 | Uzasadnienie rekomendacji z szablonów, nie z LLM | Zmieniona (it. 2) | — | [ADR-011-recommendation-justification-from-templates-not-llm.md](adr/ADR-011-recommendation-justification-from-templates-not-llm.md) |
+| ADR-012 | Wersjonowanie Zadań i niezmienność Ocen | Zmieniona (it. 2) | — | [ADR-012-exercise-versioning-and-grade-immutability.md](adr/ADR-012-exercise-versioning-and-grade-immutability.md) |
+| ADR-013 | SymPy w piaskownicy procesowej | Zastąpiony przez ADR-048 | — | [ADR-013-sympy-in-process-sandbox.md](adr/ADR-013-sympy-in-process-sandbox.md) |
+| ADR-014 | Odpytywanie (polling) zamiast WebSocket/SSE | Zastąpiony przez ADR-048 | — | [ADR-014-polling-instead-of-websocket-sse.md](adr/ADR-014-polling-instead-of-websocket-sse.md) |
+| ADR-015 | Publikacja Zadań wygenerowanych po Walidacji; Wkładki i dowody tylko po przeglądzie | Zmieniona (it. 2) | — | [ADR-015-publishing-generated-exercises-after-validation.md](adr/ADR-015-publishing-generated-exercises-after-validation.md) |
+| ADR-016 | Identyfikatory domenowe po polsku, zgodne ze słownikiem | Zmieniona (it. 2); realizacja: ADR-048 | — | [ADR-016-polish-domain-identifiers-matching-glossary.md](adr/ADR-016-polish-domain-identifiers-matching-glossary.md) |
+| ADR-017 | Obowiązkowe zatwierdzenie Transkrypcji przez Ucznia | Zmieniona (it. 2) | — | [ADR-017-mandatory-transcription-approval-by-student.md](adr/ADR-017-mandatory-transcription-approval-by-student.md) |
+| ADR-018 | Wynik zadania z Oceny wstępnej z wagą 0,5; bez Wyniku przy podejrzeniu błędu odczytu | Zmieniona (it. 2) | — | [ADR-018-exercise-result-from-preliminary-grade-weight-0-5.md](adr/ADR-018-exercise-result-from-preliminary-grade-weight-0-5.md) |
+| ADR-019 | Retencja zdjęć sterowana przejściami stanów, maks. 90 dni | Zmieniona (it. 2) | — | [ADR-019-photo-retention-driven-by-state-transitions-max-90-days.md](adr/ADR-019-photo-retention-driven-by-state-transitions-max-90-days.md) |
+| ADR-020 | JWT krótkotrwały + rotowany refresh token w cookie | Przyjęta; realizacja: ADR-048; uzupełnienie 3.1 (ADR-057) | — | [ADR-020-short-lived-jwt-rotated-refresh-token-in-cookie.md](adr/ADR-020-short-lived-jwt-rotated-refresh-token-in-cookie.md) |
+| ADR-021 | Kolejka weryfikacji globalna dla Uczniów bez Klasy | Zmieniona (it. 2) | tak | [ADR-021-global-verification-queue-for-students-without-class.md](adr/ADR-021-global-verification-queue-for-students-without-class.md) |
+| ADR-022 | Ocena wstępna wstrzymana przy podejrzeniu błędu odczytu i zgłoszenie Ucznia | Nowa (it. 2) | tak | [ADR-022-preliminary-grade-withheld-on-suspected-reading-error.md](adr/ADR-022-preliminary-grade-withheld-on-suspected-reading-error.md) |
+| ADR-023 | Rekomendacja synchroniczna w procesie `api` przez fasadę Orkiestratora | Nowa (it. 2); uzupełnienie 3.1 (C6-07) | — | [ADR-023-synchronous-recommendation-in-api-process-via-facade.md](adr/ADR-023-synchronous-recommendation-in-api-process-via-facade.md) |
+| ADR-024 | Brak wpisu ręcznego Rozwiązania | Nowa (it. 2) | tak | [ADR-024-no-manual-solution-entry.md](adr/ADR-024-no-manual-solution-entry.md) |
+| ADR-025 | NFR-01 jako czas systemowy; termin miękki i twardy; Wskazówka asynchroniczna | Nowa (it. 2) | tak | [ADR-025-nfr-01-as-system-time-soft-and-hard-deadline-async-hint.md](adr/ADR-025-nfr-01-as-system-time-soft-and-hard-deadline-async-hint.md) |
+| ADR-026 | Plan pytań z zależnościami jako kontrakt portu `ModelDecyzyjny` | Nowa (it. 2) | — | [ADR-026-question-plan-with-dependencies-as-port-contract.md](adr/ADR-026-question-plan-with-dependencies-as-port-contract.md) |
+| ADR-027 | Zgodność Oceny = punkty + pierwszy błędny krok + brakujący krok | Nowa (it. 2) | tak | [ADR-027-grade-agreement-points-first-wrong-step-missing-step.md](adr/ADR-027-grade-agreement-points-first-wrong-step-missing-step.md) |
+| ADR-028 | Zasięg Zadań i recenzent treści | Nowa (it. 2) | tak | [ADR-028-exercise-scope-and-content-reviewer.md](adr/ADR-028-exercise-scope-and-content-reviewer.md) |
+| ADR-029 | Kalibracja Poziomu trudności w osobnej tabeli z atomową aktualizacją | Nowa (it. 2) | — | [ADR-029-difficulty-calibration-in-separate-table-atomic-update.md](adr/ADR-029-difficulty-calibration-in-separate-table-atomic-update.md) |
+| ADR-030 | Seria nauki po Wkładce teoretycznej | Nowa (it. 2) | — | [ADR-030-learning-series-after-theory-insert.md](adr/ADR-030-learning-series-after-theory-insert.md) |
+| ADR-031 | Pseudonimizacja i maskowanie zdjęć w kolejce globalnej | Nowa (it. 2); realizacja: ADR-048 | tak | [ADR-031-pseudonymisation-and-photo-masking-in-global-queue.md](adr/ADR-031-pseudonymisation-and-photo-masking-in-global-queue.md) |
+| ADR-032 | Jeden kontekst na próbę, wielokrotne próby i ujawnianie klucza po terminie | Nowa (it. 2) | — | [ADR-032-one-context-per-attempt-multiple-attempts-key-disclosure.md](adr/ADR-032-one-context-per-attempt-multiple-attempts-key-disclosure.md) |
+| ADR-033 | Weryfikacja: SLA, zwalnianie wygasłych blokad, przedłużanie i szkice | Nowa (it. 2) | — | [ADR-033-verification-sla-expired-lock-release-extension-drafts.md](adr/ADR-033-verification-sla-expired-lock-release-extension-drafts.md) |
+| ADR-034 | Pula weryfikatorów globalnych: Nauczyciele bez Klas + Nauczyciele współpracujący | Nowa (it. 3) | tak | [ADR-034-global-verifier-pool-teachers-without-classes.md](adr/ADR-034-global-verifier-pool-teachers-without-classes.md) |
+| ADR-035 | Kopie treningowe z rejestrem powiązań w bazie | Nowa (it. 3) | tak | [ADR-035-training-copies-with-link-registry-in-database.md](adr/ADR-035-training-copies-with-link-registry-in-database.md) |
+| ADR-036 | Poprawki Transkrypcji ograniczone i sprawdzane ze zdjęciem | Nowa (it. 4) | tak | [ADR-036-transcription-edits-limited-and-checked-against-photo.md](adr/ADR-036-transcription-edits-limited-and-checked-against-photo.md) |
+| ADR-037 | Wersja treści Weryfikacji oddzielona od blokady | Nowa (it. 4) | — | [ADR-037-verification-content-version-separate-from-lock.md](adr/ADR-037-verification-content-version-separate-from-lock.md) |
+| ADR-038 | Przegląd Zadań zleconych przez Nauczyciela i Zgłoszenia błędu w Zadaniu | Nowa (it. 4) | tak | [ADR-038-review-of-teacher-ordered-exercises-and-error-reports.md](adr/ADR-038-review-of-teacher-ordered-exercises-and-error-reports.md) |
+| ADR-039 | Tryb wsadowy Jev i globalny ogranicznik szybkości | Nowa (it. 4) | — | [ADR-039-jev-batch-mode-and-global-rate-limiter.md](adr/ADR-039-jev-batch-mode-and-global-rate-limiter.md) |
+| ADR-040 | Okres karencji usunięcia konta: procesy wstrzymane, nie anulowane | Nowa (it. 4) | — | [ADR-040-account-deletion-grace-period-processes-paused.md](adr/ADR-040-account-deletion-grace-period-processes-paused.md) |
+| ADR-041 | Rejestr wszystkich Zdarzeń RODO w Object Lock przed transakcją | Nowa (it. 4) | — | [ADR-041-gdpr-event-registry-in-object-lock-before-transaction.md](adr/ADR-041-gdpr-event-registry-in-object-lock-before-transaction.md) |
+| ADR-042 | Filtr danych osobowych w Transkrypcji | Nowa (it. 4) | — | [ADR-042-personal-data-filter-in-transcription.md](adr/ADR-042-personal-data-filter-in-transcription.md) |
+| ADR-043 | SLA w dniach roboczych i tygodniowy model obciążenia z eskalacjami | Nowa (it. 4) | tak | [ADR-043-sla-in-working-days-weekly-load-model-escalations.md](adr/ADR-043-sla-in-working-days-weekly-load-model-escalations.md) |
+| ADR-044 | Usuwanie kont Nauczycieli i Administratorów | Nowa (it. 4) | — | [ADR-044-deleting-teacher-and-administrator-accounts.md](adr/ADR-044-deleting-teacher-and-administrator-accounts.md) |
+| ADR-045 | Normalizacja zdjęć w piaskownicy procesowej `api` | Zastąpiony przez ADR-048 | — | [ADR-045-photo-normalisation-in-api-process-sandbox.md](adr/ADR-045-photo-normalisation-in-api-process-sandbox.md) |
+| ADR-046 | Bezpieczniki trafności i poprawek reagujące na dowód przekroczenia | Nowa (it. 5) | — | [ADR-046-accuracy-and-edit-safeguards-reacting-to-evidence.md](adr/ADR-046-accuracy-and-edit-safeguards-reacting-to-evidence.md) |
+| ADR-047 | Sprzątanie osieroconych obiektów magazynu | Nowa (it. 5) | — | [ADR-047-cleanup-of-orphaned-storage-objects.md](adr/ADR-047-cleanup-of-orphaned-storage-objects.md) |
+| ADR-048 | Zmiana stosu na .NET 10 + Next.js | Przyjęta (wersja 3.0) | — | [ADR-048-stack-change-to-net-10-next-js.md](adr/ADR-048-stack-change-to-net-10-next-js.md) |
+| ADR-049 | Transliteracja i konwencje nazw identyfikatorów w C#, PostgreSQL, JSON, URL i TypeScript | Przyjęta (wersja 3.0); uzupełnienia 3.1 (p. 11–12) i 3.2 (p. 13–15); zmieniona w 3.4 przez ADR-075 (p. 16–22) | — | [ADR-049-transliteration-and-identifier-naming-conventions.md](adr/ADR-049-transliteration-and-identifier-naming-conventions.md) |
+| ADR-050 | Obliczenia symboliczne — sidecar SymPy w piaskownicy zamiast biblioteki .NET | Przyjęta (wersja 3.0) | — | [ADR-050-symbolic-computation-sympy-sidecar.md](adr/ADR-050-symbolic-computation-sympy-sidecar.md) |
+| ADR-051 | SSE dla postępu długotrwałych operacji; odpytywanie jako ścieżka zapasowa | Przyjęta (wersja 3.0); uzupełnienia 3.1 (ADR-056, ADR-057) i 3.2 (ADR-064) | — | [ADR-051-sse-for-long-running-operation-progress.md](adr/ADR-051-sse-for-long-running-operation-progress.md) |
+| ADR-052 | Przetwarzanie obrazów — Magick.NET w osobnym procesie `Lemat.ImageSandbox` | Przyjęta (wersja 3.0); uzupełnienie 3.1 (C6-11) | — | [ADR-052-image-processing-magick-net-in-sandbox.md](adr/ADR-052-image-processing-magick-net-in-sandbox.md) |
+| ADR-053 | Prace w tle w .NET — `BackgroundService` na pulę i `FOR UPDATE SKIP LOCKED` | Przyjęta (wersja 3.0); uzupełnienia 3.1 (ADR-056) i 3.2 (ADR-066) | — | [ADR-053-background-jobs-backgroundservice-skip-locked.md](adr/ADR-053-background-jobs-backgroundservice-skip-locked.md) |
 | ADR-054 | Frontend Next.js — App Router, grupy tras per rola, PWA, bez BFF | Przyjęta (wersja 3.0); uzupełnienie 3.1 (C6-14) | — | [ADR-054-frontend-next-js-app-router-pwa.md](adr/ADR-054-frontend-next-js-app-router-pwa.md) |
-| ADR-055 | Warstwa agentów AI w .NET — Microsoft.Extensions.AI, Semantic Kernel i implementacje Mock | Przyjęta (wersja 3.0); zmieniona 3.1 (ADR-058); uzupełnienie 3.2 (ADR-065) | — | [ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md](adr/ADR-055-warstwa-agentow-ai-microsoft-extensions-ai-semantic-kernel.md) |
-| ADR-056 | Jednostka pracy z jawną transakcją, zlecanie prac poleceniem SQL `ON CONFLICT` i `NOTIFY` z triggerów | Nowa (wersja 3.1); uzupełnienie 3.2 | — | [ADR-056-jednostka-pracy-zlecanie-prac-sql-i-notify-z-triggerow.md](adr/ADR-056-jednostka-pracy-zlecanie-prac-sql-i-notify-z-triggerow.md) |
-| ADR-057 | Sesja w wielu kartach — odświeżanie single-flight, okno tolerancji rotacji refresh tokenu i jeden strumień powiadomień na przeglądarkę | Nowa (wersja 3.1); p. 5 zastąpiony przez ADR-064 (3.2) | — | [ADR-057-sesja-w-wielu-kartach-single-flight-odswiezania-i-okno-tolerancji.md](adr/ADR-057-sesja-w-wielu-kartach-single-flight-odswiezania-i-okno-tolerancji.md) |
-| ADR-058 | Port `IModelGeneratywny` jako fabryka klientów czatu per rola; Semantic Kernel tylko do pluginów i szablonów promptów systemowych | Nowa (wersja 3.1); uzupełnienie 3.2 (C7-01, C7-02, C7-08 … C7-10, C7-14, C7-15) | — | [ADR-058-model-generatywny-jako-fabryka-klientow-czatu-per-rola.md](adr/ADR-058-model-generatywny-jako-fabryka-klientow-czatu-per-rola.md) |
-| ADR-059 | Budżet połączeń PostgreSQL bez PgBouncera w pilotażu | Nowa (wersja 3.1) | — | [ADR-059-budzet-polaczen-postgresql-bez-pgbouncera.md](adr/ADR-059-budzet-polaczen-postgresql-bez-pgbouncera.md) |
-| ADR-060 | Błędy API jako ProblemDetails (RFC 9457) z kodem domenowym; hierarchia wyjątków C# i obsługa w Next.js | Nowa (wersja 3.2) | — | [ADR-060-problemdetails-rfc-9457-z-kodami-domenowymi.md](adr/ADR-060-problemdetails-rfc-9457-z-kodami-domenowymi.md) |
-| ADR-061 | Kontrakt OpenAPI generowany z kodu (`Microsoft.AspNetCore.OpenApi`) i klient TypeScript generowany przez `openapi-typescript` | Nowa (wersja 3.2) | — | [ADR-061-kontrakt-openapi-z-kodu-i-generowany-klient-typescript.md](adr/ADR-061-kontrakt-openapi-z-kodu-i-generowany-klient-typescript.md) |
-| ADR-062 | Semantyka HTTP API — wersjonowanie, polityki autoryzacji, `Idempotency-Key`, `ETag`/`If-Match`, stronicowanie kursorem i limity | Nowa (wersja 3.2); p. 3, 4 (część), 6 zastąpione w 3.3 (ADR-068 … ADR-070) | — | [ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md](adr/ADR-062-semantyka-http-wersjonowanie-idempotencja-etag-stronicowanie.md) |
-| ADR-063 | DDL jako jedyne źródło schematu (migracje SQL); model EF Core bez generowania schematu | Nowa (wersja 3.2) | — | [ADR-063-ddl-jako-jedyne-zrodlo-schematu-ef-core-bez-generowania.md](adr/ADR-063-ddl-jako-jedyne-zrodlo-schematu-ef-core-bez-generowania.md) |
-| ADR-064 | Kontrakt strumieni SSE — migawka stanu przy każdym połączeniu zamiast kursora UUIDv7, heartbeat, zamykanie, ścieżka zapasowa | Nowa (wersja 3.2); uzupełnienie 3.3 (C8-02, C8-12 p. 10) | — | [ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md](adr/ADR-064-kontrakt-strumieni-sse-migawka-przy-wznowieniu.md) |
-| ADR-065 | Scenariusze Mock sterowane jawnie, tryb ścisły E2E i dane deweloperskie poza migracjami | Nowa (wersja 3.2) | — | [ADR-065-scenariusze-mock-sterowane-jawnie-i-dane-deweloperskie-poza-migracjami.md](adr/ADR-065-scenariusze-mock-sterowane-jawnie-i-dane-deweloperskie-poza-migracjami.md) |
-| ADR-066 | Odporność pętli prac w tle i harmonogramu — klasyfikacja anulowania, obsługa wyjątków, ponowienie bez konfliktu deduplikacji, nadrabianie | Nowa (wersja 3.2) | — | [ADR-066-odpornosc-petli-prac-w-tle-i-harmonogramu.md](adr/ADR-066-odpornosc-petli-prac-w-tle-i-harmonogramu.md) |
-| ADR-067 | Wiązanie `multipart/form-data` przez `[AsParameters]`, polityka nazw JSON `NazwyLemat` i błędy wiązania jako ProblemDetails | Nowa (wersja 3.3) | — | [ADR-067-wiazanie-multipart-i-serializacja-json-api.md](adr/ADR-067-wiazanie-multipart-i-serializacja-json-api.md) |
-| ADR-068 | Idempotencja — rezerwacja klucza z terminem i zapis odpowiedzi w transakcji skutku | Nowa (wersja 3.3) | — | [ADR-068-idempotencja-w-jednostce-pracy-z-rezerwacja-klucza.md](adr/ADR-068-idempotencja-w-jednostce-pracy-z-rezerwacja-klucza.md) |
-| ADR-069 | Wersja agregatu w ciele odpowiedzi jako źródło `If-Match`; brak warunkowego `GET` (`304`) i nagłówka `ETag` w odczytach | Nowa (wersja 3.3) | — | [ADR-069-wersja-w-ciele-zrodlem-if-match-bez-warunkowego-get.md](adr/ADR-069-wersja-w-ciele-zrodlem-if-match-bez-warunkowego-get.md) |
-| ADR-070 | Limity szybkości kluczowane kontem i odświeżanie sesji odporne na chwilowe awarie | Nowa (wersja 3.3) | — | [ADR-070-limity-szybkosci-kluczowane-kontem-i-odpornosc-odswiezania.md](adr/ADR-070-limity-szybkosci-kluczowane-kontem-i-odpornosc-odswiezania.md) |
-| ADR-071 | Autoryzacja obiektowa — kompletna macierz, identyfikatory zagnieżdżone, widoczność Zadań dla Ucznia, odczyty Administratora | Nowa (wersja 3.3) | — | [ADR-071-autoryzacja-obiektowa-macierz-kompletna-i-test-idor.md](adr/ADR-071-autoryzacja-obiektowa-macierz-kompletna-i-test-idor.md) |
-| ADR-072 | `PATCH` jako JSON Merge Patch z `Opcjonalne<T>`; odpowiedź rejestracji jednym rekordem | Nowa (wersja 3.3) | — | [ADR-072-patch-jako-json-merge-patch-i-rejestracja-jednym-rekordem.md](adr/ADR-072-patch-jako-json-merge-patch-i-rejestracja-jednym-rekordem.md) |
-| ADR-073 | Autozapis Poprawek Transkrypcji jako szkic roboczy | Nowa (wersja 3.3) | — | [ADR-073-autozapis-poprawek-transkrypcji-szkic-roboczy.md](adr/ADR-073-autozapis-poprawek-transkrypcji-szkic-roboczy.md) |
-| ADR-074 | Zmiana terminu i wycofanie Przypisania; ponowna odpowiedź w Teście diagnostycznym | Nowa (wersja 3.3) | — | [ADR-074-zmiana-i-wycofanie-przypisania.md](adr/ADR-074-zmiana-i-wycofanie-przypisania.md) |
+| ADR-055 | Warstwa agentów AI w .NET — Microsoft.Extensions.AI, Semantic Kernel i implementacje Mock | Przyjęta (wersja 3.0); zmieniona 3.1 (ADR-058); uzupełnienie 3.2 (ADR-065) | — | [ADR-055-ai-agent-layer-microsoft-extensions-ai-semantic-kernel.md](adr/ADR-055-ai-agent-layer-microsoft-extensions-ai-semantic-kernel.md) |
+| ADR-056 | Jednostka pracy z jawną transakcją, zlecanie prac poleceniem SQL `ON CONFLICT` i `NOTIFY` z triggerów | Nowa (wersja 3.1); uzupełnienie 3.2 | — | [ADR-056-unit-of-work-sql-job-enqueue-and-notify-from-triggers.md](adr/ADR-056-unit-of-work-sql-job-enqueue-and-notify-from-triggers.md) |
+| ADR-057 | Sesja w wielu kartach — odświeżanie single-flight, okno tolerancji rotacji refresh tokenu i jeden strumień powiadomień na przeglądarkę | Nowa (wersja 3.1); p. 5 zastąpiony przez ADR-064 (3.2) | — | [ADR-057-multi-tab-session-single-flight-refresh-tolerance-window.md](adr/ADR-057-multi-tab-session-single-flight-refresh-tolerance-window.md) |
+| ADR-058 | Port `IModelGeneratywny` jako fabryka klientów czatu per rola; Semantic Kernel tylko do pluginów i szablonów promptów systemowych | Nowa (wersja 3.1); uzupełnienie 3.2 (C7-01, C7-02, C7-08 … C7-10, C7-14, C7-15) | — | [ADR-058-generative-model-as-per-role-chat-client-factory.md](adr/ADR-058-generative-model-as-per-role-chat-client-factory.md) |
+| ADR-059 | Budżet połączeń PostgreSQL bez PgBouncera w pilotażu | Nowa (wersja 3.1) | — | [ADR-059-postgresql-connection-budget-without-pgbouncer.md](adr/ADR-059-postgresql-connection-budget-without-pgbouncer.md) |
+| ADR-060 | Błędy API jako ProblemDetails (RFC 9457) z kodem domenowym; hierarchia wyjątków C# i obsługa w Next.js | Nowa (wersja 3.2) | — | [ADR-060-problemdetails-rfc-9457-with-domain-codes.md](adr/ADR-060-problemdetails-rfc-9457-with-domain-codes.md) |
+| ADR-061 | Kontrakt OpenAPI generowany z kodu (`Microsoft.AspNetCore.OpenApi`) i klient TypeScript generowany przez `openapi-typescript` | Nowa (wersja 3.2) | — | [ADR-061-openapi-contract-from-code-and-generated-typescript-client.md](adr/ADR-061-openapi-contract-from-code-and-generated-typescript-client.md) |
+| ADR-062 | Semantyka HTTP API — wersjonowanie, polityki autoryzacji, `Idempotency-Key`, `ETag`/`If-Match`, stronicowanie kursorem i limity | Nowa (wersja 3.2); p. 3, 4 (część), 6 zastąpione w 3.3 (ADR-068 … ADR-070) | — | [ADR-062-http-semantics-versioning-idempotency-etag-pagination.md](adr/ADR-062-http-semantics-versioning-idempotency-etag-pagination.md) |
+| ADR-063 | DDL jako jedyne źródło schematu (migracje SQL); model EF Core bez generowania schematu | Nowa (wersja 3.2) | — | [ADR-063-ddl-as-single-schema-source-ef-core-without-generation.md](adr/ADR-063-ddl-as-single-schema-source-ef-core-without-generation.md) |
+| ADR-064 | Kontrakt strumieni SSE — migawka stanu przy każdym połączeniu zamiast kursora UUIDv7, heartbeat, zamykanie, ścieżka zapasowa | Nowa (wersja 3.2); uzupełnienie 3.3 (C8-02, C8-12 p. 10) | — | [ADR-064-sse-stream-contract-snapshot-on-resume.md](adr/ADR-064-sse-stream-contract-snapshot-on-resume.md) |
+| ADR-065 | Scenariusze Mock sterowane jawnie, tryb ścisły E2E i dane deweloperskie poza migracjami | Nowa (wersja 3.2) | — | [ADR-065-explicit-mock-scenarios-and-dev-data-outside-migrations.md](adr/ADR-065-explicit-mock-scenarios-and-dev-data-outside-migrations.md) |
+| ADR-066 | Odporność pętli prac w tle i harmonogramu — klasyfikacja anulowania, obsługa wyjątków, ponowienie bez konfliktu deduplikacji, nadrabianie | Nowa (wersja 3.2) | — | [ADR-066-background-job-loop-and-scheduler-resilience.md](adr/ADR-066-background-job-loop-and-scheduler-resilience.md) |
+| ADR-067 | Wiązanie `multipart/form-data` przez `[AsParameters]`, polityka nazw JSON `NazwyLemat` i błędy wiązania jako ProblemDetails | Nowa (wersja 3.3) | — | [ADR-067-multipart-binding-and-api-json-serialisation.md](adr/ADR-067-multipart-binding-and-api-json-serialisation.md) |
+| ADR-068 | Idempotencja — rezerwacja klucza z terminem i zapis odpowiedzi w transakcji skutku | Nowa (wersja 3.3) | — | [ADR-068-idempotency-in-unit-of-work-with-key-reservation.md](adr/ADR-068-idempotency-in-unit-of-work-with-key-reservation.md) |
+| ADR-069 | Wersja agregatu w ciele odpowiedzi jako źródło `If-Match`; brak warunkowego `GET` (`304`) i nagłówka `ETag` w odczytach | Nowa (wersja 3.3) | — | [ADR-069-version-in-body-as-if-match-source-no-conditional-get.md](adr/ADR-069-version-in-body-as-if-match-source-no-conditional-get.md) |
+| ADR-070 | Limity szybkości kluczowane kontem i odświeżanie sesji odporne na chwilowe awarie | Nowa (wersja 3.3) | — | [ADR-070-account-keyed-rate-limits-and-resilient-refresh.md](adr/ADR-070-account-keyed-rate-limits-and-resilient-refresh.md) |
+| ADR-071 | Autoryzacja obiektowa — kompletna macierz, identyfikatory zagnieżdżone, widoczność Zadań dla Ucznia, odczyty Administratora | Nowa (wersja 3.3) | — | [ADR-071-object-authorisation-complete-matrix-and-idor-test.md](adr/ADR-071-object-authorisation-complete-matrix-and-idor-test.md) |
+| ADR-072 | `PATCH` jako JSON Merge Patch z `Opcjonalne<T>`; odpowiedź rejestracji jednym rekordem | Nowa (wersja 3.3) | — | [ADR-072-patch-as-json-merge-patch-and-single-record-registration.md](adr/ADR-072-patch-as-json-merge-patch-and-single-record-registration.md) |
+| ADR-073 | Autozapis Poprawek Transkrypcji jako szkic roboczy | Nowa (wersja 3.3) | — | [ADR-073-transcription-edit-autosave-as-working-draft.md](adr/ADR-073-transcription-edit-autosave-as-working-draft.md) |
+| ADR-074 | Zmiana terminu i wycofanie Przypisania; ponowna odpowiedź w Teście diagnostycznym | Nowa (wersja 3.3) | — | [ADR-074-assignment-change-and-withdrawal.md](adr/ADR-074-assignment-change-and-withdrawal.md) |
+| ADR-075 | Angielskie nazwy plików i katalogów | Nowa (wersja 3.4) | — | [ADR-075-english-file-and-directory-names.md](adr/ADR-075-english-file-and-directory-names.md) |
 
 ---
 
@@ -9189,7 +9597,7 @@ produktu (23.4).
 ## 22. Parametry systemu (wartości domyślne)
 
 Parametry przechowywane w kodzie (od wersji 3.0 klasa
-`Lemat.Application.Wspolne.LematOpcje` wiązana z sekcją `Lemat` pliku
+`Lemat.Application.Common.LematOpcje` wiązana z sekcją `Lemat` pliku
 `appsettings.json`, w 2.4 `lemat/konfiguracja.py`), nadpisywalne zmiennymi
 środowiskowymi `LEMAT_*` o niezmienionych nazwach (ADR-049 p. 8), poza
 progami, kalibratorami i konfiguracją modeli (baza danych).

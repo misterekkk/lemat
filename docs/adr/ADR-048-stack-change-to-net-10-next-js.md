@@ -42,8 +42,8 @@ konkretną decyzją.
    Api, Worker, Scheduler, ImageSandbox, `efbundle`), `lemat-frontend`
    (Next.js standalone), `lemat-sympy` (sidecar Python, ADR-050), `caddy:2`.
 3. **Projekty i warstwy:** `Lemat.Domain` (bez pakietów), `Lemat.Application`
-   (przypadki użycia, fasady, porty, Orkiestrator), `Lemat.Agenci`,
-   `Lemat.Modele` (adaptery modeli i Mock), `Lemat.Infrastructure` (EF Core,
+   (przypadki użycia, fasady, porty, Orkiestrator), `Lemat.Agents`,
+   `Lemat.Models` (adaptery modeli i Mock), `Lemat.Infrastructure` (EF Core,
    Npgsql, S3, sidecary, e-mail, bezpieczeństwo), punkty kompozycji
    `Lemat.Api`, `Lemat.Worker`, `Lemat.Scheduler`, izolowany
    `Lemat.ImageSandbox` oraz projekty testów (sekcja 6.4). Granice

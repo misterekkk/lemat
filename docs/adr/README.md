@@ -1,8 +1,9 @@
 # Architecture Decision Records
 
 Każda decyzja architektoniczna projektu Lemat jest osobnym plikiem
-`ADR-NNN-<slug>.md` (slug: tytuł po transliteracji ADR-049, małe litery,
-łączniki, ≤ 60 znaków). Sekcje pliku: tabela metadanych (Status, Data
+`ADR-NNN-<slug>.md` (od wersji 3.4, ADR-075: slug to angielskie
+tłumaczenie tytułu, małe litery ASCII, łączniki, ≤ 60 znaków; tytuł i
+treść ADR pozostają po polsku). Sekcje pliku: tabela metadanych (Status, Data
 decyzji, Bramka G-0, powiązania), **Status**, **Kontekst**, **Decyzja**,
 **Alternatywy**, **Konsekwencje** i opcjonalnie **Uzupełnienia** (zmiany w
 kolejnych iteracjach, z numerem uwagi krytyka). Statusy: `Przyjęta`,
@@ -22,3 +23,6 @@ polityka nazw JSON, idempotencja w transakcji skutku, wersja w ciele zamiast
 warunkowego `GET`, limity dla klas za NAT, autoryzacja obiektowa, `PATCH`
 jako JSON Merge Patch, autozapis Poprawek jako szkic roboczy oraz zmiana i
 wycofanie Przypisania.
+ADR-075 (wersja 3.4) wprowadza angielskie nazwy plików i katalogów w całym
+repozytorium (w tym nazwy plików ADR) przy niezmienionych identyfikatorach
+ze słownika.

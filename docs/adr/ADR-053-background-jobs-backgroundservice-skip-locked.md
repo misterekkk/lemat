@@ -96,7 +96,7 @@ status = 'W_TOKU'`, a jednostka pracy handlera potwierdza dzierżawę
 wykonuje `INSERT … ON CONFLICT … RETURNING` poleceniem SQL na transakcji
 bieżącej jednostki pracy (nie `Add` encji), a `NOTIFY praca_w_tle` wysyła
 trigger `trg_praca_w_tle_powiadom`; `ZlecaniePracInterceptor` nie
-istnieje. Kontrakt `IZlecaniePrac` jest w `Lemat.Application.Wspolne.PraceWTle`.
+istnieje. Kontrakt `IZlecaniePrac` jest w `Lemat.Application.Common.BackgroundJobs`.
 
 **Uzupełnienie wersji 3.2 (C7-03, C7-04, C7-13, ADR-066).** Klasyfikacja
 anulowania (utrata dzierżawy wyłącznie przez pętlę odnawiania; każde inne

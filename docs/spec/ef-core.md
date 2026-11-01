@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ef-core.md` |
-| Wersja | 3.3 (pętla 3.x, iteracja 4) |
+| Wersja | 3.4 (angielskie nazwy plików i katalogów, ADR-075; treść jak w 3.3 — pętla 3.x, iteracja 4) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 3.6 (agregaty), 7 (model danych), 13.4 (prace w tle); schemat: [`docs/spec/ddl.md`](ddl.md) |
 | Projekt | `backend/src/Lemat.Infrastructure/Persistence/` |
 
@@ -33,7 +33,7 @@ fragmenty kodu z sekcji 6 sprawdzono budową modelu i zapisem na PostgreSQL
 | `Microsoft.EntityFrameworkCore.Design` 10 | `Lemat.Infrastructure` (`PrivateAssets=all`) | wyłącznie `efbundle` (migracje SQL, ADR-063); `dotnet ef migrations add` nie jest używane |
 
 ```csharp
-// Lemat.Infrastructure/Persistence/RejestracjaPersistence.cs
+// Lemat.Infrastructure/Persistence/PersistenceRegistration.cs
 public static IServiceCollection DodajPersistence(this IServiceCollection uslugi, LematOpcje opcje, RodzajProcesu proces)
 {
     var zrodlo = new NpgsqlDataSourceBuilder(opcje.Baza.CiagPolaczenia(proces))      // pule wg ADR-059
@@ -179,7 +179,7 @@ pobrane z katalogu po załadowaniu DDL (`enum_range`); pozostałe 31 enumów
 są w 3.6, 10 i 13 dokumentu głównego.
 
 ```csharp
-namespace Lemat.Domain.Wspolne;   // przestrzenie według modułu właściciela (3.5); tu zebrane dla czytelności
+namespace Lemat.Domain.Common;   // przestrzenie według modułu właściciela (3.5); tu zebrane dla czytelności
 public enum StatusWkladki { Szkic, DoPrzegladu, Opublikowana, Wycofana }
 public enum RolaModelu { DecyzyjnyGlowny, DecyzyjnyZapasowy, RozpoznawaniePisma, GeneratywnyZadania,
                          GeneratywnyRozwiazujacyNiezaleznie, GeneratywnyWskazowki, GeneratywnyWkladki, GeneratywnyOpiniaPomocnicza }
@@ -260,8 +260,8 @@ odczytach, ADR-069);
 
 ## 6. Konfiguracje agregatów (kluczowe fragmenty)
 
-Wszystkie klasy są w `Lemat.Infrastructure/Persistence/Konfiguracje/<Modul>/`
-i nazywają się `<Encja>EntityTypeConfiguration` (3.1 p. 7). Wspólne:
+Wszystkie klasy są w `Lemat.Infrastructure/Persistence/Configurations/<Module>/`
+i nazywają się `<Entity>EntityTypeConfiguration` (3.1 p. 7). Wspólne:
 `builder.Ignore(a => a.Zdarzenia)`; kolekcje encji wewnętrznych przez pola
 prywatne (`UsePropertyAccessMode(PropertyAccessMode.Field)`).
 
@@ -574,7 +574,7 @@ public sealed class DecyzjaModeluEntityTypeConfiguration : IEntityTypeConfigurat
 {
     public void Configure(EntityTypeBuilder<DecyzjaModelu> b)
     {
-        b.ToTable("decyzja_modelu");                                                 // tabela partycjonowana (ddl.md, 0004_partycje.sql)
+        b.ToTable("decyzja_modelu");                                                 // tabela partycjonowana (ddl.md, 0004_partitions.sql)
         b.HasKey(d => new { d.Id, d.CreatedAt });
         b.Property(d => d.SkrotStanu).HasColumnType("bytea");
         b.Property(d => d.Opcje).HasConversion<JsonbConverter<OpcjePytania?>>().HasColumnType("jsonb");
@@ -585,7 +585,7 @@ public sealed class DecyzjaModeluEntityTypeConfiguration : IEntityTypeConfigurat
 
 Wiersze `decyzja_modelu` są wstawiane wsadowo (`AddRange` + `SaveChanges`
 w jednostce pracy zapisu Oceny, ≤ 29 wierszy); EF Core 10 wysyła je jednym
-poleceniem wielowierszowym. Tabela nadrzędna i partycje są tworzone w `0004_partycje.sql` (migracje są
+poleceniem wielowierszowym. Tabela nadrzędna i partycje są tworzone w `0004_partitions.sql` (migracje są
 wyłącznie SQL, ADR-063).
 
 ## 7. Pokrycie tabel
@@ -599,7 +599,7 @@ wyłącznie SQL, ADR-063).
 | `proba_logowania` | `ProbaLogowania` | EN (techniczna) | tylko `INSERT` i zapytanie liczące | Konta |
 | `zdarzenie_rodo` | `ZdarzenieRodo` | AG (niezmienny) | `ZdarzenieRodoEntityTypeConfiguration` (PK bez wartości domyślnej, `dane` jako `JsonDocument`) | Konta |
 | `dzien_wolny` | `DzienWolny` | EN | dane referencyjne, tylko odczyt | Wspolne |
-| `dzial`, `umiejetnosc`, `umiejetnosc_wymagana` | `Dzial`, `Umiejetnosc` (kolekcja `WymaganeUmiejetnosci`) | AG (referencyjne) | tylko odczyt, `HasData` z 7.4 i `umiejetnosci.yaml` | Tresci |
+| `dzial`, `umiejetnosc`, `umiejetnosc_wymagana` | `Dzial`, `Umiejetnosc` (kolekcja `WymaganeUmiejetnosci`) | AG (referencyjne) | tylko odczyt, `HasData` z 7.4 i `skills.yaml` | Tresci |
 | `wkladka_teoretyczna` | `WkladkaTeoretyczna` | AG | `version`, indeks `ux_wkladka_opublikowana` | Tresci |
 | `arkusz_cke` | `ArkuszCke` | AG | CHECK `sesja` (konwerter `SesjaArkusza`) | Tresci |
 | `import_arkusza` | `ImportArkusza` | AG | `xmin`, `raport` jako `JsonbConverter<RaportImportu>` | Tresci |
@@ -634,8 +634,8 @@ wyłącznie SQL, ADR-063).
 | `prog_pewnosci` | `ProgPewnosci` | AG (niezmienny poza `aktywny`) | `ux_prog_aktywny`; zmiana `aktywny` przez `ExecuteUpdate` w transakcji KALIBRUJ | Kalibracja |
 | `stan_bezpiecznika` | `StanBezpiecznika` | AG | 6.5 | Kalibracja |
 | `probka_kalibracyjna` | `ProbkaKalibracyjna` | AG (niezmienny) | kolumny `zgodna`, `uwzgledniana_w_progu` jako `HasComputedColumnSql(…, stored: true)` | Kalibracja |
-| `praca_w_tle` | `PracaWTle` | EN (techniczna) | tylko odczyt (`AsNoTracking`, rekord 13.4.1 z kompletem kolumn, `MaksProb` → `maks_prob`); zapis `SklepPracWTle` (`ponow_prace`, `odzyskaj_dzierzawy`), `ZlecaniePracSql` | Orkiestracja / Wspolne.PraceWTle |
-| `przebieg_harmonogramu` | `PrzebiegHarmonogramu` | EN (techniczna) | SQL `INSERT … ON CONFLICT DO UPDATE` w `HarmonogramHostedService`; odczyt do panelu (3.2, ADR-066 p. 5) | Wspolne.PraceWTle |
+| `praca_w_tle` | `PracaWTle` | EN (techniczna) | tylko odczyt (`AsNoTracking`, rekord 13.4.1 z kompletem kolumn, `MaksProb` → `maks_prob`); zapis `SklepPracWTle` (`ponow_prace`, `odzyskaj_dzierzawy`), `ZlecaniePracSql` | Orkiestracja / Common.BackgroundJobs |
+| `przebieg_harmonogramu` | `PrzebiegHarmonogramu` | EN (techniczna) | SQL `INSERT … ON CONFLICT DO UPDATE` w `HarmonogramHostedService`; odczyt do panelu (3.2, ADR-066 p. 5) | Common.BackgroundJobs |
 | `klucz_idempotencji` | `KluczIdempotencji` | EN (techniczna) | SQL w filtrze idempotencji `Lemat.Api` | — |
 | `powiadomienie` | `Powiadomienie` | AG | `Id` = `Guid.CreateVersion7()` w fabryce; `TypPowiadomienia` konwerter | Powiadomienia |
 | `dziennik_audytu` | `WpisAudytu` | AG (niezmienny) | tylko `INSERT` | Audyt |
@@ -647,9 +647,9 @@ tabeli; od 3.2 doszła `przebieg_harmonogramu`). Test
 
 ## 8. Strategia migracji i test zgodności (wersja 3.2, ADR-063)
 
-1. **Źródło:** `docs/spec/ddl.md` (bloki A i B) → `wyodrebnij-ddl.sh` →
-   `Persistence/Migrations/Sql/0000_schemat.sql`, `0001_funkcje.sql` …
-   `0006_prace_w_tle.sql` (zasoby osadzone).
+1. **Źródło:** `docs/spec/ddl.md` (bloki A i B) → `extract-ddl.sh` →
+   `Persistence/Migrations/Sql/0000_schema.sql`, `0001_functions.sql` …
+   `0006_background_jobs.sql` (zasoby osadzone).
 2. **Migracje:** klasy `Migration` wyłącznie z
    `migrationBuilder.Sql(ZasobSql.Wczytaj("…"))`; `0001_SchematPoczatkowy`
    wykonuje pliki `0000` … `0006`. Brak `ModelSnapshot`; model EF Core nie
@@ -691,7 +691,7 @@ tabeli; od 3.2 doszła `przebieg_harmonogramu`). Test
    `zlecenie_generowania.trg_zlecenie_generowania_powiadom` (C7-15 p. 3:
    `trg_suma_kryteriow` jest na `kryterium_oceniania`, nie na
    `zadanie_wersja`).
-6. **`OgraniczeniaZgodneZMigawka`** — `Persistence/Schemat/ograniczenia.txt`
+6. **`OgraniczeniaZgodneZMigawka`** — `Persistence/Schema/constraints.txt`
    (posortowane `tabela | nazwa | pg_get_constraintdef`) = katalog; zmiana
    DDL wymaga regeneracji pliku w tym samym PR.
 7. **Wykonanie i role:** `efbundle` w kontenerze `migracje`; `0005`

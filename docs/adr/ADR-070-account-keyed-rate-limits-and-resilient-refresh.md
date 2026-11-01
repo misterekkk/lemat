@@ -47,7 +47,7 @@ odpowiedzi `!ok` (także `429`, `503`, `502`).
    `trzy-klasy-za-nat.js` (17.4): 90 wirtualnych Uczniów z jednego IP, 30
    logowań w 60 s, 90 przesłań w 60 s, odpytywanie zapasowe co 1 s przez
    30 s → 0 odpowiedzi `429`.
-4. **Odświeżenie tokenu w kliencie** (`odswiezanie.ts`):
+4. **Odświeżenie tokenu w kliencie** (`refresh.ts`):
    - `401` (`SESJA_UNIEWAZNIONA`, brak cookie) → `token = null`,
      komunikat `WYLOGOWANIE` do wszystkich kart (jedyny przypadek
      wylogowania);
@@ -71,10 +71,10 @@ odpowiedzi `!ok` (także `429`, `503`, `502`).
 
 ## Konsekwencje
 
-- Testy: Playwright `klasa-za-nat.spec.ts` (30 logowań różnych kont z
+- Testy: Playwright `class-behind-nat.spec.ts` (30 logowań różnych kont z
   jednego IP w 60 s → 30 × `200`; 6. nieudane logowanie na to samo konto
-  → `429`), Vitest `odswiezanie.test.ts` (`503` → bez `WYLOGOWANIE`,
+  → `429`), Vitest `refresh.test.ts` (`503` → bez `WYLOGOWANIE`,
   token zachowany, 3 ponowienia; `429` z `Retry-After: 2` → ponowienie po
   2 s; `401` → `WYLOGOWANIE`; wyjątek sieci → `trwajace = null`),
-  `Lemat.Api.Tests/Limity/LimityKluczowaneKontem` (dwa konta z jednego IP
+  `Lemat.Api.Tests/RateLimits/LimityKluczowaneKontem` (dwa konta z jednego IP
   nie dzielą `NaUzytkownika`).

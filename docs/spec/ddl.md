@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ddl.md` |
-| Wersja | 3.3 (pętla 3.x, iteracja 4) |
+| Wersja | 3.4 (angielskie nazwy plików i katalogów, ADR-075; treść jak w 3.3 — pętla 3.x, iteracja 4) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — sekcja 7 (decyzje, ERD, konwencje, schematy JSONB), mapowanie EF Core: [`docs/spec/ef-core.md`](ef-core.md) |
 | Status | Jedyne źródło schematu (ADR-063): migracje są klasami EF Core wykonującymi wyłącznie pliki SQL wycięte z tego dokumentu; model EF Core nie generuje schematu i jest sprawdzany z katalogiem testem `ModelEfZgodnyZKatalogiem` (`ef-core.md` 8) |
 
@@ -11,8 +11,8 @@ Plik zawiera dwa bloki SQL: **(A) tabele, typy, ograniczenia, indeksy**
 (przeniesione z 7.3 wersji 3.0 z poprawkami wersji 3.1) i **(B) triggery,
 funkcje i uprawnienia** (w wersji 3.0 opisane komentarzami; od wersji 3.1
 pełna treść, z której powstają pliki `Persistence/Migrations/Sql/*.sql`).
-Skrypt CI `backend/narzedzia/wyodrebnij-ddl.sh` wycina oba bloki do
-`backend/src/Lemat.Infrastructure/Persistence/Schemat/ddl.sql`.
+Skrypt CI `backend/tools/extract-ddl.sh` wycina oba bloki do
+`backend/src/Lemat.Infrastructure/Persistence/Schema/ddl.sql`.
 
 ## Zmiany wersji 3.3
 
@@ -34,8 +34,8 @@ Stan katalogu po załadowaniu bloków A i B na czystej bazie PostgreSQL
 | `praca_w_tle` | kolumna `max_prob` → `maks_prob` (ADR-049; konwencja `snake_case` z `MaksProb`) | C7-06 p. 7 |
 | `uczen`, `nauczyciel` | klucz obcy `uzytkownik_id → uzytkownik(id)` `DEFERRABLE INITIALLY DEFERRED` | C7-06 p. 1, ADR-063 p. 3 |
 | `przebieg_harmonogramu` | nowa tabela (trwały znacznik ostatniego wystąpienia wpisu harmonogramu) | C7-13, ADR-066 p. 5 |
-| `0005_uprawnienia.sql` | blok `DO` tworzy role `NOLOGIN`, gdy nie istnieją; `ALTER DEFAULT PRIVILEGES` dla roli wykonującej migrację | C7-15 p. 4 |
-| `0006_prace_w_tle.sql` | nowe funkcje `ponow_prace` i `odzyskaj_dzierzawy` (konflikt `ux_praca_dedup_oczekujace` → `ZASTAPIONA_NOWSZA`, odzyskiwanie per wiersz) | C7-03, ADR-066 p. 3 |
+| `0005_permissions.sql` | blok `DO` tworzy role `NOLOGIN`, gdy nie istnieją; `ALTER DEFAULT PRIVILEGES` dla roli wykonującej migrację | C7-15 p. 4 |
+| `0006_background_jobs.sql` | nowe funkcje `ponow_prace` i `odzyskaj_dzierzawy` (konflikt `ux_praca_dedup_oczekujace` → `ZASTAPIONA_NOWSZA`, odzyskiwanie per wiersz) | C7-03, ADR-066 p. 3 |
 | `powiadomienie.id` | bez zmian schematu; wznowienie strumienia nie zależy od kolejności UUIDv7 (migawka nieprzeczytanych) | C7-11, ADR-064 p. 4 |
 
 Stan katalogu po załadowaniu bloków A i B na czystej bazie PostgreSQL
@@ -1185,11 +1185,11 @@ CREATE TABLE dziennik_audytu (
 ## (B) Triggery, funkcje i uprawnienia
 
 Pliki migracji SQL (kolejność wykonywania przez `migrationBuilder.Sql`):
-`0001_funkcje.sql` (funkcje czyste), `0002_triggery_niezmiennikow.sql`,
-`0003_powiadomienia.sql`, `0004_partycje.sql`, `0005_uprawnienia.sql`, `0006_prace_w_tle.sql` (3.2, C7-03).
+`0001_functions.sql` (funkcje czyste), `0002_invariant_triggers.sql`,
+`0003_notifications.sql`, `0004_partitions.sql`, `0005_permissions.sql`, `0006_background_jobs.sql` (3.2, C7-03).
 
 ```sql
--- ===================== 0001_funkcje.sql =====================
+-- ===================== 0001_functions.sql =====================
 -- Kalendarz dni roboczych (A-15, ADR-043). Przykłady: piątek 18:00 + 3 → środa 18:00; sobota 10:00 + 3 → czwartek 08:00.
 CREATE FUNCTION dodaj_dni_robocze(od timestamptz, n integer) RETURNS timestamptz
 LANGUAGE plpgsql STABLE AS $$
@@ -1228,7 +1228,7 @@ CREATE FUNCTION poziom_z_b(b numeric, obecny smallint) RETURNS smallint LANGUAGE
         ELSE obecny END
 $$;
 
--- ===================== 0002_triggery_niezmiennikow.sql =====================
+-- ===================== 0002_invariant_triggers.sql =====================
 -- Suma kryteriów per wariant = punkty_max wersji, ≤ 1 kryterium wyniku końcowego na wariant, ≤ 24 kryteria (W-1, 13.2)
 CREATE FUNCTION f_suma_kryteriow() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
@@ -1327,7 +1327,7 @@ BEGIN
 END $$;
 CREATE TRIGGER trg_powody_poczatkowe BEFORE UPDATE ON weryfikacja FOR EACH ROW EXECUTE FUNCTION f_powody_poczatkowe();
 
--- ===================== 0003_powiadomienia.sql (ADR-056 p. 3) =====================
+-- ===================== 0003_notifications.sql (ADR-056 p. 3) =====================
 -- pg_notify w transakcji jest dostarczane wyłącznie po COMMIT, nigdy po ROLLBACK;
 -- identyczne (kanał, ładunek) z jednej transakcji PostgreSQL scala w jedno powiadomienie.
 CREATE FUNCTION f_praca_w_tle_powiadom() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -1391,7 +1391,7 @@ END $$;
 CREATE TRIGGER trg_konfiguracja_modelu_powiadom AFTER INSERT OR UPDATE OF aktywna ON konfiguracja_modelu
     FOR EACH ROW EXECUTE FUNCTION f_konfiguracja_modelu_powiadom();
 
--- ===================== 0004_partycje.sql =====================
+-- ===================== 0004_partitions.sql =====================
 CREATE FUNCTION utworz_partycje_decyzji(miesiac date) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE
     od    date := date_trunc('month', miesiac)::date;
@@ -1404,7 +1404,7 @@ END $$;
 SELECT utworz_partycje_decyzji((date_trunc('month', now()) + make_interval(months => m))::date)
 FROM generate_series(0, 3) AS m;
 
--- ===================== 0005_uprawnienia.sql =====================
+-- ===================== 0005_permissions.sql =====================
 -- Właścicielem schematu jest lemat_migracje (jedyny użytkownik z DDL, 5.4).
 -- 3.2 (C7-15 p. 4): role aplikacji tworzy infrastruktura (Terraform, docker compose: init-db.sh) jako role z LOGIN
 -- przed pierwszą migracją; na czystej bazie (Testcontainers, CI) blok DO tworzy je jako role NOLOGIN,
@@ -1428,7 +1428,7 @@ REVOKE UPDATE ON zdarzenie_rodo FROM lemat_worker;     -- DELETE po 2 latach wyk
 ALTER DEFAULT PRIVILEGES IN SCHEMA public                -- 3.2: dla roli wykonującej migrację (lemat_migracje w produkcji)
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO lemat_api, lemat_worker, lemat_scheduler;
 
--- ===================== 0006_prace_w_tle.sql (3.2, C7-03) =====================
+-- ===================== 0006_background_jobs.sql (3.2, C7-03) =====================
 -- Ponowienie i odzyskiwanie dzierżaw bez naruszenia ux_praca_dedup_oczekujace: przy typach TrybDeduplikacji.TylkoOczekujace*
 -- może istnieć praca A W_TOKU i praca B OCZEKUJE z tym samym kluczem. Powrót A do OCZEKUJE łamałby indeks, więc
 -- A kończy się jako ZAKONCZONA z ostatni_blad = 'ZASTAPIONA_NOWSZA' (B ma nowszy ładunek albo przetworzy wszystkie

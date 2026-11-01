@@ -4,12 +4,67 @@
 |---|---|
 | Dokument | `docs/ARCHITECTURE_CHANGELOG.md` |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](ARCHITECTURE_DETAILED.md) |
-| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.3) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
+| Zawartość | historia iteracji pętli architekt → krytyk (wersje 1.0 … 3.4) i mapowanie uwag krytyka na miejsca rozwiązania; przeniesione z sekcji 23 dokumentu głównego w wersji 3.0 |
 
 Numery sekcji w tabelach mapowania odnoszą się do wersji dokumentu
 głównego obowiązującej w danej iteracji. Od wersji 3.0 rejestr ADR jest w
 `docs/adr/`, a decyzje właściciela produktu D-1 … D-17 pozostają w sekcji
 23.4 dokumentu głównego.
+
+## Wersja 3.4 (2026-11-01) — angielskie nazwy plików i katalogów (ADR-075)
+
+Kontekst: nowe wymaganie właściciela projektu „nazwy folderów oraz plików
+mają być po angielsku”, przyjęte przez orkiestratora jako ADR-075 z
+uzupełnieniem ADR-049 (p. 16–22). Treść merytoryczna (reguły domenowe,
+kontrakty, DDL, identyfikatory, ścieżki REST API) bez zmian; zmieniają się
+wyłącznie nazwy plików, katalogów, projektów .NET, przestrzeni nazw i
+segmentów tras App Router (a więc adresy stron frontendu). Brak uwag
+krytyka ze statusem OTWARTA.
+
+**Zmiany:**
+
+- Pliki dokumentacji: 73 pliki `docs/adr/ADR-NNN-<slug>.md` przemianowane
+  na angielskie slugi (`git mv`; ADR-054 miał już angielski slug),
+  `docs/spec/prompty.md` → `docs/spec/prompts.md`,
+  `docs/spec/narzedzia/sprawdz_rtm.py` → `docs/spec/tools/check_rtm.py`;
+  odnośniki zaktualizowane w indeksie ADR (19), `docs/adr/README.md`, tym
+  changelogu i `docs/CRITIQUE_LOG.md` (wyłącznie ścieżki plików, bez zmiany
+  treści uwag). `CLAUDE.md`, `HANDOFF.md`, `TASKS.md` nie zawierały ścieżek
+  do przemianowanych plików.
+- Nowy ADR-075; ADR-049 — status „zmieniona w 3.4”, uzupełnienie p. 16–22.
+- 3.5: kolumna „Nazwa pliku/folderu (EN)” dla wszystkich 111 pojęć
+  (sprawdzone skryptem: 111 nazw, 0 kolizji, także bez rozróżniania
+  wielkości liter) i akapit o zasadach.
+- 3.4: segmenty tras nie są już źródłem identyfikatorów testu słownika.
+- 6.4–6.10: projekty `Lemat.Agents`, `Lemat.Models`, `Lemat.Tools` (nowy
+  wiersz tabeli 6.4; projekt był wcześniej wymieniony w 10.0.6 i ADR-065,
+  ADR-071), `Lemat.Simulations`, testy `Lemat.Agents.Tests`,
+  `Lemat.Models.Tests`; przestrzenie nazw angielskie (namespace = katalog);
+  drzewa `backend/` (6.7) i `frontend/` (6.8) przepisane z angielskimi
+  nazwami plików i polskimi nazwami typów w komentarzach; grupy tras
+  `(public)`, `(student)`, `(teacher)`, `(administrator)`.
+- Nowa 6.11: zasada i zakres, mapowanie projektów i segmentów przestrzeni
+  nazw (6.11.1), reguła nazw plików `.cs` z przyrostkami ról i manifestem
+  `file-names.yaml`, test `TestNazwPlikow` (6.11.2), `backend/.editorconfig`
+  (SA1649/MA0048/RCS1060 wyłączone, IDE0130 błąd, IDE1006 bez zmian,
+  6.11.3), mapowanie adresów stron, modułów `features/`, plików TS i testów
+  Playwright (6.11.4), pliki nazwane dotąd identyfikatorem — katalogi ról,
+  indeksy `Prompts/index.yaml` i `Mock/Scenarios/index.yaml`, migracja
+  `0001_InitialSchema.cs` z identyfikatorem `0001_SchematPoczatkowy`
+  (6.11.5), dokumentacja (6.11.6).
+- 7.7: nazwy plików migracji (klasa i SQL angielskie, identyfikator
+  migracji bez zmian); 11.5.3: ścieżki testów bezpiecznika i źródła Próbki
+  jako pliki .NET (`SafeguardTests.cs`, `SafeguardSimulation.cs`,
+  `CalibrationSampleSourceTests.cs`).
+- 18: strony i testy akceptacyjne w RTM z nowymi nazwami; skrypt
+  `check_rtm.py` sprawdza dodatkowo (9) angielskie nazwy stron i plików
+  `*.spec.ts`, (10) brak martwych odnośników Markdown w `docs/`; wynik:
+  46/46 wymagań, 140 endpointów, 114 tabel, 80 stron, 96 ADR, 15 bramek,
+  107 identyfikatorów, 0 błędów (test negatywny: wykrywa polski segment
+  trasy, polską nazwę `*.spec.ts` i martwy odnośnik).
+- `docs/spec/api.md`, `ddl.md`, `ef-core.md`, `prompts.md` w wersji 3.4:
+  ścieżki, importy TS, mapowanie stron (api.md 7), katalog promptów z
+  kolumną pliku (prompts.md 2) i drzewo scenariuszy Mock (prompts.md 6).
 
 ## Pętla 3.x, iteracja 4 (2026-11-01, wersja 3.3) — zamknięcie uwag C8 i Macierz Pokrycia Wymagań (RTM)
 
@@ -32,7 +87,7 @@ sprawdzono poza repozytorium:
   brak drugiego skutku, CHECK `2xx`);
 - TypeScript 5.9.3 (`tsc --strict`) — `odswiezanie.ts`, `strumien.ts`,
   `kolejkaZapisow.ts`; symulacja klienta SSE w Node 22;
-- skrypt `docs/spec/narzedzia/sprawdz_rtm.py` — 46/46 wymagań, 0 błędów
+- skrypt `docs/spec/tools/check_rtm.py` — 46/46 wymagań, 0 błędów
   odwołań (test negatywny: wykrywa nieistniejący endpoint, tabelę i stronę).
 
 **Zmiany struktury dokumentów:**
@@ -44,7 +99,7 @@ sprawdzono poza repozytorium:
   ADR-061, ADR-062, ADR-064.
 - `docs/spec/ddl.md` 3.3 (`klucz_idempotencji`, `przypisanie`,
   `szkic_transkrypcji`, `0007_api.sql`), `ef-core.md` 3.3, `api.md` 3.3
-  (sekcje 1–7, nowa 6.4), nowy `docs/spec/narzedzia/sprawdz_rtm.py`.
+  (sekcje 1–7, nowa 6.4), nowy `docs/spec/tools/check_rtm.py`.
 
 **Mapowanie uwag iteracji 8:**
 
@@ -95,7 +150,7 @@ TypeScript 5.9.3 z `openapi-typescript` 7.13, `openapi-fetch` 0.14.1,
   (odporność pętli prac i harmonogramu).
 - Uzupełnienia 3.2: ADR-049 (p. 13–15), ADR-051, ADR-053, ADR-055, ADR-056,
   ADR-057 (p. 5 zastąpiony), ADR-058 (p. 1–10).
-- `ddl.md`, `ef-core.md`, `prompty.md` w wersji 3.2.
+- `ddl.md`, `ef-core.md`, `prompts.md` w wersji 3.2.
 
 **Zmiany treści dokumentu głównego:**
 
@@ -124,20 +179,20 @@ TypeScript 5.9.3 z `openapi-typescript` 7.13, `openapi-fetch` 0.14.1,
 
 | Uwaga | Rozwiązanie (miejsce) |
 |---|---|
-| C7-01 | ADR-058 uzup. 3.2 p. 1, 2, 4: `MaximumIterationsPerRequest = limit + 1`, `MaximumConsecutiveErrorsPerRequest = 0`, `TerminateOnUnknownCalls = true` + `NIEZNANE_NARZEDZIE`, nazwy `sympy_sprawdz_rownowaznosc`/`sympy_postac_liniowa` w prompcie, Mock, śladzie i metryce, budżet 45 s na żądanie i 150 s na wywołanie agenta (zmierzone: 8 wykonań i `LIMIT_WYWOLAN_FUNKCJI` przy 9. żądaniu wywołania); 10.0.4, 10.2.4, 10.2.5, `prompty.md` 2, 4.3, 6; 22 |
+| C7-01 | ADR-058 uzup. 3.2 p. 1, 2, 4: `MaximumIterationsPerRequest = limit + 1`, `MaximumConsecutiveErrorsPerRequest = 0`, `TerminateOnUnknownCalls = true` + `NIEZNANE_NARZEDZIE`, nazwy `sympy_sprawdz_rownowaznosc`/`sympy_postac_liniowa` w prompcie, Mock, śladzie i metryce, budżet 45 s na żądanie i 150 s na wywołanie agenta (zmierzone: 8 wykonań i `LIMIT_WYWOLAN_FUNKCJI` przy 9. żądaniu wywołania); 10.0.4, 10.2.4, 10.2.5, `prompts.md` 2, 4.3, 6; 22 |
 | C7-02 | ADR-058 uzup. 3.2 p. 3: potok w postaci kompilowalnej (`.Use(w => new …(w, …))`), `UseFunctionInvocation` zewnętrzne, telemetria, klasyfikacja, limit czasu, koszt i ogranicznik per żądanie do dostawcy (zmierzone: 3 × `chat`, 2 × `execute_tool`, 1 × `orchestrate_tools`, 3 zapisy kosztu); rozróżnienie anulowania w `KlasyfikacjaBledowChatClient`; 10.0.4, 10.0.5 |
 | C7-03 | ADR-066 p. 3; `ddl.md` `0006_prace_w_tle.sql` (`ponow_prace`, `odzyskaj_dzierzawy` — per wiersz, `unique_violation` → `ZASTAPIONA_NOWSZA`, sprawdzone na PostgreSQL 16.15); 13.4.2; 15.4 C-47, C-48; testy (g), (h) |
 | C7-04 | ADR-066 p. 1, 2, 4, 6: klasyfikacja anulowania (`DzierzawaPracy.UtraconaAt`), `catch (Exception)` z wynikiem, `PonawiajInfrastrukture`, `StopHost` + restart + health check, `TerminMinalException` zamiast ujemnego `CancelAfter`, praca `SPRAWDZ_ZAWIESZONE_ROZWIAZANIA`; 13.3, 13.4.1 (kod `PetlaAsync`/`Klasyfikuj` — logika sprawdzona kompilacją i uruchomieniem), 13.5, 14.3, C-52 |
 | C7-05 | ADR-063 (wariant A): DDL jedynym źródłem, migracje wyłącznie SQL, EF bez `HasCheckConstraint`/`HasMaxLength`/`HasTrigger`/`HasIndex`, nazwy domyślne PostgreSQL utrwalone w `ograniczenia.txt`, test `ModelEfZgodnyZKatalogiem` (szkic sprawdzony: wykrył rozbieżność `NULL`); 7.2, 7.6, 7.7, `ef-core.md` 1, 6, 8, `ddl.md` nagłówek |
 | C7-06 | p. 1 — FK kont `DEFERRABLE INITIALLY DEFERRED`, brak relacji EF dla `UczenId`/`NauczycielId` → `uzytkownik`, relacje bez nawigacji dla pozostałych FK (ADR-063 p. 3; sprawdzone: bez relacji `23503`, z relacją zapis poprawny); p. 2 — `List<OpanowanieUmiejetnosci>` + słownik w pamięci; p. 3 — cienie PascalCase + `HasColumnName`, jedyny konstruktor; p. 4 — `Include(s => EF.Property<List<…>>(s, "_aktywne").Where(…))`; p. 5–6 — `SqlQuery<T>(UPDATE/INSERT … RETURNING).ToListAsync()`, reguła `ReloadAsync`; p. 7 — `maks_prob` w DDL, `HasColumnName("oswiadczenie_wieku_16")`, rekord `PracaWTle` z kompletem kolumn; p. 8 — `WersjaAgregatuInterceptor` po korzeniu (sprawdzone: zmiana wyłącznie `theta` podnosi `profil_ucznia.version`); `ef-core.md` 4, 6.1, 6.4, 6.5, 7; 13.4.1; 15.2; C-50 |
-| C7-07 | ADR-065: nagłówek `X-Lemat-Mock-Scenariusz` (tylko `Development`/`E2E`) przenoszony w ładunku prac, katalog scenariuszy, tryb ścisły, odpowiedzi domyślne trasy automatycznej (masa 0,995), `PrzesunietyTimeProvider` (`LEMAT_CZAS_TESTOWY`), macierz 15 scenariuszy E2E; 10.0.6, `prompty.md` 6 |
-| C7-08 | ADR-058 uzup. 3.2 p. 5: `ZapasowyLlmAdapter.WykonajPlanAsync(…, KontekstDecyzji, …)`, prompt `plan-pytan-walidacji-v1` (`prompty.md` 4.9), port `IWywolanieUstrukturyzowane` z jedną implementacją w `Lemat.Modele` (`JsonSchema.Net` w `Lemat.Modele`), test `WalidacjaPrzyObwodzieOtwartym`; 6.4, 10.0.3, 10.0.4, 13.2 |
-| C7-09 | ADR-058 uzup. 3.2 p. 6: schematy generowane z rekordów z `TransformOptions` (zmierzone: `additionalProperties: false`, komplet `required`), migawki `Schematy/*.json`, porównanie semantyczne z `prompty.md`, mapy → tablice `[{opcja, p}]`/`[{id, prawda}]`, `AdditionalProperties["strict"] = true` (sprawdzone na serwerze testowym: `json_schema.strict = true`), test kontraktu WireMock; `prompty.md` 1, 4.4, 4.8, 4.9; 10.0.3; 12.4 (`DecyzjaModeluWyjscie.rozklad`) |
+| C7-07 | ADR-065: nagłówek `X-Lemat-Mock-Scenariusz` (tylko `Development`/`E2E`) przenoszony w ładunku prac, katalog scenariuszy, tryb ścisły, odpowiedzi domyślne trasy automatycznej (masa 0,995), `PrzesunietyTimeProvider` (`LEMAT_CZAS_TESTOWY`), macierz 15 scenariuszy E2E; 10.0.6, `prompts.md` 6 |
+| C7-08 | ADR-058 uzup. 3.2 p. 5: `ZapasowyLlmAdapter.WykonajPlanAsync(…, KontekstDecyzji, …)`, prompt `plan-pytan-walidacji-v1` (`prompts.md` 4.9), port `IWywolanieUstrukturyzowane` z jedną implementacją w `Lemat.Modele` (`JsonSchema.Net` w `Lemat.Modele`), test `WalidacjaPrzyObwodzieOtwartym`; 6.4, 10.0.3, 10.0.4, 13.2 |
+| C7-09 | ADR-058 uzup. 3.2 p. 6: schematy generowane z rekordów z `TransformOptions` (zmierzone: `additionalProperties: false`, komplet `required`), migawki `Schematy/*.json`, porównanie semantyczne z `prompts.md`, mapy → tablice `[{opcja, p}]`/`[{id, prawda}]`, `AdditionalProperties["strict"] = true` (sprawdzone na serwerze testowym: `json_schema.strict = true`), test kontraktu WireMock; `prompts.md` 1, 4.4, 4.8, 4.9; 10.0.3; 12.4 (`DecyzjaModeluWyjscie.rozklad`) |
 | C7-10 | ADR-058 uzup. 3.2 p. 7: `PamiecKonfiguracjiModeli` (Singleton, odświeżanie `NOTIFY` i co 30 s), porty agentów przez `NpgsqlDataSource`/`IDbContextFactory`, testy `AgenciIPortyAgentowNieZalezaOdLematDbContext` i `WalidacjaRownoleglaBezBledowKontekstu`; 10.0.7, 10.2.5, `ef-core.md` 1, C-51 |
 | C7-11 | ADR-064 p. 2–4: strumienie stanu ze skrótem stanu jako `id:`, strumień powiadomień z migawką nieprzeczytanych przy każdym połączeniu (bez kursora UUIDv7), scalanie po `id` w kliencie, test „dwa powiadomienia w odwróconej kolejności”; ADR-057 uzup. 3.2 (p. 5 zastąpiony), ADR-051 uzup. 3.2; 12.10, C-42, C-49 |
 | C7-12 | ADR-065 p. 6: migracje bez danych `mock`, polecenie `Lemat.Narzedzia seed-dev` (usługa `seed`, profil `dev`, odmowa w `Production`), test `MigracjeNaPustejBazieNieTworzaKonfiguracjiMock`; 7.7 p. 5, 10.0.6 |
 | C7-13 | ADR-066 p. 5: tabela `przebieg_harmonogramu` (`ddl.md`), nadrabianie wystąpień z 24 h przy objęciu roli i co 1 s, kolumna „Nadr.” w tabeli cykli, alert `HARMONOGRAM_ZALEGLY`, test „przejęcie roli o 03:00:05”; 13.5, `GET /admin/harmonogram`, C-53 |
-| C7-14 | ADR-058 uzup. 3.2 p. 8: `new KernelPromptTemplateFactory { AllowDangerouslySetContent = true }` (zmierzone: flaga w `PromptTemplateConfig` nie działa, flaga fabryki i `InputVariable` działają), test `RenderowanieNazwUmiejetnosci`; `prompty.md` 1 p. 2 |
+| C7-14 | ADR-058 uzup. 3.2 p. 8: `new KernelPromptTemplateFactory { AllowDangerouslySetContent = true }` (zmierzone: flaga w `PromptTemplateConfig` nie działa, flaga fabryki i `InputVariable` działają), test `RenderowanieNazwUmiejetnosci`; `prompts.md` 1 p. 2 |
 | C7-15 | p. 1 — 43 typy (7.3, 7.6, 7.7, `ef-core.md` 3.2); p. 2 — definicje 12 enumów w `ef-core.md` 3.2 (wartości z katalogu); p. 3 — `HasTrigger` nie jest używane, `KatalogTriggerow` 15 pozycji z poprawną tabelą `trg_suma_kryteriow` (`ef-core.md` 8 p. 5, ADR-063 p. 5); p. 4 — blok `DO` tworzący role `NOLOGIN` (sprawdzone na czystej bazie); p. 5 — aliasy `global using` (ADR-049 p. 13); p. 6 — zapis w 6.4 (zakaz metapakietu SK, `OpenAI` 2.14 vs `Azure.AI.OpenAI` 2.1) i test `KontraktWywolaniaOpenAiTests`; p. 7 — 13.1 i ADR-058 uzup. p. 9 (`dostawca_llm`, `gen_ai.system`); p. 8 — 10.0.3 i `ef-core.md` 3.3 (sekwencje `\u003C`, uzasadnienie dla `jsonb` vs tekst wiadomości i kolumn `text`); dodatkowo liczba tabel 60 (wersja 3.1 podawała 58 przy 59 tabelach) |
 
 ## Pętla 3.x, iteracja 2 (2026-11-01, wersja 3.1) — agenci AI w .NET, model danych EF Core, porty i prace w tle; zamknięcie uwag C6
@@ -154,7 +209,7 @@ Z-1 bez zmian.
   poprawkami 3.1 i pełną treścią PL/pgSQL triggerów i funkcji),
   `ef-core.md` (`LematDbContext`, konwencje, konwersje, współbieżność,
   konfiguracje agregatów, pokrycie 58 tabel, strategia migracji),
-  `prompty.md` (8 promptów systemowych, 3 szablony stanów, schematy JSON
+  `prompts.md` (8 promptów systemowych, 3 szablony stanów, schematy JSON
   odpowiedzi, teksty pytań, dane Mock).
 - Nowe ADR: ADR-056 (jednostka pracy, zlecanie SQL `ON CONFLICT`,
   `NOTIFY` z triggerów), ADR-057 (sesja w wielu kartach, okno tolerancji
@@ -206,7 +261,7 @@ Z-1 bez zmian.
 | C6-07 (ŚREDNIA) | Tryb synchroniczny w `IRekomendacjaSynchroniczna` (`Lemat.Application.Orkiestracja.Synchroniczna`), zależnej tylko od `IAgentRekomendujacy` i fasad odczytu; zapis w `NastepnyElementHandler` modułu Rekomendacje; `IZlecaniePrac` i typy prac przeniesione do `Lemat.Application.Wspolne.PraceWTle`; testy `BrakCykliMiedzyModulamiAplikacji` i `KontenerDiTests` (`ValidateOnBuild`, `ValidateScopes`) | ADR-023 (uzup. 3.1), 6.1, 6.2 reguła 3, 6.3, 6.4, 6.5, 6.7, 9.2, 3.5 #67, #95 |
 | C6-08 (ŚREDNIA) | `StanBezpiecznika : Agregat<KluczBezpiecznika>` z kolumną `version`; `Utworz` (tylko `OTWARTE_OBLICZENIOWE`), `Wyzwol` z `OstatnieWyzwolenieAt`, `WyjdzZBlokady`, strażnik w `Dezaktywuj`, `DezaktywowanyPo`; `KALIBRUJ` zapisuje z tokenem wersji, przy konflikcie ponowna ocena (maks. 3), dezaktywacja w trakcie przebiegu wygrywa; dezaktywacja z `If-Match`; scenariusz C-44 | 3.5 #104, #110, 3.6, 11.5.3 (krok 6), 13.3 (`KALIBRUJ`), 15.2 (C-44), `docs/spec/ddl.md`, `docs/spec/ef-core.md` 6.5 |
 | C6-09 (ŚREDNIA) | Jeden strumień powiadomień na przeglądarkę (karta-lider Web Locks `lemat-powiadomienia-lider` + `BroadcastChannel`); limity per replika ≤ 4 na (użytkownik, zasób) i ≤ 12 na użytkownika z `429 ZA_DUZO_STRUMIENI` bez zamykania istniejących; `id:` powiadomienia = UUIDv7 `powiadomienie.id`; jawna lista triggerów `NOTIFY lemat_zdarzenia` (rozwiązanie, ocena, weryfikacja, powiadomienie, import, zlecenie); `/api/*` poza service workerem; scenariusz C-42 | ADR-057, ADR-056 p. 3, ADR-051 (uzup. 3.1), ADR-054 (uzup. 3.1), 5.2, 6.8, 6.9, 15.2 (C-42), 22 |
-| C6-10 (ŚREDNIA) | Pakiety `Microsoft.SemanticKernel.Yaml` (bez Handlebars) i `JsonSchema.Net`; limit wywołań funkcji przez `FunkcjaZLimitem : DelegatingAIFunction` (9. wywołanie → `BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`) + `MaximumIterationsPerRequest = 8`; szablony SK wyłącznie dla promptów systemowych ze zmiennymi systemowymi, treść użytkownika w wiadomości `user` z `UnsafeRelaxedJsonEscaping`; stan Modelu decyzyjnego budowany w C# (`BudowniczyStanuOceny`); testy `LimitWywolanFunkcjiTests`, `ZgodnoscBajtowaLatexTests`, `StanOcenyZgodnyBajtowo` | ADR-058 p. 4–5, 7, 5.2, 6.4, 6.6, 10.0.3, 10.2.4, `docs/spec/prompty.md` 1, 3 |
+| C6-10 (ŚREDNIA) | Pakiety `Microsoft.SemanticKernel.Yaml` (bez Handlebars) i `JsonSchema.Net`; limit wywołań funkcji przez `FunkcjaZLimitem : DelegatingAIFunction` (9. wywołanie → `BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`) + `MaximumIterationsPerRequest = 8`; szablony SK wyłącznie dla promptów systemowych ze zmiennymi systemowymi, treść użytkownika w wiadomości `user` z `UnsafeRelaxedJsonEscaping`; stan Modelu decyzyjnego budowany w C# (`BudowniczyStanuOceny`); testy `LimitWywolanFunkcjiTests`, `ZgodnoscBajtowaLatexTests`, `StanOcenyZgodnyBajtowo` | ADR-058 p. 4–5, 7, 5.2, 6.4, 6.6, 10.0.3, 10.2.4, `docs/spec/prompts.md` 1, 3 |
 | C6-11 (ŚREDNIA) | Nadzorca + procesy robocze w `Lemat.ImageSandbox` zamiast `Environment.FailFast` (zabijany tylko proces przekraczający 8 s, `504`); `tmpfs /tmp`, `ResourceLimits.Disk`, `Memory = 384 MiB`, `Thread = 1`, `SetTempDirectory`; limity kontenerów 1,5 / 3 GiB; polityka bezpieczeństwa ustawiana w kodzie (`MagickNET.Initialize` z `ConfigurationFiles`), test `KoderSpozaListyJestOdrzucany`; ładowanie biblioteki natywnej z `runtimes/` i test startowy z `read_only`; `429 LIMIT_NORMALIZACJI` po 3 przekroczeniach w 10 min | ADR-052 (uzup. 3.1), 5.3, 5.4, 6.7, 13.1 (`IObrobkaObrazow`), 22 |
 | C6-12 (NISKA) | p. 1: `ORYGINALNA`/`MASKOWANA` w 3.5 i 12.3; p. 2: 3.2 — Kalibracja w dwóch modułach, zasób `/nauczyciele`, `Zadanie.CzyBazowe`/`CzyWygenerowane`; p. 3: `IModelDecyzyjny` w 3.3 i A-02; p. 4: `WynikZadaniaSkrot`, `ZdjecieRef` jako typy wewnętrzne C#, TS `WynikZadaniaWyjscie`, `ZdjecieRozwiazaniaWyjscie`, `AdresZdjeciaWyjscie`, `ObszarNaZdjeciu` na liście nowych nazw; p. 5: `KontekstDecyzji` przy #30; p. 6: 16.1 — ES256; p. 7: `Lemat.Symulacje` → `Lemat.Infrastructure`, pakiety `Microsoft.ML`, `Microsoft.ML.LightGbm`; p. 8: ADR-049 p. 11 i test `BrakCzesciowejKwalifikacjiPrzestrzeni` | 3.2, 3.3, 3.5, 6.4, 12.3, 16.1, ADR-049 (uzup. 3.1) |
 | C6-13 (NISKA) | Trzecie znaczenie „blokady” — blokada konta (`status_konta = 'ZABLOKOWANE'`, `StatusKonta.Zablokowane`, `Uzytkownik.Zablokuj`, `KontoZablokowane`, `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`) z kwalifikatorem w prozie; przemianowanie odrzucone z powodu kolizji z Zawieszeniem Wyniku zadania | 3.1 p. 5, 3.4 część 3, 3.6, ADR-049 p. 12 |

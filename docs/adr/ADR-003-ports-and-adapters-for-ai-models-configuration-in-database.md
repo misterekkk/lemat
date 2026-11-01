@@ -11,7 +11,7 @@
 
 Przyjęta; realizacja techniczna zaktualizowana przez ADR-048 (wersja 3.0).
 
-**Realizacja w stosie .NET 10 + Next.js (wersja 3.0).** Decyzja obowiązuje. Porty są interfejsami C# w `Lemat.Application.Modele` (`IModelDecyzyjny`, `IModelGeneratywny`, `IRozpoznawaniePisma`, `ISprawdzanieSymboliczne`, `IPredyktorSukcesu`, `IOgranicznikSzybkosci`); adaptery i pakiety dostawców wyłącznie w projekcie `Lemat.Modele` (egzekwowane przez BannedApiAnalyzers i NetArchTest); modele generatywne za abstrakcją `IChatClient` (Microsoft.Extensions.AI), każdy dostawca ma implementację Mock — ADR-048, ADR-055.
+**Realizacja w stosie .NET 10 + Next.js (wersja 3.0).** Decyzja obowiązuje. Porty są interfejsami C# w `Lemat.Application.Models` (`IModelDecyzyjny`, `IModelGeneratywny`, `IRozpoznawaniePisma`, `ISprawdzanieSymboliczne`, `IPredyktorSukcesu`, `IOgranicznikSzybkosci`); adaptery i pakiety dostawców wyłącznie w projekcie `Lemat.Models` (egzekwowane przez BannedApiAnalyzers i NetArchTest); modele generatywne za abstrakcją `IChatClient` (Microsoft.Extensions.AI), każdy dostawca ma implementację Mock — ADR-048, ADR-055.
 
 ## Kontekst
 

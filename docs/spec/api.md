@@ -3,9 +3,9 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/api.md` |
-| Wersja | 3.3 (pętla 3.x, iteracja 4) |
+| Wersja | 3.4 (angielskie nazwy plików i katalogów, ADR-075; treść jak w 3.3 — pętla 3.x, iteracja 4) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — sekcja 12 (konwencje, katalog endpointów, kody błędów), 14 (obsługa błędów), 15 (współbieżność); ADR-060 … ADR-064, ADR-067 … ADR-074 |
-| Pliki w repozytorium | `backend/src/Lemat.Api/Kontrakty/<Modul>/*.cs` (rekordy), `backend/src/Lemat.Api/Endpointy/<Modul>Endpointy.cs`, `backend/openapi/lemat-v1.json` (generowany), `frontend/src/lib/api/schema.d.ts` (generowany), `frontend/src/lib/api/klient.ts`, `frontend/src/lib/sse/strumien.ts` |
+| Pliki w repozytorium | `backend/src/Lemat.Api/Contracts/<Module>/*.cs` (rekordy), `backend/src/Lemat.Api/Endpoints/<Module>Endpoints.cs`, `backend/openapi/lemat-v1.json` (generowany), `frontend/src/lib/api/schema.d.ts` (generowany), `frontend/src/lib/api/client.ts`, `frontend/src/lib/sse/stream.ts` |
 
 Plik zawiera długie listingi, do których odwołuje się sekcja 12 dokumentu
 głównego: (1) konwencje serializacji i nagłówki, (2) model błędu, (3)
@@ -16,7 +16,7 @@ Router na endpointy.
 ## 1. Konwencje serializacji i nagłówki
 
 ```csharp
-// Lemat.Api/Konfiguracja/JsonApi.cs — te same opcje dla odpowiedzi, żądań i generatora OpenAPI (ADR-061 p. 2, ADR-067);
+// Lemat.Api/Configuration/JsonApi.cs — te same opcje dla odpowiedzi, żądań i generatora OpenAPI (ADR-061 p. 2, ADR-067);
 // sprawdzone uruchomieniem na ASP.NET Core 10.0.14 (wersja 3.3)
 public static class JsonApi
 {
@@ -71,7 +71,7 @@ public sealed partial class NazwyLemat(JsonNamingPolicy baza) : JsonNamingPolicy
 ## 2. Model błędu
 
 ```csharp
-// Lemat.Api.Kontrakty.Wspolne — schemat ProblemDetailsLemat w OpenAPI (ADR-060 p. 1)
+// Lemat.Api.Contracts.Common — schemat ProblemDetailsLemat w OpenAPI (ADR-060 p. 1)
 public sealed record ProblemDetailsLemat(
     string Type, string Title, int Status, string? Detail, string Instance,
     KodBledu Kod, string TraceId,
@@ -79,7 +79,7 @@ public sealed record ProblemDetailsLemat(
     JsonObject? Szczegoly);                       // zależne od kodu (12.2, kolumna „szczegoly”)
 public sealed record BladPola(string Pole, string KodReguly, string Komunikat);   // pole: "kroki[3].latex"
 
-// Lemat.Domain.Wspolne.Bledy — kod HTTP z atrybutu członka; pełna lista = 12.2
+// Lemat.Domain.Common.Errors — kod HTTP z atrybutu członka; pełna lista = 12.2
 public enum KodBledu
 {
     [Http(422)] Walidacja, [Http(401)] Nieuwierzytelniony, [Http(401)] SesjaUniewazniona, [Http(403)] BrakUprawnien,
@@ -90,12 +90,12 @@ public enum KodBledu
     [Http(503)] UslugaNiedostepna, [Http(503)] BazaNiedostepna,
     [Http(400)] ZapytanieNieprawidlowe, [Http(410)] ZasobUsuniety, [Http(409)] LimitWersjiTranskrypcji,   // 3.3 (ADR-067, ADR-073)
     [Http(409)] PrzypisanieWycofane,                                                                     // 3.3 (ADR-074)
-    // … pozostałe kody z tabeli 12.2 (generator z katalog-bledow.yaml, test KatalogBledowKompletny)
+    // … pozostałe kody z tabeli 12.2 (generator z error-catalog.yaml, test KatalogBledowKompletny)
 }
 ```
 
 ```yaml
-# backend/src/Lemat.Api/Bledy/katalog-bledow.yaml — jedno źródło KodBledu, OpenAPI x-lemat-kody-bledow i messages/pl-PL.json (ADR-060 p. 4)
+# backend/src/Lemat.Api/Errors/error-catalog.yaml — jedno źródło KodBledu, OpenAPI x-lemat-kody-bledow i messages/pl-PL.json (ADR-060 p. 4)
 - kod: ROZWIAZANIE_NIEPRAWIDLOWY_STAN
   http: 409
   e: [E-13]
@@ -111,7 +111,7 @@ public enum KodBledu
 ```
 
 ```ts
-// frontend/src/lib/api/bledy.ts — typ z OpenAPI + klasa błędu klienta
+// frontend/src/lib/api/errors.ts — typ z OpenAPI + klasa błędu klienta
 import type { components } from "./schema";
 export type ProblemDetailsLemat = components["schemas"]["ProblemDetailsLemat"];
 export type KodBledu = components["schemas"]["KodBledu"];
@@ -126,7 +126,7 @@ export class BladApi extends Error {
 ```
 
 ```csharp
-// Lemat.Api/Bledy/ObslugaBledowWiazania.cs — błędy wiązania i deserializacji jako ProblemDetails (ADR-067 p. 6; sprawdzone na 10.0.14:
+// Lemat.Api/Errors/BindingErrorHandling.cs — błędy wiązania i deserializacji jako ProblemDetails (ADR-067 p. 6; sprawdzone na 10.0.14:
 // ucięty JSON → 400, nieznane pole / zły typ / brak dyskryminatora / brak pola formularza → 422 z bledy_pol)
 public sealed partial class ObslugaBledowWiazania(IProblemDetailsService pds) : IExceptionHandler
 {
@@ -161,12 +161,12 @@ public sealed partial class ObslugaBledowWiazania(IProblemDetailsService pds) : 
 
 ## 3. Rekordy C# kontraktów (źródło OpenAPI i typów TypeScript)
 
-Rekordy są w `Lemat.Api.Kontrakty.<Modul>`; enumy (`StatusRozwiazania`,
+Rekordy są w `Lemat.Api.Contracts.<Module>`; enumy (`StatusRozwiazania`,
 `RodzajZadania`, `PowodWeryfikacji` …) pochodzą z `Lemat.Domain` (3.5).
 Ograniczenia z 12.5 wyrażają walidatory FluentValidation (`<Rekord>Walidator`),
 a atrybuty `[StringLength]`/`[Range]` są dodane tam, gdzie mają trafić do
 OpenAPI (`maxLength`, `minimum`, `maximum`). Typ TypeScript każdego rekordu
-to `components["schemas"]["<NazwaRekordu>"]`; aliasy w `typy.ts`
+to `components["schemas"]["<NazwaRekordu>"]`; aliasy w `types.ts`
 (`export type RozwiazanieWyjscie = components["schemas"]["RozwiazanieWyjscie"];`).
 
 ```csharp
@@ -485,7 +485,7 @@ bazowego z tymi samymi typami.
 ## 4. Endpointy — przykład grupy z filtrami (Rozwiązania)
 
 ```csharp
-// Lemat.Api/Endpointy/RozwiazaniaEndpointy.cs
+// Lemat.Api/Endpoints/SolutionsEndpoints.cs
 public static class RozwiazaniaEndpointy
 {
     public static RouteGroupBuilder MapujRozwiazania(this RouteGroupBuilder api)
@@ -592,7 +592,7 @@ id: c0a7…
 | każdy | `blad` | `ProblemDetailsLemat` | — | błąd po rozpoczęciu strumienia; koniec bez ponowień przy `403`/`404` |
 
 ```csharp
-// Lemat.Api/Strumienie/StrumienRozwiazania.cs — szkielet (TypedResults.ServerSentEvents, sprawdzone na 10.0.14)
+// Lemat.Api/Streams/SolutionStream.cs — szkielet (TypedResults.ServerSentEvents, sprawdzone na 10.0.14)
 static IResult StrumienAsync(Guid id, Aktor aktor,
     IOdczytRozwiazan odczyt, KoncentratorZdarzen koncentrator, LimityStrumieni limity, TimeProvider czas, CancellationToken ct)
 {
@@ -628,13 +628,13 @@ static IResult StrumienAsync(Guid id, Aktor aktor,
 
 ## 6. Klient Next.js (`frontend/src/lib`)
 
-### 6.1 `api/klient.ts` — jedyny klient HTTP
+### 6.1 `api/client.ts` — jedyny klient HTTP
 
 ```ts
 import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "./schema";
-import { BladApi, type ProblemDetailsLemat } from "./bledy";
-import { pobierzToken, odswiezToken, zapiszRozniceZegara } from "../auth/odswiezanie";
+import { BladApi, type ProblemDetailsLemat } from "./errors";
+import { pobierzToken, odswiezToken, zapiszRozniceZegara } from "../auth/refresh";
 
 const naglowkiLemat: Middleware = {
   async onRequest({ request }) {
@@ -680,7 +680,7 @@ export function nowyKluczIdempotencji(): string { return crypto.randomUUID(); }
 export const ifMatch = (version: number) => `"${version}"`;
 ```
 
-Przykład użycia (TanStack Query, moduł `features/rozwiazania`):
+Przykład użycia (TanStack Query, moduł `features/solutions`):
 
 ```ts
 const zatwierdz = useMutation({
@@ -694,20 +694,20 @@ const zatwierdz = useMutation({
 });
 ```
 
-`obsluzBlad(e, reakcje)` (`lib/api/obsluzBlad.ts`) wywołuje reakcję dla
+`obsluzBlad(e, reakcje)` (`lib/api/handle-error.ts`) wywołuje reakcję dla
 `e.kod`, a w pozostałych przypadkach pokazuje toast z `bledy.<kod>.tytul`
 i `bledy.<kod>.akcja` (next-intl, 14.4); `5xx` i `BLAD_SIECI` w zapytaniach
 odczytu przechodzą do najbliższego `error.tsx` (TanStack Query
 `throwOnError: (e) => e instanceof BladApi && (e.status >= 500 || e.status === 0)`).
 
-### 6.2 `auth/odswiezanie.ts` — single-flight (ADR-057), różnica zegara, odporność na awarie (ADR-070 p. 4)
+### 6.2 `auth/refresh.ts` — single-flight (ADR-057), różnica zegara, odporność na awarie (ADR-070 p. 4)
 
 Moduły 6.2–6.4 przechodzą `tsc --strict` (TypeScript 5.9.3,
 `eventsource-parser` 3; sprawdzone w wersji 3.3).
 
 ```ts
-// frontend/src/lib/auth/odswiezanie.ts — single-flight (ADR-057), różnica zegara (ADR-064 uzup. 3.3 p. 4), odporność na awarie (ADR-070 p. 4)
-import { BladApi } from "../api/bledy";
+// frontend/src/lib/auth/refresh.ts — single-flight (ADR-057), różnica zegara (ADR-064 uzup. 3.3 p. 4), odporność na awarie (ADR-070 p. 4)
+import { BladApi } from "../api/errors";
 
 const kanal = new BroadcastChannel("lemat-sesja");
 let token: { wartosc: string; exp: number } | null = null;   // exp w czasie serwera (ms)
@@ -718,7 +718,7 @@ const terazSerwer = () => Date.now() + roznicaZegara;
 const czekaj = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const rozrzut = (ms: number) => ms * (0.8 + Math.random() * 0.4);
 
-/** Wywoływane przez klient.ts dla każdej odpowiedzi z nagłówkiem Date. */
+/** Wywoływane przez client.ts dla każdej odpowiedzi z nagłówkiem Date. */
 export function zapiszRozniceZegara(naglowekDate: string | null): void {
   const t = naglowekDate ? Date.parse(naglowekDate) : NaN;
   if (!Number.isNaN(t)) roznicaZegara = t - Date.now();
@@ -784,12 +784,12 @@ token, jeżeli jest jeszcze ważny. Przeglądarka bez `navigator.locks`
 w obrębie karty), a serwer toleruje ponowne użycie przez okno 30 s
 (ADR-057 p. 2).
 
-### 6.3 `sse/strumien.ts`
+### 6.3 `sse/stream.ts`
 
 ```ts
-// frontend/src/lib/sse/strumien.ts — ADR-064 (z uzupełnieniem 3.3: pierwsze zdarzenie zawsze, null kończy odpytywanie, jeden 401)
+// frontend/src/lib/sse/stream.ts — ADR-064 (z uzupełnieniem 3.3: pierwsze zdarzenie zawsze, null kończy odpytywanie, jeden 401)
 import { createParser, type EventSourceMessage } from "eventsource-parser";
-import { pobierzToken, odswiezToken } from "../auth/odswiezanie";
+import { pobierzToken, odswiezToken } from "../auth/refresh";
 
 export const OKRES_ODPYTYWANIA_SPOCZYNKU_MS = 30_000;
 export type OpcjeStrumienia<Z> = {
@@ -865,8 +865,8 @@ export function otworzStrumien<Z extends { event: string }>(o: OpcjeStrumienia<Z
 }
 ```
 
-`pobierzToken`/`odswiezToken` pochodzą z `auth/odswiezanie.ts`. Hook
-`useStrumienRozwiazania(id)` (moduł `rozwiazania`) zapisuje każde `stan` do
+`pobierzToken`/`odswiezToken` pochodzą z `auth/refresh.ts`. Hook
+`useStrumienRozwiazania(id)` (moduł `solutions`) zapisuje każde `stan` do
 pamięci TanStack Query (`setQueryData(["rozwiazanie", id], …)`), a
 `odpytaj` wywołuje `GET /rozwiazania/{id}` i zwraca jego
 `nastepne_odpytanie_ms`: liczba → kolejne odpytanie po `max(1000, n)` ms;
@@ -878,10 +878,10 @@ symulacją w Node 22 (przyspieszone zegary): wznowienia z natychmiastowym
 `stan` nie przełączają na odpytywanie; `500` → odpytywanie bez pętli 0 ms;
 dwa `401` → jedno odświeżenie i koniec.
 
-### 6.4 `features/rozwiazania/kolejkaZapisow.ts` — jedno żądanie zapisu w locie (ADR-073 p. 4)
+### 6.4 `features/solutions/save-queue.ts` — jedno żądanie zapisu w locie (ADR-073 p. 4)
 
 ```ts
-// frontend/src/features/rozwiazania/kolejkaZapisow.ts — jedno żądanie zapisu w locie na Rozwiązanie (ADR-073 p. 4)
+// frontend/src/features/solutions/save-queue.ts — jedno żądanie zapisu w locie na Rozwiązanie (ADR-073 p. 4)
 export type Zapis =
   | { rodzaj: "SZKIC"; wykonaj: () => Promise<void> }
   | { rodzaj: "WERSJA" | "ZATWIERDZENIE"; wykonaj: (version: number) => Promise<number> };   // zwraca nowe `version`
@@ -915,7 +915,7 @@ export class KolejkaZapisowRozwiazania {
 }
 ```
 
-Edytor Poprawek (`features/rozwiazania/EdytorTranskrypcji.tsx`) używa
+Edytor Poprawek (`features/solutions/TranscriptionEditor.tsx`) używa
 kolejki tak: zmiana kroku → po 1,5 s `dodaj({ rodzaj: "SZKIC" })`
 (`PUT …/transkrypcja/szkic`, `numer_zapisu` rośnie); 10 s bez zmiany i
 szkic ≠ najnowsza wersja → `dodaj({ rodzaj: "WERSJA" })` (`PUT
@@ -932,49 +932,49 @@ edytor z komunikatem (ADR-073 p. 5).
 ## 7. Mapowanie stron App Router na endpointy
 
 Strony są komponentami serwerowymi bez danych (powłoka, teksty); dane
-pobierają komponenty klienckie modułu `features/<modul>` przez `klient.ts`
+pobierają komponenty klienckie modułu `features/<module>` przez `client.ts`
 (ADR-054 p. 4). Kolumna „Mutacje” wymienia operacje wywoływane z danej
 strony.
 
 | Trasa (`src/app`) | Moduł | Odczyt (GET / SSE) | Mutacje |
 |---|---|---|---|
-| `(publiczne)/logowanie` | `konta` | — | `POST /auth/logowanie` |
-| `(publiczne)/rejestracja`, `rejestracja/nauczyciel` | `konta` | — | `POST /auth/rejestracja` (`?kod` → `kod_zaproszenia`) |
-| `(publiczne)/reset-hasla`, `reset-hasla/potwierdzenie` | `konta` | — | `POST /auth/reset-hasla`, `POST /auth/reset-hasla/potwierdzenie` |
-| `(publiczne)/dolacz/[kod]` | `klasy` | `POST /auth/odswiezenie` (sesja) | `POST /klasy/dolaczenie` |
-| `(uczen)/start` | `nauka` | `GET /uczniowie/ja`, `GET /uczniowie/ja/rekomendacje/nastepna` | `POST /elementy-sciezki/{id}/rozpoczecie`, `…/pominiecie`, `POST /uczniowie/ja/test-diagnostyczny` |
-| `(uczen)/test-diagnostyczny` | `profil` | `GET /testy-diagnostyczne/{id}` | `POST …/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` (ponowna odpowiedź nadpisuje, ADR-074 p. 3), `POST …/zakonczenie`, `POST …/pominiecie` |
-| `(uczen)/sciezka-nauki` | `nauka` | `GET /uczniowie/ja/sciezka-nauki` (strona) | `POST /elementy-sciezki/{id}/pominiecie` |
-| `(uczen)/wkladki-teoretyczne/[wkladkaId]` | `nauka` | `GET /wkladki-teoretyczne/{id}` | `POST /elementy-sciezki/{id}/przeczytanie` |
-| `(uczen)/zadania/[zadanieId]` (`?element=` albo `?przypisanie=`) | `rozwiazania` | `GET /zadania/{id}?element_sciezki_id=…` albo `?przypisanie_id=…` (ADR-071 p. 3) | `POST /zadania/{id}/odpowiedzi` (Idempotency-Key), `POST /rozwiazania` (multipart, Idempotency-Key) |
-| `(uczen)/rozwiazania` | `rozwiazania` | `GET /rozwiazania?status&kursor` | — |
-| `(uczen)/rozwiazania/[rozwiazanieId]` | `rozwiazania` | `GET /rozwiazania/{id}/strumien` (SSE), zapasowo `GET /rozwiazania/{id}` (z `szkic_transkrypcji`), `GET …/zdjecia/{zdjecie_rozwiazania_id}/adres`, `GET …/ocena/historia`, `GET /zadania/{id}?rozwiazanie_id={id}` | `PUT …/transkrypcja/szkic` (autozapis, debounce 1,5 s), `PUT …/transkrypcja` (If-Match R z `version`; po 10 s stabilnej edycji i przed zatwierdzeniem), `POST …/zatwierdzenie` (If-Match R), `POST …/zdjecia` (Idempotency-Key), `POST …/ponowienie-rozpoznania`, `POST …/porzucenie`, `POST …/zgloszenie-bledu-odczytu` (Idempotency-Key) — wszystkie przez `KolejkaZapisowRozwiazania` (6.4) |
-| `(uczen)/profil` | `profil` | `GET /uczniowie/ja/profil`, `GET /dzialy`, `GET /umiejetnosci` | — |
-| `(uczen)/przypisania` | `przypisania` | `GET /uczniowie/ja/przypisania` | — |
-| `(uczen)/klasy` | `klasy` | `GET /uczniowie/ja` | `POST /klasy/dolaczenie`, `DELETE /uczniowie/ja/klasy/{id}` |
-| `(uczen)/ustawienia` | `konta` | `GET /uczniowie/ja` | `PATCH /uczniowie/ja` (If-Match U, JSON Merge Patch: `wybrany_dzial_id: null` = wszystkie Działy, `termin_egzaminu: null` = brak terminu), `GET /uczniowie/ja/eksport-danych`, `DELETE /uczniowie/ja` (Idempotency-Key) |
-| `(nauczyciel)/nauczyciel` | `weryfikacje` | `GET /weryfikacje?dostepnosc=DOSTEPNE`, `GET /klasy` | — |
-| `nauczyciel/klasy`, `klasy/[klasaId]` | `klasy` | `GET /klasy?zarchiwizowane&kursor`, `GET /klasy/{id}`, `GET /klasy/{id}/postepy` | `POST /klasy`, `POST /klasy/{id}/kod-zaproszenia` (If-Match), `POST /klasy/{id}/archiwizacja` (If-Match), `DELETE /klasy/{id}/uczniowie/{uczen_id}` |
-| `nauczyciel/klasy/[klasaId]/uczniowie/[uczenId]` | `klasy` | `GET /uczniowie/{id}/profil`, `GET /klasy/{id}/uczniowie/{uczen_id}/rozwiazania` (link do strony Rozwiązania) | `DELETE /klasy/{id}/uczniowie/{uczen_id}` |
-| `nauczyciel/rozwiazania/[rozwiazanieId]` (3.3, C8-11 p. 1) | `weryfikacje` | `GET /rozwiazania/{id}` (rola N: zdjęcia, Transkrypcja, Ocena z prawdopodobieństwami), `GET /rozwiazania/{id}/ocena/historia`, `GET …/zdjecia/{zdjecie_rozwiazania_id}/adres`, `GET /zadania/{id}` (pełne) | `POST /rozwiazania/{id}/korekty` (If-Match R z `version` odczytu; akcja „Skoryguj ocenę”, FR-34) |
-| `nauczyciel/zestawy-zadan`, `zestawy-zadan/[zestawId]` | `przypisania` | `GET /zestawy-zadan?kursor`, `GET /zestawy-zadan/{id}`, `GET /zadania` | `POST /zestawy-zadan`, `PUT /zestawy-zadan/{id}` (If-Match), `DELETE /zestawy-zadan/{id}` (If-Match) |
-| `nauczyciel/przypisania`, `przypisania/[przypisanieId]` | `przypisania` | `GET /przypisania?klasa_id&aktywne&wycofane&kursor`, `GET /przypisania/{id}`, `GET /przypisania/{id}/postep` | `POST /przypisania` (Idempotency-Key), `PATCH /przypisania/{id}` (If-Match P, termin), `POST /przypisania/{id}/wycofanie` (If-Match P) |
-| `nauczyciel/weryfikacje` | `weryfikacje` | `GET /weryfikacje?dostepnosc&powod&klasa_id&typ_kolejki&kursor` | `POST /weryfikacje/{id}/podjecie` |
-| `nauczyciel/weryfikacje/[weryfikacjaId]` | `weryfikacje` | `GET /weryfikacje/{id}`, `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `POST …/podjecie`, `POST …/przedluzenie` (co 10 min przy aktywności), `PUT …/szkic` (debounce 3 s), `POST …/zwolnienie`, `POST …/rozstrzygniecie` (If-Match W z `version`), `POST /rozwiazania/{id}/korekty` (If-Match R z `rozwiazanie_version`) |
-| `nauczyciel/zadania`, `zadania/nowe` | `tresci` | `GET /zadania` | `POST /zadania`, `POST /zadania/{id}/zgloszenia-bledu` (Idempotency-Key) |
-| `nauczyciel/zadania/generowanie` | `tresci` | `GET /zlecenia-generowania/{id}/strumien` (SSE), zapasowo `GET /zlecenia-generowania/{id}` | `POST /zadania/generowanie` (Idempotency-Key) |
-| `nauczyciel/zadania/[zadanieId]/przeglad` | `tresci` | `GET /zadania/{id}` | `POST /zadania/{id}/przeglad` (If-Match), `POST /zadania/{id}/wycofanie` (If-Match) |
-| `nauczyciel/zgloszenia-bledu-zadan` | `tresci` | `GET /zgloszenia-bledu-zadan` | `POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` (If-Match Z z `zadanie_version`) |
-| `nauczyciel/wkladki-teoretyczne`, `[wkladkaId]/przeglad` | `tresci` | `GET /wkladki-teoretyczne?status=DO_PRZEGLADU`, `GET /wkladki-teoretyczne/{id}` | `PUT /wkladki-teoretyczne/{id}` (If-Match) |
-| `nauczyciel/ustawienia` | `konta` | — | `DELETE /nauczyciele/ja` (Idempotency-Key) |
-| `(administrator)/admin/uzytkownicy` | `administracja` | `GET /admin/uzytkownicy` | `POST /admin/uzytkownicy` (Idempotency-Key, konto Administratora), `PATCH /admin/uzytkownicy/{id}` (If-Match U), `POST …/przywrocenie`, `POST …/usuniecie` |
-| `admin/klasy`, `admin/klasy/[klasaId]` (3.3, C8-07 p. 1) | `administracja` | `GET /admin/klasy?nauczyciel_id&zarchiwizowane&kursor`, `GET /admin/klasy/{id}` (audyt), `GET /admin/uzytkownicy?rola=NAUCZYCIEL&status=AKTYWNE` (wybór Nauczyciela docelowego) | `POST /admin/klasy/{id}/przekazanie` (If-Match K z `version` `KlasaAdministratora`) |
-| `admin/arkusze-cke`, `arkusze-cke/importy/[importId]` | `administracja` | `GET /admin/arkusze-cke/importy/{id}/strumien` (SSE), zapasowo `GET /admin/arkusze-cke/importy/{id}` | `POST /admin/arkusze-cke/importy` (multipart) |
-| `admin/konfiguracje-modeli`, `progi-pewnosci`, `kalibracja`, `bezpieczniki` | `administracja` | `GET /admin/konfiguracje-modeli`, `GET /admin/progi-pewnosci?konfiguracja_modelu_id&rodzaj_zadania&kursor`, `GET /admin/kalibracja`, `GET /admin/bezpieczniki` | `POST /admin/konfiguracje-modeli`, `POST …/{id}/aktywacja`, `POST …/{id}/ewaluacja-zt1`, `POST /admin/progi-pewnosci`, `POST /admin/bezpieczniki/dezaktywacja` (If-Match `B`) |
-| `admin/obciazenie-weryfikacji`, `pula-diagnostyczna` | `administracja` | `GET /admin/obciazenie-weryfikacji`, `GET /admin/pula-diagnostyczna`, `GET /zadania?rodzaj=ZAMKNIETE&zasieg=GLOBALNY&status=OPUBLIKOWANE&diagnostyczne=true\|false` | `PUT /admin/zadania/{id}/diagnostyczne` (If-Match Z z `version`) |
-| `admin/zadania`, `zadania/[zadanieId]`, `[zadanieId]/przeglad` (3.3, C8-07 p. 3) | `tresci` | `GET /zadania?…&diagnostyczne&kursor`, `GET /zadania/{id}` (pełne) | `PUT /admin/zadania/{id}/otagowanie` (If-Match Z), `POST /zadania/{id}/przeglad` (If-Match Z), `POST /zadania/{id}/wycofanie` (If-Match Z); bez `POST /zadania` i bez zgłaszania błędu (Administrator rozpatruje) |
-| `admin/zgloszenia-bledu-zadan` | `tresci` | `GET /zgloszenia-bledu-zadan?status&zadanie_id&kursor` | `POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` (If-Match Z z `zadanie_version`) |
-| `admin/zlecenia-generowania`, `admin/zlecenia-generowania/[zlecenieId]` | `tresci` | `GET /zlecenia-generowania?kursor`, `GET /zlecenia-generowania/{id}/strumien` (SSE), zapasowo `GET /zlecenia-generowania/{id}` | `POST /zadania/generowanie` (Idempotency-Key) |
-| `admin/wkladki-teoretyczne`, `[wkladkaId]/przeglad` | `tresci` | `GET /wkladki-teoretyczne?status&umiejetnosc_id&kursor`, `GET /wkladki-teoretyczne/{id}` | `POST /admin/wkladki-teoretyczne/szkice` (Idempotency-Key), `PUT /wkladki-teoretyczne/{id}` (If-Match WT) |
-| `admin/praca-w-tle` | `administracja` | `GET /admin/praca-w-tle?status&typ&kursor`, `GET /admin/harmonogram` | `POST /admin/praca-w-tle/{id}/ponowienie` |
-| każda strona po zalogowaniu (układ roli) | `powiadomienia` | `GET /powiadomienia/strumien` (SSE, karta-lider), dociąganie `GET /powiadomienia?nieprzeczytane=true&kursor` przy `migawka.nastepny_kursor ≠ null`, zapasowo `GET /powiadomienia?nieprzeczytane=true` co 30 s | `POST /powiadomienia/{id}/przeczytanie`, `POST /auth/wylogowanie` |
+| `(public)/login` | `accounts` | — | `POST /auth/logowanie` |
+| `(public)/register`, `register/teacher` | `accounts` | — | `POST /auth/rejestracja` (`?kod` → `kod_zaproszenia`) |
+| `(public)/password-reset`, `password-reset/confirm` | `accounts` | — | `POST /auth/reset-hasla`, `POST /auth/reset-hasla/potwierdzenie` |
+| `(public)/join/[code]` | `classes` | `POST /auth/odswiezenie` (sesja) | `POST /klasy/dolaczenie` |
+| `(student)/start` | `learning` | `GET /uczniowie/ja`, `GET /uczniowie/ja/rekomendacje/nastepna` | `POST /elementy-sciezki/{id}/rozpoczecie`, `…/pominiecie`, `POST /uczniowie/ja/test-diagnostyczny` |
+| `(student)/diagnostic-test` | `profile` | `GET /testy-diagnostyczne/{id}` | `POST …/pozycje/{pozycja_testu_diagnostycznego_id}/odpowiedz` (ponowna odpowiedź nadpisuje, ADR-074 p. 3), `POST …/zakonczenie`, `POST …/pominiecie` |
+| `(student)/learning-path` | `learning` | `GET /uczniowie/ja/sciezka-nauki` (strona) | `POST /elementy-sciezki/{id}/pominiecie` |
+| `(student)/theory-inserts/[theoryInsertId]` | `learning` | `GET /wkladki-teoretyczne/{id}` | `POST /elementy-sciezki/{id}/przeczytanie` |
+| `(student)/exercises/[exerciseId]` (`?element=` albo `?przypisanie=`) | `solutions` | `GET /zadania/{id}?element_sciezki_id=…` albo `?przypisanie_id=…` (ADR-071 p. 3) | `POST /zadania/{id}/odpowiedzi` (Idempotency-Key), `POST /rozwiazania` (multipart, Idempotency-Key) |
+| `(student)/solutions` | `solutions` | `GET /rozwiazania?status&kursor` | — |
+| `(student)/solutions/[solutionId]` | `solutions` | `GET /rozwiazania/{id}/strumien` (SSE), zapasowo `GET /rozwiazania/{id}` (z `szkic_transkrypcji`), `GET …/zdjecia/{zdjecie_rozwiazania_id}/adres`, `GET …/ocena/historia`, `GET /zadania/{id}?rozwiazanie_id={id}` | `PUT …/transkrypcja/szkic` (autozapis, debounce 1,5 s), `PUT …/transkrypcja` (If-Match R z `version`; po 10 s stabilnej edycji i przed zatwierdzeniem), `POST …/zatwierdzenie` (If-Match R), `POST …/zdjecia` (Idempotency-Key), `POST …/ponowienie-rozpoznania`, `POST …/porzucenie`, `POST …/zgloszenie-bledu-odczytu` (Idempotency-Key) — wszystkie przez `KolejkaZapisowRozwiazania` (6.4) |
+| `(student)/profile` | `profile` | `GET /uczniowie/ja/profil`, `GET /dzialy`, `GET /umiejetnosci` | — |
+| `(student)/assignments` | `assignments` | `GET /uczniowie/ja/przypisania` | — |
+| `(student)/classes` | `classes` | `GET /uczniowie/ja` | `POST /klasy/dolaczenie`, `DELETE /uczniowie/ja/klasy/{id}` |
+| `(student)/settings` | `accounts` | `GET /uczniowie/ja` | `PATCH /uczniowie/ja` (If-Match U, JSON Merge Patch: `wybrany_dzial_id: null` = wszystkie Działy, `termin_egzaminu: null` = brak terminu), `GET /uczniowie/ja/eksport-danych`, `DELETE /uczniowie/ja` (Idempotency-Key) |
+| `(teacher)/teacher` | `verifications` | `GET /weryfikacje?dostepnosc=DOSTEPNE`, `GET /klasy` | — |
+| `teacher/classes`, `classes/[classId]` | `classes` | `GET /klasy?zarchiwizowane&kursor`, `GET /klasy/{id}`, `GET /klasy/{id}/postepy` | `POST /klasy`, `POST /klasy/{id}/kod-zaproszenia` (If-Match), `POST /klasy/{id}/archiwizacja` (If-Match), `DELETE /klasy/{id}/uczniowie/{uczen_id}` |
+| `teacher/classes/[classId]/students/[studentId]` | `classes` | `GET /uczniowie/{id}/profil`, `GET /klasy/{id}/uczniowie/{uczen_id}/rozwiazania` (link do strony Rozwiązania) | `DELETE /klasy/{id}/uczniowie/{uczen_id}` |
+| `teacher/solutions/[solutionId]` (3.3, C8-11 p. 1) | `verifications` | `GET /rozwiazania/{id}` (rola N: zdjęcia, Transkrypcja, Ocena z prawdopodobieństwami), `GET /rozwiazania/{id}/ocena/historia`, `GET …/zdjecia/{zdjecie_rozwiazania_id}/adres`, `GET /zadania/{id}` (pełne) | `POST /rozwiazania/{id}/korekty` (If-Match R z `version` odczytu; akcja „Skoryguj ocenę”, FR-34) |
+| `teacher/exercise-sets`, `exercise-sets/[exerciseSetId]` | `assignments` | `GET /zestawy-zadan?kursor`, `GET /zestawy-zadan/{id}`, `GET /zadania` | `POST /zestawy-zadan`, `PUT /zestawy-zadan/{id}` (If-Match), `DELETE /zestawy-zadan/{id}` (If-Match) |
+| `teacher/assignments`, `assignments/[assignmentId]` | `assignments` | `GET /przypisania?klasa_id&aktywne&wycofane&kursor`, `GET /przypisania/{id}`, `GET /przypisania/{id}/postep` | `POST /przypisania` (Idempotency-Key), `PATCH /przypisania/{id}` (If-Match P, termin), `POST /przypisania/{id}/wycofanie` (If-Match P) |
+| `teacher/verifications` | `verifications` | `GET /weryfikacje?dostepnosc&powod&klasa_id&typ_kolejki&kursor` | `POST /weryfikacje/{id}/podjecie` |
+| `teacher/verifications/[verificationId]` | `verifications` | `GET /weryfikacje/{id}`, `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres` | `POST …/podjecie`, `POST …/przedluzenie` (co 10 min przy aktywności), `PUT …/szkic` (debounce 3 s), `POST …/zwolnienie`, `POST …/rozstrzygniecie` (If-Match W z `version`), `POST /rozwiazania/{id}/korekty` (If-Match R z `rozwiazanie_version`) |
+| `teacher/exercises`, `exercises/new` | `content` | `GET /zadania` | `POST /zadania`, `POST /zadania/{id}/zgloszenia-bledu` (Idempotency-Key) |
+| `teacher/exercises/generate` | `content` | `GET /zlecenia-generowania/{id}/strumien` (SSE), zapasowo `GET /zlecenia-generowania/{id}` | `POST /zadania/generowanie` (Idempotency-Key) |
+| `teacher/exercises/[exerciseId]/review` | `content` | `GET /zadania/{id}` | `POST /zadania/{id}/przeglad` (If-Match), `POST /zadania/{id}/wycofanie` (If-Match) |
+| `teacher/exercise-error-reports` | `content` | `GET /zgloszenia-bledu-zadan` | `POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` (If-Match Z z `zadanie_version`) |
+| `teacher/theory-inserts`, `[theoryInsertId]/review` | `content` | `GET /wkladki-teoretyczne?status=DO_PRZEGLADU`, `GET /wkladki-teoretyczne/{id}` | `PUT /wkladki-teoretyczne/{id}` (If-Match) |
+| `teacher/settings` | `accounts` | — | `DELETE /nauczyciele/ja` (Idempotency-Key) |
+| `(administrator)/admin/users` | `administration` | `GET /admin/uzytkownicy` | `POST /admin/uzytkownicy` (Idempotency-Key, konto Administratora), `PATCH /admin/uzytkownicy/{id}` (If-Match U), `POST …/przywrocenie`, `POST …/usuniecie` |
+| `admin/classes`, `admin/classes/[classId]` (3.3, C8-07 p. 1) | `administration` | `GET /admin/klasy?nauczyciel_id&zarchiwizowane&kursor`, `GET /admin/klasy/{id}` (audyt), `GET /admin/uzytkownicy?rola=NAUCZYCIEL&status=AKTYWNE` (wybór Nauczyciela docelowego) | `POST /admin/klasy/{id}/przekazanie` (If-Match K z `version` `KlasaAdministratora`) |
+| `admin/cke-sheets`, `cke-sheets/imports/[importId]` | `administration` | `GET /admin/arkusze-cke/importy/{id}/strumien` (SSE), zapasowo `GET /admin/arkusze-cke/importy/{id}` | `POST /admin/arkusze-cke/importy` (multipart) |
+| `admin/model-configurations`, `confidence-thresholds`, `calibration`, `safeguards` | `administration` | `GET /admin/konfiguracje-modeli`, `GET /admin/progi-pewnosci?konfiguracja_modelu_id&rodzaj_zadania&kursor`, `GET /admin/kalibracja`, `GET /admin/bezpieczniki` | `POST /admin/konfiguracje-modeli`, `POST …/{id}/aktywacja`, `POST …/{id}/ewaluacja-zt1`, `POST /admin/progi-pewnosci`, `POST /admin/bezpieczniki/dezaktywacja` (If-Match `B`) |
+| `admin/verification-load`, `diagnostic-pool` | `administration` | `GET /admin/obciazenie-weryfikacji`, `GET /admin/pula-diagnostyczna`, `GET /zadania?rodzaj=ZAMKNIETE&zasieg=GLOBALNY&status=OPUBLIKOWANE&diagnostyczne=true\|false` | `PUT /admin/zadania/{id}/diagnostyczne` (If-Match Z z `version`) |
+| `admin/exercises`, `exercises/[exerciseId]`, `[exerciseId]/review` (3.3, C8-07 p. 3) | `content` | `GET /zadania?…&diagnostyczne&kursor`, `GET /zadania/{id}` (pełne) | `PUT /admin/zadania/{id}/otagowanie` (If-Match Z), `POST /zadania/{id}/przeglad` (If-Match Z), `POST /zadania/{id}/wycofanie` (If-Match Z); bez `POST /zadania` i bez zgłaszania błędu (Administrator rozpatruje) |
+| `admin/exercise-error-reports` | `content` | `GET /zgloszenia-bledu-zadan?status&zadanie_id&kursor` | `POST /zgloszenia-bledu-zadan/{id}/rozpatrzenie` (If-Match Z z `zadanie_version`) |
+| `admin/generation-requests`, `admin/generation-requests/[generationRequestId]` | `content` | `GET /zlecenia-generowania?kursor`, `GET /zlecenia-generowania/{id}/strumien` (SSE), zapasowo `GET /zlecenia-generowania/{id}` | `POST /zadania/generowanie` (Idempotency-Key) |
+| `admin/theory-inserts`, `[theoryInsertId]/review` | `content` | `GET /wkladki-teoretyczne?status&umiejetnosc_id&kursor`, `GET /wkladki-teoretyczne/{id}` | `POST /admin/wkladki-teoretyczne/szkice` (Idempotency-Key), `PUT /wkladki-teoretyczne/{id}` (If-Match WT) |
+| `admin/background-jobs` | `administration` | `GET /admin/praca-w-tle?status&typ&kursor`, `GET /admin/harmonogram` | `POST /admin/praca-w-tle/{id}/ponowienie` |
+| każda strona po zalogowaniu (układ roli) | `notifications` | `GET /powiadomienia/strumien` (SSE, karta-lider), dociąganie `GET /powiadomienia?nieprzeczytane=true&kursor` przy `migawka.nastepny_kursor ≠ null`, zapasowo `GET /powiadomienia?nieprzeczytane=true` co 30 s | `POST /powiadomienia/{id}/przeczytanie`, `POST /auth/wylogowanie` |

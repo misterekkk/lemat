@@ -1196,7 +1196,7 @@ Poprawki C6-01 … C6-04 są lokalne (kontrakt `IZlecaniePrac`/`IJednostkaPracy`
 
 ## Iteracja 7 (v3.1 — agenci AI i dane)
 
-Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10 + Next.js”). Zakres: 3.6, 7, 10, 13, `docs/spec/ddl.md`, `docs/spec/ef-core.md`, `docs/spec/prompty.md`, ADR-056 … ADR-059, uzupełnienia 3.1 ADR-020/023/049/051/052/053/054/055 i mapowanie C6 w `ARCHITECTURE_CHANGELOG.md`. Sekcje 12, 14 i 15 mają notkę „do przepisania w iteracji 3”, więc ich kod pythonowy nie jest w tej rundzie oceniany.
+Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10 + Next.js”). Zakres: 3.6, 7, 10, 13, `docs/spec/ddl.md`, `docs/spec/ef-core.md`, `docs/spec/prompts.md`, ADR-056 … ADR-059, uzupełnienia 3.1 ADR-020/023/049/051/052/053/054/055 i mapowanie C6 w `ARCHITECTURE_CHANGELOG.md`. Sekcje 12, 14 i 15 mają notkę „do przepisania w iteracji 3”, więc ich kod pythonowy nie jest w tej rundzie oceniany.
 
 **Weryfikacja uwag iteracji 6.** Wszystkie 15 uwag (C6-01 … C6-15) są ZAMKNIĘTE. Statusy z uzasadnieniem są wpisane przy uwagach. C6-10 jest zamknięta w p. 1, 3 i 4, a niedziałający mechanizm limitu wywołań z p. 2 przechodzi do C7-01.
 
@@ -1231,7 +1231,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 | `KernelFunction.WithKernel(Kernel)` | istnieje (kompiluje się); `KernelFunction : FullyQualifiedAIFunction : AIFunction` | nazwa narzędzia widziana przez model = `sympy_sprawdz_rownowaznosc` (C7-01) |
 | `DelegatingAIFunction` (`InvokeCoreAsync`) | istnieje (`Microsoft.Extensions.AI.Abstractions` 10.11) | — |
 | `FunctionInvokingChatClient.MaximumIterationsPerRequest`, `AllowConcurrentInvocation`, `MaximumConsecutiveErrorsPerRequest` | istnieją | semantyka inna niż w ADR-058 (C7-01) |
-| `ChatOptions.AllowMultipleToolCalls`, `ChatResponseFormat.ForJsonSchema`, `ChatToolMode.Auto`, `DataContent`, `AIJsonUtilities.CreateJsonSchema` | istnieją | schemat generowany różni się od schematów `prompty.md` (C7-09) |
+| `ChatOptions.AllowMultipleToolCalls`, `ChatResponseFormat.ForJsonSchema`, `ChatToolMode.Auto`, `DataContent`, `AIJsonUtilities.CreateJsonSchema` | istnieją | schemat generowany różni się od schematów `prompts.md` (C7-09) |
 | `ChatClientBuilder.UseOpenTelemetry(sourceName:, configure: c => c.EnableSensitiveData = false)`, `UseFunctionInvocation(configure:)` | istnieją | kolejność potoku gubi spany `execute_tool` (C7-02) |
 | `ChatClientBuilder.Use(new LimitCzasuChatClient(…))` (ADR-058 p. 3) | **nie kompiluje się** (CS1503) | `Use` przyjmuje fabrykę `Func<IChatClient, IChatClient>`; poprawnie `.Use(wewn => new LimitCzasuChatClient(wewn, …))` (C7-02) |
 | `KernelPluginFactory.CreateFromObject`, `KernelFunctionYaml.ToPromptTemplateConfig`, `KernelPromptTemplateFactory.Create(…).RenderAsync` | istnieją | renderowanie koduje wartości zmiennych HTML-em (C7-14) |
@@ -1245,11 +1245,11 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-01: Limit wywołań funkcji Agenta generującego nie działa tak, jak opisano, a nazwy narzędzi w prompcie, danych Mock i teście są błędne
 - **Waga:** WYSOKA
-- **Lokalizacja:** ADR-058 p. 3 (`MaximumIterationsPerRequest = parametry.MaksIteracjiFunkcji ?? 1`, `MaximumConsecutiveErrorsPerRequest = 1`), p. 4 (`FunkcjaZLimitem`, „wywołanie nr `limit + 1` rzuca `BladModeluTrwalyException`”, `MaximumIterationsPerRequest = 8` jako „druga linia obrony”), p. 7 (`LimitWywolanFunkcjiTests`); 10.2.4 (`KernelPluginFactory.CreateFromObject(…, "sympy")`); 10.2.5 (test „9 żądań wywołań → zlecenie z przyczyną `LIMIT_WYWOLAN_FUNKCJI`”); `prompty.md` 4.3 i 6 (`"nazwa": "sprawdz_rownowaznosc"`); 10.0.4 (termin 60 s)
+- **Lokalizacja:** ADR-058 p. 3 (`MaximumIterationsPerRequest = parametry.MaksIteracjiFunkcji ?? 1`, `MaximumConsecutiveErrorsPerRequest = 1`), p. 4 (`FunkcjaZLimitem`, „wywołanie nr `limit + 1` rzuca `BladModeluTrwalyException`”, `MaximumIterationsPerRequest = 8` jako „druga linia obrony”), p. 7 (`LimitWywolanFunkcjiTests`); 10.2.4 (`KernelPluginFactory.CreateFromObject(…, "sympy")`); 10.2.5 (test „9 żądań wywołań → zlecenie z przyczyną `LIMIT_WYWOLAN_FUNKCJI`”); `prompts.md` 4.3 i 6 (`"nazwa": "sprawdz_rownowaznosc"`); 10.0.4 (termin 60 s)
 - **Problem (sprawdzone uruchomieniem z fałszywym `IChatClient`, który zawsze żąda wywołania funkcji):**
   1. Przy `MaximumIterationsPerRequest = 8` wykonuje się dokładnie 8 wywołań funkcji. Potem `FunctionInvokingChatClient` wysyła **9. żądanie bez narzędzi** (`Tools = 0`, `ToolMode = null`) i zwraca jego odpowiedź jako zwykły wynik, bez wyjątku. `FunkcjaZLimitem` nigdy nie dostaje 9. wywołania. Opisany test (`BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`, przyczyna w zleceniu) więc nie przejdzie, a „pierwsza linia obrony” jest martwym kodem.
   2. Przy `MaximumConsecutiveErrorsPerRequest = 1` (wartość z ADR-058) wyjątek pierwszego nadmiarowego wywołania jest połykany i wysyłany do modelu jako rezultat funkcji. Na zewnątrz wychodzi dopiero przy kolejnym błędzie, czyli przy **10.** wywołaniu (zmierzono: licznik 10, wykonane 8). Natychmiastowe przerwanie wymaga wartości `0`.
-  3. `KernelFunction` z pluginu `"sympy"` jest widoczna jako `AIFunction` o nazwie **`sympy_sprawdz_rownowaznosc`** (`FullyQualifiedAIFunction`). Prompt `zadanie-v1` każe wołać `sprawdz_rownowaznosc` / `postac_liniowa`, dane Mock (`prompty.md` 6) zawierają `"nazwa": "sprawdz_rownowaznosc"`, a test ADR-058 p. 7 żąda `sprawdz_rownowaznosc`. Takie wywołanie trafia w gałąź „nieznana funkcja”: model dostaje komunikat o braku narzędzia, licznik się nie zmienia i nic się nie wykonuje (zmierzono: 0 wykonań przy 8 żądaniach). Scenariusze Mock „3 Zadania wygenerowane z wywołaniami narzędzi” nie wywołają więc żadnego narzędzia, a `WywolanieNarzedzia.Funkcja` w śladzie NFR-05 będzie miało inną nazwę niż w prompcie.
+  3. `KernelFunction` z pluginu `"sympy"` jest widoczna jako `AIFunction` o nazwie **`sympy_sprawdz_rownowaznosc`** (`FullyQualifiedAIFunction`). Prompt `zadanie-v1` każe wołać `sprawdz_rownowaznosc` / `postac_liniowa`, dane Mock (`prompts.md` 6) zawierają `"nazwa": "sprawdz_rownowaznosc"`, a test ADR-058 p. 7 żąda `sprawdz_rownowaznosc`. Takie wywołanie trafia w gałąź „nieznana funkcja”: model dostaje komunikat o braku narzędzia, licznik się nie zmienia i nic się nie wykonuje (zmierzono: 0 wykonań przy 8 żądaniach). Scenariusze Mock „3 Zadania wygenerowane z wywołaniami narzędzi” nie wywołają więc żadnego narzędzia, a `WywolanieNarzedzia.Funkcja` w śladzie NFR-05 będzie miało inną nazwę niż w prompcie.
   4. Termin 60 s obejmuje cały potok, czyli do 9 kolejnych żądań do modelu. Każde z nich ponownie wysyła rosnący kontekst, a ostatnie generuje odpowiedź do `max_tokens` 6 000. Dokument nie uzasadnia, że 60 s wystarcza. Przekroczenie terminu po 3 próbach daje zlecenie `NIEUDANE`.
 - **Oczekiwana poprawka:**
   - Wybrać jedną semantykę limitu:
@@ -1366,13 +1366,13 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-07: Implementacje Mock nie są wystarczające do deterministycznych testów E2E, a domyślny przepływ offline nie dochodzi do Oceny automatycznej
 - **Waga:** WYSOKA
-- **Lokalizacja:** 10.0.6; `prompty.md` 4.1 (wiadomość `user` rozpoznania), 6 (klucz pliku = 16 znaków SHA-256 tekstu wiadomości `user`, fallback `domyslna.json`, potem generator ze schematu); 10.1.8 (Q-RE-01), `prompty.md` 3.3; 11.2 (Pewność = minimum prawdopodobieństw), próg migracji danych 0,95
+- **Lokalizacja:** 10.0.6; `prompts.md` 4.1 (wiadomość `user` rozpoznania), 6 (klucz pliku = 16 znaków SHA-256 tekstu wiadomości `user`, fallback `domyslna.json`, potem generator ze schematu); 10.1.8 (Q-RE-01), `prompts.md` 3.3; 11.2 (Pewność = minimum prawdopodobieństw), próg migracji danych 0,95
 - **Problem:**
   1. **Dobór scenariusza.**
      - Wiadomość `user` rozpoznania zawiera wyłącznie `tresc_zadania_md`, `tekst_alternatywny_rysunkow` i `liczba_zdjec`. Skrót nie zależy od zdjęć, więc każda para (Zadanie, liczba zdjęć) ma w Mock **jedną** Transkrypcję. Testy E2E różnych Rozwiązań tego samego Zadania (poprawne / z błędem / z podejrzeniem błędu odczytu / `NIECZYTELNE`) są niemożliwe bez osobnych Zadań, a ograniczenie nie jest zapisane.
      - Każda zmiana serializacji, promptu, normalizacji SymPy albo formatu stanu zmienia skrót. Brak pliku przechodzi **po cichu** w `domyslna.json` albo w generator, więc test może przejść na innych danych niż zamierzone.
   2. **Generator ze schematu jest nieokreślony i niebezpieczny dla przepływu.**
-     - Reguła „`boolean` = `true`” ustawia `przekroczono_limit_krokow = true`, co według `prompty.md` 4.1 daje `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`). Domyślne rozpoznanie offline kończy się więc błędem, wbrew 10.0.6 („cały przepływ … działa offline”).
+     - Reguła „`boolean` = `true`” ustawia `przekroczono_limit_krokow = true`, co według `prompts.md` 4.1 daje `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`). Domyślne rozpoznanie offline kończy się więc błędem, wbrew 10.0.6 („cały przepływ … działa offline”).
      - „Środek przedziału zaokrąglony w dół” jest nieokreślony dla pól bez `maximum` (`Ramka`: tylko `minimum: 0`), dla map `additionalProperties` (`rozklad`, `stwierdzenia`), typów unii `["object","null"]` i `pattern` (`umiejetnosci_dodatkowe`, `kod`).
      - Dla `zgodnosc_z_zadaniem` w [0, 1] daje 0 albo 0,5, czyli baner E-07 przy każdym przesłaniu.
   3. **`MockModelDecyzyjny`** daje masę 0,90 na losowej opcji. Przy kalibratorze tożsamościowym i progu 0,95 z migracji danych Pewność oceny = 0,90 < 0,95, więc **każda** Ocena offline idzie do Weryfikacji, z losowymi punktami i losowym `Q-OC-06`. Trasy automatycznej (FR-23), Kontroli losowej i Wskazówki po Ocenie ostatecznej nie da się przetestować bez plików rozkładów kluczowanych skrótem stanu, który zmienia się przy każdej zmianie formatu `stan-oceny-v1`.
@@ -1388,7 +1388,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-08: Model zapasowy dla Walidacji Zadania (Q-WA) nie ma promptu ani stanu, a `ZapasowyLlmAdapter` nie zna kontekstu decyzji
 - **Waga:** ŚREDNIA
-- **Lokalizacja:** 10.0.4 (Walidacja: „Q-WA przez ten sam circuit breaker”); 10.2.5; 13.2 `ZapasowyLlmAdapter.WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, CancellationToken ct)` (bez `KontekstDecyzji`); `prompty.md` 2 (jedna wersja `plan-pytan-v1`), 4.8 („Jesteś modelem decyzyjnym systemu oceniania”, wymagane pole `Q-OC-04`, wiadomość `"[STAN]\n" + stan-oceny-v1`), 3.2 (`stan-walidacji-v1`); 6.4 (pakiety `Lemat.Modele` bez `JsonSchema.Net`)
+- **Lokalizacja:** 10.0.4 (Walidacja: „Q-WA przez ten sam circuit breaker”); 10.2.5; 13.2 `ZapasowyLlmAdapter.WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, CancellationToken ct)` (bez `KontekstDecyzji`); `prompts.md` 2 (jedna wersja `plan-pytan-v1`), 4.8 („Jesteś modelem decyzyjnym systemu oceniania”, wymagane pole `Q-OC-04`, wiadomość `"[STAN]\n" + stan-oceny-v1`), 3.2 (`stan-walidacji-v1`); 6.4 (pakiety `Lemat.Modele` bez `JsonSchema.Net`)
 - **Problem:**
   - `IModelDecyzyjny.WykonajPlanAsync` przyjmuje `KontekstDecyzji`, ale `CircuitBreakerModeluDecyzyjnego` przekazuje do `ZapasowyLlmAdapter` wywołanie bez niego.
   - Jedyny prompt zapasowy opisuje Ocenę Rozwiązania (stan oceny, Q-OC-04, zasady CKE punktowania ucznia). Dla planu Q-WA-01…05 ze stanem `stan-walidacji-v1` model dostaje sprzeczne instrukcje, a wymagane pole `Q-OC-04` nie ma sensu.
@@ -1403,16 +1403,16 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-09: Schematy odpowiedzi — dwa źródła prawdy, test zgodności niewykonalny literalnie, a mapy rozkładów są sprzeczne z „trybem ścisłym”
 - **Waga:** ŚREDNIA
-- **Lokalizacja:** `prompty.md` 1 p. 3 („wszystkie właściwości wymagane, `additionalProperties: false` … zgodność z trybem ścisłym dostawców”), 4.4 (`stwierdzenia`: `additionalProperties: {boolean}`), 4.8 (`rozklad`: `additionalProperties: {number}`); 6.6 („test porównuje zapisane pliki z wygenerowanymi i ze schematami w `docs/spec/prompty.md`”); 10.0.3 (`AIJsonUtilities.CreateJsonSchema(typeof(T))`)
+- **Lokalizacja:** `prompts.md` 1 p. 3 („wszystkie właściwości wymagane, `additionalProperties: false` … zgodność z trybem ścisłym dostawców”), 4.4 (`stwierdzenia`: `additionalProperties: {boolean}`), 4.8 (`rozklad`: `additionalProperties: {number}`); 6.6 („test porównuje zapisane pliki z wygenerowanymi i ze schematami w `docs/spec/prompts.md`”); 10.0.3 (`AIJsonUtilities.CreateJsonSchema(typeof(T))`)
 - **Problem:**
   1. Wygenerowano schemat `AIJsonUtilities.CreateJsonSchema` dla rekordu z `[StringLength]`, `[Range]`, `[MaxLength]`, `[RegularExpression]`, nullowalnym enumem i słownikiem. Wynik:
      - zawiera `minLength`/`maxLength`/`minimum`/`maximum`/`maxItems`/`pattern` i komplet `required`;
      - **nie zawiera** `additionalProperties: false`, `$schema`, `title` ani `$defs`/`$ref` (typy powtarzalne są rozwijane inline).
 
-     Schematy z `prompty.md` (`$defs.Ramka`, `$defs.ObszarNaZdjeciu`, `title`) nie będą więc równe wygenerowanym, a test „dryfu” musi porównywać semantycznie i użyć `AIJsonSchemaCreateOptions.TransformOptions { DisallowAdditionalProperties = true, RequireAllProperties = true }` — dokument tego nie określa. Rekordy C# z atrybutami ograniczeń nie są nigdzie pokazane.
-  2. `rozklad` i `stwierdzenia` jako mapy dynamiczne (`additionalProperties: {…}`) są niezgodne z trybem ścisłym (strict), który wymaga `additionalProperties: false` na każdym obiekcie. Albo `prompty.md` 1 p. 3 jest nieprawdziwe dla modelu zapasowego i W-3, albo dostawca odrzuci schemat (`400` → `BladModeluTrwalyException` → przy otwartym obwodzie każda Ocena kończy się T-6). Nie wiadomo też, czy `ForJsonSchema` w adapterze OpenAI jest wysyłane jako `strict: true`.
+     Schematy z `prompts.md` (`$defs.Ramka`, `$defs.ObszarNaZdjeciu`, `title`) nie będą więc równe wygenerowanym, a test „dryfu” musi porównywać semantycznie i użyć `AIJsonSchemaCreateOptions.TransformOptions { DisallowAdditionalProperties = true, RequireAllProperties = true }` — dokument tego nie określa. Rekordy C# z atrybutami ograniczeń nie są nigdzie pokazane.
+  2. `rozklad` i `stwierdzenia` jako mapy dynamiczne (`additionalProperties: {…}`) są niezgodne z trybem ścisłym (strict), który wymaga `additionalProperties: false` na każdym obiekcie. Albo `prompts.md` 1 p. 3 jest nieprawdziwe dla modelu zapasowego i W-3, albo dostawca odrzuci schemat (`400` → `BladModeluTrwalyException` → przy otwartym obwodzie każda Ocena kończy się T-6). Nie wiadomo też, czy `ForJsonSchema` w adapterze OpenAI jest wysyłane jako `strict: true`.
 - **Oczekiwana poprawka:**
-  - Jedno źródło: schematy wyłącznie generowane z rekordów (z `TransformOptions`), a `prompty.md` jako wygenerowany artefakt; albo schematy ręczne jako zasoby i rekordy bez generacji.
+  - Jedno źródło: schematy wyłącznie generowane z rekordów (z `TransformOptions`), a `prompts.md` jako wygenerowany artefakt; albo schematy ręczne jako zasoby i rekordy bez generacji.
   - Mapy zastąpić tablicami `[{opcja, p}]` (zgodne z trybem ścisłym), z walidacją kompletu opcji w kodzie.
   - Jawne ustawienie trybu ścisłego per dostawca i test kontraktu na schemacie każdej roli.
 - **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 6: schematy generowane z `TransformOptions` i zapisane jako migawki, mapy zamienione na tablice par, `strict = true`, test kontraktu WireMock.
@@ -1470,7 +1470,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-14: Szablony SK kodują wartości zmiennych HTML-em — założenie ADR-058 p. 4 nie jest sprawdzane dla nazw z bazy referencyjnej
 - **Waga:** NISKA
-- **Lokalizacja:** ADR-058 p. 4 (zmienne: `int`, `decimal`, enumy, „nazwy Umiejętności i Działów z bazy referencyjnej”); `prompty.md` 4.3, 4.5, 4.6 (`{{$umiejetnosc}}`, `{{$dzial}}`); test `SzablonBezZmiennychTresci` (sprawdza tylko typy)
+- **Lokalizacja:** ADR-058 p. 4 (zmienne: `int`, `decimal`, enumy, „nazwy Umiejętności i Działów z bazy referencyjnej”); `prompts.md` 4.3, 4.5, 4.6 (`{{$umiejetnosc}}`, `{{$dzial}}`); test `SzablonBezZmiennychTresci` (sprawdza tylko typy)
 - **Problem:** `KernelPromptTemplateFactory` 1.81 renderuje `x<2 & y>3 "q"` jako `x&lt;2 &amp; y&gt;3 &quot;q&quot;` (sprawdzone). Nazwa Umiejętności albo Działu z cudzysłowem, `<`, `>` lub `&` (np. „Nierówności typu „f(x) < g(x)”” albo nazwy z LaTeX) trafi do promptu systemowego w postaci zakodowanej, a test tego nie wykryje.
 - **Oczekiwana poprawka:** `AllowDangerouslySetContent = true` w `PromptTemplateConfig` (bezpieczne, bo zmienne są wyłącznie systemowe), albo CHECK/test w danych referencyjnych zabraniający tych znaków w nazwach; test renderowania każdego szablonu dla wszystkich nazw z `umiejetnosci.yaml`.
 - **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 8: `new KernelPromptTemplateFactory { AllowDangerouslySetContent = true }` (pomiar architekta: flaga w `PromptTemplateConfig` nie działa) i test `RenderowanieNazwUmiejetnosci`.
@@ -1542,7 +1542,7 @@ Iteracja 3 (sekcje 12, 14, 15) powinna je uwzględnić razem z mapowaniem macier
 
 Data przeglądu: 2026-11-01. Wersja dokumentu: 3.2 (iteracja 3 pętli „.NET 10 + Next.js”). Zakres przeglądu:
 - sekcje 12, 14 i 15 (przepisane);
-- `docs/spec/api.md` (nowy), `ddl.md`, `ef-core.md`, `prompty.md`;
+- `docs/spec/api.md` (nowy), `ddl.md`, `ef-core.md`, `prompts.md`;
 - ADR-060 … ADR-066 i mapowanie C7 w `ARCHITECTURE_CHANGELOG.md`.
 
 **Weryfikacja uwag iteracji 7.** Wszystkie 15 uwag (C7-01 … C7-15) są ZAMKNIĘTE. Uzasadnienia są wpisane przy uwagach. Dwie pozostałości redakcyjne, czyli szkielet `ProfilUcznia` w 3.6 i sekwencja `<` w `api.md` 1, przechodzą do C8-12.

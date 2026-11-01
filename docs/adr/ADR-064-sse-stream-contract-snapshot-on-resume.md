@@ -89,7 +89,7 @@ wznowieniu. Każdy kursor nadawany przed zatwierdzeniem (sekwencja,
    odrzucane (stan i tak jest czytany na nowo); dla strumienia powiadomień
    przepełnienie kończy strumień zdarzeniem `wznow` (`LIMIT_CZASU`), a
    ponowne połączenie dostaje migawkę — żadne powiadomienie nie ginie.
-8. **Ponowne łączenie i ścieżka zapasowa (klient `strumien.ts`):**
+8. **Ponowne łączenie i ścieżka zapasowa (klient `stream.ts`):**
    odstęp 1, 2, 4, 8, 16, 30 s (maks.) z losowym rozrzutem ±20%, zerowany
    po pierwszym zdarzeniu; `401` → odświeżenie tokenu (ADR-057) i jedno
    ponowienie; `403`/`404` → koniec bez ponowień; `429` albo dwie nieudane
@@ -99,14 +99,14 @@ wznowieniu. Każdy kursor nadawany przed zatwierdzeniem (sekwencja,
    /powiadomienia?nieprzeczytane=true` co 30 s) i próba SSE co 60 s.
    Karta ukryta (`document.visibilityState = "hidden"`) dłużej niż 5 min
    zamyka strumienie; po powrocie otwiera je ponownie (migawka/stan).
-9. **Testy** (`Lemat.Api.Tests/Strumienie`, `WebApplicationFactory` +
+9. **Testy** (`Lemat.Api.Tests/Streams`, `WebApplicationFactory` +
    PostgreSQL 16): `DwaPowiadomieniaWOdwroconejKolejnosciNieGinaPoWznowieniu`
    (T1 wstawia powiadomienie A i czeka, T2 wstawia B i zatwierdza, klient
    odbiera B i rozłącza się, T1 zatwierdza A, klient łączy się z
    `Last-Event-ID = B.id` → migawka zawiera A i B);
    `StanZTymSamymSkrotemNieJestWysylanyPonownie`; `KoniecZamykaStrumien`;
    `WygasniecieTokenuWysylaWznow`; `PrzepelnienieKanaluPowiadomienKonczyWznow`;
-   Playwright `sse-zapasowe-odpytywanie.spec.ts` (Caddy z buforowaniem →
+   Playwright `sse-fallback-polling.spec.ts` (Caddy z buforowaniem →
    przejście na odpytywanie w ≤ 7 s).
 
 ## Alternatywy
@@ -154,7 +154,7 @@ wznowieniu. Każdy kursor nadawany przed zatwierdzeniem (sekwencja,
    jedno ponowienie na połączenie (licznik `ponowienia401`); drugi `401`
    kończy strumień i przekazuje sterowanie `DostawcaSesji` (wylogowanie
    wyłącznie przy `401 SESJA_UNIEWAZNIONA` z odświeżenia, ADR-070 p. 4).
-4. **Różnica zegara.** `odswiezanie.ts` liczy `roznicaZegara =
+4. **Różnica zegara.** `refresh.ts` liczy `roznicaZegara =
    Date.parse(naglowek Date) − Date.now()` z każdej odpowiedzi
    `/auth/odswiezenie` i `/auth/logowanie`, a termin odświeżenia
    proaktywnego = `wygasa_at − 60 s` porównuje z `Date.now() +
@@ -165,6 +165,6 @@ wznowieniu. Każdy kursor nadawany przed zatwierdzeniem (sekwencja,
    id`); gdy `liczba_nieprzeczytanych > 100`, klient dociąga pozostałe
    strony tym kursorem, więc powiadomienie starsze od 100 najnowszych nie
    ginie.
-6. **Testy Vitest `strumien.test.ts`:** „wznow przy niezmienionym stanie nie
+6. **Testy Vitest `stream.test.ts`:** „wznow przy niezmienionym stanie nie
    przełącza na odpytywanie”, „null zatrzymuje odpytywanie i wraca do SSE”,
    „drugi 401 kończy strumień”, „opóźnienie odpytywania ≥ 1000 ms”.

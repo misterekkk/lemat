@@ -65,7 +65,7 @@ nie buduje się przy różnych typach identyfikatorów (C7-06 p. 1).
    (`fk_zadanie_aktualna_wersja`, `fk_rozwiazanie_najnowsza_transkrypcja`),
    nazwane jawnie, bo powstają po obu tabelach. Stan po migracjach
    (sprawdzone): 142 CHECK, 124 FK, 21 UNIQUE, 64 klucze główne (z
-   partycjami). Plik `Persistence/Schemat/ograniczenia.txt`
+   partycjami). Plik `Persistence/Schema/constraints.txt`
    (posortowana lista `tabela | nazwa | definicja` z `pg_constraint`) jest
    generowany w CI po migracjach i porównywany z wersją w repozytorium,
    więc każda zmiana nazwy albo definicji jest widoczna w przeglądzie PR.
@@ -92,7 +92,7 @@ nie buduje się przy różnych typach identyfikatorów (C7-06 p. 1).
    `DEFAULT`. Sprawdzone na PostgreSQL 16.15 i EF Core 10.0.3 na
    fragmencie schematu: test wykrył `element_sciezki.sciezka_nauki_id`
    nullowalne w modelu i `NOT NULL` w DDL; po `IsRequired()` 0 różnic.
-7. **Role aplikacji** (C7-15 p. 4): `0005_uprawnienia.sql` tworzy role
+7. **Role aplikacji** (C7-15 p. 4): `0005_permissions.sql` tworzy role
    `lemat_api`, `lemat_worker`, `lemat_scheduler` jako `NOLOGIN`, jeśli nie
    istnieją (blok `DO`); w produkcji tworzy je wcześniej infrastruktura z
    `LOGIN`. Sprawdzone: bloki A i B ładują się bez błędów na czystej bazie
@@ -106,7 +106,7 @@ nie buduje się przy różnych typach identyfikatorów (C7-06 p. 1).
   `migrationBuilder.Sql` i tak, a model EF stałby się nieczytelny; DDL
   jest czytany przez przeglądających (ADR-002).
 - **Jawne nazwy wszystkich 287 ograniczeń CHECK/FK/UNIQUE w DDL** — odrzucona: nazwy
-  domyślne są deterministyczne, a plik `ograniczenia.txt` daje tę samą
+  domyślne są deterministyczne, a plik `constraints.txt` daje tę samą
   kontrolę zmian bez ręcznego nazywania; kod nie odwołuje się do nazw
   CHECK ani FK.
 - **Wspólny typ `UzytkownikId` dla Ucznia i Nauczyciela** — odrzucona:

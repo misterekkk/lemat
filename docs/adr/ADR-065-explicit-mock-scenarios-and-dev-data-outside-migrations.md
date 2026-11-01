@@ -6,7 +6,7 @@
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 3, wersja 3.2) |
 | Bramka G-0 | nie |
 | Realizuje | C7-07, C7-12; zmienia ADR-055 p. 6 i 10.0.6 wersji 3.1 |
-| Dokument główny | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 10.0.6, 17.5; [`docs/spec/prompty.md`](../spec/prompty.md) sekcja 6 |
+| Dokument główny | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 10.0.6, 17.5; [`docs/spec/prompts.md`](../spec/prompts.md) sekcja 6 |
 
 ## Status
 
@@ -30,7 +30,7 @@ migracja danych warunkowana `ASPNETCORE_ENVIRONMENT`, której kontener
    rejestrowany **wyłącznie**, gdy `IHostEnvironment.EnvironmentName` ∈
    {`Development`, `E2E`}; w `Production` filtr nie istnieje, a nagłówek
    jest usuwany przez Caddy. Wartość trafia do `IKontekstScenariuszaMock`
-   (`AsyncLocal`, `Lemat.Application.Modele`), z którego `ZlecaniePracSql`
+   (`AsyncLocal`, `Lemat.Application.Models`), z którego `ZlecaniePracSql`
    kopiuje ją do `praca_w_tle.ladunek.mock_scenariusz` każdej pracy
    zleconej w tej jednostce pracy; `PulaPracHostedService` ustawia kontekst
    z ładunku pobranej pracy, więc scenariusz przechodzi łańcuchem
@@ -38,9 +38,9 @@ migracja danych warunkowana `ASPNETCORE_ENVIRONMENT`, której kontener
    samym nagłówkiem) → `OCEN_ROZWIAZANIE` → `NAPISZ_WSKAZOWKE` →
    `AKTUALIZUJ_PROFIL`. Playwright ustawia nagłówek dla całego testu
    (`extraHTTPHeaders`).
-2. **Dane scenariuszy:** `backend/src/Lemat.Modele/Mock/Scenariusze/<nazwa>/<ROLA_MODELU>.json`
+2. **Dane scenariuszy:** `backend/src/Lemat.Models/Mock/Scenarios/<scenario-folder>/<role-file>.json`
    (odpowiedź roli; dla `GENERATYWNY_ZADANIA` z listą wywołań narzędzi)
-   i `<nazwa>/DECYZYJNY_GLOWNY.json` (rozkład per `kod_pytania`, z
+   i `<scenario-folder>/decision-primary.json` (rozkład per `kod_pytania`, z
    gwiazdką dla pytań warunkowych: `"Q-OC-05.*"`). Brak scenariusza →
    odpowiedź domyślna roli (p. 3).
 3. **Odpowiedzi domyślne (bez nagłówka)** prowadzą przepływ trasą
@@ -70,7 +70,7 @@ migracja danych warunkowana `ASPNETCORE_ENVIRONMENT`, której kontener
    stałe przesunięcie liczone przy starcie) we wszystkich procesach;
    ziarno i stan Q-RE-01 nie zależą wtedy od dnia uruchomienia testu.
 6. **Dane deweloperskie poza migracjami (C7-12):** migracje nigdy nie
-   wstawiają konfiguracji `mock`. Polecenie `dotnet Lemat.Narzedzia.dll
+   wstawiają konfiguracji `mock`. Polecenie `dotnet Lemat.Tools.dll
    seed-dev` (osobna usługa `seed` w `docker-compose.yml`, profil `dev`,
    uruchamiana po `migracje`) wstawia aktywne Konfiguracje modelu `mock`
    dla 8 ról, próg 0,95, kalibrator tożsamościowy i dane referencyjne

@@ -25,7 +25,7 @@ limit 3 strumieni i wpadał w pętlę „zamknij najstarszy” (C6-09).
 
 ## Decyzja
 
-1. **Klient — single-flight między kartami** (`frontend/src/lib/auth/odswiezanie.ts`):
+1. **Klient — single-flight między kartami** (`frontend/src/lib/auth/refresh.ts`):
    - odświeżenie wykonuje się wyłącznie wewnątrz
      `navigator.locks.request("lemat-odswiezenie", { mode: "exclusive" }, …)`
      (Web Locks API, dostępne we wszystkich przeglądarkach A-10);
@@ -87,13 +87,13 @@ limit 3 strumieni i wpadał w pętlę „zamknij najstarszy” (C6-09).
    trasy Serwist dla tej ścieżki, więc przeglądarka wykonuje je natywnie,
    bez pośrednictwa `fetch` handlera (strumienie SSE nie są buforowane ani
    przerywane przez service worker).
-7. **Testy:** Playwright `sesja-dwie-karty.spec.ts` — dwie karty jednej
+7. **Testy:** Playwright `session-two-tabs.spec.ts` — dwie karty jednej
    sesji, równoczesne wymuszone odświeżenie (zegar przesunięty do `exp −
    30 s`), obie karty zalogowane, jedno żądanie `POST /auth/odswiezenie` przy
    Web Locks; wariant bez Web Locks — dwa żądania, obie karty zalogowane;
-   `powiadomienia-dwie-karty.spec.ts` — jeden strumień na przeglądarkę,
+   `notifications-two-tabs.spec.ts` — jeden strumień na przeglądarkę,
    0 ponownych połączeń w 60 s, przejęcie po zamknięciu lidera;
-   `Lemat.Api.Tests/Konta/OknoTolerancjiTests` — ponowne użycie w 30 s z tym
+   `Lemat.Api.Tests/Accounts/OknoTolerancjiTests` — ponowne użycie w 30 s z tym
    samym `User-Agent` (200, brak `Set-Cookie`), po 31 s (401 i rodzina
    unieważniona), z innym `User-Agent` (401), szóste użycie w oknie (401).
 

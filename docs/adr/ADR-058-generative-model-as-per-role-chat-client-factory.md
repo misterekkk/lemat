@@ -6,7 +6,7 @@
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 2, wersja 3.1) |
 | Bramka G-0 | nie |
 | Realizuje | C6-03, C6-10; zmienia ADR-055 p. 1, p. 2 i p. 4 |
-| Dokument główny | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 6.4, 6.5, 6.6, 10.0, 13.1; [`docs/spec/prompty.md`](../spec/prompty.md) |
+| Dokument główny | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 6.4, 6.5, 6.6, 10.0, 13.1; [`docs/spec/prompts.md`](../spec/prompts.md) |
 
 ## Status
 
@@ -18,14 +18,14 @@ ADR-055 w wersji 3.0 definiował `IModelGeneratywny.GenerujJsonAsync<T>(Prompt �
 i jednocześnie wymagał, by Agent generujący wywoływał
 `SprawdzanieSymbolicznePlugin` przez `FunctionChoiceBehavior.Auto`. Pętla
 wywołań funkcji wymaga klienta czatu roli `GENERATYWNY_ZADANIA`, którego
-port nie udostępniał, a `Lemat.Agenci` nie może sięgać do `Lemat.Modele`
+port nie udostępniał, a `Lemat.Agents` nie może sięgać do `Lemat.Models`
 (C6-03). Krytyk wskazał też brakujące pakiety Semantic Kernel, brak
 mechanizmu limitu wywołań funkcji i ryzyko kodowania znaków `<`, `>`, `&`
 w zmiennych szablonów (C6-10).
 
 ## Decyzja
 
-1. **Port per rola.** `Lemat.Application.Modele.IModelGeneratywny` jest
+1. **Port per rola.** `Lemat.Application.Models.IModelGeneratywny` jest
    fabryką klientów czatu dla ról generatywnych i roli rozpoznawania:
 
    ```csharp
@@ -38,33 +38,33 @@ w zmiennych szablonów (C6-10).
    public sealed record KlientCzatuRoli(
        RolaModelu Rola, KonfiguracjaModeluId KonfiguracjaModeluId, string Dostawca, string Model,
        string WersjaPromptu, ParametryModelu Parametry,
-       IChatClient Czat);   // potok zbudowany w Lemat.Modele (p. 3); agent nie buduje własnego
+       IChatClient Czat);   // potok zbudowany w Lemat.Models (p. 3); agent nie buduje własnego
    ```
 
    Role dozwolone: `GENERATYWNY_ZADANIA`,
    `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE`, `GENERATYWNY_WSKAZOWKI`,
    `GENERATYWNY_WKLADKI`, `GENERATYWNY_OPINIA_POMOCNICZA`,
    `ROZPOZNAWANIE_PISMA`, `DECYZYJNY_ZAPASOWY` (ta ostatnia wyłącznie dla
-   `ZapasowyLlmAdapter` w `Lemat.Modele`); `DECYZYJNY_GLOWNY` →
+   `ZapasowyLlmAdapter` w `Lemat.Models`); `DECYZYJNY_GLOWNY` →
    `ArgumentException` (Jev nie jest LLM). Port zastępuje metody
    `GenerujJsonAsync<T>` i `GenerujTekstAsync` z wersji 3.0; ich logika
    (schemat JSON, walidacja, jedna próba naprawy) jest w
-   `Lemat.Agenci.Wspolne.WywolanieCzatu` (10.0.3).
+   `Lemat.Agents.Common.WywolanieCzatu` (10.0.3).
 2. **Zależności.** `Lemat.Application` dostaje pakiet
    `Microsoft.Extensions.AI.Abstractions` (abstrakcja tej samej klasy co
    `Microsoft.Extensions.Logging.Abstractions`: `IChatClient`,
    `ChatMessage`, `ChatOptions`, `AIFunction`, `AIJsonUtilities`, bez
    implementacji ani SDK dostawców). `BannedSymbols.txt` zabrania w
-   `Lemat.Application` i `Lemat.Agenci` konstrukcji
+   `Lemat.Application` i `Lemat.Agents` konstrukcji
    `ChatClientBuilder`, `OpenAIClient`, `AzureOpenAIClient` i metod
    `AsIChatClient`; NetArchTest `AgentNieRozwiazujeKlientaCzatuZDi`
-   sprawdza, że żaden typ w `Lemat.Agenci` nie ma parametru konstruktora
+   sprawdza, że żaden typ w `Lemat.Agents` nie ma parametru konstruktora
    typu `IChatClient`, `IChatCompletionService` ani `Kernel` — klient
    pochodzi wyłącznie z `IModelGeneratywny.DlaRoliAsync`.
-3. **Potok klienta czatu** (`Lemat.Modele.Llm.FabrykaKlientowCzatu :
+3. **Potok klienta czatu** (`Lemat.Models.Llm.FabrykaKlientowCzatu :
    IModelGeneratywny`), od zewnątrz:
    `ChatClientBuilder(adapterDostawcy)`
-   `.UseOpenTelemetry(sourceName: "Lemat.Modele", configure: c => c.EnableSensitiveData = false)`
+   `.UseOpenTelemetry(sourceName: "Lemat.Models", configure: c => c.EnableSensitiveData = false)`
    `.Use(new LimitCzasuChatClient(parametry.TimeoutS))`
    `.Use(new KosztIZuzycieChatClient(konfiguracja, metryki))`
    `.Use(new OgranicznikChatClient(ogranicznik, konfiguracja, pula))` (wyłącznie `ROZPOZNAWANIE_PISMA`)
@@ -76,7 +76,7 @@ w zmiennych szablonów (C6-10).
    Polly, żeby jedno wywołanie nie przekroczyło terminu pracy.
 4. **Semantic Kernel** (`Microsoft.SemanticKernel.Core`,
    `Microsoft.SemanticKernel.Yaml`; bez `PromptTemplates.Handlebars`)
-   wyłącznie w `Lemat.Agenci`, w dwóch rolach:
+   wyłącznie w `Lemat.Agents`, w dwóch rolach:
    - **pluginy**: klasy z metodami `[KernelFunction]` (10.2.4) tworzone
      przez `KernelPluginFactory.CreateFromObject(...)`; funkcje są
      przekazywane do `ChatOptions.Tools` jako `AIFunction` (`KernelFunction`
@@ -90,7 +90,7 @@ w zmiennych szablonów (C6-10).
      drugą linią obrony. `FunctionChoiceBehavior` i `Kernel.InvokeAsync` nie
      są używane;
    - **szablony promptów systemowych**: pliki
-     `Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml`
+     `Prompts/<role-folder>/<prompt-file>.yaml`
      (`KernelFunctionYaml.ToPromptTemplateConfig`, format
      `semantic-kernel`, składnia `{{$zmienna}}`) renderowane
      `KernelPromptTemplateFactory` do **tekstu wiadomości systemowej**.
@@ -115,7 +115,7 @@ w zmiennych szablonów (C6-10).
    `GENERUJ_ZADANIE` dopisuje je do `zlecenie_generowania.wywolania_narzedzi`
    (`jsonb`, z numerem cyklu) w tej samej jednostce pracy co wersję
    Zadania.
-7. **Testy:** `Lemat.Agenci.Tests/Generowanie/LimitWywolanFunkcjiTests`
+7. **Testy:** `Lemat.Agents.Tests/Generation/LimitWywolanFunkcjiTests`
    (`MockChatClient` żąda 9 wywołań `sprawdz_rownowaznosc` → 9. kończy się
    `BladModeluTrwalyException`, zlecenie z przyczyną
    `LIMIT_WYWOLAN_FUNKCJI`); `ZgodnoscBajtowaLatexTests` (krok
@@ -128,7 +128,7 @@ w zmiennych szablonów (C6-10).
 ## Alternatywy
 
 - **`IModelGeneratywny.GenerujZNarzedziamiAsync<T>(Prompt, IReadOnlyList<AIFunction>, …)`
-  z pętlą w `Lemat.Modele`** — odrzucona: dwa porty dla jednej roli
+  z pętlą w `Lemat.Models`** — odrzucona: dwa porty dla jednej roli
   (z narzędziami i bez), a agent i tak potrzebuje kontroli nad
   wiadomościami (naprawa odpowiedzi, dopisek strażnika wycieku 10.5.3).
 - **`Kernel` z `IChatCompletionService` w agencie i
@@ -187,7 +187,7 @@ i fałszywym `IChatClient`.
    ```csharp
    new ChatClientBuilder(adapterDostawcy)
        .UseFunctionInvocation(configure: f => { /* p. 1; dla ról bez narzędzi MaximumIterationsPerRequest = 1 */ })
-       .UseOpenTelemetry(sourceName: "Lemat.Modele", configure: c => c.EnableSensitiveData = false)
+       .UseOpenTelemetry(sourceName: "Lemat.Models", configure: c => c.EnableSensitiveData = false)
        .Use(w => new KlasyfikacjaBledowChatClient(w))                                  // per żądanie HTTP
        .Use(w => new LimitCzasuChatClient(w, TimeSpan.FromSeconds((double)parametry.TimeoutS)))
        .Use(w => new KosztIZuzycieChatClient(w, konfiguracja, metryki))
@@ -215,19 +215,19 @@ i fałszywym `IChatClient`.
 5. **Model zapasowy dla Walidacji (C7-08).** `ZapasowyLlmAdapter.WykonajPlanAsync(string stan,
    PlanPytan plan, TerminPlanu termin, KontekstDecyzji kontekst, CancellationToken ct)`;
    prompt wybierany po kontekście: `Ocena` → `plan-pytan-v1`, `Walidacja` →
-   `plan-pytan-walidacji-v1` (`docs/spec/prompty.md` 4.9, bez Q-OC-04, ze
+   `plan-pytan-walidacji-v1` (`docs/spec/prompts.md` 4.9, bez Q-OC-04, ze
    stanem `stan-walidacji-v1`); `Rekomendacja` → `ArgumentException`
    (Q-RE-01 nie ma modelu zapasowego, ADR-023). Logika ustrukturyzowanego
    wyjścia (schemat, walidacja, jedna próba naprawy) jest **portem**
-   `IWywolanieUstrukturyzowane` (`Lemat.Application.Modele`) z jedną
-   implementacją `WywolanieUstrukturyzowane` w `Lemat.Modele.Llm` (pakiet
-   `JsonSchema.Net` w `Lemat.Modele`); `Lemat.Agenci.Wspolne.WywolanieCzatu`
+   `IWywolanieUstrukturyzowane` (`Lemat.Application.Models`) z jedną
+   implementacją `WywolanieUstrukturyzowane` w `Lemat.Models.Llm` (pakiet
+   `JsonSchema.Net` w `Lemat.Models`); `Lemat.Agents.Common.WywolanieCzatu`
    jest cienką nakładką (budowa wiadomości, termin agenta, wykrycie
    nieznanego narzędzia) wywołującą port. Test
    `WalidacjaPrzyObwodzieOtwartym` (Jev niedostępny, obwód otwarty →
    plan Q-WA przez `plan-pytan-walidacji-v1`, Zadanie opublikowane).
 6. **Schematy odpowiedzi — jedno źródło (C7-09).** Schematy są
-   **generowane** z rekordów C# (`Lemat.Modele.Schematy.<Rekord>`, atrybuty
+   **generowane** z rekordów C# (`Lemat.Models.Schemas.<Rekord>`, atrybuty
    `[Range]`, `[StringLength]`, `[MinLength]`, `[MaxLength]`,
    `[RegularExpression]`) przez `AIJsonUtilities.CreateJsonSchema(typ,
    serializerOptions: BudowniczyWiadomosci.Json, inferenceOptions: new() {
@@ -235,8 +235,8 @@ i fałszywym `IChatClient`.
    RequireAllProperties = true } })`; wynik (zmierzony: `additionalProperties:
    false` i komplet `required` na każdym obiekcie, `minimum`/`maximum`/`pattern`/`minItems`/`maxItems`
    z atrybutów, typy powtarzalne rozwinięte inline, bez `$defs`) jest
-   zapisywany do `Lemat.Modele/Schematy/*.json` (migawka w repozytorium,
-   test `SchematyOdpowiedziBezDryfu`). JSON w `docs/spec/prompty.md` 4 jest
+   zapisywany do `Lemat.Models/Schemas/*.json` (migawka w repozytorium,
+   test `SchematyOdpowiedziBezDryfu`). JSON w `docs/spec/prompts.md` 4 jest
    opisem tej postaci. Mapy dynamiczne zastąpiono tablicami par:
    `rozklad: [{ opcja, p }]` (model zapasowy) i `stwierdzenia: [{ id,
    prawda }]` (W-3); komplet opcji i suma prawdopodobieństw są sprawdzane w
@@ -261,7 +261,7 @@ i fałszywym `IChatClient`.
    repozytoria odczytu agentów) używają `NpgsqlDataSource` albo
    `IDbContextFactory<LematDbContext>` z kontekstem na wywołanie. Test
    architektury `AgenciIPortyAgentowNieZalezaOdLematDbContext` (NetArchTest:
-   typy `Lemat.Agenci` i implementacje portów z listy `PortyWywolywaneZAgentow`
+   typy `Lemat.Agents` i implementacje portów z listy `PortyWywolywaneZAgentow`
    nie mają zależności konstruktora od `LematDbContext`) i test
    `WalidacjaRownoleglaBezBledowKontekstu` (100 Walidacji z `Task.WhenAll`
    W-2/W-3/Q-WA/W-9 i wygasłą pamięcią konfiguracji).
@@ -272,7 +272,7 @@ i fałszywym `IChatClient`.
    (albo `InputVariable.AllowDangerouslySetContent`). `SzablonyPromptow`
    używa fabryki z tą flagą (bezpieczne: zmienne są wyłącznie systemowe,
    p. 4); test `RenderowanieNazwUmiejetnosci` renderuje każdy szablon dla
-   wszystkich nazw z `umiejetnosci.yaml` i porównuje bajty zmiennej w
+   wszystkich nazw z `skills.yaml` i porównuje bajty zmiennej w
    tekście wynikowym z nazwą w YAML.
 9. **Rejestr adapterów dla modelu zapasowego (C7-15 p. 7).**
    `FabrykaKlientowCzatu.DlaRoliAsync(DecyzyjnyZapasowy)` buduje adapter z

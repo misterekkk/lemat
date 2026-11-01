@@ -25,7 +25,7 @@ z `pattern`, co daje w TypeScript `number | string`.
 ## Decyzja
 
 1. **Źródło kontraktu = kod.** Rekordy C# żądań i odpowiedzi
-   (`Lemat.Api.Kontrakty.<Modul>`, sufiksy `Wejscie`/`Wyjscie`, ADR-049) i
+   (`Lemat.Api.Contracts.<Module>`, sufiksy `Wejscie`/`Wyjscie`, ADR-049) i
    endpointy Minimal API (`MapGroup("/api/v1/<zasob>")`, `WithName`
    = identyfikator operacji `PascalCase`, `Produces<T>`,
    `ProducesProblem(kod)`) są jedynym źródłem. `Microsoft.AspNetCore.OpenApi`
@@ -55,9 +55,9 @@ z `pattern`, co daje w TypeScript `number | string`.
    co nie daje typów).
 4. **Klient TypeScript:** `openapi-typescript` 7.13 generuje
    `frontend/src/lib/api/schema.d.ts` (`npm run api:typy`), a
-   `openapi-fetch` 0.14 jest jedynym klientem HTTP (`klient.ts`, 12.11).
-   Typy zdarzeń SSE generuje skrypt `frontend/narzedzia/generuj-zdarzenia.ts`
-   z `x-lemat-zdarzenia` do `src/lib/sse/zdarzenia.ts` (unia
+   `openapi-fetch` 0.14 jest jedynym klientem HTTP (`client.ts`, 12.11).
+   Typy zdarzeń SSE generuje skrypt `frontend/tools/generate-events.ts`
+   z `x-lemat-zdarzenia` do `src/lib/sse/events.ts` (unia
    rozróżnialna po `event`). Sprawdzone: wygenerowany `schema.d.ts` i
    klient z middleware `onRequest`/`onResponse` przechodzą `tsc --strict`.
 5. **Dryf kontraktu:** CI (a) buduje `backend` i porównuje wygenerowany
@@ -81,7 +81,7 @@ z `pattern`, co daje w TypeScript `number | string`.
 
 - Zmiana rekordu C# bez regeneracji kontraktu psuje CI, a zmiana
   niekompatybilna wymaga `v2` albo pola opcjonalnego.
-- Frontend nie definiuje DTO ręcznie; aliasy `typy.ts` (3.5) wskazują na
+- Frontend nie definiuje DTO ręcznie; aliasy `types.ts` (3.5) wskazują na
   `components["schemas"][...]`.
 
 ## Uzupełnienie wersji 3.3 (C8-01, C8-08)

@@ -31,20 +31,20 @@ P95 `GET …/nastepna` ≤ 500 ms (bez JEV_CHOICE ≤ 150 ms); krawędź `api �
 
 **Uzupełnienie wersji 3.1 (C6-07).** Tryb synchroniczny nie jest metodą
 klasy `Orkiestrator`. Realizuje go `IRekomendacjaSynchroniczna`
-(`Lemat.Application.Orkiestracja.Synchroniczna`, implementacja
+(`Lemat.Application.Orchestration.Synchronous`, implementacja
 `RekomendacjaSynchroniczna`), zależna wyłącznie od `IAgentRekomendujacy`,
 `IOgranicznikCzasuRekomendacji` (timeout 1,5 s) i fasad **odczytu**
 `IProfilFasada`, `ITresciFasada`, `IKlasyFasada`, `IKontaFasada`. Zwraca
 `DecyzjaRekomendacji` bez zapisu. Zapis elementu Ścieżki nauki,
 Rekomendacji i zleceń prac (`UZUPELNIJ_PULE`, `GENERUJ_SZKIC_WKLADKI`)
 wykonuje przypadek użycia modułu Rekomendacje
-(`Lemat.Application.Rekomendacje.Komendy.NastepnyElementHandler`) w swojej
+(`Lemat.Application.Recommendations.Commands.NastepnyElementHandler`) w swojej
 jednostce pracy; dane Ścieżki nauki (10 ostatnich elementów, Seria)
 przekazuje do `DecydujAsync` jako parametr. Kontrakty `IZlecaniePrac`,
 `ZleceniePracy`, `TypPracy` i `PulaPracy` są przeniesione do
-`Lemat.Application.Wspolne.PraceWTle`, więc żaden moduł nie zależy od
-`Lemat.Application.Orkiestracja`. Test `BrakCykliMiedzyModulamiAplikacji`
+`Lemat.Application.Common.BackgroundJobs`, więc żaden moduł nie zależy od
+`Lemat.Application.Orchestration`. Test `BrakCykliMiedzyModulamiAplikacji`
 (`Lemat.Architecture.Tests`) buduje graf zależności przestrzeni nazw
-`Lemat.Application.<Modul>` (osobny węzeł: `Orkiestracja.Synchroniczna`) i
+`Lemat.Application.<Module>` (osobny węzeł: `Orchestration.Synchronous`) i
 wymaga acykliczności; `KontenerDiTests` budują kontenery `api`, `worker` i
 `scheduler` z `ValidateOnBuild = true` i `ValidateScopes = true`.

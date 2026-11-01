@@ -2,17 +2,17 @@
 
 | Pole | Wartość |
 |---|---|
-| Dokument | `docs/spec/prompty.md` |
-| Wersja | 3.2 (pętla 3.x, iteracja 3) |
+| Dokument | `docs/spec/prompts.md` |
+| Wersja | 3.4 (angielskie nazwy plików promptów i danych Mock, indeksy `Prompts/index.yaml` i `Mock/Scenarios/index.yaml`, ADR-075; treść jak w 3.2 — pętla 3.x, iteracja 3) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — sekcja 10 (agenci), 13.1–13.2 (porty i adaptery); ADR-058 |
-| Pliki w repozytorium | `backend/src/Lemat.Agenci/Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml` (prompty systemowe), `backend/src/Lemat.Modele/Schematy/*.json` (schematy odpowiedzi, generowane z rekordów C#) |
+| Pliki w repozytorium | `backend/src/Lemat.Agents/Prompts/<role-folder>/<prompt-file>.yaml` (prompty systemowe), `backend/src/Lemat.Models/Schemas/*.json` (schematy odpowiedzi, generowane z rekordów C#) |
 
 ## 1. Zasady wspólne
 
 1. **Podział wiadomości.** Każde wywołanie modelu generatywnego ma dokładnie
    dwie wiadomości: `system` — wyrenderowany szablon z tego pliku — i
    `user` — dane zadania zbudowane w C# przez `BudowniczyWiadomosci`
-   (`Lemat.Agenci.Wspolne`) jako JSON (`snake_case`,
+   (`Lemat.Agents.Common`) jako JSON (`snake_case`,
    `JavaScriptEncoder.UnsafeRelaxedJsonEscaping`) z obrazami jako
    `DataContent` (`image/jpeg`). Wyjątek: model zapasowy — wiadomość `user`
    to stan 10.4.2 (tekst) i plan pytań (JSON).
@@ -26,16 +26,16 @@
    (wersja 3.2, C7-14): bez tej flagi SK 1.81 koduje zmienne HTML-em (`<` →
    `&lt;`, `ó` → `&#243;`), a flaga w `PromptTemplateConfig` tego nie wyłącza
    (sprawdzone); test `RenderowanieNazwUmiejetnosci` renderuje każdy szablon
-   dla wszystkich nazw z `umiejetnosci.yaml`.
+   dla wszystkich nazw z `skills.yaml`.
 3. **Ustrukturyzowane wyjście.** `ChatOptions.ResponseFormat =
    ChatResponseFormat.ForJsonSchema(schemat, nazwa, opis)` i
    `AdditionalProperties["strict"] = true` (tryb ścisły adapterów OpenAI i
    Azure OpenAI; sprawdzone: żądanie ma `response_format.json_schema.strict
    = true`). **Jedno źródło (3.2, C7-09):** schematy są generowane z
-   rekordów C# (`Lemat.Modele.Schematy`) przez `AIJsonUtilities.CreateJsonSchema`
+   rekordów C# (`Lemat.Models.Schemas`) przez `AIJsonUtilities.CreateJsonSchema`
    z `TransformOptions { DisallowAdditionalProperties = true,
    RequireAllProperties = true }` i zapisywane jako migawki
-   `Lemat.Modele/Schematy/*.json` (test `SchematyOdpowiedziBezDryfu`); JSON
+   `Lemat.Models/Schemas/*.json` (test `SchematyOdpowiedziBezDryfu`); JSON
    w sekcji 4 jest opisem tej postaci — generator rozwija typy powtarzalne
    inline (bez `$defs`/`$ref`) i nie emituje `$schema` ani `title`, więc
    porównanie z tym plikiem jest semantyczne (właściwości, typy, `required`,
@@ -61,18 +61,29 @@
 
 ## 2. Katalog promptów
 
-| Rola (`rola_modelu`) | `wersja_promptu` | Agent / adapter | Wyjście | Parametry domyślne |
-|---|---|---|---|---|
-| `ROZPOZNAWANIE_PISMA` | `rozpoznanie-v1` | Agent rozpoznający (10.3) | `RezultatRozpoznawaniaModelu` (4.1) | `temperatura` 0, `max_tokens` 8 000, `timeout_s` 14 |
-| `ROZPOZNAWANIE_PISMA` | `sprawdzenie-poprawek-v2` | Agent rozpoznający (10.3.3) | `RezultatSprawdzeniaPoprawekModelu` (4.2) | 0 / 2 000 / 8 |
-| `GENERATYWNY_ZADANIA` | `zadanie-v1` | Agent generujący (10.2), z narzędziami `sympy_sprawdz_rownowaznosc`, `sympy_postac_liniowa` | `ZadanieWygenerowaneModelu` (4.3) | 0,7 / 6 000 / 45 na żądanie (termin wywołania agenta 150 s, 3.2), `maks_iteracji_funkcji` 8 |
-| `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE` | `rozwiazanie-niezalezne-v1` | Agent generujący, W-3 | `RozwiazanieNiezalezneModelu` (4.4) | 0 / 3 000 / 30 |
-| `GENERATYWNY_WKLADKI` | `wkladka-v1` | Agent generujący, szkic Wkładki | `WkladkaModelu` (4.5) | 0,5 / 6 000 / 60 |
-| `GENERATYWNY_WSKAZOWKI` | `wskazowka-v1` | Agent wyjaśniający (10.5) | `WskazowkaModelu` (4.6) | 0,3 / 400 / 8 |
-| `GENERATYWNY_OPINIA_POMOCNICZA` | `opinia-pomocnicza-v1` | Agent oceniający, praca `OPINIA_POMOCNICZA` | `OpiniaPomocniczaModelu` (4.7) | 0 / 2 000 / 30 |
-| `DECYZYJNY_ZAPASOWY` | `plan-pytan-v1` | `ZapasowyLlmAdapter` (13.2), `KontekstDecyzji.Ocena` | `OdpowiedzPlanuModelu` (4.8) | 0 / 4 000 / 9 |
-| `DECYZYJNY_ZAPASOWY` | `plan-pytan-walidacji-v1` (wybierany przez adapter dla `KontekstDecyzji.WalidacjaZadania` przy `wersja_promptu = plan-pytan-v1`, 3.2, C7-08) | `ZapasowyLlmAdapter`, Walidacja Zadania (Q-WA) | `OdpowiedzPlanuWalidacjiModelu` (4.9) | 0 / 3 000 / 15 |
-| `DECYZYJNY_GLOWNY` | `stan-oceny-v1` | Jev — stan budowany w C# (sekcja 3), bez promptu systemowego | rozkłady Jev (A-01) | `timeout_s` 2 |
+| Rola (`rola_modelu`) | `wersja_promptu` | Plik szablonu (`Prompts/`, ADR-075) | Agent / adapter | Wyjście | Parametry domyślne |
+|---|---|---|---|---|---|
+| `ROZPOZNAWANIE_PISMA` | `rozpoznanie-v1` | `handwriting-recognition/recognition-v1.yaml` | Agent rozpoznający (10.3) | `RezultatRozpoznawaniaModelu` (4.1) | `temperatura` 0, `max_tokens` 8 000, `timeout_s` 14 |
+| `ROZPOZNAWANIE_PISMA` | `sprawdzenie-poprawek-v2` | `handwriting-recognition/edit-check-v2.yaml` | Agent rozpoznający (10.3.3) | `RezultatSprawdzeniaPoprawekModelu` (4.2) | 0 / 2 000 / 8 |
+| `GENERATYWNY_ZADANIA` | `zadanie-v1` | `generative-exercises/exercise-v1.yaml` | Agent generujący (10.2), z narzędziami `sympy_sprawdz_rownowaznosc`, `sympy_postac_liniowa` | `ZadanieWygenerowaneModelu` (4.3) | 0,7 / 6 000 / 45 na żądanie (termin wywołania agenta 150 s, 3.2), `maks_iteracji_funkcji` 8 |
+| `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE` | `rozwiazanie-niezalezne-v1` | `generative-independent-solver/independent-solution-v1.yaml` | Agent generujący, W-3 | `RozwiazanieNiezalezneModelu` (4.4) | 0 / 3 000 / 30 |
+| `GENERATYWNY_WKLADKI` | `wkladka-v1` | `generative-theory-inserts/theory-insert-v1.yaml` | Agent generujący, szkic Wkładki | `WkladkaModelu` (4.5) | 0,5 / 6 000 / 60 |
+| `GENERATYWNY_WSKAZOWKI` | `wskazowka-v1` | `generative-hints/hint-v1.yaml` | Agent wyjaśniający (10.5) | `WskazowkaModelu` (4.6) | 0,3 / 400 / 8 |
+| `GENERATYWNY_OPINIA_POMOCNICZA` | `opinia-pomocnicza-v1` | `generative-auxiliary-opinion/auxiliary-opinion-v1.yaml` | Agent oceniający, praca `OPINIA_POMOCNICZA` | `OpiniaPomocniczaModelu` (4.7) | 0 / 2 000 / 30 |
+| `DECYZYJNY_ZAPASOWY` | `plan-pytan-v1` | `decision-fallback/question-plan-v1.yaml` | `ZapasowyLlmAdapter` (13.2), `KontekstDecyzji.Ocena` | `OdpowiedzPlanuModelu` (4.8) | 0 / 4 000 / 9 |
+| `DECYZYJNY_ZAPASOWY` | `plan-pytan-walidacji-v1` (wybierany przez adapter dla `KontekstDecyzji.WalidacjaZadania` przy `wersja_promptu = plan-pytan-v1`, 3.2, C7-08) | `decision-fallback/validation-question-plan-v1.yaml` | `ZapasowyLlmAdapter`, Walidacja Zadania (Q-WA) | `OdpowiedzPlanuWalidacjiModelu` (4.9) | 0 / 3 000 / 15 |
+| `DECYZYJNY_GLOWNY` | `stan-oceny-v1` | — (kod C#, `GradingStateBuilder.cs`) | Jev — stan budowany w C# (sekcja 3), bez promptu systemowego | rozkłady Jev (A-01) | `timeout_s` 2 |
+
+Nazwa pliku szablonu jest angielska (ADR-075), a identyfikator
+`wersja_promptu` (wartość kolumny `konfiguracja_modelu.wersja_promptu`)
+pozostaje bez zmian. Plik `backend/src/Lemat.Agents/Prompts/index.yaml`
+(zasób osadzony) wiąże parę (`rola_modelu`, `wersja_promptu`) z plikiem
+(`ROZPOZNAWANIE_PISMA/rozpoznanie-v1: handwriting-recognition/recognition-v1.yaml`);
+`SzablonyPromptow` ładuje szablony wyłącznie przez ten indeks, a test
+`KazdaWersjaPromptuIstnieje` sprawdza w obie strony: każdy wpis ma plik,
+każdy plik `*.yaml` w `Prompts/` ma wpis, a katalog pliku jest katalogiem
+roli z 6.11. Pole `name` w YAML (nazwa funkcji Semantic Kernel) nie
+zmienia się.
 
 ## 3. Szablony stanów dla Modelu decyzyjnego (kod C#, bez Semantic Kernel)
 
@@ -110,7 +121,7 @@ wynik_koncowy_ucznia vs wzorcowy: {ROWNOWAZNE|NIEROWNOWAZNE|NIEROZSTRZYGNIETE|ni
 Cudzysłowy i ukośniki wsteczne w `tekst`/`latex` nie są zamieniane (stan to
 tekst, nie JSON); znak nowej linii wewnątrz pola jest zastępowany sekwencją
 `\n` (dwa znaki). Test `StanOcenyZgodnyBajtowo` porównuje wynik z plikiem
-wzorcowym `Lemat.Agenci.Tests/Dane/stan-oceny-v1/*.txt` dla 12 przypadków
+wzorcowym `Lemat.Agents.Tests/Data/grading-state-v1/*.txt` dla 12 przypadków
 (w tym `<`, `>`, `&`, `\begin{cases}`).
 
 ### 3.2 `stan-walidacji-v1` (`BudowniczyStanuWalidacji`, pytania Q-WA, 10.2.2)
@@ -166,7 +177,7 @@ POWTORKA: powtórka opanowanej umiejętności o najdawniej zaległej powtórce
 
 ## 4. Prompty systemowe i schematy odpowiedzi
 
-### 4.1 `ROZPOZNAWANIE_PISMA/rozpoznanie-v1.yaml`
+### 4.1 `handwriting-recognition/recognition-v1.yaml`
 
 ```yaml
 name: rozpoznanie
@@ -255,7 +266,7 @@ Wiadomość `user`: `{"tresc_zadania_md": "…", "tekst_alternatywny_rysunkow": 
 `przekroczono_limit_krokow = true` → `BLAD_ROZPOZNAWANIA` z kodem
 `ZBYT_WIELE_KROKOW` (8.1); `czytelne = false` → `NIECZYTELNE`.
 
-### 4.2 `ROZPOZNAWANIE_PISMA/sprawdzenie-poprawek-v2.yaml`
+### 4.2 `handwriting-recognition/edit-check-v2.yaml`
 
 ```yaml
 name: sprawdzenie_poprawek
@@ -310,7 +321,7 @@ Agent sprawdza, że zbiór `nr` w odpowiedzi = zbiór kroków w wiadomości
 (inaczej naprawa, potem `BladModeluTrwalyException`); `niezgodne` wylicza
 kod (10.3.3), nie model.
 
-### 4.3 `GENERATYWNY_ZADANIA/zadanie-v1.yaml` (z narzędziami)
+### 4.3 `generative-exercises/exercise-v1.yaml` (z narzędziami)
 
 ```yaml
 name: zadanie
@@ -424,7 +435,7 @@ Wiadomość `user`: `{"przyklady": [{"tresc_md": "…", "rozwiazanie_wzorcowe": 
 }
 ```
 
-### 4.4 `GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE/rozwiazanie-niezalezne-v1.yaml`
+### 4.4 `generative-independent-solver/independent-solution-v1.yaml`
 
 ```yaml
 name: rozwiazanie_niezalezne
@@ -470,7 +481,7 @@ template: |
 "tresc_niejednoznaczna": true}` (sygnał LLM działa tylko w kierunku
 bezpiecznym, Z-1).
 
-### 4.5 `GENERATYWNY_WKLADKI/wkladka-v1.yaml`
+### 4.5 `generative-theory-inserts/theory-insert-v1.yaml`
 
 ```yaml
 name: wkladka
@@ -513,7 +524,7 @@ template: |
 }
 ```
 
-### 4.6 `GENERATYWNY_WSKAZOWKI/wskazowka-v1.yaml`
+### 4.6 `generative-hints/hint-v1.yaml`
 
 ```yaml
 name: wskazowka
@@ -557,7 +568,7 @@ podawaj żadnych wartości liczbowych wyniku ani poprawnych wartości kroków.�
 }
 ```
 
-### 4.7 `GENERATYWNY_OPINIA_POMOCNICZA/opinia-pomocnicza-v1.yaml`
+### 4.7 `generative-auxiliary-opinion/auxiliary-opinion-v1.yaml`
 
 ```yaml
 name: opinia_pomocnicza
@@ -602,7 +613,7 @@ template: |
 Pola `konfiguracja_modelu_id`, `zgodna_z_ocena_weryfikowana` i
 `created_at` schematu 10.4.5 uzupełnia kod.
 
-### 4.8 `DECYZYJNY_ZAPASOWY/plan-pytan-v1.yaml` (model zapasowy, 13.2)
+### 4.8 `decision-fallback/question-plan-v1.yaml` (model zapasowy, 13.2)
 
 ```yaml
 name: plan_pytan
@@ -664,7 +675,7 @@ Klucz `decyzje_skladowe` zgodnie z 3.1 p. 5. Walidacja odpowiedzi
 (normalizowana do 1), `Q-OC-04.krok` = argmax Q-OC-03. Rozkład jest
 zapisywany w `decyzja_modelu.rozklad` jako obiekt `{opcja: p}` (7.5).
 
-### 4.9 `DECYZYJNY_ZAPASOWY/plan-pytan-walidacji-v1.yaml` (model zapasowy dla Walidacji, 3.2, C7-08)
+### 4.9 `decision-fallback/validation-question-plan-v1.yaml` (model zapasowy dla Walidacji, 3.2, C7-08)
 
 ```yaml
 name: plan_pytan_walidacji
@@ -705,13 +716,13 @@ z rezultatem SymPy `NIEROWNOWAZNE`/`NIEROZSTRZYGNIETE`, maks. 12).
 ```
 
 Walidacja odpowiedzi jak w 4.8 (bez Q-OC-04). Test
-`WalidacjaPrzyObwodzieOtwartym` (`Lemat.Agenci.Tests`): obwód Jev otwarty →
+`WalidacjaPrzyObwodzieOtwartym` (`Lemat.Agents.Tests`): obwód Jev otwarty →
 plan Q-WA wykonany tym promptem, Zadanie przechodzi przez `DO_PRZEGLADU`
 albo `OPUBLIKOWANE` zgodnie z 8.4.
 
 ## 5. Teksty pytań Planu pytań Oceny (Jev i model zapasowy)
 
-Teksty są stałymi `Lemat.Agenci.Ocenianie.KatalogPytan` (10.4.3); zmiana
+Teksty są stałymi `Lemat.Agents.Grading.KatalogPytan` (10.4.3); zmiana
 tekstu = nowa wersja `stan-oceny-vN` i ewaluacja ZT-1.
 
 | Kod | Tekst |
@@ -728,31 +739,41 @@ tekstu = nowa wersja `stan-oceny-vN` i ewaluacja ZT-1.
 ## 6. Implementacje Mock — scenariusze i dane (wersja 3.2, ADR-065)
 
 **Wybór odpowiedzi.** `MockChatClient` i `MockModelDecyzyjny`
-(`Lemat.Modele.Mock`) nie kluczują odpowiedzi skrótem treści (wersja 3.1:
+(`Lemat.Models.Mock`) nie kluczują odpowiedzi skrótem treści (wersja 3.1:
 SHA-256 wiadomości `user` — ta sama Transkrypcja dla każdego Rozwiązania
 Zadania i cichy fallback przy zmianie formatu, C7-07). Odpowiedź wybiera
 scenariusz z `IKontekstScenariuszaMock` (nagłówek `X-Lemat-Mock-Scenariusz`,
 przenoszony w `praca_w_tle.ladunek.mock_scenariusz`):
 
 ```text
-backend/src/Lemat.Modele/Mock/Scenariusze/
-├── auto-poprawne/                     ROZPOZNAWANIE_PISMA.json, DECYZYJNY_GLOWNY.json, GENERATYWNY_WSKAZOWKI.json
-├── auto-blad-rachunkowy/              … (Q-OC-03 = KROK_2 z masą 0,995, Q-OC-04.2 = RACHUNKOWY)
-├── weryfikacja-niska-pewnosc/         DECYZYJNY_GLOWNY.json (masa 0,70 na opcji wzorcowej)
-├── weryfikacja-poprawny-wynik-bledne-kroki/
-├── weryfikacja-dowod/
-├── weryfikacja-podejrzenie-odczytu/   ROZPOZNAWANIE_PISMA.json (pewnosc_odczytu 0,62 w kroku 2), Q-OC-06 = tak
-├── weryfikacja-poprawki-niezgodne/    ROZPOZNAWANIE_PISMA.json z rolą sprawdzenia poprawek: p_zgodna_z_poprawka 0,20
-├── kontrola-losowa/                   (+ LEMAT_KONTROLA_LOSOWA_ZIARNO w E2E)
-├── t6-oba-modele-niedostepne/         DECYZYJNY_GLOWNY.json {"blad": "PRZEJSCIOWY"}, DECYZYJNY_ZAPASOWY.json {"blad": "PRZEJSCIOWY"}
-├── t7-brak-sprawdzenia-poprawek/      sprawdzenie poprawek {"blad": "TIMEOUT"}
-├── rozpoznanie-nieczytelne/           {"czytelne": false, …}
-├── rozpoznanie-blad-przejsciowy-potem-sukces/   ROZPOZNAWANIE_PISMA.json: {"sekwencja": [{"blad": "PRZEJSCIOWY"}, {…odpowiedź…}]}
-├── rozpoznanie-timeout/               {"blad": "TIMEOUT"}
-├── generowanie-z-narzedziami/         GENERATYWNY_ZADANIA.json: "wywolania_narzedzi": [{"nazwa": "sympy_postac_liniowa", "argumenty": {…}},
+backend/src/Lemat.Models/Mock/Scenarios/
+├── index.yaml                                  identyfikator scenariusza (wartość nagłówka) → katalog (ADR-075 p. 6)
+├── auto-correct/                               auto-poprawne: handwriting-recognition.json, decision-primary.json, generative-hints.json
+├── auto-calculation-error/                     auto-blad-rachunkowy: … (Q-OC-03 = KROK_2 z masą 0,995, Q-OC-04.2 = RACHUNKOWY)
+├── verification-low-confidence/                weryfikacja-niska-pewnosc: decision-primary.json (masa 0,70 na opcji wzorcowej)
+├── verification-correct-result-wrong-steps/    weryfikacja-poprawny-wynik-bledne-kroki
+├── verification-proof/                         weryfikacja-dowod
+├── verification-suspected-reading-error/       weryfikacja-podejrzenie-odczytu: handwriting-recognition.json (pewnosc_odczytu 0,62 w kroku 2), Q-OC-06 = tak
+├── verification-inconsistent-edits/            weryfikacja-poprawki-niezgodne: handwriting-recognition.json z rolą sprawdzenia poprawek: p_zgodna_z_poprawka 0,20
+├── random-check/                               kontrola-losowa (+ LEMAT_KONTROLA_LOSOWA_ZIARNO w E2E)
+├── t6-both-models-unavailable/                 t6-oba-modele-niedostepne: decision-primary.json {"blad": "PRZEJSCIOWY"}, decision-fallback.json {"blad": "PRZEJSCIOWY"}
+├── t7-no-edit-check/                           t7-brak-sprawdzenia-poprawek: sprawdzenie poprawek {"blad": "TIMEOUT"}
+├── recognition-illegible/                      rozpoznanie-nieczytelne: {"czytelne": false, …}
+├── recognition-transient-error-then-success/   rozpoznanie-blad-przejsciowy-potem-sukces: handwriting-recognition.json: {"sekwencja": [{"blad": "PRZEJSCIOWY"}, {…odpowiedź…}]}
+├── recognition-timeout/                        rozpoznanie-timeout: {"blad": "TIMEOUT"}
+├── generation-with-tools/                      generowanie-z-narzedziami: generative-exercises.json: "wywolania_narzedzi": [{"nazwa": "sympy_postac_liniowa", "argumenty": {…}},
 │                                                                                 {"nazwa": "sympy_sprawdz_rownowaznosc", "argumenty": {…}}]
-└── generowanie-limit-wywolan/         GENERATYWNY_ZADANIA.json: 9 × sympy_sprawdz_rownowaznosc → LIMIT_WYWOLAN_FUNKCJI
+└── generation-call-limit/                      generowanie-limit-wywolan: generative-exercises.json: 9 × sympy_sprawdz_rownowaznosc → LIMIT_WYWOLAN_FUNKCJI
 ```
+
+Od wersji 3.4 (ADR-075) katalogi scenariuszy i pliki ról mają nazwy
+angielskie, a identyfikator scenariusza (wartość nagłówka
+`X-Lemat-Mock-Scenariusz`, pole `mock_scenariusz`) pozostaje bez zmian;
+`index.yaml` wiąże identyfikator z katalogiem (`auto-poprawne:
+auto-correct`), a nazwę pliku roli wyznacza mapowanie `RolaModelu` → plik z
+6.11 dokumentu głównego (`DECYZYJNY_GLOWNY` → `decision-primary.json`).
+Test `KazdyScenariuszMaKatalog` sprawdza, że każdy wpis `index.yaml` ma
+katalog, a każdy katalog — wpis.
 
 Pole `"sekwencja"` daje kolejne odpowiedzi dla kolejnych wywołań roli w
 obrębie jednego Rozwiązania (licznik w `IKontekstScenariuszaMock`, klucz

@@ -6,7 +6,7 @@
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 3, wersja 3.2) |
 | Bramka G-0 | nie |
 | Realizuje | C7-03, C7-04, C7-13; uzupełnia ADR-053 i ADR-056 p. 4 |
-| Dokument główny | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 10.0.4, 13.3, 13.4, 13.5, 14.3; [`docs/spec/ddl.md`](../spec/ddl.md) `0006_prace_w_tle.sql`, `przebieg_harmonogramu` |
+| Dokument główny | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 10.0.4, 13.3, 13.4, 13.5, 14.3; [`docs/spec/ddl.md`](../spec/ddl.md) `0006_background_jobs.sql`, `przebieg_harmonogramu` |
 
 ## Status
 
@@ -61,7 +61,7 @@ wystąpienia z okna przerwy.
    prób, metryka `praca_petla_blad_infrastruktury_total{pula}`); pętla nie
    kończy się nigdy poza zatrzymaniem procesu.
 3. **Ponowienie i odzyskiwanie bez konfliktu deduplikacji:** funkcje SQL
-   `ponow_prace` i `odzyskaj_dzierzawy` (`0006_prace_w_tle.sql`) zmieniają
+   `ponow_prace` i `odzyskaj_dzierzawy` (`0006_background_jobs.sql`) zmieniają
    każdy wiersz w osobnym bloku `EXCEPTION`; naruszenie
    `ux_praca_dedup_oczekujace` kończy pracę A statusem `ZAKONCZONA` z
    `ostatni_blad = 'ZASTAPIONA_NOWSZA'` (praca B `OCZEKUJE` z tym samym
@@ -98,7 +98,7 @@ wystąpienia z okna przerwy.
    pracy (gdy termin twardy nie minął) albo ścieżka „po wyczerpaniu” (T-6,
    `BLAD_ROZPOZNAWANIA`); metryka `rozwiazania_zawieszone_total` i alert
    przy > 0 przez 15 min.
-7. **Testy** (`Lemat.Infrastructure.Tests/PraceWTle`, Testcontainers):
+7. **Testy** (`Lemat.Infrastructure.Tests/BackgroundJobs`, Testcontainers):
    (g) `PonowienieGdyIstniejePracaOczekujacaZTymSamymKluczem`;
    (h) `OdzyskiwanieZJednymKonfliktemOdzyskujePozostale`;
    (i) `TimeoutModeluToPonowANieZakonczona`;

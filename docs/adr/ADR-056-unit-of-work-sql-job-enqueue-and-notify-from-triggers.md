@@ -32,7 +32,7 @@ był chroniony warunkiem dzierżawy (C6-15 p. 1), a lista encji wysyłających
 1. **Jednostka pracy.** Każdy przypadek użycia zmieniający stan (handler
    komendy w `api`, handler pracy w tle w `worker`, praca harmonogramu)
    wykonuje się w `IJednostkaPracy.WykonajAsync(...)`
-   (`Lemat.Application.Wspolne`), której implementacja `JednostkaPracyEf`
+   (`Lemat.Application.Common`), której implementacja `JednostkaPracyEf`
    (`Lemat.Infrastructure.Persistence`):
    1. otwiera **jawną** transakcję `Database.BeginTransactionAsync(IsolationLevel.ReadCommitted)`;
    2. uruchamia delegat przypadku użycia;
@@ -64,7 +64,7 @@ był chroniony warunkiem dzierżawy (C6-15 p. 1), a lista encji wysyłających
    `SklepPracWTle` poleceniami SQL (13.4).
 3. **`NOTIFY` wyłącznie z triggerów.** Powiadomienia są wysyłane przez
    triggery `AFTER … FOR EACH ROW` utrzymywane w migracjach SQL
-   (`Persistence/Migrations/Sql/0003_powiadomienia.sql`, pełna treść w
+   (`Persistence/Migrations/Sql/0003_notifications.sql`, pełna treść w
    `docs/spec/ddl.md`). PostgreSQL dostarcza `pg_notify` wywołane w
    transakcji **wyłącznie po `COMMIT`** i nigdy po `ROLLBACK`, a identyczne
    pary (kanał, ładunek) z jednej transakcji scala w jedno powiadomienie.
@@ -96,7 +96,7 @@ był chroniony warunkiem dzierżawy (C6-15 p. 1), a lista encji wysyłających
    proces po pauzie GC nie zapisze zmian domenowych pracy przejętej przez
    inny worker. Blokada wiersza pracy trwa do `COMMIT` i serializuje
    zapis z odzyskiwaniem dzierżaw (13.4).
-5. **Testy** (`Lemat.Infrastructure.Tests/PraceWTle`, PostgreSQL 16 w
+5. **Testy** (`Lemat.Infrastructure.Tests/BackgroundJobs`, PostgreSQL 16 w
    Testcontainers): (a) `PodwojneZlecenieTegoSamegoKluczaNieWycofujePrzypadkuUzycia`;
    (b) `SprawdzPoprawkiDoUpdateLadunku` — druga `ZlecAsync` z innym
    `transkrypcja_id` zostawia jedną pracę `OCZEKUJE` z nowym ładunkiem;
@@ -142,7 +142,7 @@ był chroniony warunkiem dzierżawy (C6-15 p. 1), a lista encji wysyłających
 
 **Uzupełnienie wersji 3.2 (C7-03, C7-06 p. 5–6).** (1) Polecenia
 „Błąd przejściowy” i „Odzyskiwanie porzuconych dzierżaw” z 13.4.2 są
-funkcjami `ponow_prace` i `odzyskaj_dzierzawy` (`0006_prace_w_tle.sql`,
+funkcjami `ponow_prace` i `odzyskaj_dzierzawy` (`0006_background_jobs.sql`,
 ADR-066 p. 3). (2) `Database.SqlQuery<T>($"INSERT … ON CONFLICT … RETURNING …")`
 jest niekomponowalne: wynik czyta się wyłącznie `ToListAsync()` (potem
 `Single()`/`SingleOrDefault()` w pamięci); `FirstOrDefaultAsync()` rzuca

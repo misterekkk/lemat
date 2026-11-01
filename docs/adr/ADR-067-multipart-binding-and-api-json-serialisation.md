@@ -113,7 +113,7 @@ weryfikacyjnym ASP.NET Core 10.0.14 + `Microsoft.AspNetCore.OpenApi`
    `AddProblemDetails(o => o.CustomizeProblemDetails = …)`, które dopisuje
    `kod` (`404 NIE_ZNALEZIONO`, `405 METODA_NIEDOZWOLONA`, `415
    NIEOBSLUGIWANY_FORMAT`, `400 ZAPYTANIE_NIEPRAWIDLOWE`) i `trace_id`.
-   Klient (`klient.ts`) dla odpowiedzi `!ok` bez `application/problem+json`
+   Klient (`client.ts`) dla odpowiedzi `!ok` bez `application/problem+json`
    (np. `502` z Caddy) ustawia `kod = "BLAD_BRAMY"` zamiast
    `BLAD_WEWNETRZNY`, aby rozróżnić awarię bramy od błędu aplikacji.
 
@@ -145,7 +145,7 @@ weryfikacyjnym ASP.NET Core 10.0.14 + `Microsoft.AspNetCore.OpenApi`
   `application/problem+json` z `kod`; schemat OpenAPI `RozwiazanieWejscie`
   ma pola `zadanie_wersja_id`, `element_sciezki_id`, `przypisanie_id`,
   `zdjecia` (`format: binary`, 1..5).
-- Test `Lemat.Api.Tests/Rozwiazania/PrzeslanieMultipartZKlientaOpenApi`
+- Test `Lemat.Api.Tests/Solutions/PrzeslanieMultipartZKlientaOpenApi`
   buduje formularz według schematu z `lemat-v1.json` (nazwy pól z
   `components.schemas.RozwiazanieWejscie.properties`) i sprawdza trzy
   przypadki z poprzedniego punktu (element, Przypisanie, brak kontekstu →

@@ -53,7 +53,7 @@ Ucznia i z LLM, więc parser musi działać w piaskownicy (R-06).
    - `GET /zdrowie` → `200 {"status":"OK","wersja_sympy":"1.13.x"}`
    Ciała ≤ 16 KiB (LaTeX kroku ≤ 2 000 znaków, 7.3); większe → `413`.
 5. Klient: `SympySidecarKlient : ISprawdzanieSymboliczne` w
-   `Lemat.Infrastructure.Piaskownice`, typowany `HttpClient` z
+   `Lemat.Infrastructure.Sandboxes`, typowany `HttpClient` z
    `SocketsHttpHandler.ConnectCallback` łączącym się z gniazdem Unix,
    timeout 2,2 s na parę i budżet 3 s na Rozwiązanie liczony przez Agenta
    oceniającego (`CancellationToken`); błąd połączenia lub timeout →

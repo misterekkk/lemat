@@ -2,7 +2,7 @@
 
 | Pole | Wartość |
 |---|---|
-| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (p. 13–15) |
+| Status | Przyjęta (wersja 3.0, 2026-11-01); uzupełnienie wersji 3.1 — sekcja „Uzupełnienia”; uzupełnienie 3.2 (p. 13–15); zmieniona w wersji 3.4 przez [ADR-075](ADR-075-english-file-and-directory-names.md) (nazwy plików, katalogów i przestrzeni nazw; p. 16–22) |
 | Data decyzji | 2026-11-01 (pętla 3.x, iteracja 1, wersja 3.0) |
 | Bramka G-0 | nie — rozszerza ADR-016, nie zmienia słownika |
 | Rozszerza | ADR-016 (identyfikatory domenowe po polsku), 3.1 dokumentu głównego |
@@ -215,3 +215,51 @@ realizuje ją polityka `NazwyLemat` (ADR-067 p. 3); test
 `NazwyJsonZgodneZKolumnamiDdl`. Pole słownikowe „Próg pewności” w kontraktach
 ma nazwę `prog_pewnosci` (`PozycjaKalibracji.prog_pewnosci`,
 `StanBezpiecznikaWyjscie.prog_pewnosci_aktywny`), nie `prog` (C8-12 p. 5).
+
+## Uzupełnienie wersji 3.4 (ADR-075)
+
+Wymaganie właściciela projektu „nazwy folderów oraz plików mają być po
+angielsku” zmienia tę decyzję wyłącznie w zakresie **nazw plików,
+katalogów i przestrzeni nazw**; reguły 1, 2, 4, 5, 8, 9, 12–15 i formy
+identyfikatorów z tabeli p. 3 (typy, właściwości, enumy, kolumny, JSON,
+ścieżki REST API, kody, zmienne `LEMAT_*`) obowiązują bez zmian.
+
+16. **Tabela p. 3 — wiersze zmienione:**
+
+    | Artefakt | Forma od wersji 3.4 | Przykład |
+    |---|---|---|
+    | Przestrzeń nazw C# | `Lemat.<Warstwa>.<Module>[.<Submodule>]`, segmenty angielskie z 6.11.1, równe katalogowi | `Lemat.Domain.Verifications` (typ `Weryfikacja`) |
+    | Plik `.cs` | nazwa EN pojęcia z 3.5 + przyrostek roli (6.11.2) albo tłumaczenie z `file-names.yaml` | `Verification.cs` z klasą `Weryfikacja` |
+    | Komponenty React | identyfikator `PascalCase` ze słownika, plik `PascalCase.tsx` z nazwą EN | `EdytorTranskrypcji` w `TranscriptionEditor.tsx` |
+    | Pozostałe pliki TS | `kebab-case.ts`, angielskie | `stream.ts` |
+    | Segmenty tras Next.js i adresy stron | `kebab-case`, angielskie; parametry dynamiczne `[<resource>Id]` w `camelCase` po angielsku | `app/(student)/learning-path`, `[solutionId]` |
+    | Ścieżki URL API | `kebab-case` po polsku (bez zmian) | `/wkladki-teoretyczne` |
+
+17. **Zmiana p. 5 (ostatnie zdanie).** Segmenty dynamiczne Next.js mają
+    nazwy `[<resource>Id]` po angielsku (`[solutionId]`, `[classId]`), bo
+    są nazwami katalogów; ich klucze w `params` są destrukturyzowane w
+    `page.tsx` do zmiennych o nazwach ze słownika (`const { solutionId:
+    rozwiazanieId } = await params;`) i są na zamkniętej liście wyjątków
+    testu słownika (6.11.4).
+18. **Zmiana p. 6.** Kolizja przestrzeni nazw z nazwą klasy nie może
+    wystąpić, bo segmenty przestrzeni są angielskie, a typy polskie; lista
+    polskich nazw modułów z p. 6 przestaje być nazwami przestrzeni i
+    pozostaje nazwami modułów w prozie (6.2).
+19. **Zmiana p. 7.** Wszystkie projekty mają nazwy angielskie:
+    `Lemat.Agenci` → `Lemat.Agents`, `Lemat.Modele` → `Lemat.Models`,
+    `Lemat.Narzedzia` → `Lemat.Tools`, `Lemat.Symulacje` →
+    `Lemat.Simulations` (6.11.1). Wyjątek z p. 7 dla pojęć słownika w
+    nazwach projektów przestaje obowiązywać.
+20. **Zmiana p. 10.** Test słownika nie traktuje nazw plików, katalogów
+    ani segmentów tras jako źródła identyfikatorów; nazwy plików sprawdza
+    test `TestNazwPlikow` (ADR-075 p. 9).
+21. **Zmiana p. 11.** Przestrzenie `Lemat.Domain.Models`,
+    `Lemat.Application.Models`, `Lemat.Application.Agents` mają tę samą
+    ostatnią część co projekty `Lemat.Models` i `Lemat.Agents`; zakaz
+    częściowej kwalifikacji obowiązuje dla nowych nazw, a test
+    `BrakCzesciowejKwalifikacjiPrzestrzeni` używa wyrażenia
+    `(?<![\w.])(Models|Agents)\.[A-Z]` (np. `using PortyModeli =
+    Lemat.Application.Models;`).
+22. **Zakazane synonimy (3.1 p. 4)** nie dotyczą nazw plików i katalogów
+    (`Student.cs`, `Grade.cs`, `review/` są dozwolone); dotyczą wyłącznie
+    identyfikatorów i tekstów UI.

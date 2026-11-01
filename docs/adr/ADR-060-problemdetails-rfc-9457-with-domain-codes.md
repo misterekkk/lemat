@@ -39,7 +39,7 @@ w jednym miejscu, a nie w kodzie komponentów (ADR-054 p. 7).
    `type` = `https://lemat.pl/bledy/<kod w kebab-case>`; `title` — krótki
    tekst pl-PL z katalogu (stały dla kodu); `detail` — tekst pl-PL dla
    konkretnego przypadku bez danych osobowych innych osób niż wywołujący.
-2. **Hierarchia wyjątków** (`Lemat.Domain.Wspolne.Bledy`, bez zależności od
+2. **Hierarchia wyjątków** (`Lemat.Domain.Common.Errors`, bez zależności od
    ASP.NET Core): abstrakcyjny `WyjatekDomenowy(KodBledu kod, string? szczegolyTekst, object? szczegoly)`
    i podklasy według rodzaju: `NiezmiennikNaruszonyException` (409),
    `NieprawidlowyStanException` (409), `KonfliktWersjiException` (412),
@@ -65,11 +65,11 @@ w jednym miejscu, a nie w kodzie komponentów (ADR-054 p. 7).
    pola `type`, `title`, `status`, `detail`, `instance`, `kod`, `trace_id`.
 4. **Katalog komunikatów:** `KodBledu` (C#) i `messages/pl-PL.json`
    (`bledy.<KOD>.tytul`, `bledy.<KOD>.akcja`) są generowane z jednego pliku
-   `backend/src/Lemat.Api/Bledy/katalog-bledow.yaml` (kod, HTTP, E-xx,
-   tytuł, akcja UI) przez generator źródeł `Lemat.Api.Generatory`
-   (C#) i skrypt `frontend/narzedzia/generuj-bledy.ts`; test CI
+   `backend/src/Lemat.Api/Errors/error-catalog.yaml` (kod, HTTP, E-xx,
+   tytuł, akcja UI) przez generator źródeł `Lemat.Api.Generators`
+   (C#) i skrypt `frontend/tools/generate-errors.ts`; test CI
    `KatalogBledowKompletny` porównuje enum, YAML i plik komunikatów.
-5. **Next.js:** `klient.ts` zamienia każdą odpowiedź `!ok` na `BladApi
+5. **Next.js:** `client.ts` zamienia każdą odpowiedź `!ok` na `BladApi
    { status, kod, problem, retryAfterS }`; komponenty reagują wyłącznie na
    `kod`. Błędy zapytań TanStack Query trafiają do `error.tsx` segmentu
    (granica błędu App Router) tylko dla `5xx` i błędów sieci; `4xx` są
@@ -92,7 +92,7 @@ w jednym miejscu, a nie w kodzie komponentów (ADR-054 p. 7).
 ## Konsekwencje
 
 - Jeden kontrakt błędu dla wszystkich endpointów; nowy kod wymaga wpisu w
-  `katalog-bledow.yaml`, co wymusza komunikat pl-PL.
+  `error-catalog.yaml`, co wymusza komunikat pl-PL.
 - Klient nie parsuje tekstów; zmiana tytułu nie psuje logiki UI.
 - `trace_id` w każdej odpowiedzi błędu ułatwia zgłoszenia od użytkowników.
 

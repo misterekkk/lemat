@@ -25,7 +25,7 @@ implementacją Mock do pracy offline. Jev nie jest modelem językowym
 
 ## Decyzja
 
-1. **Porty** (interfejsy w `Lemat.Application.Modele`):
+1. **Porty** (interfejsy w `Lemat.Application.Models`):
    `IModelDecyzyjny.WykonajPlanAsync(string stan, PlanPytan plan,
    DateTimeOffset termin, CancellationToken ct) → Task<RezultatPytan>`;
    `IModelGeneratywny.GenerujJsonAsync<T>(Prompt prompt,
@@ -37,23 +37,23 @@ implementacją Mock do pracy offline. Jev nie jest modelem językowym
    — odpowiedniki 1:1 portów 13.1. Wyjątki: `BladModeluPrzejsciowyException`,
    `BladModeluTrwalyException`, `ModelNiedostepnyException`.
 2. **Modele generatywne** wyłącznie przez `Microsoft.Extensions.AI.IChatClient`
-   budowany w `Lemat.Modele` (`RejestrAdapterow`) z potoku
+   budowany w `Lemat.Models` (`RejestrAdapterow`) z potoku
    `ChatClientBuilder`: `UseOpenTelemetry()` (bez zapisu treści
    wiadomości, `EnableSensitiveData = false`), `UseLogging()` (metadane
    bez treści), adapter dostawcy. Ustrukturyzowane wyjście:
    `GetResponseAsync<T>` ze schematem JSON generowanym z rekordu C#
    (`AIJsonUtilities.CreateJsonSchema`); obrazy jako `DataContent`
    (`image/jpeg`). Pakiety dostawców (`Microsoft.Extensions.AI.OpenAI`)
-   wyłącznie w `Lemat.Modele`. Klucze dostawców: `azure-openai`,
+   wyłącznie w `Lemat.Models`. Klucze dostawców: `azure-openai`,
    `openai-zgodny`, `mock` (wybór konkretnego dostawcy dla ról —
    konfiguracja, G-6, A-07).
 3. **Jev:** `JevAdapter` jako typowany `HttpClient` (`IHttpClientFactory`)
    z kontraktem A-01 i trybami `WSADOWY`/`POJEDYNCZY` (13.2), bez
    Microsoft.Extensions.AI i Semantic Kernel.
 4. **Semantic Kernel** (`Microsoft.SemanticKernel.Core`) wyłącznie w
-   `Lemat.Agenci`: (a) szablony promptów w formacie YAML
+   `Lemat.Agents`: (a) szablony promptów w formacie YAML
    (`PromptTemplateConfig`, składnia Handlebars) w
-   `Prompty/<ROLA_MODELU>/<wersja_promptu>.yaml`, renderowane do `Prompt`
+   `Prompts/<role-folder>/<prompt-file>.yaml`, renderowane do `Prompt`
    przekazywanego do portu; (b) plugin `SprawdzanieSymbolicznePlugin`
    (`[KernelFunction] sprawdz_rownowaznosc`, `postac_liniowa`) używany
    wyłącznie przez Agenta generującego przy tworzeniu rozwiązania
@@ -68,8 +68,8 @@ implementacją Mock do pracy offline. Jev nie jest modelem językowym
    muszą przetrwać restart procesu, być idempotentne i audytowalne
    (`decyzja_modelu`, NFR-05).
 6. **Mock:** `MockModelDecyzyjny`, `MockChatClient : IChatClient`,
-   `MockRozpoznawaniePisma` w `Lemat.Modele.Mock` z danymi
-   `Mock/Dane/**/*.json` (dopasowanie po kodzie pytania lub nazwie
+   `MockRozpoznawaniePisma` w `Lemat.Models.Mock` z danymi
+   `Mock/Data/**/*.json` (dopasowanie po kodzie pytania lub nazwie
    szablonu i SHA-256 stanu; brak dopasowania — deterministyczny rozkład z
    ziarnem = SHA-256 stanu), dostawca `mock` w `konfiguracja_modelu`;
    aktywacja `mock` w środowisku `Production` → `409
@@ -98,9 +98,9 @@ implementacją Mock do pracy offline. Jev nie jest modelem językowym
 
 ## Konsekwencje
 
-- Zmiana dostawcy LLM = nowa konfiguracja + adapter w `Lemat.Modele`
+- Zmiana dostawcy LLM = nowa konfiguracja + adapter w `Lemat.Models`
   (często tylko inny klucz `dostawca` dla tego samego pakietu), bez zmian
-  w `Lemat.Agenci` i `Lemat.Application`.
+  w `Lemat.Agents` i `Lemat.Application`.
 - Telemetria GenAI z OpenTelemetry bez treści promptów (RODO, 16.3).
 - Prompty są wersjonowane jak w 2.4 (`wersja_promptu`), ale w formacie
   szablonów SK; test sprawdza istnienie pliku dla każdej wersji.
@@ -111,7 +111,7 @@ implementacją Mock do pracy offline. Jev nie jest modelem językowym
 p. 1 — `IModelGeneratywny` jest fabryką klientów czatu per rola
 (`DlaRoliAsync(RolaModelu, CancellationToken) → KlientCzatuRoli`), a
 metody `GenerujJsonAsync<T>`/`GenerujTekstAsync` przechodzą do pomocnika
-`Lemat.Agenci.Wspolne.WywolanieCzatu`; p. 2 — potok `ChatClientBuilder` z
+`Lemat.Agents.Common.WywolanieCzatu`; p. 2 — potok `ChatClientBuilder` z
 ADR-058 p. 3 (w tym `UseFunctionInvocation`); p. 4 — Semantic Kernel
 (`Microsoft.SemanticKernel.Core`, `Microsoft.SemanticKernel.Yaml`) służy
 wyłącznie do pluginów `[KernelFunction]` przekazywanych jako `AIFunction` i
@@ -119,7 +119,7 @@ do szablonów promptów **systemowych** w składni `{{$zmienna}}` (bez
 Handlebars); limit wywołań funkcji realizuje `FunkcjaZLimitem :
 DelegatingAIFunction`; treść od użytkownika nie przechodzi przez szablony;
 stan Modelu decyzyjnego buduje kod C# bez Semantic Kernel. Pełne prompty i
-schematy — `docs/spec/prompty.md`.
+schematy — `docs/spec/prompts.md`.
 
 **Uzupełnienie wersji 3.2 (C7-07, C7-12).** Implementacje Mock wybierają
 odpowiedź po jawnym scenariuszu (`X-Lemat-Mock-Scenariusz`, poza

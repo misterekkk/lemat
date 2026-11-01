@@ -1,10 +1,10 @@
-"""Sprawdzenie Macierzy Pokrycia Wymagań (sekcja 18 docs/ARCHITECTURE_DETAILED.md). Uruchomienie: python3 docs/spec/narzedzia/sprawdz_rtm.py"""
+"""Sprawdzenie Macierzy Pokrycia Wymagań (sekcja 18 docs/ARCHITECTURE_DETAILED.md). Uruchomienie: python3 docs/spec/tools/check_rtm.py"""
 import re,os,sys,glob
 R=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','..')+'/'
 doc=open(R+'docs/ARCHITECTURE_DETAILED.md').read()
 api=open(R+'docs/spec/api.md').read(); ddl=open(R+'docs/spec/ddl.md').read()
 req=open(R+'docs/requirements.md').read(); gl=open(R+'docs/glossary.md').read()
-spec_all=doc+api+ddl+open(R+'docs/spec/ef-core.md').read()+open(R+'docs/spec/prompty.md').read()+''.join(open(f).read() for f in glob.glob(R+'docs/adr/*.md'))
+spec_all=doc+api+ddl+open(R+'docs/spec/ef-core.md').read()+open(R+'docs/spec/prompts.md').read()+''.join(open(f).read() for f in glob.glob(R+'docs/adr/*.md'))
 bledy=[]
 sec=doc[doc.index('## 18. Macierz Pokrycia'):doc.index('### 18.5')]
 def tabela(naglowek):
@@ -82,6 +82,23 @@ for r in odw:
     w=rozwin(r[2]); pokryte|=w
     for x in w:
         if x not in wym: bledy.append(f'{r[0]}: wymaganie {x} nie istnieje')
+# (9) ADR-075: strony i testy akceptacyjne mają angielskie nazwy (brak segmentów z wersji 3.3)
+STARE={'publiczne','uczen','nauczyciel','logowanie','rejestracja','reset-hasla','potwierdzenie','dolacz','test-diagnostyczny','sciezka-nauki','wkladki-teoretyczne','zadania','rozwiazania','profil','przypisania','klasy','ustawienia','uczniowie','zestawy-zadan','weryfikacje','nowe','generowanie','przeglad','zgloszenia-bledu-zadan','uzytkownicy','arkusze-cke','importy','konfiguracje-modeli','progi-pewnosci','kalibracja','bezpieczniki','obciazenie-weryfikacji','pula-diagnostyczna','zlecenia-generowania','praca-w-tle'}
+for r in fr+nfr:
+    for st in re.findall(r'`([^`]+)`',r[6]):
+        for seg in re.split(r'[/()\[\]]',st):
+            if seg in STARE or seg=='kod': bledy.append(f'{r[0]}: strona {st} ma segment z wersji 3.3: {seg}')
+            if re.search(r'^(klasa|zadanie|rozwiazanie|wkladka|weryfikacja|uczen|zestaw|zlecenie|przypisanie)Id$',seg): bledy.append(f'{r[0]}: strona {st}: polski parametr {seg}')
+    for sp in re.findall(r'`([a-z0-9\-]+)\.spec\.ts`',r[8]):
+        if any(tok in STARE or tok in {'konto','poziom','termin','rekomendacja','wkladka','trudnosc','powtorki','wybor','dzialu','uzasadnienie','tresc','kryteria','walidacja','zamkniete','przeslanie','ocena','krokowa','wynik','rozumowania','wynikanie','krokow','pewnosc','wstepna','bledne','kroki','dowod','wskazowka','blad','odczytu','po','ocenie','klasa','postepy','weryfikacja','zdjecia','korekta','otagowanie','sesja','dwie','karty','za','aparat','przeladowanie','siec','komorkowa','autozapis','wolna','podwojne','klikniecie','zapasowe','odpytywanie','kontrakt','wygasla','powiadomienia'} for tok in sp.split('-')):
+            bledy.append(f'{r[0]}: test {sp}.spec.ts ma polską nazwę pliku')
+# (10) odnośniki Markdown w docs/ wskazują istniejące pliki
+for md in glob.glob(R+'docs/**/*.md',recursive=True):
+    txt=open(md).read()
+    for cel in re.findall(r'\]\(([^)#\s]+)(?:#[^)]*)?\)',txt):
+        if re.match(r'^[a-z]+:',cel): continue
+        p=os.path.normpath(os.path.join(os.path.dirname(md),cel))
+        if not os.path.exists(p): bledy.append(f'{os.path.relpath(md,R)}: martwy odnośnik {cel}')
 print('wymagania w requirements.md:',len(wym),'| wiersze RTM:',len(ids),'| pojęcia słownika:',len(pojecia),'| wiersze odwrotne:',len(odw))
 print('sprawdzone odwołania:',licz)
 print('wymagania pokryte przez macierz odwrotną:',len(pokryte),'z',len(wym),'; bez pojęcia:',sorted(set(wym)-pokryte))

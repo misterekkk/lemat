@@ -53,7 +53,7 @@ edycji dawało do ~400 wersji.
    Rozwiązanie z Poprawkami (jedna pauza ≥ 10 s + zatwierdzenie), górna
    granica 20.
 4. **Jedno żądanie w locie na Rozwiązanie.** `KolejkaZapisowRozwiazania`
-   (moduł `features/rozwiazania`, `api.md` 6.4) szereguje `PUT …/szkic`,
+   (moduł `features/solutions`, `api.md` 6.4) szereguje `PUT …/szkic`,
    `PUT …/transkrypcja` i `POST …/zatwierdzenie`: kolejne żądanie startuje
    po odpowiedzi poprzedniego, `If-Match` bierze z `version` ostatniej
    odpowiedzi, a oczekujące autozapisy szkicu są scalane (wysyłany jest
@@ -82,9 +82,9 @@ edycji dawało do ~400 wersji.
 - Szkic jest daną osobową Ucznia: usuwany przy zatwierdzeniu, porzuceniu,
   nowym Przesłaniu, zapisie wersji domenowej i kaskadowo z kontem; nie
   jest pokazywany Nauczycielowi.
-- Testy: Playwright `autozapis-wolna-siec.spec.ts` (opóźnienie 3 s na
+- Testy: Playwright `autosave-slow-network.spec.ts` (opóźnienie 3 s na
   odpowiedź, pisanie przez 20 s → 0 dialogów `412`, tekst w edytorze
   niezmieniony po zdarzeniach `stan`, ≤ 2 wersje Transkrypcji), Vitest
-  `kolejkaZapisow.test.ts` (scalanie szkiców, `If-Match` z poprzedniej
-  odpowiedzi), `Lemat.Api.Tests/Rozwiazania/SzkicStarszyPomijany`,
+  `save-queue.test.ts` (scalanie szkiców, `If-Match` z poprzedniej
+  odpowiedzi), `Lemat.Api.Tests/Solutions/SzkicStarszyPomijany`,
   `LimitWersjiTranskrypcji` (21. wersja → `409`).

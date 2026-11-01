@@ -103,7 +103,7 @@ ponowienie z E-47.
   `COMMIT` → 0 skutków i brak odpowiedzi; wykonanie poprawne → 1 skutek,
   powtórka `POWTORKA 201`, inne ciało `KONFLIKT_CIALA`; zapis
   `kod_statusu_http = 409` odrzuca CHECK.
-- Testy (`Lemat.Api.Tests/Idempotencja`, Testcontainers PostgreSQL 16):
+- Testy (`Lemat.Api.Tests/Idempotency`, Testcontainers PostgreSQL 16):
   `KluczBezOdpowiedziPoAwariiProcesuJestPrzejmowany` (rezerwacja bez
   zapisu, `TimeProvider` + 61 s → `WYKONAJ`),
   `Konflikt40P01NieJestZapisywanyWKluczu` (wstrzyknięty `40P01` → `409

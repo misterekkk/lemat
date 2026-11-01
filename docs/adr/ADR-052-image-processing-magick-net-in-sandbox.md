@@ -54,7 +54,7 @@ w procesie obsługującym żądania ani w procesie wykonującym prace w tle
    `X-Wysokosc`, `X-Sha256`), `POST /v1/maskowanie` (JPEG + JSON ramek →
    JPEG), `POST /v1/wycinki` (JPEG + JSON obszarów → `multipart/mixed` z
    wycinkami i zdjęciem poglądowym 1024 px), `GET /zdrowie`. Klient
-   `ImageSandboxKlient` (`Lemat.Infrastructure.Piaskownice`) z semaforem
+   `ImageSandboxKlient` (`Lemat.Infrastructure.Sandboxes`) z semaforem
    równoległości równym liczbie slotów sidecara; oczekiwanie na slot
    > 5 s → `503` w `api` (ADR-045).
 5. Normalizacja JPEG: jakość 85, próbkowanie 4:2:0, profil sRGB, bez
@@ -116,7 +116,7 @@ z `read_only: true` wywołuje `MagickNET.Initialize` i `/zdrowie` zwraca
 `MagickNET.Version`. (3) **Polityka bezpieczeństwa w kodzie:**
 `MagickNET.Initialize(konfiguracja, "/tmp/magick-konfiguracja")` z
 `ConfigurationFiles.Default`, w którym `Policy.Data` to osadzony
-`polityka.xml` (`<policy domain="coder" rights="none" pattern="*"/>`, potem
+`policy.xml` (`<policy domain="coder" rights="none" pattern="*"/>`, potem
 `rights="read|write"` dla `{JPEG,PNG,HEIC,WEBP}`, `<policy domain="delegate"
 rights="none" pattern="*"/>`, `<policy domain="path" rights="none"
 pattern="@*"/>`); systemowy `policy.xml` nie jest używany. Test

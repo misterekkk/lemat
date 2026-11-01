@@ -26,7 +26,7 @@ zwracał `201` w dwóch kształtach bez dyskryminatora.
    `application/json`): pole nieobecne → bez zmiany; pole z `null` →
    wyczyszczenie (tylko pola, które w DDL dopuszczają `NULL`); pole z
    wartością → ustawienie.
-2. **Typ `Opcjonalne<T>`** (`Lemat.Api.Kontrakty.Wspolne`):
+2. **Typ `Opcjonalne<T>`** (`Lemat.Api.Contracts.Common`):
    `readonly record struct Opcjonalne<T>(bool Obecne, T? Wartosc)` z
    konwerterem `OpcjonalneKonwerter : JsonConverterFactory`
    (`HandleNull = true`, więc `null` w JSON daje `Obecne = true, Wartosc =
