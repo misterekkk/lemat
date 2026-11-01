@@ -101,7 +101,7 @@ Numer zadania nie narzuca kolejności między ścieżkami; w obrębie ścieżki 
     `backend/tests/Lemat.Api.Tests/{HttpInfrastructureTests.cs,Support/ApiFactory.cs,Support/ApiTestDatabaseFixture.cs,Support/TestEndpoints.cs}`.
   - **Weryfikacja (TASK-121):** build `-warnaserror` 0 warn/0 err; `dotnet test` zielone (Api 35, Infrastructure 167, Architecture 106, Domain 394, Application 52); `dotnet format --verify-no-changes` OK; ręcznie `dotnet run Lemat.Api` po `migrate`: `/zdrowie` 200, 404/405 jako problem+json.
 
-- [ ] **TASK-122 [POC-A] `Lemat.Tools seed-poc`: Działy, Umiejętności, 5 Zadań z Kryteriami, konta demo, konfiguracja modelu i próg**
+- [x] **TASK-122 [POC-A] `Lemat.Tools seed-poc`: Działy, Umiejętności, 5 Zadań z Kryteriami, konta demo, konfiguracja modelu i próg**
   - **Opis:** Polecenie `seed-poc` (idempotentne; odmawia przy `LEMAT_SRODOWISKO=Production`; wypisuje konta demo): 13 Działów z 7.4 (jawne `id` 1 … 13), 5 Umiejętności z kontraktu 6.2, 5 Zadań `OTWARTE_OBLICZENIOWE` `GLOBALNY` `OPUBLIKOWANE` ze stałymi identyfikatorami, treścią (Markdown + LaTeX), `rozwiazanie_wzorcowe`,
     `wynik_koncowy_wzorcowy` i Kryteriami oceniania z `docs/POC_CONTRACT.md` 6.3 (przez agregaty `Zadanie` i repozytoria z TASK-017), 2 konta Uczniów z 6.1 (argon2id; hasher z TASK-123 — do czasu jego powstania prosty `IHasherHasel` w `Lemat.Application.Accounts`, ten sam port), aktywna `konfiguracja_modelu` `mock`
     (role `ROZPOZNAWANIE_PISMA`, `DECYZYJNY_GLOWNY`), kalibrator tożsamościowy i `prog_pewnosci` 0.95 dla `OTWARTE_OBLICZENIOWE` (wymóg CHECK `ocena`, U-10). Dane w plikach osadzonych (`Persistence/Data/poc-exercises.yaml` lub JSON), nie w kodzie.
@@ -109,7 +109,11 @@ Numer zadania nie narzuca kolejności między ścieżkami; w obrębie ścieżki 
   - **Realizuje:** 7.4, 7.5, `ddl.md` (`dzial`, `umiejetnosc`, `zadanie`, `zadanie_wersja`, `kryterium_oceniania`, `konfiguracja_modelu`, `kalibrator_pewnosci`, `prog_pewnosci`); kontrakt POC 6; FR-12, FR-36 (część).
   - **DoD:** po `migrate` + `seed-poc` na pustej bazie: 13 Działów, 5 Umiejętności, 5 Zadań z identyfikatorami z kontraktu, suma `punkty_max` Kryteriów = `punkty_max` Zadania (`trg_suma_kryteriow` przechodzi), 2 konta `AKTYWNE`; drugie uruchomienie nie duplikuje (test); odmowa w `Production` (test);
     test zbalansowania `$…$` i nawiasów w `tresc_md` i `opis` Kryteriów; hasła demo nie są logowane poza komunikatem wyjściowym polecenia; build/test/format zielone.
-
+  - **Pliki (TASK-122):** `backend/src/Lemat.Application/Accounts/IPasswordHasher.cs`, `backend/src/Lemat.Infrastructure/Security/PasswordHashing.cs`, `backend/src/Lemat.Infrastructure/Persistence/Data/poc-seed.json`,
+    `backend/src/Lemat.Infrastructure/Persistence/Seeding/{PocSeedData,PocSeeder}.cs`, `backend/src/Lemat.Tools/Commands/{SeedPocCommand,DatabaseConnection}.cs`,
+    `backend/tests/Lemat.Infrastructure.Tests/Persistence/PocSeedTests.cs`, `backend/tests/Lemat.Infrastructure.Tests/Security/PasswordHashingTests.cs`;
+    zmienione: `backend/src/Lemat.Domain/Content/Exercise.cs`, `backend/src/Lemat.Infrastructure/Lemat.Infrastructure.csproj`, `backend/src/Lemat.Tools/{Program.cs,Commands/CommandDispatcher.cs,Commands/MigrujBazeCommand.cs}`.
+  - **Weryfikacja (TASK-122):** build `-warnaserror` 0 warn/0 err; `dotnet test` zielone (Architecture 106, Domain 394, Models 1, Api 35, Infrastructure 181 w tym 14 nowych); `dotnet format --verify-no-changes` OK; ręcznie `migrate` + `seed-poc` x2 na pustej bazie (13/5/5/11 kryteriów/2 konta; 2. uruchomienie zera), `LEMAT_SRODOWISKO=Production` -> kod 1.
 - [ ] **TASK-123 [POC-A] Konta: rejestracja, logowanie, odświeżenie, wylogowanie (JWT ES256, refresh w cookie)**
   - **Opis:** `HaszowanieHasel` (argon2id, pakiet `Konscious.Security.Cryptography.Argon2` z `Directory.Packages.props`), `WystawcaTokenow` (JWT ES256, 15 min, claims `sub`, `rola`, `status`, `jti`, `exp`; klucz z `LEMAT_JWT_KLUCZ`, w Development generowany i zapisywany lokalnie poza repozytorium),
     refresh token w cookie `lemat_rt` (`HttpOnly; SameSite=Strict; Path=/api/v1/auth`, `Secure` przy HTTPS) z rotacją i unieważnieniem rodziny przy ponownym użyciu (tabela `token_odswiezania`, bez okna tolerancji — U-22), uwierzytelnianie JWT Bearer, polityki `Anonimowy`, `Zalogowany`, `Uczen` (status konta `AKTYWNE`),

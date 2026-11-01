@@ -1,4 +1,4 @@
-// @Role: Dispatcher poleceń narzędzia Lemat.Tools (--help; polecenia migrate i seed-dev w kolejnych zadaniach) | @DependsOn: brak | @UsedBy: Lemat.Tools.Program, Lemat.Architecture.Tests | @Task: TASK-003, TASK-013
+// @Role: Dispatcher poleceń narzędzia Lemat.Tools (--help; polecenia migrate, seed-poc; seed-dev w kolejnych zadaniach) | @DependsOn: brak | @UsedBy: Lemat.Tools.Program, Lemat.Architecture.Tests | @Task: TASK-003, TASK-013, TASK-122
 namespace Lemat.Tools.Commands;
 
 /// <summary>Polecenie narzędzia wiersza poleceń.</summary>

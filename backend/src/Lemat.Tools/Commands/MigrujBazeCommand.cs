@@ -1,8 +1,6 @@
-// @Role: Polecenie `migrate` — stosuje migracje bazy i tworzy partycje decyzja_modelu na 12 miesięcy naprzód (idempotentne, U-08) | @DependsOn: MigratorBazy, LematKonfiguracja, IPolecenie | @UsedBy: Lemat.Tools.Program, operator, scripts | @Task: TASK-013
+// @Role: Polecenie `migrate` — stosuje migracje bazy i tworzy partycje decyzja_modelu na 12 miesięcy naprzód (idempotentne, U-08) | @DependsOn: MigratorBazy, LematKonfiguracja, IPolecenie | @UsedBy: Lemat.Tools.Program, operator, scripts | @Task: TASK-013, TASK-122
 using System.Collections;
-using Lemat.Application.Common;
 using Lemat.Infrastructure.Persistence;
-using Microsoft.Extensions.Configuration;
 
 namespace Lemat.Tools.Commands;
 
@@ -12,9 +10,7 @@ namespace Lemat.Tools.Commands;
 /// </summary>
 public sealed class MigrujBazeCommand(IDictionary? zmienneSrodowiskowe = null, TimeProvider? zegar = null) : IPolecenie
 {
-    public const string DomyslnePolaczenieDeweloperskie = "Host=localhost;Port=5433;Database=lemat_dev;Username=lemat;Password=lemat_dev";
-
-    private const string OpcjaPolaczenie = "--polaczenie=";
+    public const string DomyslnePolaczenieDeweloperskie = PolaczenieBazy.DomyslnePolaczenieDeweloperskie;
 
     public string Nazwa => "migrate";
 
@@ -25,26 +21,10 @@ public sealed class MigrujBazeCommand(IDictionary? zmienneSrodowiskowe = null, T
         ArgumentNullException.ThrowIfNull(argumenty);
         ArgumentNullException.ThrowIfNull(wyjscie);
 
-        var polaczenie = argumenty.FirstOrDefault(a => a.StartsWith(OpcjaPolaczenie, StringComparison.Ordinal))?[OpcjaPolaczenie.Length..]
-            ?? WybierzPolaczenie();
+        var polaczenie = PolaczenieBazy.Wybierz(argumenty, zmienneSrodowiskowe ?? Environment.GetEnvironmentVariables());
 
         var zastosowane = await MigratorBazy.MigrujAsync(polaczenie, zegar ?? TimeProvider.System, token);
         await wyjscie.WriteLineAsync($"Migracje: zastosowano {zastosowane}; partycje decyzja_modelu na {MigratorBazy.MiesiecyNaprzod} miesięcy naprzód.");
         return 0;
-    }
-
-    private string WybierzPolaczenie()
-    {
-        var konfiguracja = new ConfigurationBuilder()
-            .AddInMemoryCollection(LematKonfiguracja.ZmienneNaKlucze(zmienneSrodowiskowe ?? Environment.GetEnvironmentVariables()))
-            .Build();
-        var opcje = new BazaOpcje();
-        konfiguracja.GetSection($"{LematOpcje.NazwaSekcji}:Baza").Bind(opcje);
-        if (!string.IsNullOrWhiteSpace(opcje.PolaczenieMigracji))
-        {
-            return opcje.PolaczenieMigracji;
-        }
-
-        return string.IsNullOrWhiteSpace(opcje.Polaczenie) ? DomyslnePolaczenieDeweloperskie : opcje.Polaczenie;
     }
 }

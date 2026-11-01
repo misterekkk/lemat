@@ -15,6 +15,7 @@
   <!-- Pliki SQL migracji wycięte z docs/spec/ddl.md przez backend/tools/extract-ddl.sh (ADR-063); ZasobSql.Wczytaj. -->
   <ItemGroup>
     <EmbeddedResource Include="Persistence\Migrations\Sql\*.sql" LogicalName="Lemat.Infrastructure.Persistence.Migrations.Sql.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Persistence\Data\poc-seed.json" LogicalName="Lemat.Infrastructure.Persistence.Data.poc-seed.json" />
     <EmbeddedResource Include="Persistence\Schema\ddl.sql" LogicalName="Lemat.Infrastructure.Persistence.Schema.ddl.sql" />
   </ItemGroup>
 </Project>

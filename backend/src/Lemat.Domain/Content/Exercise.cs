@@ -1,4 +1,4 @@
-// @Role: Agregat Zadanie: pochodzenie, zasięg, rodzaj, Dział, Umiejętności (główna + dodatkowe), Poziom trudności nominalny, status (8.4), wersjonowanie (ADR-012: nowa wersja zamyka starą) | @DependsOn: Lemat.Domain.Common.Agregat, ZadanieWersja, TrescWersji, UmiejetnoscId, DzialId, UzytkownikId | @UsedBy: repozytoria Treści, ITresciFasada, moduły Rozwiązania, Rekomendacje, Klasy, Agent generujący | @Task: TASK-017
+// @Role: Agregat Zadanie: pochodzenie, zasięg, rodzaj, Dział, Umiejętności (główna + dodatkowe), Poziom trudności nominalny, status (8.4), wersjonowanie (ADR-012: nowa wersja zamyka starą) | @DependsOn: Lemat.Domain.Common.Agregat, ZadanieWersja, TrescWersji, UmiejetnoscId, DzialId, UzytkownikId | @UsedBy: repozytoria Treści, ITresciFasada, moduły Rozwiązania, Rekomendacje, Klasy, Agent generujący | @Task: TASK-017, TASK-122
 using Lemat.Domain.Accounts;
 using Lemat.Domain.Common;
 
@@ -7,7 +7,7 @@ namespace Lemat.Domain.Content;
 /// <summary>Powiązanie Zadania z Umiejętnością (tabela <c>zadanie_umiejetnosc</c>); dokładnie jedno jest główne.</summary>
 public sealed record PowiazanieUmiejetnosci(UmiejetnoscId UmiejetnoscId, bool Glowna);
 
-/// <summary>Dane założenia Zadania (wersja 1 powstaje razem z Zadaniem).</summary>
+/// <summary>Dane założenia Zadania (wersja 1 powstaje razem z Zadaniem; <c>WersjaId</c> pozwala narzucić stały identyfikator, np. dane startowe POC).</summary>
 public sealed record NoweZadanie(
     ZadanieId Id,
     PochodzenieZadania Pochodzenie,
@@ -25,7 +25,8 @@ public sealed record NoweZadanie(
     bool Diagnostyczne,
     UmiejetnoscId UmiejetnoscGlowna,
     IReadOnlyList<UmiejetnoscId> UmiejetnosciDodatkowe,
-    TrescWersji Tresc);
+    TrescWersji Tresc,
+    ZadanieWersjaId? WersjaId = null);
 
 public sealed class Zadanie : Agregat<ZadanieId>
 {
@@ -120,7 +121,7 @@ public sealed class Zadanie : Agregat<ZadanieId>
         }
 
         var pierwsza = ZadanieWersja.Utworz(
-            new ZadanieWersjaId(Guid.CreateVersion7(teraz)), 1, dane.Rodzaj, dane.FormaZamknieta, dane.Tresc, dane.AutorId, teraz);
+            dane.WersjaId ?? new ZadanieWersjaId(Guid.CreateVersion7(teraz)), 1, dane.Rodzaj, dane.FormaZamknieta, dane.Tresc, dane.AutorId, teraz);
         zadanie._wersje.Add(pierwsza);
         zadanie.AktualnaWersjaId = pierwsza.Id;
         return zadanie;

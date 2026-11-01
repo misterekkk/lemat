@@ -1,0 +1,428 @@
+{
+  "dzialy": [
+    {
+      "id": 1,
+      "kod": "I",
+      "nazwa": "Liczby rzeczywiste",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 1
+    },
+    {
+      "id": 2,
+      "kod": "II",
+      "nazwa": "Wyrażenia algebraiczne",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 2
+    },
+    {
+      "id": 3,
+      "kod": "III",
+      "nazwa": "Równania i nierówności",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 3
+    },
+    {
+      "id": 4,
+      "kod": "IV",
+      "nazwa": "Układy równań",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 4
+    },
+    {
+      "id": 5,
+      "kod": "V",
+      "nazwa": "Funkcje",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 5
+    },
+    {
+      "id": 6,
+      "kod": "VI",
+      "nazwa": "Ciągi",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 6
+    },
+    {
+      "id": 7,
+      "kod": "VII",
+      "nazwa": "Trygonometria",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 7
+    },
+    {
+      "id": 8,
+      "kod": "VIII",
+      "nazwa": "Planimetria",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 8
+    },
+    {
+      "id": 9,
+      "kod": "IX",
+      "nazwa": "Geometria analityczna na płaszczyźnie kartezjańskiej",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 9
+    },
+    {
+      "id": 10,
+      "kod": "X",
+      "nazwa": "Stereometria",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 10
+    },
+    {
+      "id": 11,
+      "kod": "XI",
+      "nazwa": "Kombinatoryka",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 11
+    },
+    {
+      "id": 12,
+      "kod": "XII",
+      "nazwa": "Rachunek prawdopodobieństwa i statystyka",
+      "tylko_rozszerzony": false,
+      "kolejnosc": 12
+    },
+    {
+      "id": 13,
+      "kod": "XIII",
+      "nazwa": "Optymalizacja i rachunek różniczkowy",
+      "tylko_rozszerzony": true,
+      "kolejnosc": 13
+    }
+  ],
+  "umiejetnosci": [
+    {
+      "id": 101,
+      "kod": "P.I.4",
+      "dzial_id": 1,
+      "nazwa": "Obliczanie procentów i zmian procentowych",
+      "waga_egzaminacyjna": 0.1
+    },
+    {
+      "id": 301,
+      "kod": "P.III.3",
+      "dzial_id": 3,
+      "nazwa": "Rozwiązywanie równań kwadratowych",
+      "waga_egzaminacyjna": 0.1
+    },
+    {
+      "id": 502,
+      "kod": "P.V.2",
+      "dzial_id": 5,
+      "nazwa": "Wyznaczanie wierzchołka i wartości największej funkcji kwadratowej",
+      "waga_egzaminacyjna": 0.1
+    },
+    {
+      "id": 701,
+      "kod": "P.VII.2",
+      "dzial_id": 7,
+      "nazwa": "Obliczanie wartości funkcji trygonometrycznych kąta ostrego",
+      "waga_egzaminacyjna": 0.1
+    },
+    {
+      "id": 801,
+      "kod": "P.VIII.1",
+      "dzial_id": 8,
+      "nazwa": "Obliczanie długości boków i promienia okręgu opisanego w trójkącie prostokątnym",
+      "waga_egzaminacyjna": 0.1
+    }
+  ],
+  "zadania": [
+    {
+      "zadanie_id": "a1000000-0000-4000-8000-000000000001",
+      "zadanie_wersja_id": "b1000000-0000-4000-8000-000000000001",
+      "dzial_id": 5,
+      "umiejetnosc_id": 502,
+      "poziom_trudnosci": 2,
+      "punkty_max": 2,
+      "tresc_md": "Dana jest funkcja kwadratowa $f(x) = -x^2 + 4x - 3$. Oblicz współrzędne wierzchołka paraboli będącej wykresem funkcji $f$ i podaj największą wartość funkcji $f$.",
+      "rozwiazanie_wzorcowe": {
+        "warianty": [
+          {
+            "wariant": 1,
+            "opis": "Rozwiązanie wzorcowe",
+            "kroki": [
+              {
+                "nr": 1,
+                "latex": "p = -\\frac{b}{2a} = -\\frac{4}{-2} = 2",
+                "komentarz": "odcięta wierzchołka"
+              },
+              {
+                "nr": 2,
+                "latex": "q = f(2) = -4 + 8 - 3 = 1",
+                "komentarz": "rzędna wierzchołka"
+              },
+              {
+                "nr": 3,
+                "latex": "W = (2, 1),\\ f_{\\max} = 1",
+                "komentarz": "największa wartość, bo $a < 0$"
+              }
+            ]
+          }
+        ]
+      },
+      "wynik_koncowy_wzorcowy": {
+        "typ": "WYRAZENIE",
+        "latex": "1",
+        "postac_sympy": "1"
+      },
+      "kryteria": [
+        {
+          "wariant": 1,
+          "nr_kryterium": 1,
+          "opis": "Obliczenie odciętej wierzchołka paraboli: $p = 2$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": false,
+          "wymaga_nr_kryterium": null
+        },
+        {
+          "wariant": 1,
+          "nr_kryterium": 2,
+          "opis": "Podanie największej wartości funkcji: $f(2) = 1$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": true,
+          "wymaga_nr_kryterium": 1
+        }
+      ]
+    },
+    {
+      "zadanie_id": "a1000000-0000-4000-8000-000000000002",
+      "zadanie_wersja_id": "b1000000-0000-4000-8000-000000000002",
+      "dzial_id": 3,
+      "umiejetnosc_id": 301,
+      "poziom_trudnosci": 1,
+      "punkty_max": 2,
+      "tresc_md": "Rozwiąż równanie $x^2 - 5x + 6 = 0$.",
+      "rozwiazanie_wzorcowe": {
+        "warianty": [
+          {
+            "wariant": 1,
+            "opis": "Rozwiązanie wzorcowe",
+            "kroki": [
+              {
+                "nr": 1,
+                "latex": "\\Delta = 25 - 24 = 1",
+                "komentarz": "wyróżnik"
+              },
+              {
+                "nr": 2,
+                "latex": "x_1 = \\frac{5 - 1}{2} = 2,\\ x_2 = \\frac{5 + 1}{2} = 3",
+                "komentarz": "pierwiastki"
+              }
+            ]
+          }
+        ]
+      },
+      "wynik_koncowy_wzorcowy": {
+        "typ": "ZBIOR",
+        "latex": "x_1 = 2,\\ x_2 = 3",
+        "postac_sympy": "[2, 3]"
+      },
+      "kryteria": [
+        {
+          "wariant": 1,
+          "nr_kryterium": 1,
+          "opis": "Obliczenie wyróżnika trójmianu: $\\Delta = 1$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": false,
+          "wymaga_nr_kryterium": null
+        },
+        {
+          "wariant": 1,
+          "nr_kryterium": 2,
+          "opis": "Obliczenie pierwiastków równania: $x_1 = 2$, $x_2 = 3$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": true,
+          "wymaga_nr_kryterium": 1
+        }
+      ]
+    },
+    {
+      "zadanie_id": "a1000000-0000-4000-8000-000000000003",
+      "zadanie_wersja_id": "b1000000-0000-4000-8000-000000000003",
+      "dzial_id": 1,
+      "umiejetnosc_id": 101,
+      "poziom_trudnosci": 2,
+      "punkty_max": 2,
+      "tresc_md": "Cena roweru po obniżce o $20\\%$ wynosi $640$ zł. Oblicz cenę roweru przed obniżką.",
+      "rozwiazanie_wzorcowe": {
+        "warianty": [
+          {
+            "wariant": 1,
+            "opis": "Rozwiązanie wzorcowe",
+            "kroki": [
+              {
+                "nr": 1,
+                "latex": "0{,}8x = 640",
+                "komentarz": "równanie opisujące cenę po obniżce"
+              },
+              {
+                "nr": 2,
+                "latex": "x = \\frac{640}{0{,}8} = 800",
+                "komentarz": "cena przed obniżką"
+              }
+            ]
+          }
+        ]
+      },
+      "wynik_koncowy_wzorcowy": {
+        "typ": "WYRAZENIE",
+        "latex": "800",
+        "postac_sympy": "800"
+      },
+      "kryteria": [
+        {
+          "wariant": 1,
+          "nr_kryterium": 1,
+          "opis": "Zapisanie równania opisującego cenę przed obniżką: $0{,}8x = 640$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": false,
+          "wymaga_nr_kryterium": null
+        },
+        {
+          "wariant": 1,
+          "nr_kryterium": 2,
+          "opis": "Obliczenie ceny przed obniżką: $x = 800$ zł.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": true,
+          "wymaga_nr_kryterium": 1
+        }
+      ]
+    },
+    {
+      "zadanie_id": "a1000000-0000-4000-8000-000000000004",
+      "zadanie_wersja_id": "b1000000-0000-4000-8000-000000000004",
+      "dzial_id": 7,
+      "umiejetnosc_id": 701,
+      "poziom_trudnosci": 3,
+      "punkty_max": 3,
+      "tresc_md": "Kąt $\\alpha$ jest ostry i $\\sin\\alpha = \\frac{3}{5}$. Oblicz $\\cos\\alpha$ oraz $\\operatorname{tg}\\alpha$.",
+      "rozwiazanie_wzorcowe": {
+        "warianty": [
+          {
+            "wariant": 1,
+            "opis": "Rozwiązanie wzorcowe",
+            "kroki": [
+              {
+                "nr": 1,
+                "latex": "\\cos^2\\alpha = 1 - \\sin^2\\alpha = 1 - \\frac{9}{25} = \\frac{16}{25}",
+                "komentarz": "jedynka trygonometryczna"
+              },
+              {
+                "nr": 2,
+                "latex": "\\cos\\alpha = \\frac{4}{5}",
+                "komentarz": "kąt ostry, więc cosinus dodatni"
+              },
+              {
+                "nr": 3,
+                "latex": "\\operatorname{tg}\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha} = \\frac{3}{4}",
+                "komentarz": "tangens"
+              }
+            ]
+          }
+        ]
+      },
+      "wynik_koncowy_wzorcowy": {
+        "typ": "ZBIOR",
+        "latex": "\\cos\\alpha = \\frac{4}{5},\\ \\operatorname{tg}\\alpha = \\frac{3}{4}",
+        "postac_sympy": "[4/5, 3/4]"
+      },
+      "kryteria": [
+        {
+          "wariant": 1,
+          "nr_kryterium": 1,
+          "opis": "Zastosowanie jedynki trygonometrycznej: $\\cos^2\\alpha = \\frac{16}{25}$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": false,
+          "wymaga_nr_kryterium": null
+        },
+        {
+          "wariant": 1,
+          "nr_kryterium": 2,
+          "opis": "Obliczenie $\\cos\\alpha = \\frac{4}{5}$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": false,
+          "wymaga_nr_kryterium": 1
+        },
+        {
+          "wariant": 1,
+          "nr_kryterium": 3,
+          "opis": "Obliczenie $\\operatorname{tg}\\alpha = \\frac{3}{4}$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": true,
+          "wymaga_nr_kryterium": 2
+        }
+      ]
+    },
+    {
+      "zadanie_id": "a1000000-0000-4000-8000-000000000005",
+      "zadanie_wersja_id": "b1000000-0000-4000-8000-000000000005",
+      "dzial_id": 8,
+      "umiejetnosc_id": 801,
+      "poziom_trudnosci": 1,
+      "punkty_max": 2,
+      "tresc_md": "W trójkącie prostokątnym przyprostokątne mają długości $6$ i $8$. Oblicz długość promienia okręgu opisanego na tym trójkącie.",
+      "rozwiazanie_wzorcowe": {
+        "warianty": [
+          {
+            "wariant": 1,
+            "opis": "Rozwiązanie wzorcowe",
+            "kroki": [
+              {
+                "nr": 1,
+                "latex": "c = \\sqrt{6^2 + 8^2} = \\sqrt{100} = 10",
+                "komentarz": "twierdzenie Pitagorasa"
+              },
+              {
+                "nr": 2,
+                "latex": "R = \\frac{c}{2} = 5",
+                "komentarz": "środek okręgu opisanego leży w środku przeciwprostokątnej"
+              }
+            ]
+          }
+        ]
+      },
+      "wynik_koncowy_wzorcowy": {
+        "typ": "WYRAZENIE",
+        "latex": "5",
+        "postac_sympy": "5"
+      },
+      "kryteria": [
+        {
+          "wariant": 1,
+          "nr_kryterium": 1,
+          "opis": "Obliczenie długości przeciwprostokątnej: $c = 10$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": false,
+          "wymaga_nr_kryterium": null
+        },
+        {
+          "wariant": 1,
+          "nr_kryterium": 2,
+          "opis": "Obliczenie promienia okręgu opisanego: $R = 5$.",
+          "punkty_max": 1,
+          "czy_wynik_koncowy": true,
+          "wymaga_nr_kryterium": 1
+        }
+      ]
+    }
+  ],
+  "konta": [
+    {
+      "id": "c1000000-0000-4000-8000-000000000001",
+      "email": "uczen1@lemat.local",
+      "haslo": "Lemat-Demo-2026!",
+      "imie": "Ala",
+      "nazwisko": "Kowalska"
+    },
+    {
+      "id": "c1000000-0000-4000-8000-000000000002",
+      "email": "uczen2@lemat.local",
+      "haslo": "Lemat-Demo-2026!",
+      "imie": "Jan",
+      "nazwisko": "Nowak"
+    }
+  ]
+}
