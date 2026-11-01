@@ -1,4 +1,5 @@
-// @Role: Minimalny DbContext (Npgsql, snake_case); w TASK-013 bez encji — nosi wyłącznie migracje SQL (ADR-063), mapowania agregatów dochodzą w TASK-015+ | @DependsOn: Microsoft.EntityFrameworkCore, EFCore.NamingConventions | @UsedBy: Lemat.Infrastructure.Persistence.MigratorBazy, Lemat.Infrastructure.Persistence.Migrations.SchematPoczatkowy | @Task: TASK-013
+// @Role: DbContext Lemat (Npgsql, snake_case): konwencje modelu (identyfikatory silnie typowane, timestamptz, text), konfiguracje encji z zespołu, migracje SQL (ADR-063); DbSet-y niepubliczne | @DependsOn: Microsoft.EntityFrameworkCore, EFCore.NamingConventions, KonwersjeIdentyfikatorow | @UsedBy: Lemat.Infrastructure.Persistence.MigratorBazy, JednostkaPracyEf, PersistenceRegistration, repozytoria (TASK-016+) | @Task: TASK-013, TASK-015
+using Lemat.Infrastructure.Persistence.Conventions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lemat.Infrastructure.Persistence;
@@ -24,5 +25,7 @@ public sealed class LematDbContext(DbContextOptions<LematDbContext> opcje) : DbC
         ArgumentNullException.ThrowIfNull(configurationBuilder);
         configurationBuilder.Properties<DateTimeOffset>().HaveColumnType("timestamptz");
         configurationBuilder.Properties<DateOnly>().HaveColumnType("date");
+        configurationBuilder.Properties<string>().AreUnicode();
+        KonwersjeIdentyfikatorow.Zarejestruj(configurationBuilder);
     }
 }

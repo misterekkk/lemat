@@ -1,0 +1,71 @@
+// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015
+using Lemat.Application.Common;
+using Lemat.Infrastructure.Persistence.Conventions;
+using Lemat.Infrastructure.Persistence.Interceptors;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Npgsql;
+
+namespace Lemat.Infrastructure.Persistence;
+
+public static class PersistenceRegistration
+{
+    /// <summary>
+    /// Connection string procesu: pula 30 (api) / 40 (worker) / 3 (scheduler) połączeń, <c>CommandTimeout</c> 5 s (api) albo 30 s,
+    /// nazwa aplikacji ułatwiająca diagnostykę (ADR-059). Jedno dodatkowe połączenie <c>LISTEN</c> nie należy do puli EF.
+    /// </summary>
+    public static string CiagPolaczenia(this BazaOpcje baza, RodzajProcesu proces)
+    {
+        ArgumentNullException.ThrowIfNull(baza);
+        if (string.IsNullOrWhiteSpace(baza.Polaczenie))
+        {
+            throw new InvalidOperationException("Brak Lemat:Baza:Polaczenie (LEMAT_BAZA).");
+        }
+
+        var builder = new NpgsqlConnectionStringBuilder(baza.Polaczenie)
+        {
+            MaxPoolSize = proces switch
+            {
+                RodzajProcesu.Api => 30,
+                RodzajProcesu.Worker => 40,
+                _ => 3,
+            },
+            CommandTimeout = proces == RodzajProcesu.Api ? 5 : 30,
+            ApplicationName = $"lemat-{proces.ToString().ToLowerInvariant()}",
+        };
+        return builder.ConnectionString;
+    }
+
+    public static IServiceCollection DodajPersystencje(this IServiceCollection uslugi, LematOpcje opcje, RodzajProcesu proces)
+    {
+        ArgumentNullException.ThrowIfNull(uslugi);
+        ArgumentNullException.ThrowIfNull(opcje);
+
+        var zrodlo = new NpgsqlDataSourceBuilder(opcje.Baza.CiagPolaczenia(proces))
+            .MapujTypyWyliczeniowe()
+            .EnableDynamicJson()
+            .Build();
+
+        uslugi.TryAddSingleton(TimeProvider.System);
+        uslugi.AddSingleton(zrodlo);
+        uslugi.AddSingleton<ZnacznikiCzasuInterceptor>();
+        uslugi.AddSingleton<WersjaAgregatuInterceptor>();
+        uslugi.AddDbContext<LematDbContext>(
+            (sp, builder) => builder
+                .UseNpgsql(zrodlo, o => o
+                    .MapujTypyWyliczenioweEf()
+                    .MigrationsHistoryTable(LematDbContext.TabelaHistoriiMigracji))
+                .UseSnakeCaseNamingConvention()
+                .AddInterceptors(
+                    sp.GetRequiredService<WersjaAgregatuInterceptor>(),
+                    sp.GetRequiredService<ZnacznikiCzasuInterceptor>())
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking),
+            contextLifetime: ServiceLifetime.Scoped,
+            optionsLifetime: ServiceLifetime.Singleton);
+        uslugi.AddDbContextFactory<LematDbContext>(lifetime: ServiceLifetime.Singleton);
+        uslugi.AddScoped<JednostkaPracyEf>();
+        uslugi.AddScoped<IJednostkaPracy>(sp => sp.GetRequiredService<JednostkaPracyEf>());
+        return uslugi;
+    }
+}

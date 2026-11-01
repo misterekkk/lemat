@@ -1,7 +1,17 @@
-// @Role: Korzeń agregatu: Version (token współbieżności), kolekcja zdarzeń domenowych (3.6) | @DependsOn: Lemat.Domain.Common.IZdarzenieDomenowe | @UsedBy: agregaty wszystkich modułów domenowych, LematDbContext (TASK-015) | @Task: TASK-014
+// @Role: Korzeń agregatu: Version (token współbieżności), kolekcja zdarzeń domenowych (3.6) | @DependsOn: Lemat.Domain.Common.IZdarzenieDomenowe | @UsedBy: agregaty wszystkich modułów domenowych, LematDbContext (TASK-015) | @Task: TASK-014, TASK-015
 namespace Lemat.Domain.Common;
 
-public abstract class Agregat<TId>
+/// <summary>Niegeneryczny kontrakt korzenia agregatu dla warstwy trwałości (token współbieżności, zdarzenia).</summary>
+public interface IKorzenAgregatu
+{
+    int Version { get; }
+
+    IReadOnlyList<IZdarzenieDomenowe> Zdarzenia { get; }
+
+    void PotwierdzZapis();
+}
+
+public abstract class Agregat<TId> : IKorzenAgregatu
     where TId : struct
 {
     private readonly List<IZdarzenieDomenowe> _zdarzenia = [];
