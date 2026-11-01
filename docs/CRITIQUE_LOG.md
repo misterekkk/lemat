@@ -773,7 +773,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.3. Uwagi C3-01 … C3-09 sprawd
   1. **Reguła pomijania po `id` jest poprawna dla zdarzeń `API`, ale nie dla `WORKER`.** Dla zdarzenia `API` istnienie wiersza oznacza zatwierdzoną transakcję, czyli zastosowany skutek. Od wersji 2.3 wiersz `USUNIECIE_WYKONANE` powstaje w kroku 1, czyli na **początku** usunięcia. Kroki 2–5 to aktualizacja wszystkich partycji `decyzja_modelu`, usuwanie obiektów S3 i `DELETE FROM uzytkownik`. Trwają minuty, a `USUN_KONTO` dla wszystkich zaplanowanych kont startuje razem o 02:00 UTC. Jeśli punkt odtworzenia `T` wypada po kroku 1, a przed krokiem 5, odtworzona baza ma wiersz zdarzenia **i** pełne dane konta. Skrypt pomija zdarzenie, workery startują, a konto `USUWANE` z Transkrypcjami, Ocenami i Profilem istnieje dalej. Usunie je dopiero `UZGODNIJ_REJESTR_RODO` (2) po ≥ 2 h od zapisu obiektu albo nocne `USUN_KONTO`. G-6 (a) deklaruje „w obu wariantach konto jest usunięte przed startem workerów”, ale testuje tylko odtworzenie 3 min i 60 min **po** usunięciu. Test przejdzie, a gwarancja nie jest spełniona.
   2. **Ponowienie nie zależy od roli konta.** Dla `USUNIECIE_WYKONANE` skrypt wykonuje „kroki 1–6 `USUN_KONTO`”, czyli kroki Ucznia. Usunięcie konta Nauczyciela ma inne kroki: archiwizację nieprzekazanych Klas i zamknięcie Przypisań, `WYCOFANE` dla Zadań `PRYWATNY` oraz pseudonimizację imienia i nazwiska w `rekomendacja.uzasadnienie` (`R-PRZYPISANIE`). Odtworzenie wykonane krokami Ucznia zostawia dane osobowe Nauczyciela w uzasadnieniach rekomendacji Uczniów. Ponowienie `WNIOSEK_O_USUNIECIE` ustawia tylko `status` i termin, bez skutków `KontoUsuwane` (zwolnienie blokad, eskalacja `KARENCJA_KONTA_NAUCZYCIELA`, `KLASA_DO_PRZEKAZANIA`). Weryfikacje `KLASA` takiego Nauczyciela czekają więc do eskalacji po SLA (3 dni robocze). `ANULOWANIE_USUNIECIA` odwołuje się do „tabeli wyżej”, czyli do tabeli przywrócenia Ucznia.
 - **Oczekiwana poprawka:** dla zdarzeń `zrodlo = WORKER` kryterium zastosowania ma brzmieć „wiersz `uzytkownik` nie istnieje”, a nie „istnieje wiersz `zdarzenie_rodo`”: skrypt wykonuje idempotentne kroki usunięcia, gdy konto istnieje. Ponowienie każdego zdarzenia ma zależeć od roli konta (rola zapisana w `dane` zdarzenia albo odczytana z wiersza), z krokami (1)–(5) dla Nauczyciela oraz skutkami `KontoUsuwane` / `KontoPrzywrocone`. G-6 (a) należy rozszerzyć o wariant „`T` po kroku 1, przed krokiem 5” oraz o konto Nauczyciela.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 5). Tabela kryterium zastosowania w 16.4 p. 2 zależy od źródła: `API` — wiersz `zdarzenie_rodo` albo `UNIEWAZNIENIE`; `WORKER` — brak wiersza `uzytkownik`. Skrypt przegląda cały prefiks `wykonane/` bez filtra czasu (≤ 1 800 obiektów). Każde Zdarzenie RODO ma `dane.rola` (CHECK `dane ? 'rola'` w 7.3), a ponowienie wywołuje te same funkcje domenowe co `api` i `USUN_KONTO` (`SluzbaKont.*`). Dla Nauczyciela są kroki (1)–(5) i skutki `KontoUsuwane` / `KontoPrzywrocone` (13.6), a tabela przywrócenia jest właściwa dla roli. G-6 ma warianty (a3) (zatrzymanie po krokach 1–4 zmienną testową) i (a4) (konto Nauczyciela: wniosek, usunięcie w trakcie, anulowanie). Jest też scenariusz C-39. Sprawdzono, że przywrócenie konta po kroku 0 nie jest możliwe: `POST …/przywrocenie` wymaga karencji < 30 dni, a `USUN_KONTO` startuje po `usuniecie_zaplanowane_at`, więc obiekt `USUNIECIE_WYKONANE` nie może dotyczyć konta przywróconego.
 
 ### C4-02: Kolejność wyboru progu i bezpiecznika trafności jest nieokreślona, więc zwykła reguła KALIBRUJ może codziennie cofać podniesienie progu
 - **Waga:** ŚREDNIA
@@ -783,7 +783,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.3. Uwagi C3-01 … C3-09 sprawd
   2. Przykładowy przebieg. Dzień N: bezpiecznik podnosi próg z 0,930 do 0,950. Dzień N + 1: wybór progu na oknie 90 dni (60 dni danych z błędem 0,5% rozcieńcza 30 dni degradacji) daje `min t` = 0,930 i obniża próg o dozwolone 0,02. Bezpiecznik, liczony „powyżej bieżącego progu”, znów podnosi go do 0,950. Próg oscyluje i nie rośnie, choć LB > 2% trwa. Przy takiej interpretacji bezpiecznik daje najwyżej +0,02 ponad próg zwykłej reguły. Deklaracja „degradacja do ≥ 4% wykrywana w 2–4 dni” opisuje więc wykrycie (alert), a nie skuteczną reakcję. Symulacja zlicza tylko pierwsze wyzwolenie i nie modeluje dynamiki progu ani odsetka Ocen automatycznych po nim.
   3. Brak reguły wyjścia: nie wiadomo, kiedy kończy się stan „po wyzwoleniu”, gdy po podniesieniu LB spada poniżej 2% (próba powyżej wyższego progu jest mniejsza), a UB pozostaje > 2%.
 - **Oczekiwana poprawka:** jawna kolejność i łączny wynik dnia, np. `prog_nowy = max(wybór_progu, prog_obecny + 0,02)` przy wyzwoleniu. Zakaz obniżania progu pary, dopóki LB > 2% albo UB > 2% na oknie 30 dni powyżej progu, do którego reguła chce obniżyć. Test jednostkowy: „degradacja 4% przez 30 dni na tle 60 dni z błędem 0,5% → próg rośnie monotonicznie, aż LB ≤ 2%”. Rozszerzenie symulacji o trajektorię progu i odsetek automatycznych po wyzwoleniu.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 5). „Wynik dnia KALIBRUJ” (11.5.3) ma kroki 1–6 w jawnej kolejności. Bezpieczniki są oceniane na `p0` i `K0` sprzed przebiegu. Blokada obniżania progu ma wejście (wyzwolenie) i wyjście (UB ≤ 2% przy `n_eff ≥ 189`), a krok 4 przy blokadzie ustawia `p_dol ≥ p0`. Przy wyzwoleniu `p_nowy = min(0,990, max(p_dol, p0 + 0,02))`, a przy 0,990 następuje przejście do 1,000. Zapis to jeden rekord `prog_pewnosci`. Przebieg z C4-02 p. 2 sprawdzono krokami: dzień N + 1, `p_wyb = 0,930`, BT aktywny → `p_dol = 0,950` → brak oscylacji (test (h)). Niezależnie przeliczono testy (f) (n = 300, k = 3: UB 2,90%, LB 0,34%) i (i) (n = 400, k = 2: UB 1,80%) oraz rozkład `1 − p ~ Exp(0,0631)` (udział auto 67,0 / 54,7 / 37,8 / 14,7% przy 0,930 / 0,950 / 0,970 / 0,990) i wariant 17.7 dla e = 2% (`M` ≈ 3 157, 84 min). Wszystko się zgadza. Odstępstwo (tryb pełnej weryfikacji przy 0,990, mediana wykrycia 13 dni zamiast 2–4) oceniono jako uczciwe, bo koszt jest policzony i przekazany do D-16. Skutek uboczny nowego kroku 4 opisuje C5-02.
 
 ### C4-03: Filtr danych osobowych nie chroni Uczniów, których imię lub nazwisko jest terminem matematycznym, a działanie reguły (a) na Poprawkach jest nieokreślone
 - **Waga:** ŚREDNIA
@@ -793,21 +793,21 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.3. Uwagi C3-01 … C3-09 sprawd
   2. Taki Uczeń przy każdym podpisanym Rozwiązaniu dostaje `konflikt_filtra` → T-3 → Ocenę wstrzymaną i Weryfikację. Systematyczna Weryfikacja wszystkich Rozwiązań wąskiej grupy Uczniów nie jest ujęta w 17.7, a średnie kryterium `konflikt_filtra ≤ 1%` ją ukrywa. Uczeń nie może tego naprawić Poprawką, bo flaga wynika z ramki, nie z treści.
   3. Dokument nie określa, czy reguła (a) (ramka) działa ponownie na Poprawkach, a ramka i `obszar` kroku się nie zmieniają. Jeśli działa, Uczeń nie przywróci kroku zamaskowanego w całości jako `tylko_dane_osobowe` (np. zdania wniosku bez cyfr, ≤ 6 tokenów, zapisanego obok podpisu), więc FR-18 dla tego kroku przestaje działać, a Model decyzyjny dostaje „linia z danymi osobowymi — nie jest krokiem rozwiązania” zamiast wniosku. Jeśli nie działa, Poprawka wpisuje do kroku w ramce dowolny tekst, który przechodzi tylko przez filtr `DOKLADNE`.
 - **Oczekiwana poprawka:** w regule (a) tokeny równe imieniu lub nazwisku z konta nie liczą się jako treść matematyczna. W regule (b) token ze Słownika równy nazwisku jest zastępowany, gdy sąsiaduje z drugim członem imienia i nazwiska albo leży w kroku z `podejrzenie_danych_osobowych`. Należy określić działanie reguły (a) dla Poprawek, np. krok `tylko_dane_osobowe` przywrócony Poprawką nie jest ponownie maskowany, ale podlega Sprawdzeniu zgodności i T-7. W G-2 potrzebne jest osobne kryterium dla kartek z nazwiskiem-terminem i metryka `konflikt_filtra` per Uczeń (np. odsetek Uczniów z ≥ 50% Rozwiązań z konfliktem).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 5). W regule (a) tokeny imienia i nazwiska z konta, inicjały i oznaczenie klasy są wyłączane przed oceną treści matematycznej, więc „Jan Pole, kl. 3b” daje `tylko_dane_osobowe` bez `konflikt_filtra`. Reguły (b1) i (b2) zastępują token Słownika równy nazwisku. Tabela działania filtra na Poprawkach (10.3.1 p. 3a) rozstrzyga C4-03 p. 3: reguła (a) nie jest liczona ponownie, krok przywrócony nie jest maskowany i podlega limitom 9.4, Sprawdzeniu zgodności i T-5/T-7. G-2 ma osobne kryterium dla ≥ 30 kartek z nazwiskiem-terminem, a metryka `uczniowie_z_konfliktem_filtra_udzial` ma alert (17.3, 17.7). Oba problemy z C4-03 są usunięte. Nowy skutek uboczny warunku (b1) z inicjałem opisuje C5-01.
 
 ### C4-04: Nowe identyfikatory używają słowa „zdjęcie” w znaczeniu „dezaktywacja bezpiecznika”
 - **Waga:** ŚREDNIA
 - **Lokalizacja:** 7.3 `stan_bezpiecznika` (`zdjety_przez`, `zdjeto_at`, `uzasadnienie_zdjecia`); 12.3 `POST /admin/bezpieczniki/zdjecie`; 12.4 `StanBezpiecznikaWyjscie.zdjeto_at`; 11.5.3 („Zdjęcie bezpiecznika poprawek”); 3.1 p. 5; 3.2 (Rozwiązanie → `zdjecie_rozwiazania`); 3.4 test CI, części 2 i 3
 - **Problem:** „zdjęcie” w modelu oznacza fotografię kartki. To element definicji Rozwiązania w słowniku pojęć („przesłana jako zdjęcie kartki”) i identyfikatorów `zdjecie_rozwiazania`, buckety `zdjecia/` i `zdjecia-maskowane/`, `?wersja_zdjecia=`, `ObszarNaZdjeciu`, `widoczny_na_zdjeciu`, `POPRAWKI_NIEZGODNE_ZE_ZDJECIEM`. Wersja 2.3 dodaje `uzasadnienie_zdjecia` (czytane „uzasadnienie zdjęcia”), `zdjeto_at`, `zdjety_przez` i ścieżkę `/admin/bezpieczniki/zdjecie` w znaczeniu „zdjęcie (dezaktywacja) bezpiecznika”. To homonim tego samego rodzaju co `ZADANIE_USUNIECIA` w C3-07 i łamie 3.1 p. 5 („jedno słowo — jedno znaczenie”). Test CI go nie wykryje: część 2 uzna `zdjecie` za token słownikowy, a lista słów zarezerwowanych w części 3 nie zawiera `zdjec*`. Pokrewna, łagodniejsza niejednoznaczność: „wstrzymanie” ma w identyfikatorach dwa znaczenia (`wstrzymanie_w_doborze` oraz Ocena wstępna `WSTRZYMANA_BLAD_ODCZYTU`), a w prozie trzecie (procesy „wstrzymane” w karencji).
 - **Oczekiwana poprawka:** zastąpić słowem „dezaktywacja” (`POST /admin/bezpieczniki/dezaktywacja`, `dezaktywowal_id`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji`) i dopisać `zdjec*` do słów zarezerwowanych testu CI z listą dozwolonych użyć (znaczenie: fotografia). Rozważyć ujednolicenie „wstrzymanie” albo jego definicję w 3.1 p. 5.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 5). 3.1 p. 5 definiuje „zdjęcie” wyłącznie jako fotografię i wprowadza „dezaktywację”, „odebranie” i „wyłączenie”. Kolumny `dezaktywowany_przez`, `dezaktywowano_at`, `uzasadnienie_dezaktywacji` (7.3), endpoint `POST /admin/bezpieczniki/dezaktywacja` (12.3) i DTO są przemianowane. W całym dokumencie `zdjet*` / `zdjeto` / `bezpieczniki/zdjecie` występuje tylko w regule testu CI, przypadku kontrolnym i changelogu (sprawdzone grep). Test CI ma słowa zarezerwowane `zdje*` i `wstrzym*` z listami dozwolonych użyć, a „wstrzymanie” ma jedną definicję (3.1 p. 5, 3.3). Pokrewną niejednoznaczność słowa „blokada” opisuje C5-04.
 
 ### C4-05: Granica chwilowa globalnego ogranicznika zależy od liczby procesów
 - **Waga:** NISKA
 - **Lokalizacja:** 13.2 („≤ Σ B_i + 0,8 × limit × T = 34 + 40 T”, „`pojemnosc_kubelka_workera = 4` daje Σ (B_i + r_i) = 50,0”, test (e)); 7.3 `limit_szybkosci_modelu.pojemnosc` (stała dla typu procesu); 17.4 („skalowanie: 3. replika workera”); A-01 (tolerancja 75 wywołań w 1 s); G-4 (seria 74 wywołań)
 - **Problem:** przydziały r_i zawsze sumują się do 40/s, ale Σ B_i rośnie z liczbą procesów, bo pojemność jest stała dla procesu (worker 16, `api` 1). Przy 3 workerach i 2 `api` Σ B = 50, więc w oknie 1 s procesy mogą wysłać do 90 wywołań, a tolerancja A-01 to 75. W wariancie ścisłym (B = 4) wychodzi 3 × 4 + 2 + 40 = 54 > 50. Także chwilowo, przy dołączeniu procesu, istniejące procesy do najbliższego odnowienia (≤ 10 s) mają stary przydział: 2 × 18,18 + 12,5 + 2 × 1,82 ≈ 52,5/s > 50/s. Skutek: odpowiedzi `429`, przydział zmniejszony o połowę i Oceny przekierowane do modelu zapasowego w szczycie, i to właśnie przy skalowaniu, które 17.4 podaje jako mitygację. Test (e) sprawdza tylko sumę przydziałów, a G-4 kalibruje 74 wywołania pod dokładnie 2 workery.
 - **Oczekiwana poprawka:** pojemność proporcjonalna do wagi (`B_i = B_całk × waga_i / Σ wag`, z ograniczeniem Σ B ≤ tolerancja − 0,8 × limit × 1 s). Nowy proces startuje z pustym kubełkiem i przydziałem min(r_nowy, 0,8 × limit − Σ r_pozostałych) do najbliższego odnowienia. Dodać test „granica chwilowa przy 2 / 3 / 4 workerach ≤ tolerancja A-01”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 5). Przeliczono niezależnie (13.2): `B_i = ⌊(B_całk − n_api) × w_i / Σ w⌋`. Przy 2 / 3 / 4 workerach Σ B wynosi 34 / 32 / 34, granica 1 s 74 / 72 / 74 ≤ 75, a w oknie 5 s ≤ 234. W wariancie ścisłym (B_całk = 10) granica wynosi 50 / 48 / 50. Ograniczenie `min(formuła, 0,8 × limit − Σ pozostałych)`, zmniejszanie przed `COMMIT` i zwiększanie po `COMMIT` pod `pg_advisory_xact_lock` zachowują oba niezmienniki także przy dołączaniu procesu (pusty kubełek, odnowienie co 2 s). Dodano testy (f)–(h) i C-40. Rozpoznawanie: ogranicznik R / S z `B_całk = 30` daje Σ B = 28, czyli ≤ 148 w oknie 60 s (sprawdzone). Sprzeczność z CHECK w DDL opisuje C5-03.
 
 ### C4-06: Drobne niespójności wersji 2.3
 - **Waga:** NISKA
@@ -824,7 +824,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 2.3. Uwagi C3-01 … C3-09 sprawd
   9. 17.2 S-6 i 17.4 liczą popyt jako 29 wywołań na Ocenę, a symulacja używa planu 16 + 11 + 1 = 28. Wartości trzeba ujednolicić (różnica ≈ 3,5%).
   10. Okno na rezultat Sprawdzenia `min(zatwierdzono_at + 6 s, termin_miekki − 9 s)` (9.4) maleje do 1 s przy `t_R` ≥ 18 s (termin miękki 10 s), a rachunek log-normalny zakłada 6 s. Przy wolnym rozpoznaniu p_brak przekracza więc 0,5%. Należy dopisać odsetek warunkowy albo nie skracać okna poniżej p95 Sprawdzenia.
 - **Oczekiwana poprawka:** ujednolicić wskazane miejsca: p. 1, 2 i 9 redakcyjnie, p. 3, 4, 6 i 8 drobną zmianą mechanizmu, p. 5, 7 i 10 uzupełnieniem rachunku.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 5). Sprawdzono każdy z 10 podpunktów w treści: (1) 10.3.3 — pula S; (2) 13.3 / 13.5 — cykl 5 min, wiek > 5 min, okno ≤ 10 min, zgodne z 16.4, ADR-041 i G-6; (3) klucz `wykonane/{uzytkownik_id}/{id}.json` bez daty w 7.3, 13.3 i 16.4; (4) `SELECT status FROM uzytkownik … FOR SHARE` po blokadach `rozwiazanie` → `weryfikacja` (9.6.2, 9.6.3, C-37); `UPDATE` wniosku bierze `FOR NO KEY UPDATE`, które jest sprzeczne z `FOR SHARE`, więc transakcje są serializowane bez cyklu blokad; (5) rozmiar testu nazwany wprost (2,6–7,8%, 1,1 fałszywego podniesienia na kwartał, D-16, R-22); (6) `KARENCJA_KONTA_NAUCZYCIELA` poza `odsetek_eskalacji_7d` (3.3, 11.4.3); (7) wariant 17.7 przeliczony: start +249 min, `M` = 3 951, 105 min, 20 weryfikatorów; faza ustalona +451 min, `M` = 3 277, 87 min, 16 weryfikatorów; 8 100 / 6 636 = 1,22 (D-17); (8) klucz `(konfiguracja_modelu_id, wykonawca, pula)`; (9) 28 wywołań w S-6, 17.4 i 22, 29 jako maksimum; (10) okno stałe `zatwierdzono_at + 6 s`, 6,2 s < 10 s. Drobne rozbieżności redakcyjne nowego tekstu opisuje C5-05.
 
 ### Podsumowanie iteracji 4
 
@@ -854,5 +854,145 @@ Werdykt: wersja 2.3 zamyka wszystkie 9 uwag iteracji 3, w tym jedyną wysoką (C
 - w nowych identyfikatorach pojawił się homonim słowa „zdjęcie” (C4-04).
 
 Wszystkie cztery poprawki są lokalne i nie wymagają zmian architektury.
+
+## Iteracja 5
+
+Data przeglądu: 2026-11-01. Wersja dokumentu: 2.4. Uwagi C4-01 … C4-06, w tym 10 podpunktów C4-06, sprawdzono w treści dokumentu (DDL 7.3, przepływy 9.x, 10.3.1, 11.5.3, 13.2–13.5, 16.4, 17.6–17.7), a nie tylko w tabeli 23.7. Statusy są wpisane przy uwagach iteracji 4. Rachunki przeliczono niezależnie: granice Wilsona w testach (f) i (i), rozkład pewności w symulacji dynamiki, granicę chwilową ogranicznika dla 2 / 3 / 4 workerów i ogranicznika rozpoznawania oraz warianty 17.7. Wszystkie się zgadzają. Odstępstwa architekta (C4-02: tryb pełnej weryfikacji i skorygowana mediana wykrycia; C4-04: `dezaktywowany_przez`; C4-05: stała pojemność `api`) oceniono jako skuteczne. Uwagi poniżej dotyczą fragmentów nowych w wersji 2.4 (kroki KALIBRUJ, `B_całk`, reguły b1/b2, procedura odtworzenia) oraz planu `TASKS.md`.
+
+### C5-01: Warunek (b1) z inicjałem zastępuje termin matematyczny w zwykłym kroku rozwiązania, a Poprawka nie może go przywrócić
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 10.3.1 p. 3a reguła (b1) („sąsiaduje … z tokenem dopasowanym do drugiego członu imienia i nazwiska z konta albo z jego inicjałem … dopasowanie `DOKLADNE`”, „z pominięciem znaków interpunkcyjnych”, normalizacja: małe litery, bez diakrytyków); tabela „Działanie filtra na Poprawkach” (krok zmieniony: „`DOKLADNE` z warunkiem (b1)”); 17.6 G-2 („0 zastąpień tokenów ze Słownika terminów matematycznych … 200 par … w tym nazwiska Pole, Kula, …”); ADR-042 (uzupełnienie it. 6)
+- **Problem:**
+  1. Inicjał po normalizacji i pominięciu kropki to pojedyncza litera. W tekście matematycznym jednoliterowe oznaczenia stoją obok terminów bardzo często: „Pole P”, „prosta k”, „prosta l”, „suma S”, „koło o”. Przykład: Uczeń Piotr Pole pisze „Pole P trójkąta wynosi” poza ramką danych osobowych. Token „pole” jest równy nazwisku i sąsiaduje z „p”, czyli inicjałem imienia, więc (b1) zastępuje go znacznikiem `[DANE_OSOBOWE]`. Krok nie ma ramki, więc nie dostaje ani `podejrzenie_danych_osobowych`, ani `konflikt_filtra`. Model decyzyjny ocenia „[DANE_OSOBOWE] P trójkąta wynosi”, a Ocena może być wystawiona automatycznie. Sygnał filtra zmienia więc treść kroku bez Weryfikacji, czyli to, czego zabraniają C3-02 i Z-1.
+  2. Gdy Uczeń przywraca słowo („To nie są moje dane — przywróć”), krok jest „zmieniony”, a dla takiego kroku tabela Poprawek stosuje „`DOKLADNE` z warunkiem (b1)”. „Pole P” jest zastępowane ponownie, więc FR-18 dla tego kroku nie działa. Przykład z tabeli („przywrócone słowo „Pole” zostaje”) zakłada brak sąsiedztwa.
+  3. Kryterium G-2 „0 zastąpień tokenów ze Słownika” na 1 050 Transkrypcjach z syntetycznymi danymi konta (w tym nazwisko Pole) jest sprzeczne z regułą (b1), która z założenia zastępuje token Słownika. Przy parze „Piotr Pole” i Transkrypcji z „pole P” bramka nie przejdzie. Gdyby przeszła, to tylko dlatego, że losowe pary nie trafiły na kolizję inicjału z oznaczeniem, czyli bez sprawdzenia tego przypadku.
+- **Oczekiwana poprawka:** w (b1) inicjał liczy się tylko z kropką w oryginalnym tekście (przed pominięciem interpunkcji) i tylko wtedy, gdy krok nie ma treści matematycznej po wyłączeniach z reguły (a). Prościej: (b1) stosować wyłącznie w krokach bez treści matematycznej, a w krokach z treścią (b1) z inicjałem ustawia `konflikt_filtra` zamiast zastępować. Dla kroku zmienionego przez Ucznia (b1) nie powinna zastępować tokenu, który Uczeń sam przywrócił w miejscu znacznika. G-2: „0 zastąpień tokenów Słownika w krokach z treścią matematyczną” oraz celowy zestaw przypadków „nazwisko-termin + oznaczenie równe inicjałowi” (np. 20 kartek „Pole P”, „prosta k”).
+- **Status:** OTWARTA
+
+### C5-02: Reguły nadzoru w kroku 4 KALIBRUJ nie mają określonej populacji ani wartości przy braku Kontroli, co może zablokować wyjście z trybu pełnej weryfikacji
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 11.5.3 tabela reguł nadzoru (`wykonanie_kontroli_30d` = „Kontrole zakończone do `termin_at` / utworzone”, bezpiecznik braku nadzoru „< 50 zakończonych przy ≥ 100 utworzonych”); krok 4 („`zablokowane = BT.aktywny ∨ ostrzezenie_T ∨ wykonanie_kontroli_30d < 0,80 ∨ bezpiecznik braku nadzoru`”); skutek (4) (wyjście z trybu pełnej weryfikacji przez dezaktywację, „próg obniża się o ≤ 0,02 na dobę przez test kroku 4”); 11.5.1 p. 5 (start w trybie pełnej weryfikacji, „próg obniży się automatycznie”); 12.4 `wykonanie_kontroli_30d: number | null`
+- **Problem:**
+  1. W trybie pełnej weryfikacji (`p0 = 1,000`, start D-6 albo po wyzwoleniu przy 0,990) nie ma Ocen automatycznych, więc nie ma Kontroli losowych, a `wykonanie_kontroli_30d` = 0/0. API przewiduje `null`, ale krok 4 nie określa, czy `null < 0,80`. W implementacji, która traktuje brak danych zachowawczo (`null` → zablokowane), para nigdy nie obniży progu z 1,000. Tryb pełnej weryfikacji (`M` = 5 194 min/dobę, 17.7) staje się wtedy trwały, mimo dezaktywacji przez Administratora.
+  2. Mianownik „utworzone w oknie 30 dni” obejmuje Kontrole, których `termin_at` jeszcze nie minął (≈ 3 dni robocze, czyli do ≈ 14% okna). Po obniżeniu progu z 1,000 do 0,980 pojawiają się pierwsze Oceny automatyczne z odsetkiem Kontroli 0,20 (mniej niż 400 próbek). To ≈ 0,20 × 0,25 × 1 200 ≈ 60 Kontroli na dobę. Po 2 dniach jest ≥ 100 utworzonych i < 50 zakończonych, choć żadna nie jest spóźniona. Wyzwala się bezpiecznik braku nadzoru (+0,02), a krok 5 przywraca 0,990–1,000. Para oscyluje przy wyjściu z trybu pełnej weryfikacji. Ten sam efekt w łagodniejszej postaci zaniża `wykonanie_kontroli_30d` w normalnej pracy (alert przy < 0,90 przy pełnym wykonaniu w terminie).
+- **Oczekiwana poprawka:** zdefiniować populację: „Kontrole z `termin_at ≤ now()` utworzone w oknie 30 dni”, analogicznie dla progu „≥ 100 utworzonych”. Zdefiniować wartość przy pustej populacji: `null` = brak reguły nadzoru (bez blokady), skoro brak Kontroli wynika z braku Ocen automatycznych. Dodać test: „dezaktywacja przy `p0 = 1,000` → próg spada do 0,990, 0,970, … przy bezbłędnych Próbkach, bez wyzwolenia bezpiecznika braku nadzoru w pierwszych 3 dniach roboczych”.
+- **Status:** OTWARTA
+
+### C5-03: CHECK `pojemnosc BETWEEN 1 AND 34` jest sprzeczny z pojemnością 0 przy dołączaniu procesu i ponad limit wierszy
+- **Waga:** NISKA
+- **Lokalizacja:** 7.3 `limit_szybkosci_modelu.pojemnosc smallint NOT NULL CHECK (pojemnosc BETWEEN 1 AND 34)`; 13.2 („`B_nowy = min(formuła, B_całk − Σ pojemności pozostałych)` — przy pełnym wykorzystaniu … oba wynoszą 0”; „wiersz ponad tę liczbę dostaje `B_i = 0`”); test (g); C-40
+- **Problem:** nowy proces rejestruje się przy pełnym wykorzystaniu z `pojemnosc = 0`, czego CHECK nie dopuszcza. `INSERT` kończy się błędem, więc replika uruchomiona w szczycie (C-40, mitygacja z 17.4) nie zarejestruje się w ogóle albo implementacja obejdzie to wartością 1 i naruszy niezmiennik `Σ pojemnosc ≤ B_całk`. To samo dotyczy wiersza ponad limit 32. Dla ogranicznika rozpoznawania (`B_całk = 30`) górna granica 34 jest luźna, ale poprawna.
+- **Oczekiwana poprawka:** `CHECK (pojemnosc BETWEEN 0 AND 34)` (albo `≤ B_całk` z parametru 22), test (g) z asercją `pojemnosc = 0` po `INSERT`.
+- **Status:** OTWARTA
+
+### C5-04: „Blokada” ma w modelu trzy znaczenia, a test CI tego nie wykrywa
+- **Waga:** NISKA
+- **Lokalizacja:** 3.3 („Blokada weryfikacji”, „Blokada obniżania progu”); 13.2 („blokada doradcza”); 11.5.3 skutki (1) i (4) oraz komentarz DDL `stan_bezpiecznika` („aktywny = blokada obniżania”), proza bez kwalifikatora („blokada kończy się automatycznie”, „blokady `W_TRAKCIE`”); 3.4 część 2 (`blokada` dopisana do słów ogólnych `tests/slownik_tokeny.yaml`)
+- **Problem:** od wersji 2.4 to samo słowo oznacza wyłączne prawo do rozstrzygnięcia Weryfikacji, stan pary po wyzwoleniu bezpiecznika i mechanizm PostgreSQL. Oba pojęcia domenowe mają kwalifikatory, ale proza i komentarze często ich nie mają. „Blokada” trafiła na listę słów ogólnych, więc test CI przepuści np. `blokada_aktywna` w obu znaczeniach. To ten sam rodzaj ryzyka co C4-04, w łagodniejszej postaci. Kolumna `stan_bezpiecznika.aktywny` ma przy tym dwa znaczenia zależne od `typ` (POPRAWKI: T-7 dla Poprawek; TRAFNOSC: Blokada obniżania progu).
+- **Oczekiwana poprawka:** dopisać `blokad*` do słów zarezerwowanych z listą dozwolonych użyć (`zablokowana_do`, `BlokadaWeryfikacji…`, `blokada_obnizania…`) i ujednolicić prozę 11.5.3 do pełnej nazwy. Rozważyć osobną kolumnę `blokada_obnizania_progu` zamiast przeciążonego `aktywny` dla `TRAFNOSC`.
+- **Status:** OTWARTA
+
+### C5-05: Drobne niespójności wersji 2.4
+- **Waga:** NISKA
+- **Lokalizacja:** 3.4 część 3; 3.2 / 18 / 12.3; 23.7 / 11.5.3; 13.3 `UZGODNIJ_REJESTR_RODO` (1)
+- **Problem:**
+  1. 3.4 część 3: zdublowany fragment „dla `zadan*` `zadan*`:”, a w liście dozwolonych użyć `zdje*` jest pozycja „`zdjecie` w `ObszarNaZdjeciu`/`NiepewnyFragment`/`obszar`”, której nie da się przełożyć na wyjątek tokenowy.
+  2. Ścieżki z różnymi nazwami parametrów: 3.2 i 18 — `/uczniowie/{id}/profil`, `DELETE /uczniowie/ja/klasy/{id}`; 12.3 — `{uczenId}`, `{klasaId}`. Test OpenAPI z 3.4 porównuje identyfikatory, więc warto ujednolicić.
+  3. 23.7 (C4-06 p. 5) podaje „P(≥ 1 wyzwolenie w 90 dniach) 31–45%”, a akapit „Rozmiar testu” w 11.5.3 — „31–36%”. Rozbieżność wyjaśnia dopiero wniosek (3) symulacji dynamiki (okno pełne od dnia 1). Akapit warto doprecyzować.
+  4. `UZGODNIJ_REJESTR_RODO` (1) przegląda obiekty „z ostatnich 24 h”. Przerwa schedulera > 24 h (np. awaria i odtworzenie) zostawia zdarzenia `API` bez transakcji, których żadna praca nie unieważni. Należy dopisać przebieg nadrabiający od ostatniego udanego przebiegu albo alert.
+- **Oczekiwana poprawka:** p. 1–3 redakcyjnie; p. 4 — okno od `max(ostatni_udany_przebieg − 5 min, now() − 60 dni)`.
+- **Status:** OTWARTA
+
+### Podsumowanie iteracji 5
+
+Weryfikacja uwag otwartych po iteracji 4:
+
+| Stan | Liczba | Identyfikatory |
+|---|---|---|
+| ZAMKNIĘTA | 6 | C4-01 … C4-06 (w tym 10/10 podpunktów C4-06) |
+| OTWARTA | 0 | — |
+
+Nowe uwagi iteracji 5 dotyczące architektury (C5-01 … C5-05) oraz planu (C5-06 … C5-09, sekcja niżej):
+
+| Waga | Liczba uwag | Identyfikatory |
+|---|---|---|
+| KRYTYCZNA | 0 | — |
+| WYSOKA | 0 | — |
+| ŚREDNIA | 4 | C5-01, C5-02, C5-06, C5-07 |
+| NISKA | 5 | C5-03, C5-04, C5-05, C5-08, C5-09 |
+| **Razem** | **9** | |
+
+## Weryfikacja pokrycia TASKS.md
+
+**Metoda.** Uniwersum elementów wyodrębniono niezależnie od macierzy plannera, skryptem w scratchpadzie, z `docs/ARCHITECTURE_DETAILED.md` v2.4 i `docs/requirements.md`. Pokrycie sprawdzono wyłącznie na polach „Realizuje” 143 zadań (bez macierzy na końcu `TASKS.md`), dokładnym dopasowaniem identyfikatora. Sekcje dopasowano do listy „Sekcje:”, a endpointy jako `METODA ścieżka`. Zależności sprawdzono pod kątem nieistniejących identyfikatorów, cykli (DFS) i odwołań w przód, a dla DDL dodatkowo pod kątem kolejności kluczy obcych (zadanie tworzące tabelę wskazywaną musi być przodkiem zadania tworzącego tabelę wskazującą). DoD przejrzano pod kątem kryteriów niesprawdzalnych („zgodnie z sekcją X”) i zgodności z testami zdefiniowanymi w architekturze.
+
+| Kategoria | Elementów | Pokryte | Brak |
+|---|---|---|---|
+| Sekcje numerowane (`##`–`####`) | 149 | 149 | 0 |
+| ADR-001 … ADR-047 | 47 | 47 | 0 |
+| DDL — tabele | 59 | 59 | 0 |
+| DDL — typy wyliczeniowe | 43 | 43 | 0 |
+| DDL — triggery `trg_*` | 6 | 6 | 0 |
+| DDL — funkcje (`dodaj_dni_robocze`) | 1 | 1 | 0 |
+| DDL — indeksy | 50 | 50 | 0 |
+| DDL — rozszerzenia | 2 | 2 | 0 |
+| Endpointy API (tabele 12.3; `/dzialy` i `/umiejetnosci` osobno) | 100 | 100 | 0 |
+| Agenci (5) i Orkiestrator (6.3 → TASK-020) | 6 | 6 | 0 |
+| Prace w tle (13.3 + `ZWOLNIJ_BLOKADY_WERYFIKACJI` z 13.5) | 29 | 29 | 0 |
+| Zdarzenia domenowe 13.6 | 16 | 16 | 0 |
+| Bramki G-0 … G-7 | 8 | 8 | 0 |
+| Scenariusze C-01 … C-40 | 40 | 40 | 0 |
+| Błędy E-01 … E-38 | 38 | 38 | 0 |
+| Ryzyka R-01 … R-22 | 22 | 22 | 0 |
+| Decyzje D-1 … D-17 | 17 | 17 | 0 |
+| Pliki testowe / symulacyjne / danych | 12 | 12 | 0 |
+| FR-01 … FR-36 | 36 | 36 | 0 |
+| NFR-01 … NFR-10 | 10 | 10 | 0 |
+| Założenia A, zasady Z, scenariusze S, reguły T | 15 + 6 + 7 + 7 | 35 | 0 |
+| Niespójności N, sprawdzenia W, pytania Q, reguły `R-*`, PZS-1 B | 6 + 10 + 13 + 12 + 9 | 50 | 0 |
+| **Razem** | **776** | **776** | **0** |
+
+Wynik zgadza się z macierzą plannera (775). Różnica 1 to Orkiestrator, liczony tu osobno i pokryty przez sekcję 6.3 w TASK-020. Fałszywe trafienia skryptu odrzucono ręcznie: `CODZIENNY` to tryb pracy `SPRZATAJ_OSIEROCONE_OBIEKTY`, a nie praca w tle. Ścieżki z prozy 3.2 / 18 o innych nazwach parametrów opisuje C5-05 p. 2. Zależności: 0 nieistniejących identyfikatorów, 0 cykli, 0 odwołań do zadań późniejszych, każde zadanie poza TASK-001 ma zależność. Słownik: w `TASKS.md` i `CLAUDE.md` nie ma zakazanych synonimów poza celowymi przypadkami kontrolnymi i listą zakazów (`TASK-xxx` jest zadeklarowanym identyfikatorem planu); naruszenie w `HANDOFF.md` opisuje C5-09.
+
+**Pokrycie formalne wynosi 100%** (776/776, lista braków pusta). Wpisanie elementu do „Realizuje” nie gwarantuje jednak, że opis i DoD odpowiadają architekturze v2.4. Rozbieżności opisują uwagi niżej.
+
+### C5-06: TASK-078 błędnie opisuje regułę (a) Filtra danych osobowych, a DoD nie obejmuje Poprawek
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** `TASKS.md` TASK-078 („reguła (a) imię, nazwisko, inicjały i oznaczenie klasy z konta → `[DANE_OSOBOWE]`”), DoD TASK-078 i TASK-080; architektura 10.3.1 p. 3a reguły (a)/(b), tabela Poprawek, G-2 („test Poprawek: przywrócenie kroku `tylko_dane_osobowe` na 50 przypadkach”)
+- **Problem:** w architekturze reguła (a) jest regułą ramki. Inicjały i oznaczenie klasy są tylko **wyłączane** przed oceną, czy krok ma treść matematyczną. Tokenowo zastępowane są wyłącznie imię, nazwisko, część lokalna e-maila (b) oraz PESEL i e-mail (c). Opis zadania każe zastępować inicjały i oznaczenie klasy znacznikiem. Wykonawca, który go dosłownie wdroży, zamieni na `[DANE_OSOBOWE]` jednoliterowe tokeny („P.”, „k”) i ciągi typu „3b” w tekście matematycznym. Złamie tym kryterium G-2 (≤ 0,5% fałszywych zastąpień) i inwariant C3-02. DoD nie wymaga też testów tabeli „Działanie filtra na Poprawkach” (kroki niezmienione, zmienione, wstawione, przywrócony `tylko_dane_osobowe`), choć to główna treść poprawki C4-03 p. 3.
+- **Oczekiwana poprawka:** opis zgodny z 10.3.1 p. 3a: (a) ramka i wyłączenia przed oceną treści, (b) imię, nazwisko i e-mail z regułami (b1)/(b2), (c) PESEL i e-mail. DoD: testy każdego wiersza tabeli Poprawek oraz test G-2 „50 przywróceń bez ponownego maskowania i ze Sprawdzeniem zgodności”, a po decyzji w C5-01 także przypadek „Pole P”.
+- **Status:** OTWARTA
+
+### C5-07: DoD nie wymagają testów dodanych w v2.4 dla bezpiecznika, ogranicznika i odtworzenia konta Nauczyciela
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** TASK-104 DoD („`test_bezpiecznik.py` (a)–(e)”), TASK-103 DoD; TASK-041 DoD („`test_ogranicznik.py` (a)–(f)”); TASK-119 DoD („Testy C-34 i C-39 (PITR w trakcie `USUN_KONTO` po krokach 1–4)”); architektura 11.5.3 testy (a)–(k), 13.2 testy (a)–(h), G-6 (a3), (a4), (b)–(d)
+- **Problem:** testy, które v2.4 dodała jako dowód zamknięcia C4-02 i C4-05, nie występują w żadnym DoD: (f) ostrzeżenie, (g) degradacja 4% z niemalejącym progiem, (h) brak oscylacji, (i) wyjście z blokady, (j) 0,990 → 1,000 i brak wyjścia, (k) dezaktywacja `TRAFNOSC`; w ograniczniku (g) dołączenie 3. workera z przydziałem 0 i (h) dwa jednoczesne odnowienia. DoD TASK-103 („bezpiecznik nie jest cofany”) jest ogólne i nie wskazuje danych testu (g)/(h). DoD TASK-119 zawęża C-39 do kroków Ucznia 1–4. Wariant (a4), czyli konto Nauczyciela (pseudonimizacja `R-PRZYPISANIE`, skutki `KontoUsuwane`, tabela przywrócenia Nauczyciela), i scenariusze (b)–(d) G-6 są tylko w opisie TASK-142, którego DoD to „protokół podpisany”. Zadanie można więc uznać za `DONE` bez dowodu zamknięcia uwag C4.
+- **Oczekiwana poprawka:** TASK-104 DoD — (a)–(k) z 11.5.3, w tym dane deterministyczne testu (g). TASK-041 DoD — (a)–(h) z 13.2. TASK-119 DoD — G-6 (a1)–(a4) i (b)–(d) jako testy automatyczne w środowisku testowym, w tym konto Nauczyciela (0 wystąpień imienia i nazwiska w `rekomendacja.uzasadnienie`).
+- **Status:** OTWARTA
+
+### C5-08: Zależności niezgodne z kolejnością implementacji
+- **Waga:** NISKA
+- **Lokalizacja:** TASK-103 (zależności: TASK-022, TASK-029, TASK-102) i TASK-104 (zależność: TASK-103); TASK-018 (zależność: TASK-008); 7.3 `klucz_idempotencji.uzytkownik_id`, `powiadomienie.uzytkownik_id` → `uzytkownik`
+- **Problem:**
+  1. Kroki 2–3 „Wyniku dnia KALIBRUJ” (TASK-103) wymagają oceny bezpieczników i Blokady obniżania progu, które implementuje TASK-104, a TASK-104 zależy od TASK-103. DoD TASK-103 („bezpiecznik nie jest cofany przez wybór progu”) jest niewykonalne przed TASK-104. Pętla jest logiczna, nie formalna, więc test acykliczności jej nie wykrywa.
+  2. TASK-018 tworzy tabele z kluczem obcym do `uzytkownik` (TASK-009), ale nie zależy od TASK-009 ani pośrednio, ani bezpośrednio. Migracja wykonana w kolejności zależności się nie powiedzie.
+- **Oczekiwana poprawka:** wydzielić ocenę bezpieczników (populacja, LB/UB, klasyfikacja 1–4) do TASK-104 zależnego od TASK-102, a TASK-103 (kroki 1–6) uzależnić od TASK-104; dodać TASK-009 do zależności TASK-018.
+- **Status:** OTWARTA
+
+### C5-09: Pozostałości redakcyjne w TASKS.md, CLAUDE.md i HANDOFF.md
+- **Waga:** NISKA
+- **Lokalizacja:** `TASKS.md` TASK-006 DoD („TASK „slownik-baza””), TASK-048 („TASK „rodo-kopie””), TASK-049 DoD („TASK „wer-obciazenie””); TASK-043 DoD („zgodnie z 14.1”); `HANDOFF.md` linia 36 („kolejka prac w tle”), linie 15–18 i Q-2 („v2.4 nie ma osobnego przeglądu krytyka”)
+- **Problem:** (1) trzy odwołania do zadań po roboczych nazwach zamiast identyfikatorów (powinny być TASK-024, TASK-115, TASK-099); (2) DoD TASK-043 odwołuje się do sekcji zamiast podać sprawdzalne kryterium (które błędy → `ModelNiedostepny`, które → przejściowe); (3) „kolejka prac w tle” łamie 3.1 p. 5 („prace w tle, nigdy „kolejka””); (4) po tym przeglądzie stwierdzenia HANDOFF o braku przeglądu v2.4 są nieaktualne.
+- **Oczekiwana poprawka:** zamienić nazwy robocze na identyfikatory, rozpisać DoD TASK-043 według wierszy E-09 / 14.1, poprawić sformułowanie w HANDOFF i zaktualizować Q-2 oraz linie 15–18 wynikiem iteracji 5.
+- **Status:** OTWARTA
+
+### Werdykt
+
+Wersja 2.4 zamyka wszystkie 6 uwag iteracji 4 (w tym 10/10 podpunktów C4-06). Nie ma otwartych uwag krytycznych ani wysokich. Pokrycie formalne planu wynosi 100% (776/776), zależności są acykliczne, a nazwy w planie są zgodne ze słownikiem. Dokument i plan nie są jednak jeszcze na poziomie produkcyjnym:
+- reguła (b1) z inicjałem zmienia treść kroku matematycznego bez Weryfikacji i blokuje FR-18 dla tego kroku, a G-2 jest z nią sprzeczna (C5-01);
+- reguły nadzoru w nowym kroku 4 KALIBRUJ mają nieokreśloną populację i wartość `null`, przez co wyjście z trybu pełnej weryfikacji może się zablokować albo oscylować (C5-02);
+- opis TASK-078 sprzeczny z 10.3.1 i DoD bez testów v2.4 pozwalają oznaczyć zadania jako `DONE` bez dowodu zamknięcia uwag C4 (C5-06, C5-07).
+
+Wszystkie poprawki są lokalne: 3 akapity architektury, 1 CHECK w DDL i redakcja kilku zadań planu.
 
 STATUS: NEEDS_REVISION
