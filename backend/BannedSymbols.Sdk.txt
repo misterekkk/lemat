@@ -1,0 +1,6 @@
+N:OpenAI;SDK dostawców modeli wyłącznie w Lemat.Models (NFR-06, 6.5)
+N:OpenAI.Chat;SDK dostawców modeli wyłącznie w Lemat.Models (NFR-06, 6.5)
+N:Azure.AI.OpenAI;SDK dostawców modeli wyłącznie w Lemat.Models (NFR-06, 6.5)
+N:Azure.AI.Inference;SDK dostawców modeli wyłącznie w Lemat.Models (NFR-06, 6.5)
+N:Anthropic;SDK dostawców modeli wyłącznie w Lemat.Models (NFR-06, 6.5)
+N:Anthropic.SDK;SDK dostawców modeli wyłącznie w Lemat.Models (NFR-06, 6.5)

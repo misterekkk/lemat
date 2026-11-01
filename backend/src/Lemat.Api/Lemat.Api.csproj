@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Lemat.Application\Lemat.Application.csproj" />
+    <ProjectReference Include="..\Lemat.Infrastructure\Lemat.Infrastructure.csproj" />
+    <ProjectReference Include="..\Lemat.Agents\Lemat.Agents.csproj" />
+    <ProjectReference Include="..\Lemat.Models\Lemat.Models.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+  </ItemGroup>
+</Project>

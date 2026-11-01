@@ -41,7 +41,7 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
 
 # Faza 1: Szkielet solucji .NET i aplikacji Next.js + konfiguracja środowiska
 
-- [ ] **TASK-001 [MVP] Solucja .NET: pliki globalne i projekty `src`**
+- [x] **TASK-001 [MVP] Solucja .NET: pliki globalne i projekty `src`**
   - **Opis:** Utwórz `backend/Lemat.slnx`, `global.json` (SDK `10.0.100`, `rollForward: latestPatch`), `Directory.Build.props` (`Nullable=enable`,
     `TreatWarningsAsErrors=true`, `AnalysisLevel=latest-recommended`, `ImplicitUsings=enable`, `EnforceCodeStyleInBuild=true`), `Directory.Packages.props`
     (Central Package Management; pakiety z 5.2/6.4; **zakaz** metapakietu `Microsoft.SemanticKernel`), `BannedSymbols.txt` (`DateTime.Now`,
@@ -54,6 +54,11 @@ wszystkich `[MVP]` (chyba że właściciel zdecyduje inaczej). Uproszczenia MVP 
   - **DoD:** `dotnet build backend/Lemat.slnx -warnaserror` przechodzi na czystym klonie; graf referencji projektów odpowiada diagramowi 6.4 (sprawdź `dotnet list reference`);
     `Lemat.Domain.csproj` nie ma `PackageReference`; `dotnet format backend/Lemat.slnx --verify-no-changes` przechodzi; `.gitignore` obejmuje wymienione katalogi;
     brak kodu domenowego (tylko szkielety projektów).
+  - **Pliki (TASK-001):** `.gitignore`; `backend/Lemat.slnx`, `backend/global.json`, `backend/Directory.Build.props`, `backend/Directory.Packages.props`,
+    `backend/BannedSymbols.txt`, `backend/BannedSymbols.Sdk.txt`, `backend/.editorconfig`, `backend/src/Directory.Build.props`;
+    `backend/src/Lemat.{Domain,Application,Agents,Models,Infrastructure,Api,Worker,Scheduler,Tools}/Lemat.<Nazwa>.csproj`;
+    `backend/src/Lemat.Api/Program.cs`, `backend/src/Lemat.Worker/Program.cs`, `backend/src/Lemat.Scheduler/Program.cs`, `backend/src/Lemat.Tools/Program.cs`.
+  - **Weryfikacja:** `dotnet build backend/Lemat.slnx -warnaserror` OK; `dotnet format backend/Lemat.slnx --verify-no-changes` OK; brak projektów testowych (TASK-002).
 
 - [ ] **TASK-002 [MVP] Projekty testowe, testy architektury i lekki test słownika**
   - **Opis:** Dodaj `backend/tests`: `Lemat.Domain.Tests`, `Lemat.Application.Tests`, `Lemat.Agents.Tests`, `Lemat.Models.Tests`, `Lemat.Infrastructure.Tests`,

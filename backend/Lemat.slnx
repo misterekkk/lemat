@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Lemat.Domain/Lemat.Domain.csproj" />
+    <Project Path="src/Lemat.Application/Lemat.Application.csproj" />
+    <Project Path="src/Lemat.Agents/Lemat.Agents.csproj" />
+    <Project Path="src/Lemat.Models/Lemat.Models.csproj" />
+    <Project Path="src/Lemat.Infrastructure/Lemat.Infrastructure.csproj" />
+    <Project Path="src/Lemat.Api/Lemat.Api.csproj" />
+    <Project Path="src/Lemat.Worker/Lemat.Worker.csproj" />
+    <Project Path="src/Lemat.Scheduler/Lemat.Scheduler.csproj" />
+    <Project Path="src/Lemat.Tools/Lemat.Tools.csproj" />
+  </Folder>
+</Solution>

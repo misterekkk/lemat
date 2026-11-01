@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Lemat.Application\Lemat.Application.csproj" />
+    <ProjectReference Include="..\Lemat.Domain\Lemat.Domain.csproj" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Microsoft.SemanticKernel.Core" />
+    <PackageReference Include="Microsoft.SemanticKernel.Yaml" />
+    <PackageReference Include="JsonSchema.Net" />
+  </ItemGroup>
+</Project>

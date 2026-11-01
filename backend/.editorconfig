@@ -1,0 +1,53 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+[*.{csproj,props,targets,slnx,json,yml,yaml}]
+indent_size = 2
+
+[*.cs]
+# ADR-075: nazwa pliku jest angielska, typ w środku polski — reguły "nazwa pliku = nazwa typu" wyłączone
+dotnet_diagnostic.SA1649.severity = none
+dotnet_diagnostic.MA0048.severity = none
+dotnet_diagnostic.RCS1060.severity = none
+# ADR-075: przestrzeń nazw = katalog (angielski)
+dotnet_style_namespace_match_folder = true
+dotnet_diagnostic.IDE0130.severity = error
+# ADR-049: nazewnictwo identyfikatorów (PascalCase, I-prefiks, _camelCase)
+dotnet_diagnostic.IDE1006.severity = error
+dotnet_naming_rule.typy_pascal.symbols = typy
+dotnet_naming_rule.typy_pascal.style = pascal
+dotnet_naming_rule.typy_pascal.severity = error
+dotnet_naming_symbols.typy.applicable_kinds = class, struct, interface, enum, delegate, property, method, event
+dotnet_naming_style.pascal.capitalization = pascal_case
+dotnet_naming_rule.interfejsy_i.symbols = interfejsy
+dotnet_naming_rule.interfejsy_i.style = prefiks_i
+dotnet_naming_rule.interfejsy_i.severity = error
+dotnet_naming_symbols.interfejsy.applicable_kinds = interface
+dotnet_naming_style.prefiks_i.required_prefix = I
+dotnet_naming_style.prefiks_i.capitalization = pascal_case
+dotnet_naming_rule.stale_pascal.symbols = stale
+dotnet_naming_rule.stale_pascal.style = pascal
+dotnet_naming_rule.stale_pascal.severity = error
+dotnet_naming_symbols.stale.applicable_kinds = field
+dotnet_naming_symbols.stale.applicable_accessibilities = *
+dotnet_naming_symbols.stale.required_modifiers = const
+dotnet_naming_rule.statyczne_tylko_do_odczytu_pascal.symbols = statyczne_tylko_do_odczytu
+dotnet_naming_rule.statyczne_tylko_do_odczytu_pascal.style = pascal
+dotnet_naming_rule.statyczne_tylko_do_odczytu_pascal.severity = error
+dotnet_naming_symbols.statyczne_tylko_do_odczytu.applicable_kinds = field
+dotnet_naming_symbols.statyczne_tylko_do_odczytu.applicable_accessibilities = *
+dotnet_naming_symbols.statyczne_tylko_do_odczytu.required_modifiers = static, readonly
+dotnet_naming_rule.pola_prywatne.symbols = pola_prywatne
+dotnet_naming_rule.pola_prywatne.style = podkreslnik_camel
+dotnet_naming_rule.pola_prywatne.severity = error
+dotnet_naming_symbols.pola_prywatne.applicable_kinds = field
+dotnet_naming_symbols.pola_prywatne.applicable_accessibilities = private
+dotnet_naming_style.podkreslnik_camel.required_prefix = _
+dotnet_naming_style.podkreslnik_camel.capitalization = camel_case

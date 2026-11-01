@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Lemat.Application\Lemat.Application.csproj" />
+    <ProjectReference Include="..\Lemat.Domain\Lemat.Domain.csproj" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="Azure.AI.OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.ML" />
+    <PackageReference Include="Microsoft.ML.LightGbm" />
+  </ItemGroup>
+</Project>

@@ -4,8 +4,8 @@
 |---|---|
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
-| Stan kodu | **brak kodu** — `backend/` i `frontend/` jeszcze nie istnieją; wszystkie wiersze mają status `planowane` |
-| Ostatnia aktualizacja | 2026-11-01 (wersja początkowa, TASK-000 = planowanie) |
+| Stan kodu | szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`); `frontend/` nie istnieje; pozostałe wiersze `planowane` |
+| Ostatnia aktualizacja | 2026-11-01 (TASK-001) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -138,7 +138,7 @@ Moduł = `Lemat.Domain.<Module>` + `Lemat.Application.<Module>` + grupa tras w `
 
 ### 5.1 Projekty backendu (strzałka = „ma referencję do”)
 
-Stan: wszystkie węzły `planowane`; węzły z linią przerywaną są POST-MVP.
+Stan (TASK-001): węzły `Lemat.*` istnieją jako szkielety `gotowe` (referencje zweryfikowane z `.csproj`); węzły z linią przerywaną są POST-MVP i nie istnieją.
 
 ```mermaid
 flowchart BT
@@ -155,8 +155,11 @@ flowchart BT
     SYM["sandbox/sympy - POST-MVP"]
     APP --> DOM
     AGE --> APP
+    AGE --> DOM
     MOD --> APP
+    MOD --> DOM
     INF --> APP
+    INF --> DOM
     API --> AGE
     API --> MOD
     API --> INF
@@ -164,7 +167,11 @@ flowchart BT
     WRK --> MOD
     WRK --> INF
     SCH --> INF
+    SCH --> APP
     TLS --> INF
+    TLS --> APP
+    WRK --> APP
+    API --> APP
     INF -.-> IMG
     INF -.-> SYM
 ```
@@ -264,7 +271,13 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 
 | Ścieżka | Role | DependsOn | UsedBy | Task |
 |---|---|---|---|---|
-| *(brak plików — kod nie został jeszcze utworzony)* | | | | |
+| `backend/src/Lemat.Api/Program.cs` | Punkt kompozycji procesu api (szkielet, bez endpointów) | Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | host ASP.NET Core | TASK-001 |
+| `backend/src/Lemat.Worker/Program.cs` | Punkt kompozycji procesu worker (szkielet, bez pul prac w tle) | Lemat.Application, Lemat.Infrastructure, Lemat.Agents, Lemat.Models | host Generic Host | TASK-001 |
+| `backend/src/Lemat.Scheduler/Program.cs` | Punkt kompozycji procesu scheduler (szkielet, POST-MVP) | Lemat.Application, Lemat.Infrastructure | host Generic Host | TASK-001 |
+| `backend/src/Lemat.Tools/Program.cs` | Narzędzie wiersza poleceń (szkielet; migrate i seed-dev w kolejnych zadaniach) | Lemat.Application, Lemat.Infrastructure | operator, scripts | TASK-001 |
+
+Projekty `Lemat.Domain`, `Lemat.Application`, `Lemat.Agents`, `Lemat.Models`, `Lemat.Infrastructure` nie mają jeszcze plików `.cs` (tylko `.csproj`).
+Pliki konfiguracyjne solucji (TASK-001): `backend/{Lemat.slnx,global.json,Directory.Build.props,Directory.Packages.props,BannedSymbols.txt,BannedSymbols.Sdk.txt,.editorconfig}`, `backend/src/Directory.Build.props` (analizator BannedApiAnalyzers tylko dla `src`), `.gitignore`.
 
 ### 6.1 Planowane drzewo (skrót; pełne: 6.7 i 6.8 architektury)
 
