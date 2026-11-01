@@ -1022,14 +1022,14 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   1. EF Core (także 10) nie generuje `INSERT … ON CONFLICT` dla encji dodanej do `DbContext` — `Add` + `SaveChanges` wysyła zwykły `INSERT`. Konflikt `ux_praca_dedup` / `ux_praca_dedup_oczekujace` jest przewidzianą ścieżką (ponowne `PUT /rozwiazania/{id}/transkrypcja` → `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` z nowym ładunkiem, ponowione żądanie z innym kluczem idempotencji, dwa handlery zlecające tę samą pracę). Zgodnie z opisem kończy się `DbUpdateException` (`23505`). Cały przypadek użycia jest wtedy wycofywany: Uczeń dostaje `500` przy drugiej Poprawce, a handler pracy wpada w ponowienia aż do `MARTWA`. Semantyki `DO UPDATE SET ladunek` nie da się w ogóle wyrazić przez `Add`.
   2. `SaveChangesInterceptor.SavingChangesAsync` działa **przed** otwarciem transakcji niejawnej `SaveChanges`. Polecenie `pg_notify` wykonane tam bez jawnej transakcji idzie w trybie autocommit, więc powiadomienie dociera, zanim wiersz `praca_w_tle` albo nowy stan Rozwiązania jest widoczny. Worker budzi się, nic nie znajduje i czeka 5 s (zabezpieczenie z ADR-053 p. 2a), co zjada budżet NFR-01 (17.2). `KoncentratorZdarzen` czyta stary stan i wysyła go jako `stan`, a kolejne powiadomienie może nie przyjść. Przy wycofaniu `SaveChanges` powiadomienie i tak jest wysłane. `SavedChangesAsync` działa z kolei **po** zatwierdzeniu transakcji niejawnej, czyli też poza nią. Gwarancja „po zatwierdzeniu” istnieje wyłącznie przy jawnej transakcji jednostki pracy, której dokument nie wymaga.
 - **Oczekiwana poprawka:** `IZlecaniePrac` jako operacja SQL (`NpgsqlCommand`/`ExecuteSqlAsync` z `INSERT … ON CONFLICT …`) na połączeniu i transakcji bieżącej jednostki pracy, a nie `Add` encji. `IJednostkaPracy` zawsze otwiera jawną transakcję (`BeginTransactionAsync`), a `pg_notify` jest wykonywane w niej przed `CommitAsync` (np. `DbTransactionInterceptor.TransactionCommittingAsync` albo jawne wywołanie w `IJednostkaPracy.ZatwierdzAsync`). Testy w `Lemat.Infrastructure.Tests`: (a) podwójne zlecenie z tym samym kluczem nie wycofuje przypadku użycia, (b) `DO UPDATE` ładunku `SPRAWDZ_POPRAWKI_TRANSKRYPCJI`, (c) `LISTEN` nie dostaje powiadomienia przed `COMMIT` ani po `ROLLBACK`.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). ADR-056: jawna transakcja `IJednostkaPracy`, `ZlecaniePracSql` z `INSERT … ON CONFLICT … RETURNING id, (xmax = 0)`, `NOTIFY` wyłącznie z triggerów `trg_*_powiadom`. Sprawdzone na PostgreSQL 16 z DDL `docs/spec/ddl.md`: oba predykaty `ON CONFLICT` trafiają w indeksy częściowe `ux_praca_dedup` / `ux_praca_dedup_oczekujace`, `DO UPDATE` podmienia ładunek, a `Database.SqlQuery<T>(…).ToListAsync()` zwraca `(id, wstawiona)`. Nowe problemy tego mechanizmu opisują C7-03 (konflikt indeksu przy ponowieniu) i C7-06 p. 6 (kompozycja `SqlQuery`).
 
 ### C6-02: Rotacja refresh tokenu z wykrywaniem ponownego użycia + access token tylko w pamięci karty = wylogowanie przy kilku kartach i wznowieniu PWA
 - **Waga:** WYSOKA
 - **Lokalizacja:** 16.1 („refresh token … rotowany przy każdym użyciu; ponowne użycie unieważnionego tokenu unieważnia całą `rodzina_id`”); ADR-054 p. 2 (bez BFF, access token w pamięci `DostawcaSesji`, odświeżanie `POST /api/v1/auth/odswiezenie`); 6.8 `lib/auth/`; ADR-051 p. 3 (strumień zamykany przy `exp`, klient łączy się ponownie „z odświeżonym tokenem”)
 - **Problem:** bez BFF każda karta, każde przeładowanie, każde wznowienie PWA z tła i każde ponowne połączenie SSE po `exp` wywołuje odświeżenie, bo token żyje tylko w pamięci karty. Cookie `lemat_rt` jest wspólne dla kart. Dwie karty (np. Nauczyciel z kolejką weryfikacji i Rozwiązaniem w drugiej karcie; Uczeń z Zadaniem i Profilem) wysyłają odświeżenie z tym samym tokenem w odstępie milisekund. Pierwsze rotuje token, drugie jest „ponownym użyciem unieważnionego tokenu”, więc serwer unieważnia rodzinę i obie karty są wylogowane. Ten sam wyścig daje React 19 Strict Mode w dev (podwójny efekt) i ponowienia TanStack Query. Dla Nauczyciela utrata sesji w trakcie Weryfikacji oznacza utratę Blokady weryfikacji po 15 min (szkic jest autozapisywany, ale doświadczenie jest nie do przyjęcia), a dla Ucznia na telefonie — logowanie po każdym powrocie do aplikacji z dwiema kartami. Dokument nie opisuje tego scenariusza ani w 6.8, ani w 15.2.
 - **Oczekiwana poprawka:** (1) w kliencie odświeżanie typu single-flight między kartami: `navigator.locks.request("lemat-odswiezenie", …)` (Web Locks API) i `BroadcastChannel` rozgłaszający nowy access token kartom tego samego origin; (2) po stronie serwera okno tolerancji (np. 30 s): ponowne użycie tokenu rotowanego w tym oknie zwraca tego samego następcę zamiast unieważniać rodzinę (zapis `zastapiony_przez`, `zastapiony_at` w `token_odswiezania`); unieważnienie rodziny dopiero poza oknem albo przy innym User-Agent / IP (do decyzji); (3) test Playwright „2 karty, równoczesne odświeżenie, obie zalogowane” i test integracyjny okna tolerancji; (4) scenariusz w 15.2.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). ADR-057: single-flight z Web Locks i `BroadcastChannel`, okno tolerancji 30 s z `skrot_klienta_http` i limitem 5 użyć, kolumny `token_odswiezania` są w DDL (sprawdzone w katalogu), testy Playwright i integracyjne, scenariusz C-41.
 
 ### C6-03: Granica „agent ↔ port modelu generatywnego” jest sprzeczna: Semantic Kernel w `Lemat.Agenci` potrzebuje `IChatClient`, którego port nie udostępnia
 - **Waga:** WYSOKA
@@ -1040,7 +1040,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   
   Nie wiadomo też, gdzie jest zapisywany ślad wywołań funkcji (NFR-05), skoro `decyzja_modelu` dotyczy Modelu decyzyjnego.
 - **Oczekiwana poprawka:** jawny port w `Lemat.Application.Modele`, np. `IFabrykaKlientowCzatu.PobierzAsync(RolaModelu rola, CancellationToken ct) → IKlientCzatuRoli` (opakowanie z `IChatClient`, konfiguracją roli i limitami), z jednoznaczną decyzją, czy `Microsoft.Extensions.AI.Abstractions` jest dozwolony w `Lemat.Application` (6.4, 6.5, BannedSymbols). Alternatywnie: port `IModelGeneratywny.GenerujZNarzedziamiAsync<T>(Prompt, IReadOnlyList<AIFunction> narzedzia, int maksWywolan, …)` z implementacją pętli w `Lemat.Modele`, a funkcje dostarcza agent jako `AIFunction`. Dopisać, gdzie są logowane wywołania narzędzi (np. `zlecenie_generowania` / `walidacja_zadania.sprawdzenia`) i test architektury „agent nie rozwiązuje `IChatClient` z DI”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). ADR-058: `IModelGeneratywny.DlaRoliAsync → KlientCzatuRoli` z konfiguracją roli i potokiem budowanym w `Lemat.Modele`, `Microsoft.Extensions.AI.Abstractions` w `Lemat.Application`, ślad narzędzi w `zlecenie_generowania.wywolania_narzedzi`, NetArchTest `AgentNieRozwiazujeKlientaCzatuZDi`. Wady samego potoku opisują C7-01 i C7-02.
 
 ### C6-04: Szkielet `Rozwiazanie` gubi pracę po ponowieniu rozpoznania, rzuca wyjątek przy pierwszej Ocenie i nie ma połowy przejść maszyny stanów 8.1
 - **Waga:** WYSOKA
@@ -1052,7 +1052,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   4. `Zatwierdz(TranskrypcjaId)` nie sprawdza, że Transkrypcja należy do tego Rozwiązania i jest jego **najnowszą** wersją. Wyścig: Uczeń zapisuje Poprawki w karcie A (`PUT …/transkrypcja` tworzy wersję 2), a w karcie B zatwierdza widoczną wersję 1. Oceniona zostaje Transkrypcja inna niż ta, którą Uczeń poprawił (FR-18), a Sprawdzenie zgodności poprawek dotyczy wersji, która nie jest oceniana. W 3.6 brakuje też `ETag`/`version` jako warunku zatwierdzenia.
   5. Niezmiennik „para (`ElementSciezkiId`, `PrzypisanieId`) tylko dla `R-PRZYPISANIE`” z komentarza nie jest sprawdzany, a `rodzaj` jest parametrem od wywołującego, a nie cechą `ZadanieWersja`.
 - **Oczekiwana poprawka:** komplet przejść 8.1 jako metod z niezmiennikami (każda metoda, która ustawia `Przeslane`, zgłasza zdarzenie zlecające rozpoznanie); `PrzeslanoAt` ustawiane wyłącznie przy przesłaniu, a ponowienie z `OstatnieRozpoznanieOdAt` niezależnym od pomiaru A-11; `Zatwierdz(TranskrypcjaId id, int wersjaTranskrypcji, int oczekiwanaWersjaRozwiazania)` z `409 TRANSKRYPCJA_NIEAKTUALNA`; test domeny dla każdego wiersza 8.1 i test wyścigu „Poprawka vs zatwierdzenie” (15.2).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). 3.6 ma komplet przejść 8.1 (`RozpocznijRozpoznawanie` … `Anuluj`). `PonowRozpoznanie` zgłasza `RozwiazaniePrzeslane` i nie zmienia `PrzeslanoAt`. `Zatwierdz` sprawdza `Version` i najnowszą wersję Transkrypcji (409/412). Kolumny `najnowsza_transkrypcja_id`, `najnowsza_wersja_transkrypcji`, `ostatnie_rozpoznanie_od_at` z CHECK-ami są w DDL (sprawdzone).
 
 ### C6-05: Szkielet `Weryfikacja` nie ma fabryki, `KlasaId`, `Anuluj`, `Zwolnij`, `DolaczOcene` i omija limit 2 h
 - **Waga:** ŚREDNIA
@@ -1064,7 +1064,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   4. Brak `Anuluj(PowodAnulowania)` (enum jest zadeklarowany), `Zwolnij` (endpoint `…/zwolnienie`, 3.5 #75) i `DolaczOcene` (`OcenaWeryfikowanaId` po `PONOW_OCENE`); `DopiszZgloszenie` nie sprawdza stanu, więc dopisuje Zgłoszenie do Weryfikacji `Zakonczona`/`Anulowana`.
   5. `Eskaluj` w stanie `W_TRAKCIE` zeruje `NauczycielDocelowyId`, ale zostawia Blokadę weryfikacji dotychczasowego Nauczyciela, więc nie wiadomo, czy może on rozstrzygnąć Weryfikację już w kolejce `GLOBALNA` (np. bez uprawnienia `weryfikator_globalny`).
 - **Oczekiwana poprawka:** fabryka `Weryfikacja.Utworz(...)` z `PowodyPoczatkowe`, `Priorytet` i przydziałem 11.4.1; `KlasaId`; `Podejmij(nauczyciel, UprawnienieDoPodjecia, teraz)` z zachowaniem `PodjetaAt` przy ponownym podjęciu przez właściciela; metody `Anuluj`, `Zwolnij`, `DolaczOcene` ze strażnikami stanu; jawna reguła dla `Eskaluj` w stanie `W_TRAKCIE`.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). Są: fabryka `Weryfikacja.Utworz`, `KlasaId`, `Podejmij` z `UprawnienieDoPodjecia` i limitem 2 h liczonym od `PodjetaAt` także po wygaśnięciu, `Zwolnij`/`ZwolnijWygasla`/`DolaczOcene`/`Anuluj`/`CofnijEskalacjeKarencji`, strażnik w `DopiszZgloszenie` i reguła `Eskaluj` w `W_TRAKCIE`. Realizację SQL podjęcia opisuje C7-06 p. 5.
 
 ### C6-06: Szkielety kont: przywrócenie konta omija zatwierdzenie Nauczyciela, a limit 180 min dotyczy wszystkich weryfikatorów
 - **Waga:** ŚREDNIA
@@ -1074,21 +1074,21 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   2. `NadajWeryfikatoraGlobalnego` stosuje warunek `prognoza + deklarowane ≤ 180` bezwarunkowo, a A-14 ogranicza go do Nauczyciela **prowadzącego Klasę**. Nauczyciel bez Klas albo współpracujący z umową, który deklaruje 240 min (CHECK dopuszcza do 480), dostaje `LIMIT_OBCIAZENIA_WERYFIKATORA`. To podważa pulę weryfikatorów z 17.7 i bramkę G-7.
   3. Brak warunku umowy poufności (definicja Weryfikatora globalnego w 3.3), statusu `AKTYWNE` i metody odebrania flagi (3.1 p. 5: „flagi są odbierane w `USUN_KONTO`”).
 - **Oczekiwana poprawka:** `OkresKarencji` przechowuje `StatusPrzedWnioskiem`, a `Przywroc` go odtwarza (kolumna w 7.3); `NadajWeryfikatoraGlobalnego(int deklarowane, bool prowadziKlase, int prognozaKolejkiKlasy, bool umowaPoufnosci)` z limitem 180 wyłącznie przy `prowadziKlase`; metody `OdbierzWeryfikatoraGlobalnego` / `OdbierzRecenzentaTresci`; testy domeny dla wszystkich par (status przed wnioskiem, przywrócenie).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). `OkresKarencji.StatusPrzedWnioskiem` z kolumną i CHECK-ami `status_przed_wnioskiem` (sprawdzone w katalogu), `Zatwierdz`/`Zablokuj`/`Odblokuj`, limit 180 min tylko dla prowadzącego Klasę, `umowa_poufnosci_at` z CHECK, metody odbierania flag.
 
 ### C6-07: Cykl zależności w czasie wykonania `Rekomendacje ↔ Orkiestracja`
 - **Waga:** ŚREDNIA
 - **Lokalizacja:** 6.2 reguła 3 („Orkiestracja może korzystać z fasad wszystkich modułów; żaden moduł nie korzysta z Orkiestracji poza `IZlecaniePrac` … i `IOrkiestrator.RekomendujSynchronicznieAsync` (wyłącznie Rekomendacje)”); 6.3 tryb synchroniczny; 6.1 (`REKM --> ORK`); 6.5 (NetArchTest bez reguły acykliczności)
 - **Problem:** `Orkiestrator` jest jedną klasą, która korzysta z fasad wszystkich modułów, w tym `IRekomendacjeFasada` (zapis elementu Ścieżki nauki i Rekomendacji po decyzji agenta), a fasada Rekomendacji zależy od `IOrkiestrator`. Przy wstrzykiwaniu przez konstruktor `Microsoft.Extensions.DependencyInjection` zgłasza „circular dependency” przy pierwszym rozwiązaniu usługi. Przy obejściu (`Lazy<T>`, lokator usług) przypadek użycia „następny element” wchodzi ponownie w ten sam moduł w tej samej transakcji, a reguła 6.2 p. 4 (transakcja = zmiany jednego przypadku użycia) staje się niejasna: kto zapisuje element i zlecenie uzupełnienia puli, Rekomendacje czy Orkiestrator? Reguły 6.5 sprawdzają kierunek „przez fasadę”, ale nie acykliczność między modułami.
 - **Oczekiwana poprawka:** wydzielić `RekomendacjaSynchroniczna` (osobna klasa w `Lemat.Application.Orkiestracja`, zależna wyłącznie od `IAgentRekomendujacy` i fasad odczytu Profil/Tresci), która zwraca decyzję, a zapis wykonuje przypadek użycia Rekomendacji; albo przenieść tryb synchroniczny do `Lemat.Application.Rekomendacje` bez udziału `IOrkiestrator`. Dodać test architektury „brak cykli między przestrzeniami nazw modułów `Lemat.Application.*`” (poza jawnie wymienionym `IZlecaniePrac`) i test rozwiązania kontenera DI w `Lemat.Api.Tests` (`ValidateOnBuild = true`, `ValidateScopes = true`).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). `IRekomendacjaSynchroniczna` w `Orkiestracja.Synchroniczna` zależy tylko od agenta i fasad odczytu. Zapis wykonuje `NastepnyElementHandler` Rekomendacji. `IZlecaniePrac` jest w `Wspolne.PraceWTle`. Są testy `BrakCykliMiedzyModulamiAplikacji` i `KontenerDiTests`.
 
 ### C6-08: `StanBezpiecznika` bez tokenu współbieżności — `KALIBRUJ` nadpisuje równoległą dezaktywację
 - **Waga:** ŚREDNIA
 - **Lokalizacja:** 3.6 `StanBezpiecznika` (nie dziedziczy `Agregat<>`, brak `Version`), 3.5 #104 (rodzaj „AG”); 7.3 `stan_bezpiecznika` (brak kolumny `version`); 13.3 `KALIBRUJ` („ocena bezpieczników na stanie sprzed przebiegu … `UPSERT stan_bezpiecznika`”, czas do 10 min); `POST /admin/bezpieczniki/dezaktywacja`; 15.2 (brak scenariusza)
 - **Problem:** `KALIBRUJ` czyta stan na początku przebiegu, liczy kroki 1–6 przez kilka minut i wykonuje `UPSERT`. Administrator, który w tym czasie dezaktywuje bezpiecznik (`aktywny = false`, `okno_od = teraz`, uzasadnienie), traci tę decyzję po cichu: `UPSERT` przywraca `aktywny = true` i stare `okno_od`, a próg przy wyzwoleniu może zostać ponownie podniesiony. Odwrotny wyścig — dezaktywacja po ocenie, a przed zapisem — daje stan, którego żaden z aktorów nie zamierzał. Szkielet nie ustawia też `ostatnie_wyzwolenie_at` w `Wyzwol`, nie modeluje `wyjscie_z_blokady_at`, dopuszcza `Dezaktywuj` na nieaktywnym bezpieczniku i nie sprawdza `RodzajZadania == OtwarteObliczeniowe` (CHECK 7.3).
 - **Oczekiwana poprawka:** `StanBezpiecznika : Agregat<…>` z kolumną `version` (token współbieżności) albo `SELECT … FOR UPDATE` w obu ścieżkach i ponowna ocena w `KALIBRUJ` po konflikcie; dezaktywacja w trakcie przebiegu wygrywa (przebieg z `rezultat_przestarzaly`); metody `Wyzwol(teraz)` z `OstatnieWyzwolenieAt`, `WyjdzZBlokady(teraz)`; strażnik stanu w `Dezaktywuj`; scenariusz w 15.2 i test integracyjny.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). `StanBezpiecznika : Agregat<KluczBezpiecznika>` z `version` w DDL, `Wyzwol`/`WyjdzZBlokady`, strażnik `Dezaktywuj`, `DezaktywowanyPo`, `KALIBRUJ` z tokenem wersji i ponowną oceną, scenariusz C-44. Mapowanie klucza złożonego jest jednak niewykonalne w opisanej postaci (C7-06 p. 3).
 
 ### C6-09: Limity strumieni SSE są liczone per replika i kolidują ze strumieniem powiadomień w każdym układzie
 - **Waga:** ŚREDNIA
@@ -1100,7 +1100,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   4. Zapis Wskazówki zmienia `ocena`, a nie `rozwiazanie.version`; nie jest określone, jak interceptor mapuje zmianę encji `Ocena` (Wskazówka, Ocena po Rozstrzygnięciu) na `NOTIFY {"typ":"ROZWIAZANIE","id":…}`.
   5. Service worker Serwist przechwytujący `fetch` strumienia (`NetworkOnly`) może buforować albo przerywać długie odpowiedzi w części przeglądarek; bezpieczniej wyłączyć `/api/*` z obsługi `fetch` w `sw.ts`.
 - **Oczekiwana poprawka:** jeden strumień powiadomień na przeglądarkę (wybór karty-lidera przez Web Locks / `BroadcastChannel`, jak w C6-02) albo powiadomienia multipleksowane w jednym strumieniu na kartę; limit liczony globalnie (wiersz w tabeli `UNLOGGED` albo licznik per użytkownik w PostgreSQL) albo limit tylko per (użytkownik, zasób); `id:` powiadomienia = `id` (UUIDv7) powiadomienia; jawna lista encji, których zmiana wysyła `NOTIFY ROZWIAZANIE`; `/api/*` poza `fetch` handlerem service workera; test Playwright „2 karty, brak pętli ponownych połączeń”.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). Jest jeden strumień powiadomień na przeglądarkę (karta-lider), `429 ZA_DUZO_STRUMIENI` bez zamykania istniejących strumieni, zamknięta lista triggerów `NOTIFY` (8 triggerów obecnych w katalogu po załadowaniu DDL), `/api/*` poza service workerem i scenariusz C-42. Wznawianie po `Last-Event-ID` z UUIDv7 ma nową lukę (C7-11).
 
 ### C6-10: Wykonalność Semantic Kernel: brakujące pakiety, limit wywołań funkcji i kodowanie LaTeX w szablonach
 - **Waga:** ŚREDNIA
@@ -1111,7 +1111,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   3. Silniki szablonów SK domyślnie kodują wartości zmiennych wejściowych (ochrona przed wstrzyknięciem znaczników `<message>`), chyba że ustawiono `AllowDangerouslySetContent`. Transkrypcja i treść Zadania zawierają `<`, `>`, `&` (nierówności, `\begin{cases} … & …`). Bez jawnej polityki i testu model dostaje `&lt;` zamiast `<`, co zmienia treść kroku przed oceną (FR-19, FR-21), a `decyzja_modelu.stan` (NFR-05) nie odpowiada temu, co widział Nauczyciel.
   4. Szablon stanu Modelu decyzyjnego (10.4.2) renderowany przez SK „bez wywołania LLM” wiąże deterministyczny kontrakt Jev (A-01, limit 32 000 znaków) z silnikiem szablonów i jego kodowaniem; prostsze i testowalne jest zwykłe budowanie tekstu w C#.
 - **Oczekiwana poprawka:** dopisać pakiety do 6.4/5.2; wskazać mechanizm limitu wywołań i test „9. wywołanie przerywa generowanie z `BladModeluTrwalyException`”; ustalić politykę kodowania (zmienne treści matematycznej z `AllowDangerouslySetContent = true` w szablonach bez znaczników ról, albo wyłącznie format tekstowy bez parsowania ról) i test zgodności bajtowej „LaTeX z `<`, `&` w stanie i w prompcie”; stan Jev budować bez SK.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7) w zakresie p. 1, 3 i 4: są pakiety `Microsoft.SemanticKernel.Yaml` i `JsonSchema.Net` (bez Handlebars), treść użytkownika trafia do wiadomości `user` z `UnsafeRelaxedJsonEscaping`, a stan Jev buduje C#. Punkt 2 (limit wywołań funkcji) ma wskazany mechanizm, ale ten mechanizm nie działa tak, jak opisano (zweryfikowano kompilacją i uruchomieniem). Problem jest kontynuowany jako C7-01.
 
 ### C6-11: Sidecar Magick.NET: system plików tylko do odczytu, polityka ImageMagick i `FailFast` jako wektor DoS
 - **Waga:** ŚREDNIA
@@ -1121,7 +1121,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   2. Magick.NET nie wczytuje systemowego `policy.xml`; polityka musi być ustawiona w kodzie (`MagickNET.SetSecurityPolicy` / `MagickNET.Initialize` z `ConfigurationFiles`). Bez tego wyłączenie koderów z p. 3 nie działa, a jedyną obroną pozostaje sprawdzenie formatu przez `MagickImageInfo`.
   3. `Environment.FailFast` po 8 s jednego żądania zabija wszystkie równoległe operacje sidecara (2 w `obrazy-api`), czyli przesłania innych Uczniów, a przy powtarzaniu restartów Docker wydłuża opóźnienie kolejnych startów. Jeden spreparowany plik (np. HEIC z kosztownym dekodowaniem w granicach 40 Mpx) wysyłany co kilka sekund wyłącza przesyłanie zdjęć na replice `api` (`503`) — limit szybkości 12.7 nie jest liczony po kosztach dekodowania.
 - **Oczekiwana poprawka:** `tmpfs: /tmp` (np. 512 MiB) i `ResourceLimits.Disk` jawnie; polityka bezpieczeństwa ustawiana w `Program.cs` sidecara z testem „koder spoza listy jest odrzucany”; izolacja operacji per proces potomny albo `ResourceLimits.Time` + `ResourceLimits.Thread = 1` zamiast `FailFast` całego sidecara; metryka i limit przesłań na Ucznia po przekroczeniach czasu normalizacji (np. 3 przekroczenia / 10 min → `429`).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). Nadzorca i procesy robocze zamiast `FailFast`, `tmpfs`, `ResourceLimits.Disk`/`Thread`/`Time`, polityka w kodzie. Zweryfikowano na Magick.NET-Q8-AnyCPU 15.0.0: `MagickNET.Initialize(IConfigurationFiles, string)` istnieje, polityka z `ConfigurationFiles.Default.Policy.Data` odrzuca SVG i TXT (`MagickPolicyErrorException`), a biblioteka natywna ładuje się z `runtimes/linux-x64/native` bez zapisu do `/tmp`.
 
 ### C6-12: Niespójności mapowania 3.2 / 3.3 / 3.5 z resztą dokumentu
 - **Waga:** NISKA
@@ -1136,14 +1136,14 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   7. `Lemat.Symulacje` (6.4) ma referencje tylko do `Lemat.Domain` i `Lemat.Application`, choć symuluje `OgranicznikSzybkosci` z `Lemat.Infrastructure` (6.7: `OgranicznikSymulacja.cs`); `PredyktorSukcesuGbm` w `Lemat.Modele` (ML.NET LightGBM) nie ma pakietów `Microsoft.ML*` w 6.4.
   8. Przestrzeń nazw `Lemat.Domain.Modele` / `Lemat.Application.Modele` przesłania projekt `Lemat.Modele` w kodzie wewnątrz `Lemat.Domain.*` / `Lemat.Application.*` (odwołanie `Modele.X` rozwiązuje się do przestrzeni warstwy). ADR-049 p. 6 rozstrzyga kolizję przestrzeni z klasą, ale nie przestrzeni z przestrzenią; to samo dotyczy `Lemat.Application.Agenci` i projektu `Lemat.Agenci`.
 - **Oczekiwana poprawka:** ujednolicić p. 1–6 w 3.2/3.3/3.5/16.1 (dla p. 1 wybrać jedną formę i dopisać wartości do 3.5 i 12.3); p. 7 — referencje i pakiety w 6.4; p. 8 — zapis w ADR-049 i reguła analizatora (pełne kwalifikowanie albo aliasy `using`).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). Wszystkie 8 punktów jest ujednoliconych: `ORYGINALNA|MASKOWANA` w 3.5 i 12.3, 3.2, 3.3 (`IModelDecyzyjny`), typy TS, `KontekstDecyzji`, ES256 w 16.1, referencje i pakiety `Lemat.Symulacje`/ML.NET oraz test `BrakCzesciowejKwalifikacjiPrzestrzeni` w ADR-049.
 
 ### C6-13: „Blokada” ma trzecie znaczenie (konto zablokowane) mimo deklaracji „dokładnie dwa znaczenia”
 - **Waga:** NISKA
 - **Lokalizacja:** 3.1 p. 5 („**Blokada** … ma dokładnie dwa znaczenia domenowe”); 3.4 część 3 (dozwolone użycia `ZABLOKOWANE` — wartość `status_konta`, `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`); 3.6 `StatusKonta.Zablokowane`, `PowodEskalacji.NauczycielDocelowyZablokowany`
 - **Problem:** konto zablokowane przez Administratora to trzecie znaczenie słowa — ani Blokada weryfikacji, ani Blokada obniżania progu. Lista dozwolonych użyć je przepuszcza, ale 3.1 p. 5 i ADR-049 p. 9 go nie definiują. To ta sama klasa ryzyka co C4-04 / C5-04: test CI akceptuje `zablokow*` w znaczeniu, którego słownik nie zna.
 - **Oczekiwana poprawka:** dopisać trzecie znaczenie z kwalifikatorem („blokada konta”: `status_konta = 'ZABLOKOWANE'`, `NAUCZYCIEL_DOCELOWY_ZABLOKOWANY`) do 3.1 p. 5, ADR-049 p. 9 i PZS-1 albo przemianować (np. `ZAWIESZONE`, `NAUCZYCIEL_DOCELOWY_ZAWIESZONY` — z kolizją z „Zawieszeniem Wyniku zadania” do rozstrzygnięcia).
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). Trzecie znaczenie „blokada konta” z kwalifikatorem jest w 3.1 p. 5, 3.4 i ADR-049 p. 12.
 
 ### C6-14: Struktura App Router nie pokrywa ról Administratora i recenzenta treści ani wyświetlania zdjęć bez BFF
 - **Waga:** ŚREDNIA
@@ -1153,7 +1153,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   2. Zdjęcia kartek (Uczeń, Nauczyciel w Weryfikacji) są pobierane z endpointu wymagającego `Authorization`. `<img src="/api/v1/…">` nie wyśle nagłówka (token jest tylko w pamięci), więc dostanie `401`. Potrzebny jest jawny wzorzec: `fetch` z nagłówkiem → `302` na S3 → odczyt `blob` (wymaga CORS na buckecie) → `URL.createObjectURL`, albo endpoint zwracający JSON z podpisanym URL. Reguła 6.9 p. 4 (`fetch` wyłącznie w `klient.ts`) musi go objąć; trzeba też zwalniać `blob:` URL (pamięć telefonu przy 5 zdjęciach × 2560 px).
   3. Next.js 16 buduje domyślnie Turbopackiem, a `@serwist/next` 9 wymaga webpacka; potrzebne `next build --webpack` albo wariant Serwist dla Turbopacka — wymaganie nie jest zapisane w 5.2 / ADR-054.
 - **Oczekiwana poprawka:** dopisać trasy `(administrator)/admin/zadania/**`, `zgloszenia-bledu-zadan`, `zlecenia-generowania`; `(nauczyciel)/nauczyciel/wkladki-teoretyczne/**` dla recenzenta (strażnik flagi `recenzent_tresci`); `(uczen)/klasy` i opis przepływu `dolacz/[kod]` (zalogowany / niezalogowany); wzorzec pobierania zdjęć w `lib/api` z testem Vitest i E2E; decyzję o buildzie Serwist w ADR-054.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). Są trasy Administratora i recenzenta (`StraznikFlagi`), `(uczen)/klasy`, przepływ `dolacz/[kod]`, `GET …/zdjecia/{id}/adres` (JSON z podpisanym URL, bez `blob:` i CORS) oraz `next build --webpack` dla Serwist.
 
 ### C6-15: Drobne luki wykonalności procesów w tle i infrastruktury
 - **Waga:** NISKA
@@ -1165,7 +1165,7 @@ Pokrycie formalne słownika wynosi 100%. Poniższe uwagi dotyczą poprawności i
   4. `SciezkaNauki` ładuje wszystkie elementy (`Kolejnosc = _elementy.Count + 1`), czyli setki do tysięcy wierszy na Ucznia w ciągu roku, przy każdym `GET …/rekomendacje/nastepna` (cel p95 ≤ 500 ms). Element `PROPONOWANY` po `WygasaAt`, którego praca w tle jeszcze nie oznaczyła `WYGASLY`, blokuje `Zaproponuj` błędem `ELEMENT_JUZ_PROPONOWANY`. Limit Serii ≤ 8 jest tylko w komentarzu.
   5. Fabryka `Ocena.Automatyczna(RezultatOceny r, Trasa t)` używa `RezultatOceny` (rezultat Agenta oceniającego), którego przestrzeń nazw nie jest określona. Jeśli to typ z `Lemat.Application`, domena zależy od aplikacji (cykl warstw z 6.5).
 - **Oczekiwana poprawka:** (1) `WHERE id = @id AND wykonawca = @ja AND status = 'W_TOKU'` przy zapisie wyniku i test; (2) budżet połączeń w 17.4 / 22 z minimalnym `max_connections` i decyzją o puli; (3) strażnik w `Zastosuj` + test; (4) agregat z aktywnym oknem elementów (np. tylko `PROPONOWANY`/`ROZPOCZETY`) i `Kolejnosc` z sekwencji, wygaszanie w `Zaproponuj` przed sprawdzeniem niezmiennika, limit Serii w metodzie; (5) `RezultatOceny` w `Lemat.Domain.Ocenianie` albo fabryka przyjmująca typy domenowe.
-- **Status:** OTWARTA
+- **Status:** ZAMKNIĘTA (iteracja 7). p. 1: warunek `wykonawca`/`W_TOKU` i `FOR UPDATE`. p. 2: ADR-059 (155 połączeń, `max_connections ≥ 200`). p. 3: strażnik `UniewaznionyAt`. p. 4: `_aktywne` i `ostatnia_kolejnosc` (kolumna w DDL). p. 5: `RezultatOceny` w domenie. Składnię filtrowanego `Include` opisuje C7-06 p. 4.
 
 ### Podsumowanie iteracji 6
 
@@ -1193,5 +1193,347 @@ Werdykt: wersja 3.0 zamyka wszystkie uwagi iteracji 5. Mapowanie słownika jest 
 - szkielet głównego agregatu `Rozwiazanie` zostawia Rozwiązanie w `PRZESLANE` po ponowieniu, zawyża metrykę NFR-01 i nie chroni przed oceną nieaktualnej Transkrypcji (C6-04).
 
 Poprawki C6-01 … C6-04 są lokalne (kontrakt `IZlecaniePrac`/`IJednostkaPracy`, okno tolerancji refresh tokenu + single-flight w kliencie, jeden port w `Lemat.Application.Modele`, uzupełnienie metod agregatu). Większość pozostałych uwag mieści się w planowanych iteracjach 2 i 3, ale powinna zostać wpisana do ich zakresu.
+
+## Iteracja 7 (v3.1 — agenci AI i dane)
+
+Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10 + Next.js”). Zakres: 3.6, 7, 10, 13, `docs/spec/ddl.md`, `docs/spec/ef-core.md`, `docs/spec/prompty.md`, ADR-056 … ADR-059, uzupełnienia 3.1 ADR-020/023/049/051/052/053/054/055 i mapowanie C6 w `ARCHITECTURE_CHANGELOG.md`. Sekcje 12, 14 i 15 mają notkę „do przepisania w iteracji 3”, więc ich kod pythonowy nie jest w tej rundzie oceniany.
+
+**Weryfikacja uwag iteracji 6.** Wszystkie 15 uwag (C6-01 … C6-15) są ZAMKNIĘTE. Statusy z uzasadnieniem są wpisane przy uwagach. C6-10 jest zamknięta w p. 1, 3 i 4, a niedziałający mechanizm limitu wywołań z p. 2 przechodzi do C7-01.
+
+**Metoda (skrypty i projekt w scratchpadzie, niezależnie od tabel architekta).**
+
+1. Bloki A i B `docs/spec/ddl.md` załadowano do PostgreSQL 16.
+   - Blok A działa bez błędów.
+   - Blok B zgłasza błędy wyłącznie w `0005_uprawnienia.sql`, bo DDL nie tworzy ról `lemat_api`, `lemat_worker` i `lemat_scheduler`.
+   - Katalog po załadowaniu zawiera:
+     - 58 tabel (+ 4 partycje `decyzja_modelu`);
+     - 43 typy wyliczeniowe;
+     - 15 triggerów;
+     - 142 CHECK-i, 124 klucze obce i 21 ograniczeń UNIQUE.
+2. Skrypty porównały z katalogiem:
+   - nazwy kolumn, CHECK-ów, indeksów i triggerów użyte w `ef-core.md`;
+   - listę `MapowanieTypowWyliczeniowych`;
+   - wartości enumów C# z 3.6, 10 i 13 po transliteracji `UPPER_SNAKE`;
+   - właściwości szkieletów agregatów 3.6 po konwencji `snake_case`.
+3. Projekt `dotnet new console` (.NET SDK 10.0.114) z aktualnymi stabilnymi pakietami:
+   - `Microsoft.SemanticKernel.Core` i `Microsoft.SemanticKernel.Yaml` 1.81.0;
+   - `Microsoft.Extensions.AI` i `Microsoft.Extensions.AI.OpenAI` 10.11.0;
+   - `Magick.NET-Q8-AnyCPU` 15.0.0;
+   - `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3 i `EFCore.NamingConventions` 10.0.1;
+   - `Azure.AI.OpenAI` 2.1.0, `JsonSchema.Net` 9.6.0 i `Cronos` 0.13.0.
+
+   Kluczowe API z sekcji 10 i ADR-052/056/058 sprawdzono kompilacją, refleksją i uruchomieniem: potok `FunctionInvokingChatClient` z fałszywym `IChatClient`, budowa modelu EF Core, polecenia SQL na PostgreSQL 16 i polityka Magick.NET.
+
+**Wynik weryfikacji API (ryzyko R-27).**
+
+| API wskazane w dokumencie | Wynik | Uwaga |
+|---|---|---|
+| `KernelFunction.WithKernel(Kernel)` | istnieje (kompiluje się); `KernelFunction : FullyQualifiedAIFunction : AIFunction` | nazwa narzędzia widziana przez model = `sympy_sprawdz_rownowaznosc` (C7-01) |
+| `DelegatingAIFunction` (`InvokeCoreAsync`) | istnieje (`Microsoft.Extensions.AI.Abstractions` 10.11) | — |
+| `FunctionInvokingChatClient.MaximumIterationsPerRequest`, `AllowConcurrentInvocation`, `MaximumConsecutiveErrorsPerRequest` | istnieją | semantyka inna niż w ADR-058 (C7-01) |
+| `ChatOptions.AllowMultipleToolCalls`, `ChatResponseFormat.ForJsonSchema`, `ChatToolMode.Auto`, `DataContent`, `AIJsonUtilities.CreateJsonSchema` | istnieją | schemat generowany różni się od schematów `prompty.md` (C7-09) |
+| `ChatClientBuilder.UseOpenTelemetry(sourceName:, configure: c => c.EnableSensitiveData = false)`, `UseFunctionInvocation(configure:)` | istnieją | kolejność potoku gubi spany `execute_tool` (C7-02) |
+| `ChatClientBuilder.Use(new LimitCzasuChatClient(…))` (ADR-058 p. 3) | **nie kompiluje się** (CS1503) | `Use` przyjmuje fabrykę `Func<IChatClient, IChatClient>`; poprawnie `.Use(wewn => new LimitCzasuChatClient(wewn, …))` (C7-02) |
+| `KernelPluginFactory.CreateFromObject`, `KernelFunctionYaml.ToPromptTemplateConfig`, `KernelPromptTemplateFactory.Create(…).RenderAsync` | istnieją | renderowanie koduje wartości zmiennych HTML-em (C7-14) |
+| `MagickNET.Initialize(IConfigurationFiles, string)`, `ConfigurationFiles.Default.Policy.Data`, `MagickNET.SetTempDirectory`, `ResourceLimits.{Memory,Disk,Thread,Time,Area,Width,Height}` | istnieją; polityka działa (SVG/TXT → `MagickPolicyErrorException`); `ConfigurationFiles` jest w przestrzeni `ImageMagick.Configuration`; `ResourceLimits.Time` to `ulong` w sekundach | `MagickNET.SetSecurityPolicy` **nie istnieje** w 15.0.0 (dokument go nie używa; alternatywa: `ConfigurationFiles.Policy.Data`, jak w ADR-052 uzup. 3.1) |
+| `NpgsqlDataSourceBuilder.MapEnum(Type, string, INpgsqlNameTranslator)`, `EnableDynamicJson()`, `UseNpgsql(…, o => o.MapEnum(Type, …).MigrationsHistoryTable(…).CommandTimeout(…))`, `UseSnakeCaseNamingConvention()` | istnieją | — |
+| `Database.SqlQuery<T>($"INSERT … ON CONFLICT … RETURNING …")` | działa z `ToListAsync()`; z `FirstOrDefaultAsync()` → `InvalidOperationException` (SQL niekomponowalny) | C7-06 p. 6 |
+| `ExecuteUpdateAsync` z „`UPDATE … RETURNING`” (ef-core 6.4) | `ExecuteUpdateAsync` zwraca `int` (liczba wierszy), nie ma `RETURNING` | C7-06 p. 5 |
+| filtrowany `.Include("_aktywne", e => …)` (ef-core 6.5) | przeciążenie nie istnieje | działa `Include(s => EF.Property<List<ElementSciezki>>(s, "_aktywne").Where(…))` (C7-06 p. 4) |
+| `Property<uint>("xmin").HasColumnType("xid")…IsConcurrencyToken()` | działa; skrypt migracji nie tworzy kolumny `xmin` | — |
+| `AzureOpenAIClient(…).GetChatClient(m).AsIChatClient()`, `OpenAIClient(…, new OpenAIClientOptions { Endpoint })` | działają; `Azure.AI.OpenAI` 2.1.0 (najnowsza stabilna) jest budowana na `OpenAI` 2.1.0, a `Microsoft.Extensions.AI.OpenAI` 10.11 wymaga `OpenAI` 2.14.0 | C7-15 p. 6 |
+
+### C7-01: Limit wywołań funkcji Agenta generującego nie działa tak, jak opisano, a nazwy narzędzi w prompcie, danych Mock i teście są błędne
+- **Waga:** WYSOKA
+- **Lokalizacja:** ADR-058 p. 3 (`MaximumIterationsPerRequest = parametry.MaksIteracjiFunkcji ?? 1`, `MaximumConsecutiveErrorsPerRequest = 1`), p. 4 (`FunkcjaZLimitem`, „wywołanie nr `limit + 1` rzuca `BladModeluTrwalyException`”, `MaximumIterationsPerRequest = 8` jako „druga linia obrony”), p. 7 (`LimitWywolanFunkcjiTests`); 10.2.4 (`KernelPluginFactory.CreateFromObject(…, "sympy")`); 10.2.5 (test „9 żądań wywołań → zlecenie z przyczyną `LIMIT_WYWOLAN_FUNKCJI`”); `prompty.md` 4.3 i 6 (`"nazwa": "sprawdz_rownowaznosc"`); 10.0.4 (termin 60 s)
+- **Problem (sprawdzone uruchomieniem z fałszywym `IChatClient`, który zawsze żąda wywołania funkcji):**
+  1. Przy `MaximumIterationsPerRequest = 8` wykonuje się dokładnie 8 wywołań funkcji. Potem `FunctionInvokingChatClient` wysyła **9. żądanie bez narzędzi** (`Tools = 0`, `ToolMode = null`) i zwraca jego odpowiedź jako zwykły wynik, bez wyjątku. `FunkcjaZLimitem` nigdy nie dostaje 9. wywołania. Opisany test (`BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`, przyczyna w zleceniu) więc nie przejdzie, a „pierwsza linia obrony” jest martwym kodem.
+  2. Przy `MaximumConsecutiveErrorsPerRequest = 1` (wartość z ADR-058) wyjątek pierwszego nadmiarowego wywołania jest połykany i wysyłany do modelu jako rezultat funkcji. Na zewnątrz wychodzi dopiero przy kolejnym błędzie, czyli przy **10.** wywołaniu (zmierzono: licznik 10, wykonane 8). Natychmiastowe przerwanie wymaga wartości `0`.
+  3. `KernelFunction` z pluginu `"sympy"` jest widoczna jako `AIFunction` o nazwie **`sympy_sprawdz_rownowaznosc`** (`FullyQualifiedAIFunction`). Prompt `zadanie-v1` każe wołać `sprawdz_rownowaznosc` / `postac_liniowa`, dane Mock (`prompty.md` 6) zawierają `"nazwa": "sprawdz_rownowaznosc"`, a test ADR-058 p. 7 żąda `sprawdz_rownowaznosc`. Takie wywołanie trafia w gałąź „nieznana funkcja”: model dostaje komunikat o braku narzędzia, licznik się nie zmienia i nic się nie wykonuje (zmierzono: 0 wykonań przy 8 żądaniach). Scenariusze Mock „3 Zadania wygenerowane z wywołaniami narzędzi” nie wywołają więc żadnego narzędzia, a `WywolanieNarzedzia.Funkcja` w śladzie NFR-05 będzie miało inną nazwę niż w prompcie.
+  4. Termin 60 s obejmuje cały potok, czyli do 9 kolejnych żądań do modelu. Każde z nich ponownie wysyła rosnący kontekst, a ostatnie generuje odpowiedź do `max_tokens` 6 000. Dokument nie uzasadnia, że 60 s wystarcza. Przekroczenie terminu po 3 próbach daje zlecenie `NIEUDANE`.
+- **Oczekiwana poprawka:**
+  - Wybrać jedną semantykę limitu:
+    - (a) `MaximumIterationsPerRequest = limit + 1`, `MaximumConsecutiveErrorsPerRequest = 0` i `FunkcjaZLimitem` jako jedyny strażnik z wyjątkiem;
+    - albo (b) świadomie użyć mechanizmu wbudowanego: po `limit` iteracjach ostatnie żądanie idzie bez narzędzi, a zlecenie dostaje adnotację `LIMIT_WYWOLAN_FUNKCJI` wyliczaną z licznika, bez wyjątku.
+  - Ustalić nazwy narzędzi: plugin bez prefiksu albo jawne nazwy `sympy_*` wszędzie (prompt, Mock, test, ślad, metryka `wywolania_funkcji_total{funkcja}`). Do tego test „nazwa w `ChatOptions.Tools` = nazwa w prompcie i w danych Mock”.
+  - Wybrać `TerminateOnUnknownCalls` (np. `true` + `BladModeluTrwalyException("NIEZNANE_NARZEDZIE")`).
+  - Dodać budżet czasu generowania z liczbą żądań (np. termin per żądanie i łączny 120 s) albo uzasadnić 60 s pomiarem.
+- **Status:** OTWARTA
+
+### C7-02: Kolejność i konstrukcja potoku `ChatClientBuilder` (ADR-058 p. 3) — kod się nie kompiluje, a spany `execute_tool` i koszt per iteracja nie powstają
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** ADR-058 p. 3; 10.0.5 (tabela telemetrii: spany `execute_tool {funkcja}`); 10.2.5 („spany `execute_tool sprawdz_rownowaznosc` … z `Microsoft.Extensions.AI`”); 10.0.4
+- **Problem:**
+  1. `.Use(new LimitCzasuChatClient(parametry.TimeoutS))`, `.Use(new KosztIZuzycieChatClient(…))` itd. nie kompilują się (CS1503). `ChatClientBuilder.Use` przyjmuje fabrykę `Func<IChatClient, IChatClient>`, a `DelegatingChatClient` wymaga klienta wewnętrznego w konstruktorze.
+  2. `UseOpenTelemetry` jest pierwszym (najbardziej zewnętrznym) elementem, a `UseFunctionInvocation` ostatnim (najbliżej dostawcy). Uruchomienie takiego potoku z `ActivityListener` daje **jeden span `chat`** na całą pętlę i **zero spanów `execute_tool`**. W odwrotnej kolejności (`UseFunctionInvocation().UseOpenTelemetry()`) powstają `chat` per iteracja, `execute_tool sympy_sprawdz_rownowaznosc` i `orchestrate_tools`. Telemetria z 10.0.5 i ślad wywołań w spanach (NFR-05) są więc nieosiągalne w kolejności z ADR-058.
+  3. Z tego samego powodu `LimitCzasuChatClient`, `KosztIZuzycieChatClient`, `OgranicznikChatClient` i `KlasyfikacjaBledowChatClient` obejmują całą pętlę wywołań funkcji, a nie pojedyncze żądanie do dostawcy. Ogranicznik dla `ROZPOZNAWANIE_PISMA` jest bez narzędzi, więc tam to nie szkodzi. Dla `GENERATYWNY_ZADANIA` nie wiadomo jednak, czy limit czasu, koszt i ogranicznik działają per żądanie HTTP, czy per wywołanie agenta.
+  4. `KlasyfikacjaBledowChatClient` dostaje `OperationCanceledException` z limitu czasu potoku i z anulowania dzierżawy tym samym tokenem. Nie ma reguły, jak je rozróżnia — por. C7-04.
+- **Oczekiwana poprawka:** zapis potoku w kompilowalnej postaci (`.Use(w => new LimitCzasuChatClient(w, …))`) z jawną kolejnością i uzasadnieniem każdej warstwy (per żądanie vs per wywołanie agenta). Zalecana kolejność: `UseFunctionInvocation` na zewnątrz, `UseOpenTelemetry` wewnątrz niego, a koszt, ogranicznik i klasyfikacja per żądanie do dostawcy. Test `Lemat.Modele.Tests` z `ActivityListener`: „generowanie z 2 wywołaniami → 3 spany `chat` i 2 spany `execute_tool`”.
+- **Status:** OTWARTA
+
+### C7-03: Ponowienie i odzyskiwanie dzierżawy łamią indeks `ux_praca_dedup_oczekujace` — jeden konflikt blokuje odzyskiwanie wszystkich prac
+- **Waga:** WYSOKA
+- **Lokalizacja:** 13.4.2 („Błąd przejściowy”: `SET status = … 'OCZEKUJE'` z warunkiem dzierżawy; „Odzyskiwanie porzuconych dzierżaw”: jedno `UPDATE … WHERE status = 'W_TOKU' AND dzierzawa_do < now()`); 13.3 `AKTUALIZUJ_PROFIL` i `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` (deduplikacja wyłącznie wśród `OCZEKUJE`); `ddl.md` `ux_praca_dedup_oczekujace`; ADR-056 p. 2
+- **Problem:**
+  - Przy `TrybDeduplikacji.TylkoOczekujace*` może istnieć jednocześnie praca A `W_TOKU` i praca B `OCZEKUJE` z tym samym kluczem. To przypadek zamierzony:
+    - nowy Wynik zadania Ucznia w trakcie `AKTUALIZUJ_PROFIL`;
+    - nowy `PUT …/transkrypcja` w trakcie Sprawdzenia zgodności poprawek.
+  - Gdy A kończy się błędem przejściowym albo traci dzierżawę, oba polecenia z 13.4.2 próbują ustawić A na `OCZEKUJE`. Sprawdzono na PostgreSQL 16 z DDL:
+    - `PonowAsync` kończy się `23505 duplicate key … ux_praca_dedup_oczekujace`;
+    - polecenie odzyskiwania dzierżaw (jedno `UPDATE` dla wszystkich wygasłych dzierżaw) **kończy się tym samym błędem w całości**, więc nie odzyskuje także prac innych typów. W teście nie odzyskała się praca `OCEN_ROZWIAZANIE` z wygasłą dzierżawą.
+  - Stan trwa, dopóki B nie zostanie pobrana. Przy nasyconej puli `POMOCNICZA` albo `dostepna_od` B w przyszłości (odstępy 1 s … 2 min) żadna porzucona praca w systemie nie wraca do kolejki. Dotyczy to też `OCEN_ROZWIAZANIE` z terminem twardym 120 s, a skutkiem jest masowe T-6.
+  - Wyjątek z `PonowAsync` nie jest obsłużony w `PetlaAsync` (C7-04).
+- **Oczekiwana poprawka:**
+  - Przy ponowieniu i odzyskiwaniu typu `TylkoOczekujace*`: gdy istnieje praca `OCZEKUJE` z tym samym kluczem, A przechodzi do `ZAKONCZONA` z `ostatni_blad = 'ZASTAPIONA_NOWSZA'`. Dla `AKTUALIZUJ_PROFIL` B i tak przetworzy wszystkie niezastosowane Wyniki. Dla `SPRAWDZ_POPRAWKI_TRANSKRYPCJI` B ma nowszy ładunek.
+  - Alternatywnie scalić A z B (`DELETE` B i przejęcie ładunku) w jednym poleceniu z `NOT EXISTS`.
+  - Odzyskiwanie dzierżaw wykonywać per wiersz albo z `ON CONFLICT`-bezpiecznym predykatem `NOT EXISTS (SELECT 1 … status = 'OCZEKUJE' AND typ = p.typ AND klucz_deduplikacji = p.klucz_deduplikacji)`.
+  - Testy (g) „ponowienie przy istniejącej pracy `OCZEKUJE` z tym samym kluczem” i (h) „odzyskiwanie dzierżaw z jednym konfliktem odzyskuje pozostałe prace”.
+- **Status:** OTWARTA
+
+### C7-04: `PulaPracHostedService` klasyfikuje każde anulowanie jako utratę dzierżawy i nie obsługuje pozostałych wyjątków — zatrzymane Rozwiązania i zatrzymanie procesu `worker`
+- **Waga:** WYSOKA
+- **Lokalizacja:** 13.4.1 `PetlaAsync` (`catch (OperationCanceledException) when (!zatrzymanie.IsCancellationRequested) → RezultatPrzestarzaly("DZIERZAWA_UTRACONA")` → `ZakonczAsync`), `ZapiszWynikAsync`, `PobierzAsync`; 10.0.3 (`CancellationTokenSource.CancelAfter(min(timeout_s, termin − teraz))`); 10.4.6 („całość ograniczona terminem twardym 120 s (`CancelAfter`)”, „po terminie twardym → handler wykonuje T-6”); 13.2 `JevAdapter` (`HttpClient.Timeout = Infinite`, `CancelAfter`); 10.3.4 („przekroczenie terminu → `BladModeluPrzejsciowyException`”)
+- **Problem:**
+  1. `OperationCanceledException` powstaje w czterech źródłach:
+     - przy utracie dzierżawy;
+     - w `CancelAfter` w `WywolanieCzatu`;
+     - przy terminie twardym 120 s Agenta oceniającego;
+     - przy `TaskCanceledException` z `HttpClient` (S3, Jev, sidecary).
+
+     Pętla traktuje każde z nich jako `DZIERZAWA_UTRACONA` i wykonuje `ZakonczAsync`. Przy przekroczeniu czasu (dzierżawa wciąż ważna) to polecenie **się udaje**, więc praca kończy się jako `ZAKONCZONA` bez efektu i bez ścieżki „po wyczerpaniu prób”:
+     - Rozwiązanie zostaje w `OCENIANIE` bez T-6;
+     - Rozwiązanie zostaje w `ROZPOZNAWANIE` bez `BLAD_ROZPOZNAWANIA`.
+
+     Żadna praca z 13.3 nie zbiera takich stanów (`PORZUC_NIEZATWIERDZONE` nie obejmuje `ROZPOZNAWANIE` ani `OCENIANIE`). Mapowanie timeoutu na `BladModeluPrzejsciowyException` jest opisane tylko dla Agenta rozpoznającego, a dla terminu twardego Oceny wprost przerzucone na „handler”, bez kontraktu.
+  2. `PetlaAsync` nie ma `catch (Exception)`. Każdy inny wyjątek kończy zadanie pętli, a przez `Task.WhenAll` cały `ExecuteAsync` usługi:
+     - `DbUpdateException`, `NpgsqlException`;
+     - `23505` z C7-03;
+     - `NiezmiennikNaruszonyException` z handlera;
+     - błąd w `ZapiszWynikAsync` albo `PobierzAsync`.
+
+     W .NET 10 domyślnie `HostOptions.BackgroundServiceExceptionBehavior = StopHost`, więc proces `worker` zatrzymuje się w całości (wszystkie pule obu typów). Chwilowa niedostępność bazy przy `PobierzAsync` wyłącza więc całą replikę.
+  3. `CancelAfter(min(timeout_s, termin − teraz))` z ujemnym czasem (termin minął przed wywołaniem) rzuca `ArgumentOutOfRangeException`, którego klasyfikacja 10.0.4 nie obejmuje.
+- **Oczekiwana poprawka:**
+  - Jawna reguła: utratę dzierżawy rozpoznaje wyłącznie `dzierzawa.Token.IsCancellationRequested` przy niezanulowanym `zatrzymanie` **i** wyniku `OdnowDzierzaweAsync = false`. Każde inne anulowanie wewnątrz handlera jest przekroczeniem czasu: `Ponow`, a po terminie twardym `Trwaly` → `PoWyczerpaniuAsync` (T-6, `BLAD_ROZPOZNAWANIA` z `PRZEKROCZONY_CZAS`).
+  - `catch (Exception)` w pętli z `Ponow` i metryką. `ZapiszWynikAsync` i `PobierzAsync` z ponowieniem i odstępem, bez zakończenia pętli.
+  - `BackgroundServiceExceptionBehavior` ustawione świadomie (`Ignore` + health check albo `StopHost` z restartem kontenera i alertem).
+  - Praca kontrolna harmonogramu dla Rozwiązań w `ROZPOZNAWANIE`/`OCENIANIE` bez aktywnej pracy dłużej niż 5 min.
+  - Testy: „timeout modelu → `Ponow`, a nie `ZAKONCZONA`”, „wyjątek bazy w `PobierzAsync` nie zatrzymuje hosta”.
+- **Status:** OTWARTA
+
+### C7-05: Strategia migracji i test `SchematZgodnyZDdlTest` są niewykonalne — dwa źródła schematu dają różne nazwy, typy i rodzaje ograniczeń
+- **Waga:** WYSOKA
+- **Lokalizacja:** 7.2 („prefiksy `ux_`, `ix_`, `fk_`, `trg_`, `ck_` (CHECK nazwany w konfiguracji EF Core)”); 7.7 p. 2, 6; `ef-core.md` 6 (`HasCheckConstraint("ck_…")`, `HasMaxLength(60)`), 8 p. 1–2, 6
+- **Problem:** `0001_SchematPoczatkowy` jest generowana z modelu EF Core i uzupełniana plikami SQL, a test wymaga, by `pg_dump --schema-only` i katalogi `pg_constraint`/`pg_index` były równe bazie z `ddl.sql`. Stan po załadowaniu DDL:
+  - **142 z 142 CHECK-ów** ma nazwy automatyczne (`uzytkownik_check`, `zadanie_check3`, …), a `ef-core.md` nadaje 12 z nich nazwy `ck_*`, których w DDL nie ma (skrypt: 12 × „CHECK BRAK”). Pozostałe 130 CHECK-ów (np. `char_length(imie) BETWEEN 1 AND 60`, zakresy `smallint`) nie występuje w konfiguracji EF, więc migracja z modelu ich nie utworzy. Lista „obiektów spoza modelu EF” w 7.7 p. 2 obejmuje tylko CHECK-i na tablicach.
+  - **118 z 124 kluczy obcych** ma nazwy `*_fkey`, a EF z `UseSnakeCaseNamingConvention` tworzy `fk_<tabela>_<tabela>_<kolumna>`.
+  - **21 ograniczeń UNIQUE** (`*_key`) w DDL odpowiada w EF `HasIndex(…).IsUnique()`, czyli indeksom unikalnym bez ograniczenia. `pg_constraint` się różni.
+  - `HasMaxLength(60)` / `HasMaxLength(8000)` daje w Npgsql `character varying(n)`, a DDL ma `text` + CHECK `char_length`.
+
+  Test zakończy się więc setkami różnic, a 7.2 opisuje konwencję nazw, której DDL nie stosuje.
+- **Oczekiwana poprawka:** jedno źródło schematu.
+  - **Wariant A:** migracja `0001` = `migrationBuilder.Sql(ddl.sql)` + migawka modelu EF bez operacji. Test porównuje model EF z katalogiem (tabela, kolumna, typ, `NULL`, klucze, długości), np. przez `IModel`/`IRelationalModel` vs `information_schema`, zamiast porównania `pg_dump` dwóch baz.
+  - **Wariant B:** DDL generowany z migracji (`dotnet ef migrations script`), a `ddl.md` jako artefakt.
+
+  W obu wariantach DDL powinien nadać jawne nazwy wszystkim CHECK-om/FK/UNIQUE (zgodnie z 7.2). `HasMaxLength` należy zastąpić `HasColumnType("text")` + CHECK albo przyjąć `varchar(n)` w DDL.
+- **Status:** OTWARTA
+
+### C7-06: Konfiguracje EF Core z `ef-core.md` nie budują modelu albo nie odpowiadają DDL (sprawdzone kompilacją i budową modelu)
+- **Waga:** WYSOKA
+- **Lokalizacja:** `ef-core.md` 6.1 (`Nauczyciel`), 6.5 (`ProfilUcznia`, `SciezkaNauki`, `StanBezpiecznika`), 6.4 (podjęcie Weryfikacji), 4 (`WersjaAgregatuInterceptor`), 7 (`PracaWTle`, `Uczen`); ADR-056 p. 2; 3.6 (`ProfilUcznia._opanowanie`, `StanBezpiecznika`, `PracaWTle.MaksProb`, `Uczen`)
+- **Problem:**
+  1. `HasOne<Uzytkownik>().WithOne().HasForeignKey<Nauczyciel>(n => n.Id)` przy `Nauczyciel : Agregat<NauczycielId>` i `Uzytkownik : Agregat<UzytkownikId>` → `InvalidOperationException: … foreign key properties {'Id' : NauczycielId} cannot target the primary key {'Id' : UzytkownikId} because it is not compatible`. To samo dotyczy `Uczen` (`UczenId`) i każdego FK z `UczenId`/`NauczycielId` do `uzytkownik`.
+  2. `OwnsMany<OpanowanieUmiejetnosci>("_opanowanie", …)` przy polu `Dictionary<UmiejetnoscId, OpanowanieUmiejetnosci>` (3.6) → `The collection navigation '_opanowanie' … does not implement 'IEnumerable<OpanowanieUmiejetnosci>'`. Model się nie buduje.
+  3. `StanBezpiecznika` ma właściwości cienia `konfiguracja_modelu_id`/`rodzaj_zadania`/`typ` i konstruktor `(konfiguracjaModeluId, rodzajZadania, typ)`. EF nie wiąże parametrów z cieniami o nazwach `snake_case`: z samym tym konstruktorem → `No suitable constructor was found`. Z niejawnym konstruktorem bezparametrowym (3.6 tworzy obiekt inicjalizatorem) EF materializuje encję przez niego, a `Id` (ignorowane) zostaje `default`. Wtedy `BlokadaObnizaniaProgu`/`KazdaPoprawkaDoWeryfikacji` liczą się dla `Typ = Trafnosc` i pustej konfiguracji — błąd cichy. Działa wariant z cieniami o nazwach PascalCase (`KonfiguracjaModeluId`, `RodzajZadania`, `Typ`) + `HasColumnName(…)` (sprawdzone).
+  4. `.Include("_aktywne", e => …)` nie istnieje. Działa `Include(s => EF.Property<List<ElementSciezki>>(s, "_aktywne").Where(…))` (sprawdzone).
+  5. Podjęcie, przedłużenie i zwolnienie Weryfikacji: „`ExecuteUpdateAsync` … jedno polecenie `UPDATE … RETURNING`, metody agregatu wykonywane na wierszu zwróconym przez `RETURNING`”. `ExecuteUpdateAsync` zwraca liczbę wierszy, bez `RETURNING`. Potrzebne `SqlQuery<T>`/`FromSql` z `UPDATE … RETURNING` (niekomponowalne, p. 6) albo `UPDATE` + odczyt. Brakuje też reguły odświeżenia śledzonej encji `Weryfikacja` po poleceniu SQL w tej samej jednostce pracy (inaczej `SaveChanges` wyśle nieaktualny `version`).
+  6. `Database.SqlQuery<T>($"INSERT … RETURNING …")` (ADR-056 p. 2) działa tylko bez kompozycji (`ToListAsync`). `FirstOrDefaultAsync`/`SingleAsync` → `InvalidOperationException: 'FromSql' or 'SqlQuery' was called with non-composable SQL`. Kontrakt `ZlecaniePracSql` tego nie zapisuje.
+  7. Nazwy kolumn z konwencji nie zgadzają się z DDL (skrypt + `GenerateCreateScript`):
+     - `PracaWTle.MaksProb` → `maks_prob`, a DDL ma `max_prob` (dodatkowo `max` łamie ADR-049);
+     - `Uczen.OswiadczenieWieku16` → `oswiadczenie_wieku16`, a DDL ma `oswiadczenie_wieku_16`, bez `HasColumnName` w tabeli pokrycia.
+
+     Rekord `PracaWTle` (13.4.1) nie ma też `Status`, `DostepnaOd`, `Priorytet`, `OstatniBlad`, potrzebnych panelowi `/admin/praca-w-tle`.
+  8. `WersjaAgregatuInterceptor` zwiększa `Version` agregatu w stanie `Modified`. Zmiana wyłącznie encji wewnętrznych (`OwnsMany`/`HasMany`: `opanowanie_umiejetnosci`, `ocena_kryterium`, `zdjecie_rozwiazania`, `kryterium_oceniania`) zostawia korzeń `Unchanged`, więc token współbieżności nie chroni niezmienników agregatu. Dla `ProfilUcznia` chroni go `FOR UPDATE` z 13.3, ale reguła ogólna jest błędna.
+- **Oczekiwana poprawka:**
+  - Wspólny typ identyfikatora dla kont: `UczenId`/`NauczycielId` jako `UzytkownikId` albo FK przez właściwość cienia `uzytkownik_id` typu `UzytkownikId`.
+  - `_opanowanie` jako `List<OpanowanieUmiejetnosci>` ze słownikiem budowanym w pamięci.
+  - Cienie PascalCase + `HasColumnName` dla klucza `StanBezpiecznika` i brak konstruktora bezparametrowego.
+  - Poprawne składnie p. 4–6.
+  - `HasColumnName` dla p. 7 albo zmiana DDL na `maks_prob`.
+  - Interceptor oznaczający korzeń jako `Modified`, gdy zmienia się dowolna encja jego agregatu (np. przez `IAgregatWlasciciel`).
+  - Test `ModelEfBudujeSieIZgadzaZKatalogiem` (budowa `IModel` + porównanie z katalogiem, C7-05) uruchamiany przy każdym PR.
+- **Status:** OTWARTA
+
+### C7-07: Implementacje Mock nie są wystarczające do deterministycznych testów E2E, a domyślny przepływ offline nie dochodzi do Oceny automatycznej
+- **Waga:** WYSOKA
+- **Lokalizacja:** 10.0.6; `prompty.md` 4.1 (wiadomość `user` rozpoznania), 6 (klucz pliku = 16 znaków SHA-256 tekstu wiadomości `user`, fallback `domyslna.json`, potem generator ze schematu); 10.1.8 (Q-RE-01), `prompty.md` 3.3; 11.2 (Pewność = minimum prawdopodobieństw), próg migracji danych 0,95
+- **Problem:**
+  1. **Dobór scenariusza.**
+     - Wiadomość `user` rozpoznania zawiera wyłącznie `tresc_zadania_md`, `tekst_alternatywny_rysunkow` i `liczba_zdjec`. Skrót nie zależy od zdjęć, więc każda para (Zadanie, liczba zdjęć) ma w Mock **jedną** Transkrypcję. Testy E2E różnych Rozwiązań tego samego Zadania (poprawne / z błędem / z podejrzeniem błędu odczytu / `NIECZYTELNE`) są niemożliwe bez osobnych Zadań, a ograniczenie nie jest zapisane.
+     - Każda zmiana serializacji, promptu, normalizacji SymPy albo formatu stanu zmienia skrót. Brak pliku przechodzi **po cichu** w `domyslna.json` albo w generator, więc test może przejść na innych danych niż zamierzone.
+  2. **Generator ze schematu jest nieokreślony i niebezpieczny dla przepływu.**
+     - Reguła „`boolean` = `true`” ustawia `przekroczono_limit_krokow = true`, co według `prompty.md` 4.1 daje `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`). Domyślne rozpoznanie offline kończy się więc błędem, wbrew 10.0.6 („cały przepływ … działa offline”).
+     - „Środek przedziału zaokrąglony w dół” jest nieokreślony dla pól bez `maximum` (`Ramka`: tylko `minimum: 0`), dla map `additionalProperties` (`rozklad`, `stwierdzenia`), typów unii `["object","null"]` i `pattern` (`umiejetnosci_dodatkowe`, `kod`).
+     - Dla `zgodnosc_z_zadaniem` w [0, 1] daje 0 albo 0,5, czyli baner E-07 przy każdym przesłaniu.
+  3. **`MockModelDecyzyjny`** daje masę 0,90 na losowej opcji. Przy kalibratorze tożsamościowym i progu 0,95 z migracji danych Pewność oceny = 0,90 < 0,95, więc **każda** Ocena offline idzie do Weryfikacji, z losowymi punktami i losowym `Q-OC-06`. Trasy automatycznej (FR-23), Kontroli losowej i Wskazówki po Ocenie ostatecznej nie da się przetestować bez plików rozkładów kluczowanych skrótem stanu, który zmienia się przy każdej zmianie formatu `stan-oceny-v1`.
+  4. Stan Q-RE-01 zawiera `dni_do_egzaminu` i „dni temu”, więc ziarno `MockModelDecyzyjny` zależy od daty systemowej. Rekomendacje E2E zmieniają się z dnia na dzień, bo proces `api` w E2E nie ma `FakeTimeProvider`.
+- **Oczekiwana poprawka:**
+  - Jawny selektor scenariusza Mock niezależny od treści, np. pole `mock_scenariusz` w danych Zadania testowego albo nagłówek `X-Lemat-Mock-Scenariusz` przekazywany do kontekstu pracy, tylko poza `Production`.
+  - Tryb ścisły w E2E: brak pliku scenariusza = błąd testu, nie fallback.
+  - Generator domyślny z wartościami per rola dla pól sterujących (`czytelne = true`, `przekroczono_limit_krokow = false`, `zgodnosc_z_zadaniem = 0.95`, ramki = całe zdjęcie) i zdefiniowanym zachowaniem dla map, unii i `pattern`.
+  - `MockModelDecyzyjny` z domyślną masą ≥ 0,99 na opcji „zgodnej z rozwiązaniem wzorcowym” (np. „tak” dla Q-OC-01, `BRAK_BLEDU`, maks. punkty), żeby domyślny przepływ szedł trasą automatyczną.
+  - Czas `api`/`worker` w E2E ustawiany przez `LEMAT_CZAS_TESTOWY` (`TimeProvider` z przesunięciem).
+  - Macierz scenariuszy E2E (trasa automatyczna, każdy powód Weryfikacji, T-6, T-7, błąd przejściowy, timeout) z przypisanymi plikami danych.
+- **Status:** OTWARTA
+
+### C7-08: Model zapasowy dla Walidacji Zadania (Q-WA) nie ma promptu ani stanu, a `ZapasowyLlmAdapter` nie zna kontekstu decyzji
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 10.0.4 (Walidacja: „Q-WA przez ten sam circuit breaker”); 10.2.5; 13.2 `ZapasowyLlmAdapter.WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, CancellationToken ct)` (bez `KontekstDecyzji`); `prompty.md` 2 (jedna wersja `plan-pytan-v1`), 4.8 („Jesteś modelem decyzyjnym systemu oceniania”, wymagane pole `Q-OC-04`, wiadomość `"[STAN]\n" + stan-oceny-v1`), 3.2 (`stan-walidacji-v1`); 6.4 (pakiety `Lemat.Modele` bez `JsonSchema.Net`)
+- **Problem:**
+  - `IModelDecyzyjny.WykonajPlanAsync` przyjmuje `KontekstDecyzji`, ale `CircuitBreakerModeluDecyzyjnego` przekazuje do `ZapasowyLlmAdapter` wywołanie bez niego.
+  - Jedyny prompt zapasowy opisuje Ocenę Rozwiązania (stan oceny, Q-OC-04, zasady CKE punktowania ucznia). Dla planu Q-WA-01…05 ze stanem `stan-walidacji-v1` model dostaje sprzeczne instrukcje, a wymagane pole `Q-OC-04` nie ma sensu.
+  - Walidacja przy otwartym obwodzie (NFR-07) albo publikuje Zadania na podstawie odpowiedzi do niewłaściwego promptu, albo kończy się `BladModeluTrwalyException` → `ODRZUCONE_W_WALIDACJI` dla każdego Zadania.
+  - `ZapasowyLlmAdapter` (`Lemat.Modele`) potrzebuje walidacji schematu i jednej próby naprawy, czyli logiki `WywolanieCzatu` z `Lemat.Agenci`, do której nie ma dostępu (6.5). Nie wiadomo, czy logika jest zduplikowana, ani skąd `Lemat.Modele` ma `JsonSchema.Net`.
+- **Oczekiwana poprawka:**
+  - `KontekstDecyzji` w `ZapasowyLlmAdapter`.
+  - Osobny prompt `plan-pytan-walidacji-v1` (bez Q-OC-04) albo wersja promptu wybierana per kontekst z `konfiguracja_modelu`.
+  - Test „Walidacja przy obwodzie otwartym”.
+  - Port `IWywolanieUstrukturyzowane` (`Lemat.Application.Modele`) z implementacją w jednym miejscu albo przeniesienie `WywolanieCzatu` do `Lemat.Modele` (i dopisanie `JsonSchema.Net` do pakietów).
+- **Status:** OTWARTA
+
+### C7-09: Schematy odpowiedzi — dwa źródła prawdy, test zgodności niewykonalny literalnie, a mapy rozkładów są sprzeczne z „trybem ścisłym”
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** `prompty.md` 1 p. 3 („wszystkie właściwości wymagane, `additionalProperties: false` … zgodność z trybem ścisłym dostawców”), 4.4 (`stwierdzenia`: `additionalProperties: {boolean}`), 4.8 (`rozklad`: `additionalProperties: {number}`); 6.6 („test porównuje zapisane pliki z wygenerowanymi i ze schematami w `docs/spec/prompty.md`”); 10.0.3 (`AIJsonUtilities.CreateJsonSchema(typeof(T))`)
+- **Problem:**
+  1. Wygenerowano schemat `AIJsonUtilities.CreateJsonSchema` dla rekordu z `[StringLength]`, `[Range]`, `[MaxLength]`, `[RegularExpression]`, nullowalnym enumem i słownikiem. Wynik:
+     - zawiera `minLength`/`maxLength`/`minimum`/`maximum`/`maxItems`/`pattern` i komplet `required`;
+     - **nie zawiera** `additionalProperties: false`, `$schema`, `title` ani `$defs`/`$ref` (typy powtarzalne są rozwijane inline).
+
+     Schematy z `prompty.md` (`$defs.Ramka`, `$defs.ObszarNaZdjeciu`, `title`) nie będą więc równe wygenerowanym, a test „dryfu” musi porównywać semantycznie i użyć `AIJsonSchemaCreateOptions.TransformOptions { DisallowAdditionalProperties = true, RequireAllProperties = true }` — dokument tego nie określa. Rekordy C# z atrybutami ograniczeń nie są nigdzie pokazane.
+  2. `rozklad` i `stwierdzenia` jako mapy dynamiczne (`additionalProperties: {…}`) są niezgodne z trybem ścisłym (strict), który wymaga `additionalProperties: false` na każdym obiekcie. Albo `prompty.md` 1 p. 3 jest nieprawdziwe dla modelu zapasowego i W-3, albo dostawca odrzuci schemat (`400` → `BladModeluTrwalyException` → przy otwartym obwodzie każda Ocena kończy się T-6). Nie wiadomo też, czy `ForJsonSchema` w adapterze OpenAI jest wysyłane jako `strict: true`.
+- **Oczekiwana poprawka:**
+  - Jedno źródło: schematy wyłącznie generowane z rekordów (z `TransformOptions`), a `prompty.md` jako wygenerowany artefakt; albo schematy ręczne jako zasoby i rekordy bez generacji.
+  - Mapy zastąpić tablicami `[{opcja, p}]` (zgodne z trybem ścisłym), z walidacją kompletu opcji w kodzie.
+  - Jawne ustawienie trybu ścisłego per dostawca i test kontraktu na schemacie każdej roli.
+- **Status:** OTWARTA
+
+### C7-10: Równoległe wywołania w agentach (`Task.WhenAll`) a `DbContext` o zasięgu `Scoped`
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 10.2.5 („W-2, W-3 i plan Q-WA … równolegle (`Task.WhenAll`)”; W-9 `similarity` „przez port”); 10.0.7 (agenci `Scoped`); ADR-058 p. 1 (`DlaRoliAsync` — aktywna Konfiguracja modelu z bazy, pamięć podręczna 30 s); 10.3.4 (równoległe pobranie zdjęć)
+- **Problem:** w `WalidujAsync` równolegle działają:
+  - W-3 (`DlaRoliAsync(GENERATYWNY_ROZWIAZUJACY_NIEZALEZNIE)` — odczyt `konfiguracja_modelu` po wygaśnięciu pamięci podręcznej);
+  - plan Q-WA (przy przejściu na model zapasowy `DlaRoliAsync(DECYZYJNY_ZAPASOWY)`);
+  - W-9 (zapytanie `pg_trgm` przez port).
+
+  Jeśli te porty używają `LematDbContext` z zakresu pracy (jedyny kontekst opisany w `ef-core.md`), drugie równoległe zapytanie kończy się `InvalidOperationException: A second operation was started on this context instance`, co daje losowe błędy Walidacji zależne od czasu wygaśnięcia pamięci podręcznej. Dokument nie określa czasu życia `FabrykaKlientowCzatu` i źródła jej odczytów ani reguły „porty używane współbieżnie nie korzystają z `DbContext` zakresu”.
+- **Oczekiwana poprawka:** odczyty portów wywoływanych przez agentów przez `IDbContextFactory<LematDbContext>` albo `NpgsqlDataSource` (nowe połączenie na zapytanie); `FabrykaKlientowCzatu` jako `Singleton` z pamięcią podręczną odświeżaną poza ścieżką żądania; test architektury „typy `Lemat.Agenci` i porty wywoływane z agentów nie zależą od `LematDbContext`” i test współbieżny Walidacji.
+- **Status:** OTWARTA
+
+### C7-11: Wznawianie strumienia powiadomień po `Last-Event-ID` z UUIDv7 gubi zdarzenia
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** ADR-057 p. 5 („`powiadomienie.id` (UUIDv7 … `Guid.CreateVersion7()`, monotoniczny w obrębie procesu); po `Last-Event-ID` serwer wysyła powiadomienia z `id > Last-Event-ID`”); 7.2
+- **Problem:**
+  1. `Guid.CreateVersion7()` w .NET ma 48 bitów czasu w ms i bity losowe, bez licznika, więc nie jest monotoniczny w obrębie milisekundy, także w jednym procesie.
+  2. Powiadomienia tworzą 2 repliki `api` i 2 repliki `worker` z niezależnymi zegarami.
+  3. `id` jest nadawane przed `COMMIT`. Powiadomienie Y z transakcji, która zaczęła się wcześniej (mniejszy `id`), a zatwierdziła się po wysłaniu X, ma `id < X`. Klient wznawiający z `Last-Event-ID = X` nigdy go nie dostanie.
+
+  Dotyczy to m.in. `NOWA_WERYFIKACJA`, `OCENA_SKORYGOWANA` i `TRANSKRYPCJA_GOTOWA`.
+- **Oczekiwana poprawka:** kursor wznowienia niezależny od kolejności nadawania `id`:
+  - albo `created_at` z marginesem (np. ponowne wysłanie zdarzeń z ostatnich 30 s przed kursorem i deduplikacja po `id` w kliencie);
+  - albo kolumna `nr_zdarzenia bigint` nadawana w triggerze `AFTER INSERT` z sekwencji połączonej z oknem bezpieczeństwa.
+
+  Do tego test „dwa powiadomienia zatwierdzone w odwróconej kolejności nie giną po ponownym połączeniu”.
+- **Status:** OTWARTA
+
+### C7-12: Konfiguracje `mock` jako migracja danych warunkowana `ASPNETCORE_ENVIRONMENT` — ryzyko aktywnego Mock w produkcji i nieudanego startu
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 10.0.6 („migracja danych `Dane/0001_konfiguracje_mock.sql`, wyłącznie gdy `ASPNETCORE_ENVIRONMENT != Production`”); 7.7 p. 5 (`efbundle` w kontenerze `migracje`); 6.6 („start procesu z aktywną konfiguracją `mock` w `Production` kończy się błędem”)
+- **Problem:**
+  - `efbundle` w kontenerze `migracje` nie jest aplikacją ASP.NET Core. Zmienna `ASPNETCORE_ENVIRONMENT` nie musi być tam ustawiona (domyślnie brak ≠ `Production`), więc migracja wstawi aktywne konfiguracje `mock` dla 8 ról w produkcji.
+  - Pierwsze wdrożenie kończy się wtedy odmową startu `api`/`worker` (6.6). Bez tego zabezpieczenia aktywny Mock oceniałby Rozwiązania.
+  - Migracja warunkowa daje też w `__historia_migracji` wpis „zastosowana” niezależnie od tego, czy dane wstawiono, więc późniejsza zmiana środowiska jej nie powtórzy.
+- **Oczekiwana poprawka:** dane Mock poza migracjami — osobne polecenie `Lemat.Narzedzia seed-dev` (uruchamiane przez `docker compose` dla `Development`) albo `HostedService` startowy aktywny wyłącznie przy `IHostEnvironment.IsDevelopment()`; test „migracje na pustej bazie nie tworzą konfiguracji `mock`”.
+- **Status:** OTWARTA
+
+### C7-13: Harmonogram nie nadrabia wystąpień pominiętych przy przełączeniu instancji, restarcie albo wdrożeniu
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 13.5 (`Cron.GetNextOccurrence(ostatnie, Strefa) ≤ teraz` — `ostatnie` w pamięci; przejęcie roli w ≤ 10 s; tabela cykli 02:00 / 03:00 / 04:00 / 04:30 / 05:00 / 1. dnia miesiąca)
+- **Problem:**
+  - Dokument nie określa, czym jest `ostatnie` po starcie albo przejęciu roli. Jeśli to czas startu, wystąpienia z okna przerwy przepadają: wdrożenie, restart kontenera albo utrata połączenia blokady (do 10 s, a przy awarii hosta dłużej).
+  - Przykłady skutków:
+    - pominięte `KALIBRUJ` 03:00 odkłada kalibrację i bezpiecznik o dobę;
+    - `USUN_KONTO` 02:00 przesuwa usunięcia RODO o dobę;
+    - `UTRZYMAJ_PARTYCJE` 1. dnia miesiąca przesuwa utworzenie partycji o miesiąc (bufor 3 miesiące maleje bez alertu).
+  - Deduplikacja chroni przed duplikatami tylko wśród `OCZEKUJE`/`W_TOKU`, więc nie zastąpi nadrabiania.
+- **Oczekiwana poprawka:** trwały znacznik ostatniego wykonania per wpis (tabela `przebieg_harmonogramu(nazwa, ostatnie_wystapienie)` aktualizowana w jednostce pracy zlecenia) i nadrabianie wystąpień z ostatnich 24 h przy starcie albo przejęciu roli (warunki wykonania 13.3 są idempotentne); test „przejęcie roli o 03:00:05 zleca `KALIBRUJ` dla bieżącej daty”.
+- **Status:** OTWARTA
+
+### C7-14: Szablony SK kodują wartości zmiennych HTML-em — założenie ADR-058 p. 4 nie jest sprawdzane dla nazw z bazy referencyjnej
+- **Waga:** NISKA
+- **Lokalizacja:** ADR-058 p. 4 (zmienne: `int`, `decimal`, enumy, „nazwy Umiejętności i Działów z bazy referencyjnej”); `prompty.md` 4.3, 4.5, 4.6 (`{{$umiejetnosc}}`, `{{$dzial}}`); test `SzablonBezZmiennychTresci` (sprawdza tylko typy)
+- **Problem:** `KernelPromptTemplateFactory` 1.81 renderuje `x<2 & y>3 "q"` jako `x&lt;2 &amp; y&gt;3 &quot;q&quot;` (sprawdzone). Nazwa Umiejętności albo Działu z cudzysłowem, `<`, `>` lub `&` (np. „Nierówności typu „f(x) < g(x)”” albo nazwy z LaTeX) trafi do promptu systemowego w postaci zakodowanej, a test tego nie wykryje.
+- **Oczekiwana poprawka:** `AllowDangerouslySetContent = true` w `PromptTemplateConfig` (bezpieczne, bo zmienne są wyłącznie systemowe), albo CHECK/test w danych referencyjnych zabraniający tych znaków w nazwach; test renderowania każdego szablonu dla wszystkich nazw z `umiejetnosci.yaml`.
+- **Status:** OTWARTA
+
+### C7-15: Drobne niespójności wersji 3.1
+- **Waga:** NISKA
+- **Lokalizacja:** 7.3, 7.6, 7.7 p. 6, `ef-core.md` 3.2, 3.3, 6.2, 7; `ddl.md` blok B `0005_uprawnienia.sql`; 3.6/3.5; ADR-058 p. 1; 13.1; 10.0.3
+- **Problem:**
+  1. Dokument podaje „42 typy wyliczeniowe” (7.3, 7.6, 7.7, `ef-core.md` 3.2: „42 = 42”), a DDL i lista `MapowanieTypowWyliczeniowych` mają **43** (zgodne ze sobą nazwa po nazwie).
+  2. 31 enumów C# z 3.6/10/13 zgadza się z DDL wartość po wartości. 12 typów z listy mapowania nie ma jednak definicji C# w dokumencie, w tym `RolaModelu` — kluczowa dla ADR-058: `StatusWkladki`, `RolaModelu`, `ZrodloProbki`, `ZrodloKalibratora`, `StatusZlecenia`, `StatusImportu`, `StatusTestu`, `DecyzjaPrzegladu`, `RezultatWalidacji`, `StatusZgloszeniaZadania`, `TypZdarzeniaRodo`, `ZrodloZdarzeniaRodo`.
+  3. Triggery w modelu EF:
+     - `HasTrigger("trg_suma_kryteriow")` jest na tabeli `zadanie_wersja`, a trigger jest na `kryterium_oceniania`;
+     - 6 triggerów nie ma `HasTrigger` (`trg_umiejetnosc_glowna_w_dziale`, `trg_praca_w_tle_powiadom`, `trg_powiadomienie_powiadom`, `trg_import_arkusza_powiadom`, `trg_zlecenie_generowania_powiadom`, `trg_konfiguracja_modelu_powiadom`), choć 7.6 deklaruje triggery w modelu „dokumentacja w modelu, testy”.
+  4. `0005_uprawnienia.sql` nadaje uprawnienia rolom, których DDL nie tworzy. Na czystej bazie (Testcontainers w `SchematZgodnyZDdlTest`) migracja kończy się błędem `role "lemat_api" does not exist`. Brakuje kroku tworzenia ról albo warunku.
+  5. Kolizje nazw w `Lemat.Agenci` (sprawdzone kompilacją): `FunctionCallContent` (SK i MEAI) i `Kernel` (SK i `ImageMagick` w sidecarze) są niejednoznaczne. Potrzebna reguła aliasów `using` (ADR-049 p. 11 dotyczy tylko przestrzeni `Lemat.*`).
+  6. Wersje pakietów:
+     - `Azure.AI.OpenAI` 2.1.0 (najnowsza stabilna) jest zbudowana na `OpenAI` 2.1.0, a `Microsoft.Extensions.AI.OpenAI` 10.11 wymusza `OpenAI` 2.14.0. Konstrukcja klienta działa, ale potrzebny jest test kontraktu wywołania na WireMock.
+     - Metapakiet `Microsoft.SemanticKernel` wciąga `Azure.AI.OpenAI` 2.9.0-beta.1 (NU1605 przy jawnej 2.1.0), więc w `Directory.Packages.props` dopuszczalne są wyłącznie `Microsoft.SemanticKernel.Core` i `.Yaml` — warto to zapisać w 6.4.
+  7. `FabrykaKlientowCzatu` dla `DECYZYJNY_ZAPASOWY` musi zbudować klienta z `parametry.dostawca_llm`, a nie z `dostawca = zapasowy-llm`. Rejestr adapterów 13.1 tego nie opisuje, a `KlientCzatuRoli.Dostawca` będzie wtedy niejednoznaczny w telemetrii (`gen_ai.system`).
+  8. Tekst 10.0.3 („bez zamiany na <”) i `ef-core.md` 3.3 („zapisuje `<`, `>`, `&` jako `<`, `>`, `&`”) zgubił sekwencje `<` itd. Uzasadnienie `UnsafeRelaxedJsonEscaping` dla `jsonb` jest też nieścisłe: `jsonb` dekoduje sekwencje `\uXXXX` przy zapisie, więc równość bajtowa dotyczy tekstu wiadomości do modelu i kolumn `text`, a nie zawartości `jsonb`.
+- **Oczekiwana poprawka:** p. 1 — 43; p. 2 — definicje enumów w 3.6/13 albo odnośnik do generatora; p. 3 — `HasTrigger` na właściwych tabelach dla wszystkich 15 triggerów; p. 4 — `CREATE ROLE … IF NOT EXISTS` (blok `DO`) albo tworzenie ról poza migracją z warunkiem; p. 5 — reguła aliasów w ADR-049; p. 6 — zapis w 6.4 i test kontraktu; p. 7 — opis w 13.1; p. 8 — poprawka tekstu.
+- **Status:** OTWARTA
+
+### Podsumowanie iteracji 7
+
+Weryfikacja uwag otwartych po iteracji 6:
+
+| Stan | Liczba | Identyfikatory |
+|---|---|---|
+| ZAMKNIĘTA | 15 | C6-01 … C6-15 (C6-10 w p. 1, 3, 4; p. 2 kontynuowany w C7-01) |
+| OTWARTA | 0 | — |
+
+Nowe uwagi iteracji 7:
+
+| Waga | Liczba uwag | Identyfikatory |
+|---|---|---|
+| KRYTYCZNA | 0 | — |
+| WYSOKA | 6 | C7-01, C7-03, C7-04, C7-05, C7-06, C7-07 |
+| ŚREDNIA | 7 | C7-02, C7-08, C7-09, C7-10, C7-11, C7-12, C7-13 |
+| NISKA | 2 | C7-14, C7-15 |
+| **Razem** | **15** | |
+
+Werdykt: wersja 3.1 zamyka wszystkie 15 uwag iteracji 6.
+
+Co działa (sprawdzone na PostgreSQL 16 i w projekcie .NET 10):
+- DDL ładuje się bez błędów (poza rolami w `0005`); nazwy tabel, kolumn, indeksów i triggerów użyte w `ef-core.md` istnieją w katalogu; 31 enumów C# zgadza się z DDL wartość po wartości;
+- `INSERT … ON CONFLICT` z predykatami indeksów częściowych i `DO UPDATE` ładunku działa;
+- Magick.NET 15 ma wszystkie użyte API, a polityka bezpieczeństwa w kodzie odrzuca SVG/TXT;
+- port per rola (ADR-058), jednostka pracy z jawną transakcją (ADR-056) i budżet połączeń (ADR-059) są spójne.
+
+Dokument nie jest jednak na poziomie produkcyjnym:
+- limit wywołań funkcji i nazwy narzędzi Agenta generującego nie działają tak, jak opisano, a potok `ChatClientBuilder` w zapisanej postaci się nie kompiluje i nie emituje spanów narzędzi (C7-01, C7-02);
+- mechanika prac w tle ma dwa błędy wykonania: konflikt indeksu deduplikacji blokuje odzyskiwanie wszystkich dzierżaw, a pętla puli zamyka przekroczenia czasu jako sukces i zatrzymuje proces przy pierwszym nieobsłużonym wyjątku (C7-03, C7-04);
+- warstwa danych nie przejdzie własnych testów: migracja z modelu EF i DDL dają różne schematy, a cztery konfiguracje EF nie budują modelu (C7-05, C7-06);
+- Mock nie pozwala deterministycznie sterować scenariuszami E2E, a domyślny przepływ offline kończy się błędem rozpoznania albo Weryfikacją (C7-07).
+
+Poprawki C7-01 … C7-07 są lokalne. Wymagają zmiany:
+- konfiguracji `FunctionInvokingChatClient` i nazewnictwa narzędzi;
+- dwóch poleceń SQL i bloku `try/catch` w 13.4;
+- wyboru jednego źródła schematu;
+- typów identyfikatorów kont i kolekcji `ProfilUcznia`;
+- selektora scenariuszy Mock.
+
+Iteracja 3 (sekcje 12, 14, 15) powinna je uwzględnić razem z mapowaniem macierzy błędów.
 
 STATUS: NEEDS_REVISION
