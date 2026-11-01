@@ -1,4 +1,4 @@
-// @Role: Tłumaczy błędy PostgreSQL na wyjątki domenowe/aplikacyjne: P0001 -> NiezmiennikNaruszonyException(kod), 23505 -> kod z katalogu indeksów unikalnych, 40001/40P01 -> konflikt współbieżności | @DependsOn: Npgsql, Lemat.Domain.Common.NiezmiennikNaruszonyException, Lemat.Application.Common.KonfliktWspolbieznosciException | @UsedBy: JednostkaPracyEf, repozytoria (TASK-016+) | @Task: TASK-015, TASK-017
+// @Role: Tłumaczy błędy PostgreSQL na wyjątki domenowe/aplikacyjne: P0001 -> NiezmiennikNaruszonyException(kod), 23505 -> kod z katalogu indeksów unikalnych, 40001/40P01 -> konflikt współbieżności | @DependsOn: Npgsql, Lemat.Domain.Common.NiezmiennikNaruszonyException, Lemat.Application.Common.KonfliktWspolbieznosciException | @UsedBy: JednostkaPracyEf, repozytoria (TASK-016+) | @Task: TASK-015, TASK-017, TASK-018
 using Lemat.Application.Common;
 using Lemat.Domain.Common;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +18,9 @@ public static class KatalogIndeksowUnikalnych
         ["ux_test_jeden"] = "TEST_JUZ_WYKONANY",
         ["uzytkownik_email_key"] = "EMAIL_ZAJETY",
         ["ux_wkladka_opublikowana"] = "WKLADKA_OPUBLIKOWANA_ISTNIEJE",
+        ["klasa_kod_zaproszenia_key"] = "KOD_ZAPROSZENIA_ZAJETY",
+        ["ux_konfiguracja_aktywna"] = "KONFIGURACJA_MODELU_AKTYWNA_ISTNIEJE",
+        ["ux_prog_aktywny"] = "PROG_AKTYWNY_ISTNIEJE",
     };
 
     public static IReadOnlyDictionary<string, string> Wszystkie => Kody;

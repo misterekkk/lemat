@@ -1,4 +1,4 @@
-// @Role: Analizator Roslyn deklaracji identyfikatorów pod kątem zakazanych synonimów ze słownika (3.1, 3.4) | @DependsOn: Microsoft.CodeAnalysis.CSharp | @UsedBy: ZakazaneSynonimyWIdentyfikatorachTests | @Task: TASK-002
+// @Role: Analizator Roslyn deklaracji identyfikatorów pod kątem zakazanych synonimów ze słownika (3.1, 3.4) | @DependsOn: Microsoft.CodeAnalysis.CSharp | @UsedBy: ZakazaneSynonimyWIdentyfikatorachTests | @Task: TASK-002, TASK-018
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -30,6 +30,11 @@ internal static partial class ForbiddenSynonymAnalyzer
             }
 
             var identyfikator = token.ValueText;
+            if (IsJevPointsQuestionException(token))
+            {
+                continue;
+            }
+
             foreach (var zakazany in FindForbiddenTokens(identyfikator))
             {
                 var linia = drzewo.GetLineSpan(token.Span).StartLinePosition.Line + 1;
@@ -50,6 +55,18 @@ internal static partial class ForbiddenSynonymAnalyzer
             .Where(zakazany => !(wielkieLitery && zakazany == "score"))
             .Distinct(StringComparer.Ordinal)];
     }
+
+    /// <summary>
+    /// Wyjątek od zakazu „score” (CLAUDE.md 4.C.3): typ pytania Jev SCORE — rekord <c>PytanieScore</c> i członek <c>TypPytania.Score</c> (architektura 13.1).
+    /// </summary>
+    private static bool IsJevPointsQuestionException(SyntaxToken token) => token.Parent switch
+    {
+        BaseTypeDeclarationSyntax deklaracja => deklaracja.Identifier == token && token.ValueText == "PytanieScore",
+        EnumMemberDeclarationSyntax skladnik => skladnik.Identifier == token
+            && token.ValueText == "Score"
+            && skladnik.Parent is EnumDeclarationSyntax { Identifier.ValueText: "TypPytania" },
+        _ => false,
+    };
 
     private static bool IsDeclaration(SyntaxToken token) => token.Parent switch
     {

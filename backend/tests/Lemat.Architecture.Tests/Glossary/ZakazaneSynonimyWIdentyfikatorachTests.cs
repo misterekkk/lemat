@@ -1,4 +1,4 @@
-// @Role: Test strażnika słownika: brak zakazanych synonimów w identyfikatorach backend/src i backend/tests (wersja lekka 3.4) | @DependsOn: ForbiddenSynonymAnalyzer, RepositoryLocator | @UsedBy: dotnet test | @Task: TASK-002
+// @Role: Test strażnika słownika: brak zakazanych synonimów w identyfikatorach backend/src i backend/tests (wersja lekka 3.4) | @DependsOn: ForbiddenSynonymAnalyzer, RepositoryLocator | @UsedBy: dotnet test | @Task: TASK-002, TASK-018
 using Lemat.Architecture.Tests.Support;
 
 namespace Lemat.Architecture.Tests.Glossary;
@@ -54,6 +54,14 @@ public sealed class ZakazaneSynonimyWIdentyfikatorachTests
     public void WielkoscLiterWPozostalychPrzypadkachTokenJestZakazany()
     {
         ForbiddenSynonymAnalyzer.Analyze("enum E { Score }", "probka.cs").ShouldHaveSingleItem();
+    }
+
+    [Theory]
+    [InlineData("enum TypPytania { Noul, Score, Choice }")]
+    [InlineData("record PytanieScore { }")]
+    public void DopuszczaTypPytaniaJevSkali(string kod)
+    {
+        ForbiddenSynonymAnalyzer.Analyze(kod, "probka.cs").ShouldBeEmpty();
     }
 
     [Theory]
