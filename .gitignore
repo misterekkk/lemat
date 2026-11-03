@@ -20,3 +20,6 @@ storage/
 # Różne
 .DS_Store
 *.log
+
+# Logi i PID-y procesow uruchamianych przez scripts/dev-up.sh (TASK-130)
+.logs/

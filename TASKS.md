@@ -209,13 +209,15 @@ Numer zadania nie narzuca kolejności między ścieżkami; w obrębie ścieżki 
     zmienione: `backend/openapi/lemat-v1.json` (regenerowany, +1 endpoint), `backend/src/Lemat.Application/Profile/ProfileRegistration.cs`, `backend/src/Lemat.Infrastructure/Persistence/PersistenceRegistration.cs`, `backend/src/Lemat.Api/Configuration/ApiHost.cs`.
   - **Weryfikacja (TASK-129):** build `-warnaserror` 0 warn / 0 err; `dotnet test` zielone (Agents 1, Application 70, Architecture 106, Domain 500, Models 12, Api 138, Infrastructure 242); `dotnet format --verify-no-changes` OK. Bez zmian DDL i pakietów.
 
-- [ ] **TASK-130 [POC-A] Test integracyjny przepływu POC i skrypt `scripts/dev-up.sh`**
+- [x] **TASK-130 [POC-A] Test integracyjny przepływu POC i skrypt `scripts/dev-up.sh`**
   - **Opis:** `Lemat.Api.Tests/Poc/PocFlowTests`: `WebApplicationFactory` + `PocPracaHostedService` w procesie testu na tej samej bazie (PostgreSQL 16), sterowany zegar i skrócone opóźnienia; scenariusz: rejestracja → `PATCH /uczniowie/ja` → `GET /zadania` → `POST /rozwiazania` (JPEG z zasobu testowego) → odpytywanie `GET /rozwiazania/{id}` do `TRANSKRYPCJA_GOTOWA` → zatwierdzenie → odpytywanie do `OCENIONE` → `GET …/ocena` → `GET /uczniowie/ja/profil-uproszczony`; oraz drugi Uczeń nie widzi cudzych Rozwiązań (`404`).
     `scripts/dev-up.sh` (z opcjami `--stop`, `--reset`): PostgreSQL (`db-up.sh` albo lokalny — wg `.env`), `Lemat.Tools migrate`, `seed-poc`, `Lemat.Api` (5080) i `Lemat.Worker` w tle (logi w `.logs/`, ignorowane przez git; PID-y do `--stop`), czeka na `GET /api/v1/zdrowie`, wypisuje adresy i konta demo; `scripts/poc-smoke.sh` (curl: pełny przepływ z kontraktu na działającym API — używany przez TASK-140). Aktualizacja `.env.example` (nowe klucze `Lemat:Poc:*`, `LEMAT_JWT_KLUCZ`, `LEMAT_MAGAZYN_SCIEZKA`), sekcja „Szybki start POC” w `README.md`.
   - **Zależności:** TASK-128, TASK-129.
   - **Realizuje:** kontrakt POC (całość), 17.5 (część), CLAUDE.md pkt 7, 10; TASK-109 i TASK-112 (część).
   - **DoD:** `PocFlowTests` zielony w < 60 s; wszystkie kształty odpowiedzi zgodne z przykładami kontraktu; na czystym środowisku `scripts/dev-up.sh` uruchamia całość jednym poleceniem, `scripts/poc-smoke.sh` kończy się kodem 0 i wypisuje punkty z Oceny, `--stop` zatrzymuje procesy; instrukcje z README wykonane krok po kroku (zapis w raporcie);
     `scripts/verify-backend.sh` zielone; **backend POC kompletny** — `handoff-guardian` zapisuje w `HANDOFF.md` 12.4 stan ścieżki A.
+  - **Pliki (TASK-130):** `backend/tests/Lemat.Api.Tests/Poc/PocFlowTests.cs`, `scripts/dev-up.sh`, `scripts/poc-smoke.sh`, `.env.example`, `README.md` (Szybki start POC), `.gitignore` (`.logs/`);
+  - **Weryfikacja (TASK-130):** `scripts/verify-backend.sh` zielone (Domain 500, Application 70, Models 12, Agents 1, Architecture 106, Api 139, Infrastructure 242; format OK); `PocFlowTests` ~7 s; `dev-up.sh` + `poc-smoke.sh` (kod 0, Ocena 0/2 pkt dla Zadania 5, izolacja `uczen2` 404) + `--stop` zweryfikowane ręcznie; `--reset` NIEZWERYFIKOWANE (`docker compose down -v` zablokowane przez klasyfikator uprawnień). Bez zmian DDL i pakietów.
 
 ## Ścieżka B — frontend `[POC-B]` (TASK-131 … 139)
 
