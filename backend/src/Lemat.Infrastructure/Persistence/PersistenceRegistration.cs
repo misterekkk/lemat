@@ -1,4 +1,4 @@
-// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-126, TASK-127, TASK-128
+// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-126, TASK-127, TASK-128, TASK-129
 using Lemat.Application.Accounts;
 using Lemat.Application.Calibration;
 using Lemat.Application.Classes;
@@ -104,6 +104,7 @@ public static class PersistenceRegistration
         uslugi.AddScoped<IProgPewnosciRepozytorium, ProgPewnosciRepozytoriumEf>();
         uslugi.AddScoped<IProfilRepozytorium, ProfilRepozytoriumEf>();
         uslugi.AddScoped<IWynikZadaniaRepozytorium, WynikZadaniaRepozytoriumEf>();
+        uslugi.AddScoped<IProfilUproszczonyCzytnik, ProfilUproszczonyCzytnikEf>();
         uslugi.AddScoped<ITestDiagnostycznyRepozytorium, TestDiagnostycznyRepozytoriumEf>();
         uslugi.AddScoped<IParametryZadaniaDlaProfilu, ParametryZadaniaDlaProfiluEf>();
         uslugi.AddScoped<IAktualizacjaKalibracjiTrudnosci, AktualizacjaKalibracjiTrudnosciSql>();

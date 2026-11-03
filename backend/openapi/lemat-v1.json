@@ -321,6 +321,26 @@
         }
       }
     },
+    "/api/v1/uczniowie/ja/profil-uproszczony": {
+      "get": {
+        "tags": [
+          "EndpointyProfilu"
+        ],
+        "operationId": "PobierzProfilUproszczony",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfilUproszczonyWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/rejestracja": {
       "post": {
         "tags": [
@@ -482,6 +502,45 @@
           },
           "wygasa_at": {
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DzialProfiluWyjscie": {
+        "required": [
+          "id",
+          "nazwa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nazwa": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DzialUproszczony": {
+        "required": [
+          "dzial",
+          "liczba_ocenionych",
+          "sredni_procent_punktow"
+        ],
+        "type": "object",
+        "properties": {
+          "dzial": {
+            "$ref": "#/components/schemas/DzialProfiluWyjscie"
+          },
+          "liczba_ocenionych": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sredni_procent_punktow": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -864,11 +923,102 @@
           }
         ]
       },
+      "OstatniaOcenaSkrot": {
+        "required": [
+          "rozwiazanie_id",
+          "zadanie_id",
+          "dzial",
+          "punkty",
+          "punkty_max",
+          "oceniono_at"
+        ],
+        "type": "object",
+        "properties": {
+          "rozwiazanie_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "zadanie_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dzial": {
+            "$ref": "#/components/schemas/DzialProfiluWyjscie"
+          },
+          "punkty": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "punkty_max": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "oceniono_at": {
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "PoziomMatury": {
         "enum": [
           "PODSTAWOWY",
           "ROZSZERZONY"
         ]
+      },
+      "ProfilUproszczonyWyjscie": {
+        "required": [
+          "uczen_id",
+          "liczba_rozwiazan",
+          "liczba_ocenionych",
+          "suma_punktow",
+          "suma_punktow_max",
+          "sredni_procent_punktow",
+          "dzialy",
+          "ostatnie_oceny"
+        ],
+        "type": "object",
+        "properties": {
+          "uczen_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "liczba_rozwiazan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "liczba_ocenionych": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "suma_punktow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "suma_punktow_max": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sredni_procent_punktow": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "dzialy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DzialUproszczony"
+            }
+          },
+          "ostatnie_oceny": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OstatniaOcenaSkrot"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "RejestracjaWejscie": {
         "required": [
@@ -1531,6 +1681,9 @@
     },
     {
       "name": "EndpointyRozwiazan"
+    },
+    {
+      "name": "EndpointyProfilu"
     },
     {
       "name": "EndpointyKont"

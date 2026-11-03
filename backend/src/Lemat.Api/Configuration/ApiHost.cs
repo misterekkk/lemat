@@ -1,4 +1,4 @@
-// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126, TASK-127, TASK-128
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126, TASK-127, TASK-128, TASK-129
 using System.Reflection;
 using Lemat.Api.Endpoints;
 using Lemat.Api.Errors;
@@ -98,6 +98,7 @@ public static class ApiHost
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyUcznia>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyTresci>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyRozwiazan>();
+        builder.Services.AddSingleton<IGrupaEndpointow, EndpointyProfilu>();
         builder.Services.AddSingleton(sp => new KodekKursora(KluczKursora(sp.GetRequiredService<LematOpcje>())));
         builder.Services.AddScoped<FiltrScenariuszaMock>();
 
