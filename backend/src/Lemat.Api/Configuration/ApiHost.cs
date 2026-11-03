@@ -1,4 +1,4 @@
-// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126
 using System.Reflection;
 using Lemat.Api.Endpoints;
 using Lemat.Api.Errors;
@@ -7,8 +7,10 @@ using Lemat.Api.Pagination;
 using Lemat.Application.Accounts;
 using Lemat.Application.Common;
 using Lemat.Application.Content;
+using Lemat.Application.Grading;
 using Lemat.Application.Profile;
 using Lemat.Application.Recommendations;
+using Lemat.Application.Solutions;
 using FluentValidation;
 using Lemat.Api.Contracts.Accounts;
 using Lemat.Api.Security;
@@ -78,6 +80,8 @@ public static class ApiHost
         builder.Services.DodajModulTresci();
         builder.Services.DodajModulProfil();
         builder.Services.DodajModulRekomendacje();
+        builder.Services.DodajModulRozwiazan();
+        builder.Services.DodajModulOceniania();
         builder.Services.DodajBezpieczenstwo(opcje);
         builder.Services.DodajUwierzytelnianie();
         builder.Services.DodajPrzypadkiUzyciaUcznia();

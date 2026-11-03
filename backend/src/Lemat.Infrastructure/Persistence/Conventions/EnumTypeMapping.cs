@@ -1,12 +1,14 @@
-// @Role: Rejestr typów wyliczeniowych PostgreSQL (43 z ddl.md) i mapowanie na enumy C# dla źródła danych Npgsql oraz modelu EF Core (ef-core.md 3.2) | @DependsOn: TlumaczNazwUpperSnake, Npgsql, Lemat.Domain.Common | @UsedBy: PersistenceRegistration, LematDbContext, testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019
+// @Role: Rejestr typów wyliczeniowych PostgreSQL (43 z ddl.md) i mapowanie na enumy C# dla źródła danych Npgsql oraz modelu EF Core (ef-core.md 3.2) | @DependsOn: TlumaczNazwUpperSnake, Npgsql, Lemat.Domain.Common | @UsedBy: PersistenceRegistration, LematDbContext, testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-126
 using System.Collections.Concurrent;
 using Lemat.Domain.Accounts;
 using Lemat.Domain.Calibration;
 using Lemat.Domain.Common;
 using Lemat.Domain.Content;
+using Lemat.Domain.Grading;
 using Lemat.Domain.Models;
 using Lemat.Domain.Profile;
 using Lemat.Domain.Recommendations;
+using Lemat.Domain.Solutions;
 using Npgsql;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
@@ -33,7 +35,7 @@ public static class MapowanieTypowWyliczeniowych
         "zrodlo_zdarzenia_rodo", "typ_bezpiecznika", "powod_eskalacji",
     ];
 
-    /// <summary>Enumy C# zarejestrowane przez TASK-015/016/017/018/019 (reszta dochodzi z TASK modułów).</summary>
+    /// <summary>Enumy C# zarejestrowane przez TASK-015/016/017/018/019/126 (reszta dochodzi z TASK modułów).</summary>
     public static readonly IReadOnlyList<(Type Typ, string NazwaPg)> Poczatkowe =
     [
         (typeof(PoziomMatury), "poziom_matury"),
@@ -58,6 +60,12 @@ public static class MapowanieTypowWyliczeniowych
         (typeof(CelElementu), "cel_elementu"),
         (typeof(StatusElementuSciezki), "status_elementu_sciezki"),
         (typeof(StrategiaRekomendacji), "strategia_rekomendacji"),
+        (typeof(StatusRozwiazania), "status_rozwiazania"),
+        (typeof(ZrodloTranskrypcji), "zrodlo_transkrypcji"),
+        (typeof(StatusOceny), "status_oceny"),
+        (typeof(ZrodloOceny), "zrodlo_oceny"),
+        (typeof(TypBledu), "typ_bledu"),
+        (typeof(ZrodloWskazowki), "zrodlo_wskazowki"),
     ];
 
     private static readonly ConcurrentDictionary<Type, string> Rejestr = new(

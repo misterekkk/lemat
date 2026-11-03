@@ -1,5 +1,7 @@
-// @Role: Kompozycja procesu worker (host ogólny + /zdrowie na porcie 8081, wpięta trwałość PostgreSQL) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, Microsoft.AspNetCore.App | @UsedBy: Lemat.Worker.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003, TASK-004, TASK-121
+// @Role: Kompozycja procesu worker (host ogólny + /zdrowie na porcie 8081, wpięta trwałość PostgreSQL) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, Microsoft.AspNetCore.App | @UsedBy: Lemat.Worker.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003, TASK-004, TASK-121, TASK-126
 using Lemat.Application.Common;
+using Lemat.Application.Grading;
+using Lemat.Application.Solutions;
 using Lemat.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -30,6 +32,8 @@ public static class WorkerHost
         }
 
         builder.Services.DodajPersystencje(opcje, RodzajProcesu.Worker);
+        builder.Services.DodajModulRozwiazan();
+        builder.Services.DodajModulOceniania();
 
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole();

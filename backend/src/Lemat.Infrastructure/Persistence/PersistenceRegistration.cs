@@ -1,21 +1,25 @@
-// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019
+// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-126
 using Lemat.Application.Accounts;
 using Lemat.Application.Calibration;
 using Lemat.Application.Classes;
 using Lemat.Application.Common;
 using Lemat.Application.Content;
+using Lemat.Application.Grading;
 using Lemat.Application.Models;
 using Lemat.Application.Profile;
 using Lemat.Application.Recommendations;
+using Lemat.Application.Solutions;
 using Lemat.Infrastructure.Persistence.Conventions;
 using Lemat.Infrastructure.Persistence.Interceptors;
 using Lemat.Infrastructure.Persistence.Repositories.Accounts;
 using Lemat.Infrastructure.Persistence.Repositories.Calibration;
 using Lemat.Infrastructure.Persistence.Repositories.Classes;
 using Lemat.Infrastructure.Persistence.Repositories.Content;
+using Lemat.Infrastructure.Persistence.Repositories.Grading;
 using Lemat.Infrastructure.Persistence.Repositories.Models;
 using Lemat.Infrastructure.Persistence.Repositories.Profile;
 using Lemat.Infrastructure.Persistence.Repositories.Recommendations;
+using Lemat.Infrastructure.Persistence.Repositories.Solutions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -101,6 +105,9 @@ public static class PersistenceRegistration
         uslugi.AddScoped<IAktualizacjaKalibracjiTrudnosci, AktualizacjaKalibracjiTrudnosciSql>();
         uslugi.AddScoped<ISciezkaNaukiRepozytorium, SciezkaNaukiRepozytoriumEf>();
         uslugi.AddScoped<IRekomendacjaRepozytorium, RekomendacjaRepozytoriumEf>();
+        uslugi.AddScoped<IRozwiazanieRepozytorium, RozwiazanieRepozytoriumEf>();
+        uslugi.AddScoped<ITranskrypcjaRepozytorium, TranskrypcjaRepozytoriumEf>();
+        uslugi.AddScoped<IOcenaRepozytorium, OcenaRepozytoriumEf>();
         return uslugi;
     }
 }
