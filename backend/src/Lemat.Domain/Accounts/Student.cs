@@ -1,4 +1,4 @@
-// @Role: Agregat Uczeń: poziom matury, termin egzaminu, wybrany Dział, oświadczenie 16+ (A-06), zgoda na trening, Grupa eksperymentu (fnv1a) | @DependsOn: Lemat.Domain.Common.Agregat, UzytkownikId, GrupaEksperymentu, PoziomMatury, DzialId | @UsedBy: repozytoria Kont, IKontaFasada, moduły Profil, Rekomendacje, Klasy | @Task: TASK-016
+// @Role: Agregat Uczeń: poziom matury, termin egzaminu, wybrany Dział, oświadczenie 16+ (A-06), zgoda na trening, Grupa eksperymentu (fnv1a) | @DependsOn: Lemat.Domain.Common.Agregat, UzytkownikId, GrupaEksperymentu, PoziomMatury, DzialId | @UsedBy: repozytoria Kont, IKontaFasada, moduły Profil, Rekomendacje, Klasy | @Task: TASK-016, TASK-124
 using Lemat.Domain.Common;
 using Lemat.Domain.Content;
 
@@ -57,6 +57,12 @@ public sealed class Uczen : Agregat<UczenId>
         PoziomMatury = poziom;
         TerminEgzaminu = termin;
     }
+
+    /// <summary>Zmiana samego Poziomu matury (PATCH /uczniowie/ja, FR-02); skutki dla Profilu i Ścieżki nauki są poza zakresem POC.</summary>
+    public void UstawPoziom(PoziomMatury poziom) => PoziomMatury = poziom;
+
+    /// <summary>Ustawia albo czyści (<c>null</c>) Termin egzaminu (FR-02).</summary>
+    public void UstawTermin(DateOnly? termin) => TerminEgzaminu = termin;
 
     public void WybierzDzial(DzialId? dzial) => WybranyDzialId = dzial;
 

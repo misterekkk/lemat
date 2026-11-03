@@ -1,4 +1,4 @@
-// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124
 using System.Reflection;
 using Lemat.Api.Endpoints;
 using Lemat.Api.Errors;
@@ -59,7 +59,7 @@ public static class ApiHost
         builder.Services.AddExceptionHandler<ObslugaBledowWiazania>();
         builder.Services.AddExceptionHandler<ObslugaWyjatkowDomenowych>();
         builder.Services.AddProblemDetails();
-        builder.Services.AddOpenApi("v1");
+        builder.Services.AddOpenApi("v1", opcjeOpenApi => opcjeOpenApi.AddSchemaTransformer(new OpcjonalneSchematOpenApi()));
 
         var opcje = builder.Configuration.GetSection(LematOpcje.NazwaSekcji).Get<LematOpcje>() ?? new LematOpcje();
         if (string.IsNullOrWhiteSpace(opcje.Srodowisko))
@@ -80,10 +80,13 @@ public static class ApiHost
         builder.Services.DodajModulRekomendacje();
         builder.Services.DodajBezpieczenstwo(opcje);
         builder.Services.DodajUwierzytelnianie();
+        builder.Services.DodajPrzypadkiUzyciaUcznia();
         builder.Services.DodajUwierzytelnianieJwt();
         builder.Services.AddSingleton<IValidator<RejestracjaWejscie>, RejestracjaWejscieWalidator>();
         builder.Services.AddSingleton<IValidator<LogowanieWejscie>, LogowanieWejscieWalidator>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyKont>();
+        builder.Services.AddSingleton<IGrupaEndpointow, EndpointyUcznia>();
+        builder.Services.AddSingleton<IGrupaEndpointow, EndpointyTresci>();
         builder.Services.AddSingleton(sp => new KodekKursora(KluczKursora(sp.GetRequiredService<LematOpcje>())));
         builder.Services.AddScoped<FiltrScenariuszaMock>();
 

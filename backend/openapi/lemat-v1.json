@@ -25,6 +25,29 @@
         }
       }
     },
+    "/api/v1/dzialy": {
+      "get": {
+        "tags": [
+          "EndpointyTresci"
+        ],
+        "operationId": "ListaDzialow",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DzialWyjscie"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/rejestracja": {
       "post": {
         "tags": [
@@ -117,10 +140,88 @@
           }
         }
       }
+    },
+    "/api/v1/uczniowie/ja": {
+      "get": {
+        "tags": [
+          "EndpointyUcznia"
+        ],
+        "operationId": "PobierzUcznia",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UczenWyjscie"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "EndpointyUcznia"
+        ],
+        "operationId": "ZmienUcznia",
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZmianaUczniaWejscie"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZmianaUczniaWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UczenWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "DzialWyjscie": {
+        "required": [
+          "id",
+          "kod",
+          "nazwa",
+          "poziom_matury"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kod": {
+            "type": "string"
+          },
+          "nazwa": {
+            "type": "string"
+          },
+          "poziom_matury": {
+            "$ref": "#/components/schemas/PoziomMatury"
+          }
+        },
+        "additionalProperties": false
+      },
       "FlagiUzytkownika": {
         "required": [
           "weryfikator_globalny",
@@ -133,6 +234,27 @@
           },
           "recenzent_tresci": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KlasaUcznia": {
+        "required": [
+          "id",
+          "nazwa",
+          "nauczyciel"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nazwa": {
+            "type": "string"
+          },
+          "nauczyciel": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -152,6 +274,42 @@
           }
         },
         "additionalProperties": false
+      },
+      "OpcjonalneOfboolean": {
+        "type": [
+          "null",
+          "boolean"
+        ]
+      },
+      "OpcjonalneOfDateOnly": {
+        "type": [
+          "null",
+          "string"
+        ],
+        "format": "date"
+      },
+      "OpcjonalneOfint": {
+        "type": [
+          "null",
+          "integer"
+        ],
+        "format": "int32"
+      },
+      "OpcjonalneOfPoziomMatury": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/PoziomMatury"
+          }
+        ]
+      },
+      "PoziomMatury": {
+        "enum": [
+          "PODSTAWOWY",
+          "ROZSZERZONY"
+        ]
       },
       "RejestracjaWejscie": {
         "required": [
@@ -252,6 +410,15 @@
         },
         "additionalProperties": false
       },
+      "StanTestuDiagnostycznego": {
+        "enum": [
+          "BRAK",
+          "W_TOKU",
+          "ZAKONCZONY",
+          "POMINIETY",
+          "NIEDOSTEPNY"
+        ]
+      },
       "StatusKonta": {
         "enum": [
           "AKTYWNE",
@@ -259,6 +426,78 @@
           "ZABLOKOWANE",
           "USUWANE"
         ]
+      },
+      "UczenWyjscie": {
+        "required": [
+          "id",
+          "email",
+          "imie",
+          "nazwisko",
+          "poziom_matury",
+          "termin_egzaminu",
+          "wybrany_dzial_id",
+          "zgoda_na_trening",
+          "test_diagnostyczny",
+          "klasy",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "imie": {
+            "type": "string"
+          },
+          "nazwisko": {
+            "type": "string"
+          },
+          "poziom_matury": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PoziomMatury"
+              }
+            ]
+          },
+          "termin_egzaminu": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "wybrany_dzial_id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "zgoda_na_trening": {
+            "type": "boolean"
+          },
+          "test_diagnostyczny": {
+            "$ref": "#/components/schemas/StanTestuDiagnostycznego"
+          },
+          "klasy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KlasaUcznia"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "UzytkownikSesji": {
         "required": [
@@ -296,6 +535,24 @@
           }
         },
         "additionalProperties": false
+      },
+      "ZmianaUczniaWejscie": {
+        "type": "object",
+        "properties": {
+          "poziom_matury": {
+            "$ref": "#/components/schemas/OpcjonalneOfPoziomMatury"
+          },
+          "termin_egzaminu": {
+            "$ref": "#/components/schemas/OpcjonalneOfDateOnly"
+          },
+          "wybrany_dzial_id": {
+            "$ref": "#/components/schemas/OpcjonalneOfint"
+          },
+          "zgoda_na_trening": {
+            "$ref": "#/components/schemas/OpcjonalneOfboolean"
+          }
+        },
+        "additionalProperties": false
       }
     }
   },
@@ -304,7 +561,13 @@
       "name": "Lemat.Api"
     },
     {
+      "name": "EndpointyTresci"
+    },
+    {
       "name": "EndpointyKont"
+    },
+    {
+      "name": "EndpointyUcznia"
     }
   ]
 }
