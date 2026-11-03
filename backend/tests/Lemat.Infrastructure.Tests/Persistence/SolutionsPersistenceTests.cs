@@ -1,4 +1,4 @@
-// @Role: Testy bazy modułów Rozwiązania i Ocenianie (PostgreSQL 16): zapis i odczyt agregatu ze Zdjęciami i Transkrypcją, wersjonowanie przejść, konflikt współbieżności, CHECK-i DDL, trg_ocena_niezmienna, UNIQUE (rozwiazanie_id, wersja), Ocena z Kryteriami i Wskazówką, Wynik zadania z Oceny, rejestracja modułów w DI | @DependsOn: BazaTestowa, SeedPocCommand, RozwiazanieRepozytoriumEf, TranskrypcjaRepozytoriumEf, OcenaRepozytoriumEf, JednostkaPracyEf | @UsedBy: dotnet test | @Task: TASK-126
+// @Role: Testy bazy modułów Rozwiązania i Ocenianie (PostgreSQL 16): zapis i odczyt agregatu ze Zdjęciami i Transkrypcją, wersjonowanie przejść, konflikt współbieżności, CHECK-i DDL, trg_ocena_niezmienna, UNIQUE (rozwiazanie_id, wersja), Ocena z Kryteriami i Wskazówką, Wynik zadania z Oceny, rejestracja modułów w DI | @DependsOn: BazaTestowa, SeedPocCommand, RozwiazanieRepozytoriumEf, TranskrypcjaRepozytoriumEf, OcenaRepozytoriumEf, JednostkaPracyEf | @UsedBy: dotnet test | @Task: TASK-126, TASK-127
 using Lemat.Application.Common;
 using Lemat.Application.Grading;
 using Lemat.Application.Solutions;
@@ -653,7 +653,7 @@ public sealed class RozwiazaniaPersistenceTests(PostgresFixture postgres) : IAsy
         await using var kontekst = _baza.Kontekst();
         var fasada = new OcenianieFasada(new OcenaRepozytoriumEf(kontekst));
 
-        var skrot = await fasada.PobierzAktualnaAsync(id, Ct);
+        var skrot = await fasada.PobierzAktualnaAsync(id, IdWersji, Ct);
         skrot.ShouldNotBeNull();
         skrot.Id.ShouldBe(ocenaId);
         skrot.Punkty.ShouldBe(1);
@@ -662,7 +662,8 @@ public sealed class RozwiazaniaPersistenceTests(PostgresFixture postgres) : IAsy
         skrot.Wskazowka.ShouldBe("Wskazówka.");
         skrot.ZrodloWskazowki.ShouldBe(ZrodloWskazowki.Szablon);
         skrot.Kryteria.Count.ShouldBe(2);
-        (await fasada.PobierzAktualnaAsync(new RozwiazanieId(Guid.NewGuid()), Ct)).ShouldBeNull();
+        skrot.Kryteria.Select(k => k.NrKryterium).Order().ShouldBe([1, 2]);
+        (await fasada.PobierzAktualnaAsync(new RozwiazanieId(Guid.NewGuid()), IdWersji, Ct)).ShouldBeNull();
     }
 
     // ---------- Wynik zadania z Oceny, Decyzja modelu ----------

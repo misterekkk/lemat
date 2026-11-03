@@ -9,6 +9,9 @@ public interface IRozwiazaniaFasada
     /// <summary>Rozwiązanie wskazanego Ucznia; cudze i nieistniejące zwracają <c>null</c> (uprawnienia obiektowe, ADR-071).</summary>
     Task<RozwiazanieSkrot?> PobierzDlaUczniaAsync(RozwiazanieId id, UczenId uczen, CancellationToken ct);
 
+    /// <summary>Rozwiązania Ucznia (created_at malejąco, potem id), opcjonalnie z jednym statusem; strona po <paramref name="po"/> (wyłącznie).</summary>
+    Task<StronaRozwiazan> ListaDlaUczniaAsync(UczenId uczen, StatusRozwiazania? status, PozycjaListyRozwiazan? po, int limit, CancellationToken ct);
+
     /// <summary>Najnowsza wersja Transkrypcji Rozwiązania; <c>null</c>, gdy jeszcze nie powstała.</summary>
     Task<TranskrypcjaSkrot?> PobierzNajnowszaTranskrypcjeAsync(RozwiazanieId id, CancellationToken ct);
 }

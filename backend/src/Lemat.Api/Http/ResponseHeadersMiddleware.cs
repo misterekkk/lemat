@@ -1,4 +1,4 @@
-// @Role: Middleware ustawiający nagłówki odpowiedzi API: Cache-Control: no-store, Vary: Authorization, X-Lemat-Wersja-Api | @DependsOn: — | @UsedBy: ApiHost | @Task: TASK-121
+// @Role: Middleware ustawiający nagłówki odpowiedzi API: Cache-Control: no-store, Vary: Authorization, X-Lemat-Wersja-Api | @DependsOn: — | @UsedBy: ApiHost | @Task: TASK-121, TASK-127
 namespace Lemat.Api.Http;
 
 /// <summary>Dopisuje nagłówki wspólne dla wszystkich odpowiedzi (kontrakt POC 1).</summary>
@@ -12,7 +12,12 @@ public sealed class NaglowkiOdpowiedziMiddleware(RequestDelegate nastepny)
         kontekst.Response.OnStarting(static stan =>
         {
             var odpowiedz = (HttpResponse)stan;
-            odpowiedz.Headers.CacheControl = "no-store";
+            // Endpoint może ustawić własne Cache-Control (np. obraz z magazynu lokalnego: private, max-age=300).
+            if (string.IsNullOrEmpty(odpowiedz.Headers.CacheControl))
+            {
+                odpowiedz.Headers.CacheControl = "no-store";
+            }
+
             odpowiedz.Headers.Append("Vary", "Authorization");
             odpowiedz.Headers["X-Lemat-Wersja-Api"] = WersjaApi;
             return Task.CompletedTask;

@@ -1,4 +1,4 @@
-// @Role: Jedne opcje System.Text.Json dla żądań, odpowiedzi i generatora OpenAPI (snake_case z separacją cyfr, enumy UPPER_SNAKE, null jawnie, brak nieznanych pól) | @DependsOn: Lemat.Domain.Common.KonwencjaNazw | @UsedBy: ApiHost, ObslugaBledowWiazania, KodekKursora, testy | @Task: TASK-121
+// @Role: Jedne opcje System.Text.Json dla żądań, odpowiedzi i generatora OpenAPI (snake_case z separacją cyfr, enumy UPPER_SNAKE, null jawnie, brak nieznanych pól) | @DependsOn: Lemat.Domain.Common.KonwencjaNazw | @UsedBy: ApiHost, ObslugaBledowWiazania, KodekKursora, testy | @Task: TASK-121, TASK-127
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,6 +22,7 @@ public static class JsonApi
         opcje.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
         opcje.AllowOutOfOrderMetadataProperties = true;
         opcje.Converters.Add(new JsonStringEnumConverter(NazwyEnum, allowIntegerValues: false));
+        opcje.Converters.Add(new UtcDateTimeOffsetConverter());
         opcje.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
     }
 

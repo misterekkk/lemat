@@ -5,7 +5,7 @@ using Lemat.Domain.Solutions;
 
 namespace Lemat.Application.Grading;
 
-public sealed record OcenaKryteriumSkrot(Guid KryteriumOcenianiaId, int Punkty, decimal? Prawdopodobienstwo);
+public sealed record OcenaKryteriumSkrot(Guid KryteriumOcenianiaId, int NrKryterium, int Punkty, decimal? Prawdopodobienstwo);
 
 public sealed record OcenaSkrot(
     OcenaId Id,

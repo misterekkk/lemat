@@ -1,4 +1,4 @@
-// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126, TASK-127
 using System.Reflection;
 using Lemat.Api.Endpoints;
 using Lemat.Api.Errors;
@@ -13,10 +13,12 @@ using Lemat.Application.Recommendations;
 using Lemat.Application.Solutions;
 using FluentValidation;
 using Lemat.Api.Contracts.Accounts;
+using Lemat.Api.Contracts.Solutions;
 using Lemat.Api.Security;
 using Lemat.Api.Validation;
 using Lemat.Infrastructure.Security;
 using Lemat.Infrastructure.Persistence;
+using Lemat.Infrastructure.Storage;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace Lemat.Api.Configuration;
@@ -82,6 +84,9 @@ public static class ApiHost
         builder.Services.DodajModulRekomendacje();
         builder.Services.DodajModulRozwiazan();
         builder.Services.DodajModulOceniania();
+        builder.Services.DodajMagazynIObrobkeObrazow(builder.Environment.ContentRootPath);
+        builder.Services.DodajPrzypadkiUzyciaRozwiazan();
+        builder.Services.AddScoped<MapperRozwiazan>();
         builder.Services.DodajBezpieczenstwo(opcje);
         builder.Services.DodajUwierzytelnianie();
         builder.Services.DodajPrzypadkiUzyciaUcznia();
@@ -91,6 +96,7 @@ public static class ApiHost
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyKont>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyUcznia>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyTresci>();
+        builder.Services.AddSingleton<IGrupaEndpointow, EndpointyRozwiazan>();
         builder.Services.AddSingleton(sp => new KodekKursora(KluczKursora(sp.GetRequiredService<LematOpcje>())));
         builder.Services.AddScoped<FiltrScenariuszaMock>();
 
@@ -100,6 +106,9 @@ public static class ApiHost
     public static WebApplication MapEndpoints(this WebApplication app)
     {
         app.UseMiddleware<NaglowkiOdpowiedziMiddleware>();
+        app.UseWhen(
+            kontekst => HttpMethods.IsPost(kontekst.Request.Method) && kontekst.Request.Path.Equals(SciezkaPrzeslaniaRozwiazania, StringComparison.OrdinalIgnoreCase),
+            galaz => galaz.Use(UstawLimitCialaZdjec));
         app.UseExceptionHandler();
         app.UseStatusCodePages(ZapiszProblemDlaStatusu);
         app.UseAuthentication();
@@ -112,6 +121,21 @@ public static class ApiHost
         }
 
         return app;
+    }
+
+    /// <summary>Do 5 zdjęć po 10 MB plus pola formularza: 52 MB na całe ciało (kontrakt POC 7.4); pozostałe żądania zachowują domyślny limit Kestrela.</summary>
+    private const long MaksCialoPrzeslaniaBajty = 52_428_800;
+
+    private const string SciezkaPrzeslaniaRozwiazania = "/api/v1/rozwiazania";
+
+    private static Task UstawLimitCialaZdjec(HttpContext kontekst, RequestDelegate nastepny)
+    {
+        if (kontekst.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit)
+        {
+            limit.MaxRequestBodySize = MaksCialoPrzeslaniaBajty;
+        }
+
+        return nastepny(kontekst);
     }
 
     private static readonly HashSet<int> StatusyZKodem = [400, 401, 403, 404, 405, 412, 413, 415, 422, 428, 500, 503];

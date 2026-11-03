@@ -16,6 +16,12 @@ public interface IRozwiazanieRepozytorium
     Task<Rozwiazanie?> PobierzDoOdczytuAsync(RozwiazanieId id, CancellationToken ct);
 
     /// <summary>
+    /// Rozwiązania Ucznia bez śledzenia w porządku (created_at malejąco, id rosnąco), opcjonalnie z jednym statusem, po pozycji <paramref name="po"/> (wyłącznie);
+    /// najwyżej <paramref name="limit"/> pozycji.
+    /// </summary>
+    Task<IReadOnlyList<Rozwiazanie>> ListaDlaUczniaAsync(UczenId uczen, StatusRozwiazania? status, PozycjaListyRozwiazan? po, int limit, CancellationToken ct);
+
+    /// <summary>
     /// Identyfikator Rozwiązania Ucznia przy Zadaniu, które jest w trakcie (PRZESLANE … OCENIANIE, także oczekujące na Weryfikację);
     /// <c>BLAD_ROZPOZNAWANIA</c>, <c>OCENIONE</c>, <c>PORZUCONE</c> i <c>ANULOWANE</c> nie blokują nowego Rozwiązania. <c>null</c>, gdy brak.
     /// </summary>

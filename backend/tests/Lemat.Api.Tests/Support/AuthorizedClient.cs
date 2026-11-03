@@ -1,4 +1,4 @@
-// @Role: Pomocnik testów endpointów Ucznia: rejestruje konto, trzyma token dostępu i wysyła GET/PATCH z nagłówkami (If-Match, Content-Type) oraz odczytem JSON | @DependsOn: ApiFactory, KlientAuth, OdpowiedzTestowa | @UsedBy: Accounts/UczenEndpointsTests, Content/SectionsEndpointsTests | @Task: TASK-124
+// @Role: Pomocnik testów endpointów Ucznia: rejestruje konto, trzyma token dostępu i wysyła GET/PATCH z nagłówkami (If-Match, Content-Type) oraz odczytem JSON | @DependsOn: ApiFactory, KlientAuth, OdpowiedzTestowa | @UsedBy: Accounts/UczenEndpointsTests, Content/SectionsEndpointsTests | @Task: TASK-124, TASK-127
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -67,6 +67,40 @@ public sealed class KlientZalogowany : IDisposable
         var tekst = await odpowiedz.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var tresc = string.IsNullOrWhiteSpace(tekst) ? default : JsonDocument.Parse(tekst).RootElement.Clone();
         return new OdpowiedzTestowa(odpowiedz, tresc);
+    }
+
+    /// <summary>Wysyła multipart/form-data (np. POST /rozwiazania) z tokenem i opcjonalnym nagłówkiem Mock; ciało odpowiedzi czytane jako JSON.</summary>
+    public async Task<OdpowiedzTestowa> WyslijFormularzAsync(string sciezka, MultipartFormDataContent tresc, string? scenariuszMock = null)
+    {
+        using var zadanie = new HttpRequestMessage(HttpMethod.Post, sciezka) { Content = tresc };
+        if (Token is not null)
+        {
+            zadanie.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        }
+
+        if (scenariuszMock is not null)
+        {
+            zadanie.Headers.TryAddWithoutValidation("X-Lemat-Mock-Scenariusz", scenariuszMock);
+        }
+
+        var odpowiedz = await _klient.SendAsync(zadanie, TestContext.Current.CancellationToken);
+        var tekst = await odpowiedz.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var json = string.IsNullOrWhiteSpace(tekst) || !odpowiedz.Content.Headers.ContentType!.MediaType!.Contains("json", StringComparison.Ordinal)
+            ? default
+            : JsonDocument.Parse(tekst).RootElement.Clone();
+        return new OdpowiedzTestowa(odpowiedz, json);
+    }
+
+    /// <summary>Surowe GET (bez parsowania JSON), np. obraz z magazynu lokalnego; token dostępu dołączany tylko, gdy <paramref name="zTokenem"/>.</summary>
+    public async Task<HttpResponseMessage> PobierzSurowoAsync(string sciezka, bool zTokenem = false)
+    {
+        using var zadanie = new HttpRequestMessage(HttpMethod.Get, sciezka);
+        if (zTokenem && Token is not null)
+        {
+            zadanie.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        }
+
+        return await _klient.SendAsync(zadanie, TestContext.Current.CancellationToken);
     }
 
     public void Dispose() => _klient.Dispose();

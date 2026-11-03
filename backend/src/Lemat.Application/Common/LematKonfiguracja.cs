@@ -1,4 +1,4 @@
-// @Role: Rejestracja LematOpcje (Options + ValidateOnStart) i mapowanie zmiennych środowiskowych LEMAT_* na klucze sekcji Lemat | @DependsOn: LematOpcje, LematOpcjeWalidator, Microsoft.Extensions.Configuration | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost | @Task: TASK-004
+// @Role: Rejestracja LematOpcje (Options + ValidateOnStart) i mapowanie zmiennych środowiskowych LEMAT_* na klucze sekcji Lemat | @DependsOn: LematOpcje, LematOpcjeWalidator, Microsoft.Extensions.Configuration | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost | @Task: TASK-004, TASK-127
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +23,7 @@ public static class LematKonfiguracja
         ["LEMAT_POTWIERDZONA_RETENCJA_DOSTAWCY"] = "Lemat:Modele:PotwierdzonaRetencjaDostawcy",
         ["LEMAT_MOCK_OPOZNIENIE_MS"] = "Lemat:Modele:MockOpoznienieMs",
         ["LEMAT_MAGAZYN_SCIEZKA"] = "Lemat:Magazyn:Sciezka",
+        ["LEMAT_MAGAZYN_KLUCZ"] = "Lemat:Magazyn:Klucz",
         ["LEMAT_KURSOR_KLUCZ"] = "Lemat:Kursor:Klucz",
         ["LEMAT_JWT_KLUCZ"] = "Lemat:Jwt:Klucz",
         ["LEMAT_KONTA_AUTOZATWIERDZANIE_NAUCZYCIELI"] = "Lemat:Konta:AutozatwierdzanieNauczycieli",

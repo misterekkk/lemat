@@ -1,4 +1,4 @@
-// @Role: Testy jednostkowe LematOpcje: wartości domyślne (tabela 22), nadpisanie zmiennymi LEMAT_*, walidacja startu | @DependsOn: Lemat.Application.Common | @UsedBy: dotnet test | @Task: TASK-004
+// @Role: Testy jednostkowe LematOpcje: wartości domyślne (tabela 22), nadpisanie zmiennymi LEMAT_*, walidacja startu | @DependsOn: Lemat.Application.Common | @UsedBy: dotnet test | @Task: TASK-004, TASK-127
 using System.Collections;
 using Lemat.Application.Common;
 using Microsoft.Extensions.Configuration;
@@ -150,11 +150,30 @@ public sealed class LematOpcjeTests
         o.Modele.PotwierdzonaRetencjaDostawcy = true;
         o.Kursor.Klucz = "k";
         o.Jwt.Klucz = "j";
+        o.Magazyn.Klucz = "m";
         Waliduj(o).Succeeded.ShouldBeTrue();
 
         o.Konta.AutozatwierdzanieNauczycieli = true;
 
         Waliduj(o).FailureMessage!.ShouldContain("AutozatwierdzanieNauczycieli");
+    }
+
+    [Fact]
+    public void ProductionWymagaKluczaMagazynu()
+    {
+        var o = Poprawne();
+        o.Srodowisko = "Production";
+        o.Modele.Dostawca = "anthropic";
+        o.Modele.KluczApi = "k";
+        o.Modele.PotwierdzonaRetencjaDostawcy = true;
+        o.Kursor.Klucz = "k";
+        o.Jwt.Klucz = "j";
+
+        Waliduj(o).FailureMessage!.ShouldContain("Magazyn:Klucz");
+
+        o.Magazyn.Klucz = "m";
+
+        Waliduj(o).Succeeded.ShouldBeTrue();
     }
 
     [Theory]

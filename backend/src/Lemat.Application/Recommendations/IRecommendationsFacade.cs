@@ -1,4 +1,4 @@
-// @Role: Fasada modułu Rekomendacje (6.2): Ścieżka nauki, propozycja Elementu z Rekomendacją w jednej transakcji, przejścia stanów 8.5 (rozpoczęcie, ukończenie, pominięcie, przeczytanie, wygaszenie), Seria; bez zależności od Orchestration | @DependsOn: Lemat.Domain.Recommendations, SciezkaSkrot, NowaRekomendacja | @UsedBy: Agent rekomendujący (TASK-040), Rozwiązania (TASK-020), Orkiestracja (WYGAS_ELEMENTY), Api (planowane TASK-073) | @Task: TASK-019
+// @Role: Fasada modułu Rekomendacje (6.2): Ścieżka nauki, propozycja Elementu z Rekomendacją w jednej transakcji, przejścia stanów 8.5 (rozpoczęcie, ukończenie, pominięcie, przeczytanie, wygaszenie), Seria; bez zależności od Orchestration | @DependsOn: Lemat.Domain.Recommendations, SciezkaSkrot, NowaRekomendacja | @UsedBy: Agent rekomendujący (TASK-040), Rozwiązania (TASK-020, TASK-127), Orkiestracja (WYGAS_ELEMENTY), Api (planowane TASK-073) | @Task: TASK-019, TASK-127
 using Lemat.Domain.Accounts;
 using Lemat.Domain.Common;
 using Lemat.Domain.Content;
@@ -24,6 +24,12 @@ public interface IRekomendacjeFasada
     /// Zakłada Ścieżkę, gdy jej brak.
     /// </summary>
     Task<NastepnyElementSkrot> ZaproponujAsync(UczenId uczen, PropozycjaElementu propozycja, NowaRekomendacja rekomendacja, CancellationToken ct);
+
+    /// <summary>
+    /// POC (U-24): techniczny element ROZPOCZETY dla próby rozwiązania Zadania (kontekst próby wymagany przez DDL), bez Rekomendacji;
+    /// zakłada Ścieżkę, gdy jej brak. Wołać w transakcji przypadku użycia razem z zapisem Rozwiązania.
+    /// </summary>
+    Task<ElementSkrot> RozpocznijProbeAsync(UczenId uczen, ZadanieId zadanie, UmiejetnoscId umiejetnosc, ZadanieWersjaId wersja, CancellationToken ct);
 
     /// <summary>POST rozpoczecie (idempotentne): PROPONOWANY -> ROZPOCZETY; Zadanie wymaga wersji pokazanej Uczniowi.</summary>
     Task<ElementSkrot> RozpocznijAsync(UczenId uczen, ElementSciezkiId element, ZadanieWersjaId? wersja, CancellationToken ct);

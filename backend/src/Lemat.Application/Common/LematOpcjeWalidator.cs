@@ -1,4 +1,4 @@
-// @Role: Walidacja LematOpcje przy starcie (Production bez mocków, A-07 retencja, ścieżka magazynu, zakresy) | @DependsOn: LematOpcje, Microsoft.Extensions.Options | @UsedBy: LematKonfiguracja | @Task: TASK-004
+// @Role: Walidacja LematOpcje przy starcie (Production bez mocków, A-07 retencja, ścieżka magazynu, zakresy) | @DependsOn: LematOpcje, Microsoft.Extensions.Options | @UsedBy: LematKonfiguracja | @Task: TASK-004, TASK-127
 using Microsoft.Extensions.Options;
 
 namespace Lemat.Application.Common;
@@ -72,6 +72,11 @@ public sealed class LematOpcjeWalidator : IValidateOptions<LematOpcje>
         if (produkcja && opcje.Konta.AutozatwierdzanieNauczycieli)
         {
             bledy.Add("Lemat:Konta:AutozatwierdzanieNauczycieli jest dozwolone wyłącznie poza Production.");
+        }
+
+        if (produkcja && string.IsNullOrWhiteSpace(opcje.Magazyn.Klucz))
+        {
+            bledy.Add("Production wymaga Lemat:Magazyn:Klucz (LEMAT_MAGAZYN_KLUCZ).");
         }
 
         if (produkcja && string.IsNullOrWhiteSpace(opcje.Kursor.Klucz))

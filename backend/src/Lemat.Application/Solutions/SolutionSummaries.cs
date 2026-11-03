@@ -6,7 +6,7 @@ using Lemat.Domain.Solutions;
 
 namespace Lemat.Application.Solutions;
 
-public sealed record ZdjecieSkrot(Guid Id, int PrzeslanieNr, int Kolejnosc, string KluczObiektu, int Szerokosc, int Wysokosc);
+public sealed record ZdjecieSkrot(Guid Id, int PrzeslanieNr, int Kolejnosc, string KluczObiektu, int Szerokosc, int Wysokosc, bool Dostepne);
 
 public sealed record RozwiazanieSkrot(
     RozwiazanieId Id,
@@ -14,7 +14,10 @@ public sealed record RozwiazanieSkrot(
     ZadanieId ZadanieId,
     ZadanieWersjaId ZadanieWersjaId,
     ElementSciezkiId? ElementSciezkiId,
+    Guid? PrzypisanieId,
     StatusRozwiazania Status,
+    int LiczbaPrzeslan,
+    int LiczbaPonowienRozpoznania,
     KodBleduRozpoznawania? KodBleduRozpoznawania,
     TranskrypcjaId? NajnowszaTranskrypcjaId,
     int? NajnowszaWersjaTranskrypcji,
@@ -23,6 +26,8 @@ public sealed record RozwiazanieSkrot(
     DateTimeOffset? ZatwierdzonoAt,
     DateTimeOffset? OcenaWystawionaAt,
     TimeSpan? CzasSystemowy,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
     int Version,
     IReadOnlyList<ZdjecieSkrot> Zdjecia);
 
@@ -33,6 +38,13 @@ public sealed record TranskrypcjaSkrot(
     RozwiazanieId RozwiazanieId,
     int Wersja,
     ZrodloTranskrypcji Zrodlo,
+    int PrzeslanieNr,
     decimal? ZgodnoscZZadaniem,
     DateTimeOffset CreatedAt,
     IReadOnlyList<KrokSkrot> Kroki);
+
+/// <summary>Pozycja listy Rozwiązań Ucznia w porządku (created_at malejąco, id rosnąco) — podstawa kursora (kontrakt POC 7.6).</summary>
+public sealed record PozycjaListyRozwiazan(DateTimeOffset CreatedAt, RozwiazanieId Id);
+
+/// <summary>Strona Rozwiązań Ucznia; <see cref="MaWiecej"/> = istnieją kolejne pozycje po ostatniej zwróconej.</summary>
+public sealed record StronaRozwiazan(IReadOnlyList<RozwiazanieSkrot> Elementy, bool MaWiecej);

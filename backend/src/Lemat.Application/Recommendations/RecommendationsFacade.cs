@@ -1,4 +1,4 @@
-// @Role: Implementacja IRekomendacjeFasada nad repozytoriami i IJednostkaPracy: propozycja Elementu z Rekomendacją w jednej transakcji, przejścia stanów 8.5, Seria; uprawnienia obiektowe przez Ścieżkę Ucznia (ADR-071) | @DependsOn: ISciezkaNaukiRepozytorium, IRekomendacjaRepozytorium, IJednostkaPracy, TimeProvider, Lemat.Domain.Recommendations | @UsedBy: DI (RecommendationsRegistration), moduły przez IRekomendacjeFasada | @Task: TASK-019
+// @Role: Implementacja IRekomendacjeFasada nad repozytoriami i IJednostkaPracy: propozycja Elementu z Rekomendacją w jednej transakcji, przejścia stanów 8.5, Seria; uprawnienia obiektowe przez Ścieżkę Ucznia (ADR-071) | @DependsOn: ISciezkaNaukiRepozytorium, IRekomendacjaRepozytorium, IJednostkaPracy, TimeProvider, Lemat.Domain.Recommendations | @UsedBy: DI (RecommendationsRegistration), moduły przez IRekomendacjeFasada | @Task: TASK-019, TASK-127
 using Lemat.Application.Common;
 using Lemat.Domain.Accounts;
 using Lemat.Domain.Common;
@@ -64,6 +64,20 @@ public sealed class RekomendacjeFasada(
             },
             ct);
     }
+
+    public Task<ElementSkrot> RozpocznijProbeAsync(UczenId uczen, ZadanieId zadanie, UmiejetnoscId umiejetnosc, ZadanieWersjaId wersja, CancellationToken ct) =>
+        jednostkaPracy.WykonajAsync(
+            async token =>
+            {
+                var teraz = czas.GetUtcNow();
+                var sciezka = await PobierzLubZalozAsync(uczen, null, token);
+                var element = sciezka.Zaproponuj(
+                    new PropozycjaElementu(TypElementuSciezki.Zadanie, CelElementu.Nauka, umiejetnosc, zadanie, null, null, false, null),
+                    teraz);
+                element.Rozpocznij(wersja, teraz);
+                return Skrot(element);
+            },
+            ct);
 
     public Task<ElementSkrot> RozpocznijAsync(UczenId uczen, ElementSciezkiId element, ZadanieWersjaId? wersja, CancellationToken ct) =>
         ZmienElementAsync(

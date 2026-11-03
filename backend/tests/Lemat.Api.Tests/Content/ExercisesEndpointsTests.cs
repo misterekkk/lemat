@@ -1,4 +1,4 @@
-// @Role: Testy integracyjne GET /api/v1/zadania i GET /api/v1/zadania/{id} (kontrakt POC 5, 6.3): odpowiedź identyczna z kontraktem po seed-poc, filtr dzial_id, 404, brak pól wzorcowych, paginacja kursorowa, 401 | @DependsOn: ApiFactory, KlientZalogowany, PocSeed | @UsedBy: dotnet test | @Task: TASK-125
+// @Role: Testy integracyjne GET /api/v1/zadania i GET /api/v1/zadania/{id} (kontrakt POC 5, 6.3): odpowiedź identyczna z kontraktem po seed-poc, filtr dzial_id, 404, brak pól wzorcowych, paginacja kursorowa, 401 | @DependsOn: ApiFactory, KlientZalogowany, PocSeed | @UsedBy: dotnet test | @Task: TASK-125, TASK-127
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -6,6 +6,7 @@ using Lemat.Api.Tests.Support;
 
 namespace Lemat.Api.Tests.Content;
 
+[Collection(KolekcjeTestowe.DanePoc)]
 public sealed class ExercisesEndpointsTests(ApiFactory fabryka, BazaTestowaFixture baza) : IClassFixture<ApiFactory>
 {
     private const string Id4 = "a1000000-0000-4000-8000-000000000004";

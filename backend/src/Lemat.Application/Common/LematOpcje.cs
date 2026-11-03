@@ -1,4 +1,4 @@
-// @Role: Parametry systemu MVP (sekcja 22) wiązane z sekcją Lemat; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | @DependsOn: Microsoft.Extensions.Options | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost, LematOpcjeWalidator | @Task: TASK-004, TASK-123
+// @Role: Parametry systemu MVP (sekcja 22) wiązane z sekcją Lemat; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | @DependsOn: Microsoft.Extensions.Options | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost, LematOpcjeWalidator | @Task: TASK-004, TASK-123, TASK-127
 namespace Lemat.Application.Common;
 
 /// <summary>
@@ -121,7 +121,12 @@ public sealed class MagazynOpcje
     public const string Lokalny = "lokalny";
 
     public string Typ { get; set; } = Lokalny;
+
+    /// <summary>Katalog magazynu lokalnego (<c>LEMAT_MAGAZYN_SCIEZKA</c>); ścieżka względna jest liczona od katalogu głównego aplikacji.</summary>
     public string Sciezka { get; set; } = string.Empty;
+
+    /// <summary><c>LEMAT_MAGAZYN_KLUCZ</c>: klucz HMAC podpisu adresów magazynu lokalnego (U-03); w Development/E2E domyślny klucz deweloperski.</summary>
+    public string Klucz { get; set; } = string.Empty;
 }
 
 public sealed class ObrazyOpcje

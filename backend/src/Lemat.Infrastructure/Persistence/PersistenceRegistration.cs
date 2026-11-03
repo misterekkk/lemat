@@ -1,14 +1,16 @@
-// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-126
+// @Role: Rejestracja warstwy trwałości w DI: źródło danych Npgsql z enumami i dynamicznym jsonb, LematDbContext (+ fabryka), interceptory, IJednostkaPracy; pule połączeń wg procesu (ADR-059) | @DependsOn: LematOpcje, RodzajProcesu, MapowanieTypowWyliczeniowych, JednostkaPracyEf | @UsedBy: Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | @Task: TASK-015, TASK-016, TASK-017, TASK-018, TASK-019, TASK-126, TASK-127
 using Lemat.Application.Accounts;
 using Lemat.Application.Calibration;
 using Lemat.Application.Classes;
 using Lemat.Application.Common;
+using Lemat.Application.Common.BackgroundJobs;
 using Lemat.Application.Content;
 using Lemat.Application.Grading;
 using Lemat.Application.Models;
 using Lemat.Application.Profile;
 using Lemat.Application.Recommendations;
 using Lemat.Application.Solutions;
+using Lemat.Infrastructure.BackgroundJobs;
 using Lemat.Infrastructure.Persistence.Conventions;
 using Lemat.Infrastructure.Persistence.Interceptors;
 using Lemat.Infrastructure.Persistence.Repositories.Accounts;
@@ -84,6 +86,7 @@ public static class PersistenceRegistration
         uslugi.AddDbContextFactory<LematDbContext>(lifetime: ServiceLifetime.Singleton);
         uslugi.AddScoped<JednostkaPracyEf>();
         uslugi.AddScoped<IJednostkaPracy>(sp => sp.GetRequiredService<JednostkaPracyEf>());
+        uslugi.AddScoped<IZlecaniePrac, ZlecaniePracSql>();
         uslugi.AddScoped<IUzytkownikRepozytorium, UzytkownikRepozytoriumEf>();
         uslugi.AddScoped<IUczenRepozytorium, UczenRepozytoriumEf>();
         uslugi.AddScoped<INauczycielRepozytorium, NauczycielRepozytoriumEf>();
