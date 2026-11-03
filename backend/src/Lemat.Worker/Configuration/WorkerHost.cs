@@ -1,8 +1,16 @@
-// @Role: Kompozycja procesu worker (host ogólny + /zdrowie na porcie 8081, wpięta trwałość PostgreSQL) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, Microsoft.AspNetCore.App | @UsedBy: Lemat.Worker.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003, TASK-004, TASK-121, TASK-126
+// @Role: Kompozycja procesu worker (host ogólny + /zdrowie na porcie 8081, trwałość PostgreSQL, Mocki modeli i pętla prac w tle POC) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, Microsoft.AspNetCore.App | @UsedBy: Lemat.Worker.Program, Lemat.Architecture.Tests.KontenerDiTests | @Task: TASK-003, TASK-004, TASK-121, TASK-126, TASK-128
+using Lemat.Application.Calibration;
 using Lemat.Application.Common;
+using Lemat.Application.Common.BackgroundJobs;
+using Lemat.Application.Content;
 using Lemat.Application.Grading;
+using Lemat.Application.Models;
+using Lemat.Application.Profile;
+using Lemat.Application.Recommendations;
 using Lemat.Application.Solutions;
 using Lemat.Infrastructure.Persistence;
+using Lemat.Models.Mock;
+using Lemat.Worker.Jobs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -10,7 +18,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Lemat.Worker.Configuration;
 
-/// <summary>Buduje host procesu <c>worker</c>; wyłącznie kontrola zdrowia.</summary>
+/// <summary>Buduje host procesu <c>worker</c>: kontrola zdrowia i pętla prac w tle POC.</summary>
 public static class WorkerHost
 {
     public const string DomyslnyAdres = "http://0.0.0.0:8081";
@@ -32,8 +40,18 @@ public static class WorkerHost
         }
 
         builder.Services.DodajPersystencje(opcje, RodzajProcesu.Worker);
+        builder.Services.DodajModulTresci();
+        builder.Services.DodajModulModele();
+        builder.Services.DodajModulKalibracji();
+        builder.Services.DodajModulProfil();
+        builder.Services.DodajModulRekomendacje();
         builder.Services.DodajModulRozwiazan();
         builder.Services.DodajModulOceniania();
+
+        // Potok POC (U-26): Mocki modeli wybierane konfiguracją (w Production dostawca 'mock' kończy start błędem walidacji opcji, ADR-055 p. 6).
+        builder.Services.DodajModeleMock(opcje);
+        builder.Services.DodajPrzetwarzaniePrac();
+        builder.Services.AddHostedService<PocPracaHostedService>();
 
         builder.Logging.ClearProviders();
         builder.Logging.AddJsonConsole();

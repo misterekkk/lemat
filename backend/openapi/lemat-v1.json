@@ -213,6 +213,76 @@
         }
       }
     },
+    "/api/v1/rozwiazania/{id}/zatwierdzenie": {
+      "post": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "ZatwierdzRozwiazanie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZatwierdzenieRozwiazaniaWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RozwiazanieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rozwiazania/{id}/ocena": {
+      "get": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "PobierzOceneRozwiazania",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcenaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rozwiazania/{id}/zdjecia/{zdjecieRozwiazaniaId}/adres": {
       "get": {
         "tags": [
@@ -1353,6 +1423,30 @@
             "items": {
               "$ref": "#/components/schemas/UmiejetnoscZadaniaWyjscie"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZatwierdzenieRozwiazaniaWejscie": {
+        "required": [
+          "transkrypcja_id",
+          "wersja"
+        ],
+        "type": "object",
+        "properties": {
+          "transkrypcja_id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "wersja": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         },
         "additionalProperties": false

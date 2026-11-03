@@ -1,4 +1,4 @@
-// @Role: Składanie RozwiazanieWyjscie z migawek modułów Rozwiązania, Ocenianie i Treści: Transkrypcja (stałe pola POC), Ocena z opisami Kryteriów, nastepne_odpytanie_ms (1000 w stanach przejściowych) | @DependsOn: IRozwiazaniaFasada, IOcenianieFasada, ITresciFasada | @UsedBy: EndpointyRozwiazan | @Task: TASK-127
+// @Role: Składanie RozwiazanieWyjscie z migawek modułów Rozwiązania, Ocenianie i Treści: Transkrypcja (stałe pola POC), Ocena z opisami Kryteriów, nastepne_odpytanie_ms (1000 w stanach przejściowych) | @DependsOn: IRozwiazaniaFasada, IOcenianieFasada, ITresciFasada | @UsedBy: EndpointyRozwiazan | @Task: TASK-127, TASK-128
 using Lemat.Application.Content;
 using Lemat.Application.Grading;
 using Lemat.Application.Solutions;
@@ -20,11 +20,7 @@ public sealed class MapperRozwiazan(IRozwiazaniaFasada rozwiazania, IOcenianieFa
             transkrypcja = Transkrypcja(t);
         }
 
-        OcenaWyjscie? ocena = null;
-        if (r.Status == StatusRozwiazania.Ocenione && await oceny.PobierzAktualnaAsync(r.Id, r.ZadanieWersjaId, ct) is { } o)
-        {
-            ocena = Ocena(o, await tresci.PobierzZadanieDoOcenyAsync(r.ZadanieWersjaId, ct));
-        }
+        var ocena = await ZlozOceneAsync(r, ct);
 
         return new RozwiazanieWyjscie(
             r.Id.Wartosc,
@@ -45,6 +41,18 @@ public sealed class MapperRozwiazan(IRozwiazaniaFasada rozwiazania, IOcenianieFa
             r.UpdatedAt,
             NastepneOdpytanie(r.Status),
             null);
+    }
+
+    /// <summary>Ocena aktualna tylko dla Rozwiązania w statusie <c>OCENIONE</c> (to samo źródło dla pola <c>ocena</c> i GET …/ocena); w pozostałych <c>null</c>.</summary>
+    public async Task<OcenaWyjscie?> ZlozOceneAsync(RozwiazanieSkrot r, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(r);
+        if (r.Status != StatusRozwiazania.Ocenione || await oceny.PobierzAktualnaAsync(r.Id, r.ZadanieWersjaId, ct) is not { } o)
+        {
+            return null;
+        }
+
+        return Ocena(o, await tresci.PobierzZadanieDoOcenyAsync(r.ZadanieWersjaId, ct));
     }
 
     /// <summary>1000 ms w stanach przejściowych POC, <c>null</c> w pozostałych (kontrakt POC 7.5).</summary>

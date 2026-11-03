@@ -1,10 +1,12 @@
-// @Role: Grupa endpointów Rozwiązań Ucznia: POST /rozwiazania (multipart, 202 + Location), GET /rozwiazania (status, kursor), GET /rozwiazania/{id} (odpytywanie), GET …/zdjecia/{id}/adres oraz GET /magazyn-lokalny/{token} (kontrakt POC 7.4 … 7.6, 7.9, 7.10) | @DependsOn: PrzeslijRozwiazanieHandler, IRozwiazaniaFasada, MapperRozwiazan, IOdczytPodpisanegoAdresu, IMagazynObiektow, FiltrScenariuszaMock, KodekKursora | @UsedBy: ApiHost (IGrupaEndpointow) | @Task: TASK-127
+// @Role: Grupa endpointów Rozwiązań Ucznia: POST /rozwiazania (multipart, 202 + Location), GET /rozwiazania (status, kursor), GET /rozwiazania/{id} (odpytywanie), GET …/zdjecia/{id}/adres oraz GET /magazyn-lokalny/{token} oraz POST …/zatwierdzenie (If-Match, 202) i GET …/ocena (kontrakt POC 7.4 … 7.10) | @DependsOn: PrzeslijRozwiazanieHandler, ZatwierdzRozwiazanieHandler, IRozwiazaniaFasada, MapperRozwiazan, IOdczytPodpisanegoAdresu, IMagazynObiektow, FiltrScenariuszaMock, KodekKursora | @UsedBy: ApiHost (IGrupaEndpointow) | @Task: TASK-127, TASK-128
 using System.Globalization;
+using FluentValidation;
 using Lemat.Api.Contracts.Solutions;
 using Lemat.Api.Errors;
 using Lemat.Api.Http;
 using Lemat.Api.Pagination;
 using Lemat.Api.Security;
+using Lemat.Api.Validation;
 using Lemat.Application.Models;
 using Lemat.Application.Solutions;
 using Lemat.Domain.Accounts;
@@ -41,6 +43,17 @@ public sealed class EndpointyRozwiazan : IGrupaEndpointow
             .WithName("PobierzRozwiazanie")
             .RequireAuthorization(PolitykiAutoryzacji.Uczen)
             .Produces<RozwiazanieWyjscie>();
+
+        trasy.MapPost("/api/v1/rozwiazania/{id}/zatwierdzenie", ZatwierdzAsync)
+            .WithName("ZatwierdzRozwiazanie")
+            .RequireAuthorization(PolitykiAutoryzacji.Uczen)
+            .Accepts<ZatwierdzenieRozwiazaniaWejscie>("application/json")
+            .Produces<RozwiazanieWyjscie>(StatusCodes.Status202Accepted);
+
+        trasy.MapGet("/api/v1/rozwiazania/{id}/ocena", OcenaAsync)
+            .WithName("PobierzOceneRozwiazania")
+            .RequireAuthorization(PolitykiAutoryzacji.Uczen)
+            .Produces<OcenaWyjscie>();
 
         trasy.MapGet("/api/v1/rozwiazania/{id}/zdjecia/{zdjecieRozwiazaniaId}/adres", AdresZdjeciaAsync)
             .WithName("AdresZdjeciaRozwiazania")
@@ -165,6 +178,58 @@ public sealed class EndpointyRozwiazan : IGrupaEndpointow
     {
         var skrot = await ZnajdzWlasneAsync(id, rozwiazania, kontekst, ct);
         return Results.Ok(await mapper.ZlozAsync(skrot, ct));
+    }
+
+    private static async Task<IResult> ZatwierdzAsync(
+        string id,
+        ZatwierdzenieRozwiazaniaWejscie wejscie,
+        IValidator<ZatwierdzenieRozwiazaniaWejscie> walidator,
+        ZatwierdzRozwiazanieHandler handler,
+        MapperRozwiazan mapper,
+        HttpContext kontekst,
+        CancellationToken ct)
+    {
+        var oczekiwana = NaglowekIfMatch.Wymagaj(kontekst.Request);
+        await WalidacjaWejscia.WymagajAsync(walidator, wejscie, ct);
+        if (!Guid.TryParse(id, out var rozwiazanieId))
+        {
+            throw new BladApiException(KodBledu.NieZnaleziono);
+        }
+
+        var wynik = await handler.WykonajAsync(
+            new ZatwierdzRozwiazanieWejscie(
+                UczenId.Z(BiezacyUzytkownik.Id(kontekst.User)),
+                new RozwiazanieId(rozwiazanieId),
+                oczekiwana,
+                new TranskrypcjaId(wejscie.TranskrypcjaId!.Value),
+                wejscie.Wersja!.Value),
+            ct);
+
+        switch (wynik.Rodzaj)
+        {
+            case RodzajWynikuZatwierdzenia.Zatwierdzone:
+                return Results.Json(await mapper.ZlozAsync(wynik.Rozwiazanie!, ct), statusCode: StatusCodes.Status202Accepted);
+            case RodzajWynikuZatwierdzenia.NieprawidlowyStan:
+                throw new BladApiException(
+                    KodBledu.RozwiazanieNieprawidlowyStan,
+                    szczegoly: new Dictionary<string, object?> { ["status"] = KonwencjaNazw.PascalNaUpperSnake(wynik.Rozwiazanie!.Status.ToString()) });
+            case RodzajWynikuZatwierdzenia.KonfliktWersji:
+                throw new BladApiException(
+                    KodBledu.KonfliktWersji,
+                    szczegoly: new Dictionary<string, object?> { ["aktualny"] = await mapper.ZlozAsync(wynik.Rozwiazanie!, ct) });
+            case RodzajWynikuZatwierdzenia.TranskrypcjaNieaktualna:
+                throw new BladApiException(KodBledu.TranskrypcjaNieaktualna);
+            default:
+                throw new BladApiException(KodBledu.NieZnaleziono);
+        }
+    }
+
+    private static async Task<IResult> OcenaAsync(string id, IRozwiazaniaFasada rozwiazania, MapperRozwiazan mapper, HttpContext kontekst, CancellationToken ct)
+    {
+        var skrot = await ZnajdzWlasneAsync(id, rozwiazania, kontekst, ct);
+        var ocena = await mapper.ZlozOceneAsync(skrot, ct)
+            ?? throw new BladApiException(KodBledu.NieZnaleziono, "Ocena nie jest jeszcze gotowa.");
+        return Results.Ok(ocena);
     }
 
     private static async Task<IResult> AdresZdjeciaAsync(

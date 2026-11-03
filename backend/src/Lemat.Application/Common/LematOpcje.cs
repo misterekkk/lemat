@@ -1,4 +1,4 @@
-// @Role: Parametry systemu MVP (sekcja 22) wiązane z sekcją Lemat; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | @DependsOn: Microsoft.Extensions.Options | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost, LematOpcjeWalidator | @Task: TASK-004, TASK-123, TASK-127
+// @Role: Parametry systemu MVP (sekcja 22) wiązane z sekcją Lemat; wartości domyślne = tabela 22; wybór implementacji Mock/lokalnych | @DependsOn: Microsoft.Extensions.Options | @UsedBy: Lemat.Api.Configuration.ApiHost, Lemat.Worker.Configuration.WorkerHost, Lemat.Scheduler.Configuration.SchedulerHost, LematOpcjeWalidator | @Task: TASK-004, TASK-123, TASK-127, TASK-128
 namespace Lemat.Application.Common;
 
 /// <summary>
@@ -30,6 +30,7 @@ public sealed class LematOpcje
     public EmailOpcje Email { get; set; } = new();
     public JwtOpcje Jwt { get; set; } = new();
     public KursorOpcje Kursor { get; set; } = new();
+    public PocOpcje Poc { get; set; } = new();
 }
 
 public sealed class BazaOpcje
@@ -165,4 +166,23 @@ public sealed class KursorOpcje
 {
     /// <summary><c>LEMAT_KURSOR_KLUCZ</c>: klucz HMAC podpisu kursora stronicowania (ADR-062 p. 5).</summary>
     public string Klucz { get; set; } = string.Empty;
+}
+
+/// <summary>Parametry zmockowanego potoku POC (kontrakt POC 7.1, U-26): opóźnienia Mocka i pętla odpytywania prac w tle.</summary>
+public sealed class PocOpcje
+{
+    /// <summary><c>Lemat:Poc:OpoznienieRozpoznaniaMs</c>: czas trwania statusu ROZPOZNAWANIE.</summary>
+    public int OpoznienieRozpoznaniaMs { get; set; } = 3000;
+
+    /// <summary><c>Lemat:Poc:OpoznienieOcenyMs</c>: czas trwania statusu OCENIANIE.</summary>
+    public int OpoznienieOcenyMs { get; set; } = 2000;
+
+    /// <summary>Odstęp odpytywania <c>praca_w_tle</c> przez pętlę workera, gdy brak prac.</summary>
+    public int OdpytanieMs { get; set; } = 500;
+
+    /// <summary>Czas dzierżawy pracy w tle; po jego upływie praca wraca do kolejki (odzyskiwanie dzierżaw).</summary>
+    public int DzierzawaSekund { get; set; } = 60;
+
+    /// <summary>Odstęp przed ponowieniem pracy zakończonej błędem.</summary>
+    public int OdstepPonowieniaMs { get; set; } = 2000;
 }

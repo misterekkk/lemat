@@ -1,0 +1,153 @@
+{
+  "zadania": {
+    "a1000000-0000-4000-8000-000000000001": {
+      "zgodnosc_z_zadaniem": 0.95,
+      "kroki": [
+        {
+          "nr": 1,
+          "tekst": "Obliczam odciętą wierzchołka",
+          "latex": "p=\\frac{-b}{2a}=\\frac{-4}{2\\cdot(-1)}=2",
+          "pewnosc_odczytu": 0.97
+        },
+        {
+          "nr": 2,
+          "tekst": "Obliczam wartość funkcji w wierzchołku",
+          "latex": "f(2)=-2^2+4\\cdot 2-3=1",
+          "pewnosc_odczytu": 0.95
+        },
+        {
+          "nr": 3,
+          "tekst": "Odpowiedź",
+          "latex": "W=(2,1),\\ f_{\\max}=1",
+          "pewnosc_odczytu": 0.93
+        }
+      ],
+      "ocena": {
+        "punkty_kryteriow": [
+          1,
+          1
+        ],
+        "pierwszy_bledny_krok": null,
+        "typ_bledu": null,
+        "wskazowka": null
+      }
+    },
+    "a1000000-0000-4000-8000-000000000002": {
+      "zgodnosc_z_zadaniem": 0.95,
+      "kroki": [
+        {
+          "nr": 1,
+          "tekst": "Obliczam wyróżnik",
+          "latex": "\\Delta=(-5)^2-4\\cdot 1\\cdot 6=1",
+          "pewnosc_odczytu": 0.96
+        },
+        {
+          "nr": 2,
+          "tekst": "Obliczam pierwiastki",
+          "latex": "x_1=\\frac{5-1}{2}=2,\\quad x_2=\\frac{5+1}{2}=4",
+          "pewnosc_odczytu": 0.91
+        }
+      ],
+      "ocena": {
+        "punkty_kryteriow": [
+          1,
+          0
+        ],
+        "pierwszy_bledny_krok": 2,
+        "typ_bledu": "RACHUNKOWY",
+        "wskazowka": "Sprawdź jeszcze raz krok 2 — policz ponownie drugi pierwiastek."
+      }
+    },
+    "a1000000-0000-4000-8000-000000000003": {
+      "zgodnosc_z_zadaniem": 0.95,
+      "kroki": [
+        {
+          "nr": 1,
+          "tekst": "Oznaczam cenę przed obniżką jako x",
+          "latex": "0{,}8x=640",
+          "pewnosc_odczytu": 0.95
+        },
+        {
+          "nr": 2,
+          "tekst": "Obliczam x",
+          "latex": "x=\\frac{640}{0{,}8}=800",
+          "pewnosc_odczytu": 0.96
+        },
+        {
+          "nr": 3,
+          "tekst": "Odpowiedź",
+          "latex": "800\\ \\text{zł}",
+          "pewnosc_odczytu": 0.9
+        }
+      ],
+      "ocena": {
+        "punkty_kryteriow": [
+          1,
+          1
+        ],
+        "pierwszy_bledny_krok": null,
+        "typ_bledu": null,
+        "wskazowka": null
+      }
+    },
+    "a1000000-0000-4000-8000-000000000004": {
+      "zgodnosc_z_zadaniem": 0.95,
+      "kroki": [
+        {
+          "nr": 1,
+          "tekst": "Korzystam z jedynki trygonometrycznej",
+          "latex": "\\cos^2\\alpha=1-\\sin^2\\alpha=1-\\frac{9}{25}=\\frac{16}{25}",
+          "pewnosc_odczytu": 0.94
+        },
+        {
+          "nr": 2,
+          "tekst": "Kąt jest ostry, więc cosinus jest dodatni",
+          "latex": "\\cos\\alpha=\\frac{4}{5}",
+          "pewnosc_odczytu": 0.97
+        },
+        {
+          "nr": 3,
+          "tekst": "Obliczam tangens",
+          "latex": "\\operatorname{tg}\\alpha=\\frac{\\cos\\alpha}{\\sin\\alpha}=\\frac{4}{5}:\\frac{3}{5}=\\frac{4}{3}",
+          "pewnosc_odczytu": 0.88
+        }
+      ],
+      "ocena": {
+        "punkty_kryteriow": [
+          1,
+          1,
+          0
+        ],
+        "pierwszy_bledny_krok": 3,
+        "typ_bledu": "MERYTORYCZNY",
+        "wskazowka": "Sprawdź jeszcze raz krok 3 — przypomnij sobie, jak definiuje się tangens kąta."
+      }
+    },
+    "a1000000-0000-4000-8000-000000000005": {
+      "zgodnosc_z_zadaniem": 0.95,
+      "kroki": [
+        {
+          "nr": 1,
+          "tekst": "Obliczam przeciwprostokątną",
+          "latex": "c=6+8=14",
+          "pewnosc_odczytu": 0.95
+        },
+        {
+          "nr": 2,
+          "tekst": "Obliczam promień okręgu opisanego",
+          "latex": "R=\\frac{c}{2}=7",
+          "pewnosc_odczytu": 0.94
+        }
+      ],
+      "ocena": {
+        "punkty_kryteriow": [
+          0,
+          0
+        ],
+        "pierwszy_bledny_krok": 1,
+        "typ_bledu": "MERYTORYCZNY",
+        "wskazowka": "Sprawdź jeszcze raz krok 1 — jakie twierdzenie łączy długości boków trójkąta prostokątnego?"
+      }
+    }
+  }
+}

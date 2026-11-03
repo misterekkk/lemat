@@ -10,4 +10,7 @@
     <PackageReference Include="Microsoft.ML" />
     <PackageReference Include="Microsoft.ML.LightGbm" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Mock\Data\poc-mock.json" LogicalName="Lemat.Models.Mock.Data.poc-mock.json" />
+  </ItemGroup>
 </Project>

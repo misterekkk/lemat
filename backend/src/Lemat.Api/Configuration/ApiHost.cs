@@ -1,4 +1,4 @@
-// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126, TASK-127
+// @Role: Kompozycja procesu api (logi JSON, JSON API, ProblemDetails RFC 9457, nagłówki, kursor, trwałość i moduły Konta/Treści, OpenAPI, adres dev) | @DependsOn: Lemat.Application.Common, Lemat.Infrastructure.Persistence, JsonApi, Lemat.Api.Errors, Lemat.Api.Http | @UsedBy: Lemat.Api.Program, Lemat.Architecture.Tests.KontenerDiTests, Lemat.Api.Tests | @Task: TASK-003, TASK-004, TASK-121, TASK-123, TASK-124, TASK-126, TASK-127, TASK-128
 using System.Reflection;
 using Lemat.Api.Endpoints;
 using Lemat.Api.Errors;
@@ -93,6 +93,7 @@ public static class ApiHost
         builder.Services.DodajUwierzytelnianieJwt();
         builder.Services.AddSingleton<IValidator<RejestracjaWejscie>, RejestracjaWejscieWalidator>();
         builder.Services.AddSingleton<IValidator<LogowanieWejscie>, LogowanieWejscieWalidator>();
+        builder.Services.AddSingleton<IValidator<ZatwierdzenieRozwiazaniaWejscie>, ZatwierdzenieRozwiazaniaWejscieWalidator>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyKont>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyUcznia>();
         builder.Services.AddSingleton<IGrupaEndpointow, EndpointyTresci>();

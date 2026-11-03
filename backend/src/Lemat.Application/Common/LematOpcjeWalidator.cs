@@ -1,4 +1,4 @@
-// @Role: Walidacja LematOpcje przy starcie (Production bez mocków, A-07 retencja, ścieżka magazynu, zakresy) | @DependsOn: LematOpcje, Microsoft.Extensions.Options | @UsedBy: LematKonfiguracja | @Task: TASK-004, TASK-127
+// @Role: Walidacja LematOpcje przy starcie (Production bez mocków, A-07 retencja, ścieżka magazynu, zakresy) | @DependsOn: LematOpcje, Microsoft.Extensions.Options | @UsedBy: LematKonfiguracja | @Task: TASK-004, TASK-127, TASK-128
 using Microsoft.Extensions.Options;
 
 namespace Lemat.Application.Common;
@@ -129,6 +129,14 @@ public sealed class LematOpcjeWalidator : IValidateOptions<LematOpcje>
         {
             bledy.Add("Lemat:Modele:MockOpoznienieMs nie może być ujemne.");
         }
+
+        if (opcje.Poc.OpoznienieRozpoznaniaMs < 0 || opcje.Poc.OpoznienieOcenyMs < 0 || opcje.Poc.OdstepPonowieniaMs < 0)
+        {
+            bledy.Add("Lemat:Poc: opóźnienia i odstęp ponowienia nie mogą być ujemne.");
+        }
+
+        Dodatnie(opcje.Poc.OdpytanieMs, "Poc:OdpytanieMs", bledy);
+        Dodatnie(opcje.Poc.DzierzawaSekund, "Poc:DzierzawaSekund", bledy);
     }
 
     private static void Dodatnie(int wartosc, string klucz, List<string> bledy)

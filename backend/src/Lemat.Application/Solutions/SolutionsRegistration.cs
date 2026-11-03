@@ -1,4 +1,4 @@
-// @Role: Rejestracja w DI usług aplikacyjnych modułu Rozwiązania (fasada) i przypadków użycia zapisu; repozytoria rejestruje warstwa trwałości | @DependsOn: Microsoft.Extensions.DependencyInjection.Abstractions, RozwiazaniaFasada | @UsedBy: Lemat.Api/Worker (hosty), testy | @Task: TASK-126, TASK-127
+// @Role: Rejestracja w DI usług aplikacyjnych modułu Rozwiązania (fasada) i przypadków użycia zapisu; repozytoria rejestruje warstwa trwałości | @DependsOn: Microsoft.Extensions.DependencyInjection.Abstractions, RozwiazaniaFasada | @UsedBy: Lemat.Api/Worker (hosty), testy | @Task: TASK-126, TASK-127, TASK-128
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lemat.Application.Solutions;
@@ -20,6 +20,7 @@ public static class SolutionsRegistration
     {
         ArgumentNullException.ThrowIfNull(uslugi);
         uslugi.AddScoped<PrzeslijRozwiazanieHandler>();
+        uslugi.AddScoped<ZatwierdzRozwiazanieHandler>();
         return uslugi;
     }
 }
