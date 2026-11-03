@@ -3,5 +3,6 @@
     <ProjectReference Include="..\..\src\Lemat.Api\Lemat.Api.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Testcontainers.PostgreSql" />
+    <None Include="Content\zadania-poc.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

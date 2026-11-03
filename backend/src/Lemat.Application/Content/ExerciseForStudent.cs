@@ -1,4 +1,4 @@
-// @Role: Widok Zadania dla Ucznia (bez Rozwiązania wzorcowego, Kryteriów i klucza odpowiedzi) zwracany przez ITresciFasada.PobierzZadanieUczniaAsync; status, zasięg i autor służą autoryzacji w warstwie API | @DependsOn: Lemat.Domain.Content | @UsedBy: moduły Rozwiązania, Rekomendacje, Lemat.Api | @Task: TASK-017
+// @Role: Widok Zadania dla Ucznia (bez Rozwiązania wzorcowego, Kryteriów i klucza odpowiedzi) zwracany przez ITresciFasada.PobierzZadanieUczniaAsync; status, zasięg i autor służą autoryzacji w warstwie API | @DependsOn: Lemat.Domain.Content | @UsedBy: moduły Rozwiązania, Rekomendacje, Lemat.Api | @Task: TASK-017, TASK-125
 using Lemat.Domain.Accounts;
 using Lemat.Domain.Common;
 using Lemat.Domain.Content;
@@ -23,4 +23,12 @@ public sealed record ZadanieUcznia(
     UmiejetnoscId UmiejetnoscGlowna,
     string TrescMd,
     int PunktyMax,
-    OpcjeZamknieteUcznia? Opcje);
+    OpcjeZamknieteUcznia? Opcje,
+    PoziomTrudnosci PoziomTrudnosci,
+    IReadOnlyList<PowiazanieUmiejetnosci> Umiejetnosci);
+
+/// <summary>Pozycja listy Zadań Ucznia w porządku (Poziom trudności, id) — podstawa kursora (kontrakt POC 5.1).</summary>
+public sealed record PozycjaListyZadan(PoziomTrudnosci PoziomTrudnosci, ZadanieId ZadanieId);
+
+/// <summary>Strona Zadań Ucznia; <see cref="MaWiecej"/> = istnieją kolejne pozycje po ostatniej zwróconej.</summary>
+public sealed record StronaZadanUcznia(IReadOnlyList<ZadanieUcznia> Elementy, bool MaWiecej);

@@ -1,4 +1,4 @@
-// @Role: Implementacja ITresciFasada nad repozytoriami Treści (tylko odczyt; mapowanie agregatów na migawki) | @DependsOn: IZadanieRepozytorium, IWkladkaTeoretycznaRepozytorium, IDzialRepozytorium, IUmiejetnoscRepozytorium | @UsedBy: DI (ContentRegistration), moduły przez ITresciFasada | @Task: TASK-017
+// @Role: Implementacja ITresciFasada nad repozytoriami Treści (tylko odczyt; mapowanie agregatów na migawki) | @DependsOn: IZadanieRepozytorium, IWkladkaTeoretycznaRepozytorium, IDzialRepozytorium, IUmiejetnoscRepozytorium | @UsedBy: DI (ContentRegistration), moduły przez ITresciFasada | @Task: TASK-017, TASK-125
 using Lemat.Domain.Content;
 
 namespace Lemat.Application.Content;
@@ -38,11 +38,35 @@ public sealed class TresciFasada(
     public async Task<ZadanieUcznia?> PobierzZadanieUczniaAsync(ZadanieId zadanie, CancellationToken ct)
     {
         var agregat = await zadania.PobierzDoOdczytuAsync(zadanie, ct);
-        if (agregat is null)
-        {
-            return null;
-        }
+        return agregat is null ? null : DlaUcznia(agregat);
+    }
 
+    public async Task<StronaZadanUcznia> ListaZadanUczniaAsync(DzialId? dzial, PozycjaListyZadan? po, int limit, CancellationToken ct)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(limit, 1);
+        var pozycje = await zadania.ListaOpublikowanychAsync(dzial, ct);
+
+        // Porządek (poziom, id jako tekst UUID = porządek PostgreSQL); kursor to ostatnia zwrócona pozycja.
+        var uporzadkowane = pozycje
+            .OrderBy(p => p.PoziomTrudnosci.Wartosc)
+            .ThenBy(p => p.ZadanieId.Wartosc.ToString(), StringComparer.Ordinal)
+            .Where(p => po is null || PrzedPozycja(po, p))
+            .Take(limit + 1)
+            .ToList();
+        var maWiecej = uporzadkowane.Count > limit;
+        var strona = uporzadkowane.Take(limit).ToList();
+
+        var agregaty = (await zadania.PobierzDoOdczytuAsync([.. strona.Select(p => p.ZadanieId)], ct)).ToDictionary(z => z.Id);
+        return new StronaZadanUcznia([.. strona.Where(p => agregaty.ContainsKey(p.ZadanieId)).Select(p => DlaUcznia(agregaty[p.ZadanieId]))], maWiecej);
+    }
+
+    private static bool PrzedPozycja(PozycjaListyZadan kursor, PozycjaListyZadan pozycja) =>
+        pozycja.PoziomTrudnosci.Wartosc > kursor.PoziomTrudnosci.Wartosc
+        || (pozycja.PoziomTrudnosci.Wartosc == kursor.PoziomTrudnosci.Wartosc
+            && string.CompareOrdinal(pozycja.ZadanieId.Wartosc.ToString(), kursor.ZadanieId.Wartosc.ToString()) > 0);
+
+    private static ZadanieUcznia DlaUcznia(Zadanie agregat)
+    {
         var wersja = agregat.AktualnaWersja;
         return new ZadanieUcznia(
             agregat.Id,
@@ -59,7 +83,9 @@ public sealed class TresciFasada(
             wersja.PunktyMax,
             wersja.OpcjeZamkniete is { } opcje
                 ? new OpcjeZamknieteUcznia(opcje.Forma, opcje.Opcje, [.. opcje.Stwierdzenia.Select(s => new StwierdzenieDlaUcznia(s.Id, s.TrescMd))])
-                : null);
+                : null,
+            agregat.PoziomTrudnosciNominalny,
+            agregat.Umiejetnosci);
     }
 
     public Task<IReadOnlyList<ZadanieDoDoboru>> PobierzKandydatowDoboruAsync(FiltrKandydatow filtr, CancellationToken ct)

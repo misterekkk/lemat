@@ -1,4 +1,4 @@
-// @Role: Testy jednostkowe TresciFasada (atrapy repozytoriów): migawka do oceny, widok Ucznia bez klucza, kandydaci doboru, Działy, Umiejętności, opublikowana Wkładka | @DependsOn: TresciFasada, NSubstitute, Lemat.Domain.Content | @UsedBy: dotnet test | @Task: TASK-017
+// @Role: Testy jednostkowe TresciFasada (atrapy repozytoriów): migawka do oceny, widok Ucznia bez klucza, kandydaci doboru, Działy, Umiejętności, opublikowana Wkładka | @DependsOn: TresciFasada, NSubstitute, Lemat.Domain.Content | @UsedBy: dotnet test | @Task: TASK-017, TASK-125
 using Lemat.Application.Content;
 using Lemat.Domain.Common;
 using Lemat.Domain.Content;
@@ -133,6 +133,29 @@ public sealed class ContentFacadeTests
         (await Fasada().PobierzZadanieUczniaAsync(zadanie.Id, Ct))!.Opcje.ShouldBeNull();
         _zadania.PobierzDoOdczytuAsync(new ZadanieId(Guid.NewGuid()), Ct).Returns((Zadanie?)null);
         (await Fasada().PobierzZadanieUczniaAsync(new ZadanieId(Guid.NewGuid()), Ct)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ListaZadanUczniaSortujePoPoziomieIIdOrazStronicujePoKursorze()
+    {
+        var pozycje = new[]
+        {
+            new PozycjaListyZadan(new PoziomTrudnosci(3), new ZadanieId(Guid.Parse("a1000000-0000-4000-8000-000000000004"))),
+            new PozycjaListyZadan(new PoziomTrudnosci(1), new ZadanieId(Guid.Parse("a1000000-0000-4000-8000-000000000005"))),
+            new PozycjaListyZadan(new PoziomTrudnosci(1), new ZadanieId(Guid.Parse("a1000000-0000-4000-8000-000000000002"))),
+        };
+        _zadania.ListaOpublikowanychAsync(null, Ct).Returns(pozycje);
+        _zadania.PobierzDoOdczytuAsync(Arg.Any<IReadOnlyCollection<ZadanieId>>(), Ct).Returns(_ => Task.FromResult<IReadOnlyList<Zadanie>>([Obliczeniowe()]));
+
+        var pierwsza = await Fasada().ListaZadanUczniaAsync(null, null, 2, Ct);
+        var druga = await Fasada().ListaZadanUczniaAsync(null, pozycje[1], 2, Ct);
+
+        pierwsza.MaWiecej.ShouldBeTrue();
+        await _zadania.Received(1).PobierzDoOdczytuAsync(
+            Arg.Is<IReadOnlyCollection<ZadanieId>>(i => i.SequenceEqual(new[] { pozycje[2].ZadanieId, pozycje[1].ZadanieId })), Ct);
+        druga.MaWiecej.ShouldBeFalse();
+        await _zadania.Received(1).PobierzDoOdczytuAsync(
+            Arg.Is<IReadOnlyCollection<ZadanieId>>(i => i.SequenceEqual(new[] { pozycje[0].ZadanieId })), Ct);
     }
 
     [Fact]

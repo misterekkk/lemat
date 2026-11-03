@@ -1,4 +1,4 @@
-// @Role: Repozytorium EF Core agregatu Zadanie (ze śledzeniem do zmiany, bez śledzenia do odczytu, If-Match, po wersji, kandydaci doboru z kalibracją trudności) | @DependsOn: LematDbContext, IZadanieRepozytorium, KalibracjaTrudnosci | @UsedBy: DI (PersistenceRegistration), TresciFasada | @Task: TASK-017
+// @Role: Repozytorium EF Core agregatu Zadanie (ze śledzeniem do zmiany, bez śledzenia do odczytu, If-Match, po wersji, kandydaci doboru z kalibracją trudności) | @DependsOn: LematDbContext, IZadanieRepozytorium, KalibracjaTrudnosci | @UsedBy: DI (PersistenceRegistration), TresciFasada | @Task: TASK-017, TASK-125
 using Lemat.Application.Content;
 using Lemat.Domain.Common;
 using Lemat.Domain.Content;
@@ -21,6 +21,33 @@ public sealed class ZadanieRepozytoriumEf(LematDbContext kontekst) : IZadanieRep
 
     public Task<Zadanie?> PobierzDoOdczytuAsync(ZadanieId id, CancellationToken ct) =>
         kontekst.Set<Zadanie>().AsNoTracking().FirstOrDefaultAsync(z => z.Id == id, ct);
+
+    public async Task<IReadOnlyList<Zadanie>> PobierzDoOdczytuAsync(IReadOnlyCollection<ZadanieId> identyfikatory, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(identyfikatory);
+        if (identyfikatory.Count == 0)
+        {
+            return [];
+        }
+
+        var lista = identyfikatory.ToList();
+        return await kontekst.Set<Zadanie>().AsNoTracking().Where(z => lista.Contains(z.Id)).ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<PozycjaListyZadan>> ListaOpublikowanychAsync(DzialId? dzial, CancellationToken ct)
+    {
+        var zapytanie = kontekst.Set<Zadanie>()
+            .AsNoTracking()
+            .IgnoreAutoIncludes()
+            .Where(z => z.Status == StatusZadania.Opublikowane && z.Zasieg == ZasiegZadania.Globalny);
+        if (dzial is { } wybrany)
+        {
+            zapytanie = zapytanie.Where(z => z.DzialId == wybrany);
+        }
+
+        var pozycje = await zapytanie.Select(z => new { z.Id, z.PoziomTrudnosciNominalny }).ToListAsync(ct);
+        return [.. pozycje.Select(p => new PozycjaListyZadan(p.PoziomTrudnosciNominalny, p.Id))];
+    }
 
     public Task<Zadanie?> PobierzPoWersjiAsync(ZadanieWersjaId wersja, CancellationToken ct) =>
         kontekst.Set<Zadanie>().AsNoTracking().FirstOrDefaultAsync(z => z.Wersje.Any(w => w.Id == wersja), ct);

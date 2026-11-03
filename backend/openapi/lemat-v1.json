@@ -48,6 +48,56 @@
         }
       }
     },
+    "/api/v1/zadania": {
+      "get": {
+        "tags": [
+          "EndpointyTresci"
+        ],
+        "operationId": "ListaZadan",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StronaOfZadanieUczniaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zadania/{id}": {
+      "get": {
+        "tags": [
+          "EndpointyTresci"
+        ],
+        "operationId": "PobierzZadanie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadanieUczniaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/rejestracja": {
       "post": {
         "tags": [
@@ -222,6 +272,23 @@
         },
         "additionalProperties": false
       },
+      "DzialZadaniaWyjscie": {
+        "required": [
+          "id",
+          "nazwa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nazwa": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "FlagiUzytkownika": {
         "required": [
           "weryfikator_globalny",
@@ -237,6 +304,13 @@
           }
         },
         "additionalProperties": false
+      },
+      "FormaZamknieta": {
+        "enum": [
+          "WYBOR_JEDNOKROTNY",
+          "PRAWDA_FALSZ",
+          null
+        ]
       },
       "KlasaUcznia": {
         "required": [
@@ -376,6 +450,13 @@
         },
         "additionalProperties": false
       },
+      "RodzajZadania": {
+        "enum": [
+          "ZAMKNIETE",
+          "OTWARTE_OBLICZENIOWE",
+          "OTWARTE_Z_DOWODEM"
+        ]
+      },
       "RolaRejestracji": {
         "enum": [
           "UCZEN",
@@ -426,6 +507,28 @@
           "ZABLOKOWANE",
           "USUWANE"
         ]
+      },
+      "StronaOfZadanieUczniaWyjscie": {
+        "required": [
+          "elementy",
+          "nastepny_kursor"
+        ],
+        "type": "object",
+        "properties": {
+          "elementy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZadanieUczniaWyjscie"
+            }
+          },
+          "nastepny_kursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "UczenWyjscie": {
         "required": [
@@ -499,6 +602,27 @@
         },
         "additionalProperties": false
       },
+      "UmiejetnoscZadaniaWyjscie": {
+        "required": [
+          "id",
+          "nazwa",
+          "glowna"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nazwa": {
+            "type": "string"
+          },
+          "glowna": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "UzytkownikSesji": {
         "required": [
           "id",
@@ -520,6 +644,72 @@
           },
           "flagi": {
             "$ref": "#/components/schemas/FlagiUzytkownika"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZadanieUczniaWyjscie": {
+        "required": [
+          "id",
+          "zadanie_wersja_id",
+          "rodzaj",
+          "forma_zamknieta",
+          "tresc_md",
+          "zalaczniki",
+          "opcje",
+          "stwierdzenia",
+          "punkty_max",
+          "poziom_trudnosci",
+          "dzial",
+          "umiejetnosci"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "zadanie_wersja_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rodzaj": {
+            "$ref": "#/components/schemas/RodzajZadania"
+          },
+          "forma_zamknieta": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FormaZamknieta"
+              }
+            ]
+          },
+          "tresc_md": {
+            "type": "string"
+          },
+          "zalaczniki": {
+            "type": "array"
+          },
+          "opcje": { },
+          "stwierdzenia": { },
+          "punkty_max": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "poziom_trudnosci": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dzial": {
+            "$ref": "#/components/schemas/DzialZadaniaWyjscie"
+          },
+          "umiejetnosci": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UmiejetnoscZadaniaWyjscie"
+            }
           }
         },
         "additionalProperties": false
