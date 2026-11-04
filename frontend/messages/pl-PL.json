@@ -131,5 +131,27 @@
     "ostatnieBrak": "Brak ocenionych rozwiązań.",
     "dzialyWiersz": "{procent} · Ocenione: {liczba}",
     "ostatniaOcena": "{dzial} · {punkty} z {punktyMax} pkt"
+  },
+  "Zadania": {
+    "naglowek": "Zadania",
+    "ladowanie": "Wczytywanie zadań…",
+    "ponow": "Spróbuj ponownie",
+    "filtrDzialu": "Dział",
+    "wszystkieDzialy": "Wszystkie działy",
+    "pusta": "Brak zadań w wybranym dziale.",
+    "dzial": "Dział: {dzial}",
+    "otworz": "Zobacz zadanie",
+    "wrocDoListy": "Wróć do listy zadań",
+    "szczegolyLadowanie": "Wczytywanie zadania…",
+    "nieZnalezionoTytul": "Nie znaleziono zadania",
+    "nieZnalezionoOpis": "Takie zadanie nie istnieje albo nie jest już dostępne.",
+    "umiejetnosci": "Umiejętności",
+    "umiejetnoscGlowna": "główna",
+    "brakUmiejetnosci": "Brak przypisanych umiejętności.",
+    "przeslij": "Prześlij rozwiązanie",
+    "sekcjaPrzeslania": "Przesłanie rozwiązania",
+    "szczegolyNaglowek": "Zadanie",
+    "trudnoscPunkty": "Poziom trudności: {poziom} z 5 · Punkty do zdobycia: {punkty}",
+    "dzialTrudnoscPunkty": "Dział: {dzial} · Poziom trudności: {poziom} z 5 · Punkty do zdobycia: {punkty}"
   }
 }
