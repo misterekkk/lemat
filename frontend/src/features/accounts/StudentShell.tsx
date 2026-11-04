@@ -1,4 +1,4 @@
-// @Role: Strażnik i powłoka układu Ucznia: bez sesji przekierowanie na /login, nawigacja (Zadania, Rozwiązania, Profil, Ustawienia, Wyloguj) działająca na 375 px | @DependsOn: lib/auth/SessionProvider, next/navigation, ui/Button | @UsedBy: app/(student)/layout | @Task: TASK-133
+// @Role: Strażnik i powłoka układu Ucznia: bez sesji przekierowanie na /login, nawigacja (Zadania, Rozwiązania, Profil, Ustawienia, Wyloguj) działająca na 375 px, link „Przejdź do treści” | @DependsOn: lib/auth/SessionProvider, next/navigation, ui/Button | @UsedBy: app/(student)/layout | @Task: TASK-133, TASK-138
 "use client";
 
 import clsx from "clsx";
@@ -18,6 +18,7 @@ const POZYCJE = [
 
 export function StudentShell({ children }: { children: ReactNode }) {
   const t = useTranslations("Konto");
+  const tStany = useTranslations("Stany");
   const router = useRouter();
   const sciezka = usePathname();
   const sesja = useSession();
@@ -37,6 +38,12 @@ export function StudentShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen">
+      <a
+        href="#tresc"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded-md focus:bg-white focus:p-3 focus:text-blue-700"
+      >
+        {tStany("przejdzDoTresci")}
+      </a>
       <header className="border-b border-slate-200">
         <nav
           aria-label={t("nawigacja.etykieta")}
@@ -66,7 +73,9 @@ export function StudentShell({ children }: { children: ReactNode }) {
           </Button>
         </nav>
       </header>
-      <main className="mx-auto max-w-4xl p-4">{children}</main>
+      <main id="tresc" tabIndex={-1} className="mx-auto max-w-4xl p-4">
+        {children}
+      </main>
     </div>
   );
 }

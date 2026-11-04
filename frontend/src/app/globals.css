@@ -13,3 +13,17 @@ body {
     Roboto,
     sans-serif;
 }
+
+/* TASK-138: widoczny fokus klawiatury dla linków i pól (przyciski mają własne klasy). */
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+main:focus {
+  outline: none;
+}

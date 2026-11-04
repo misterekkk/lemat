@@ -1,15 +1,18 @@
-// @Role: Konfiguracja Next.js: plugin next-intl i rewrites /api/:path* do backendu (dev) | @DependsOn: next-intl/plugin, zmienna LEMAT_API_URL | @UsedBy: next dev/build | @Task: TASK-006
+// @Role: Konfiguracja Next.js: plugin next-intl i rewrites /api/:path* do backendu tylko w trybie real (NEXT_PUBLIC_LEMAT_API) | @DependsOn: next-intl/plugin, lib/api/proxy, zmienne LEMAT_API_URL i NEXT_PUBLIC_LEMAT_API | @UsedBy: next dev/build | @Task: TASK-006, TASK-138
 import createNextIntlPlugin from "next-intl/plugin";
 import type { NextConfig } from "next";
+import { okreslTrybApi, regulyPrzekierowan } from "./src/lib/api/proxy";
 
 const withNextIntl = createNextIntlPlugin("./src/lib/i18n/request.ts");
 
-const adresApi = process.env.LEMAT_API_URL ?? "http://localhost:5080";
+const tryb = okreslTrybApi(process.env.NEXT_PUBLIC_LEMAT_API);
 
 const konfiguracja: NextConfig = {
   output: "standalone",
+  // Wartość zawsze jawna (mock|real), by dead-code elimination usunęła MSW z buildu real.
+  env: { NEXT_PUBLIC_LEMAT_API: tryb },
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${adresApi}/api/:path*` }];
+    return regulyPrzekierowan(tryb, process.env.LEMAT_API_URL);
   },
 };
 

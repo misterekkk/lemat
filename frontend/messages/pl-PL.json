@@ -5,7 +5,10 @@
   },
   "Strona": {
     "naglowek": "Lemat",
-    "opis": "Platforma do nauki do matury z matematyki. Rozwiązuj zadania, zrób zdjęcie kartki i otrzymaj ocenę ze wskazówką."
+    "opis": "Platforma do nauki do matury z matematyki. Rozwiązuj zadania, zrób zdjęcie kartki i otrzymaj ocenę ze wskazówką.",
+    "zaloguj": "Zaloguj się",
+    "zalozKonto": "Załóż konto",
+    "przejdzDoZadan": "Przejdź do zadań"
   },
   "Ui": {
     "zamknij": "Zamknij",
@@ -237,5 +240,18 @@
     "listaPustaLink": "Przejdź do zadań",
     "otworz": "Zobacz rozwiązanie",
     "wiecej": "Pokaż więcej"
+  },
+  "Mock": {
+    "baner": "Dane przykładowe — to tryb demonstracyjny bez serwera, nic nie jest zapisywane na stałe."
+  },
+  "Stany": {
+    "ladowanie": "Wczytywanie…",
+    "bladTytul": "Coś poszło nie tak",
+    "bladOpis": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+    "ponow": "Spróbuj ponownie",
+    "wrocNaStrone": "Wróć na stronę główną",
+    "brakStronyTytul": "Nie znaleziono strony",
+    "brakStronyOpis": "Adres jest nieprawidłowy albo strona została przeniesiona.",
+    "przejdzDoTresci": "Przejdź do treści"
   }
 }

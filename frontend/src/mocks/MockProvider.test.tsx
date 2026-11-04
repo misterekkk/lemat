@@ -1,8 +1,17 @@
-// @Role: Testy MockProvider (warunkowe uruchomienie MSW wg NEXT_PUBLIC_LEMAT_API) i trwałości sesji mocka w localStorage (jsdom) | @DependsOn: mocks/MockProvider, mocks/db, @testing-library/react | @UsedBy: vitest | @Task: TASK-132
+// @Role: Testy MockProvider (warunkowe uruchomienie MSW wg NEXT_PUBLIC_LEMAT_API) i trwałości sesji mocka w localStorage (jsdom) | @DependsOn: mocks/MockProvider, mocks/db, @testing-library/react | @UsedBy: vitest | @Task: TASK-132, TASK-138
 import { render, screen, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import komunikaty from "../../messages/pl-PL.json";
 import { dodajKonto, odswiezSesjeMocka, resetujStan, wystawSesje } from "./db";
 import { MockProvider } from "./MockProvider";
+
+const zIntl = (ui: React.ReactElement) =>
+  render(
+    <NextIntlClientProvider locale="pl-PL" messages={komunikaty}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
 
 const uruchomMock = vi.fn(() => Promise.resolve());
 vi.mock("./browser", () => ({ uruchomMock: () => uruchomMock() }));
@@ -18,17 +27,19 @@ afterEach(() => {
 describe("MockProvider", () => {
   it("w trybie real renderuje dzieci od razu i nie uruchamia MSW", () => {
     vi.stubEnv("NEXT_PUBLIC_LEMAT_API", "real");
-    render(<MockProvider>treść</MockProvider>);
+    zIntl(<MockProvider>treść</MockProvider>);
     expect(screen.getByText("treść")).toBeInTheDocument();
     expect(uruchomMock).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Dane przykładowe/)).not.toBeInTheDocument();
   });
 
   it("w trybie mock wstrzymuje dzieci do uruchomienia workera", async () => {
     vi.stubEnv("NEXT_PUBLIC_LEMAT_API", "mock");
-    render(<MockProvider>treść</MockProvider>);
+    zIntl(<MockProvider>treść</MockProvider>);
     expect(screen.queryByText("treść")).not.toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("treść")).toBeInTheDocument());
     expect(uruchomMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Dane przykładowe/)).toBeInTheDocument();
   });
 });
 

@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "NEXT_PUBLIC_LEMAT_API=mock next dev",
+    "dev:real": "NEXT_PUBLIC_LEMAT_API=real next dev",
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
