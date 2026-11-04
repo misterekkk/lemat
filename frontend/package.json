@@ -18,7 +18,7 @@
     "test": "vitest run",
     "check:headers": "node scripts/check-headers.mjs",
     "gen:api": "node -e \"console.log('gen:api: placeholder do TASK-081')\"",
-    "e2e": "node -e \"console.log('e2e: placeholder do TASK-110')\""
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

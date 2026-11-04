@@ -1,4 +1,4 @@
-// @Role: Konfiguracja ESLint 9 (flat): eslint-config-next, zakaz tekstów na sztywno w JSX, zgodność z Prettier | @DependsOn: eslint-config-next, eslint-config-prettier | @UsedBy: npm run lint | @Task: TASK-006, TASK-131, TASK-132
+// @Role: Konfiguracja ESLint 9 (flat): eslint-config-next, zakaz tekstów na sztywno w JSX, zgodność z Prettier | @DependsOn: eslint-config-next, eslint-config-prettier | @UsedBy: npm run lint | @Task: TASK-006, TASK-131, TASK-132, TASK-139
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import prettier from "eslint-config-prettier/flat";
@@ -12,6 +12,8 @@ const konfiguracja = [
       ".next/**",
       "node_modules/**",
       "coverage/**",
+      "playwright-report/**",
+      "test-results/**",
       "next-env.d.ts",
       "public/mockServiceWorker.js",
     ],

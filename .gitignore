@@ -23,3 +23,7 @@ storage/
 
 # Logi i PID-y procesow uruchamianych przez scripts/dev-up.sh (TASK-130)
 .logs/
+
+# Raporty Playwright (TASK-139)
+playwright-report/
+test-results/
