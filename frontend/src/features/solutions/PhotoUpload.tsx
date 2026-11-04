@@ -1,4 +1,4 @@
-// @Role: Przesłanie zdjęć kartki: wybór 1…5 plików (aparat/galeria), konwersja do JPEG, miniatury z usuwaniem, wysyłka multipart POST /rozwiazania i przejście do ekranu Rozwiązania | @DependsOn: lib/api/client, lib/api/queries, lib/photos/to-jpeg, lib/api/use-error-message, ui/Button | @UsedBy: features/solutions/index, app/(student)/exercises/[exerciseId]/page | @Task: TASK-136
+// @Role: Przesłanie zdjęć kartki: wybór 1…5 plików (aparat/galeria), konwersja do JPEG, miniatury z usuwaniem, wysyłka multipart POST /rozwiazania i przejście do ekranu Rozwiązania | @DependsOn: lib/api/client, lib/api/queries, lib/photos/to-jpeg, lib/api/use-error-message, ui/Button | @UsedBy: features/solutions/index, app/(student)/exercises/[exerciseId]/page | @Task: TASK-136, TASK-137
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -161,6 +161,8 @@ export function PhotoUpload({ zadanieId, konwerter = naJpeg }: PhotoUploadProps)
         zdjecia: zdjecia.map((z) => z.blob),
         scenariusz: scenariuszZeSrodowiska(),
       });
+      klientZapytan.setQueryData(kluczeZapytan.rozwiazanie(rozwiazanie.id), rozwiazanie);
+      void klientZapytan.invalidateQueries({ queryKey: kluczeZapytan.rozwiazania });
       router.push(`/solutions/${rozwiazanie.id}`);
     } catch (e) {
       wysylkaWToku.current = false;

@@ -1,4 +1,4 @@
-// @Role: Zapytania TanStack Query dla danych Ucznia, Działów i uproszczonego Profilu (wspólne klucze i unieważnianie) | @DependsOn: lib/api/client, @tanstack/react-query | @UsedBy: features/accounts, features/profile, features/content | @Task: TASK-134, TASK-135
+// @Role: Zapytania TanStack Query dla danych Ucznia, Działów i uproszczonego Profilu (wspólne klucze i unieważnianie) | @DependsOn: lib/api/client, @tanstack/react-query | @UsedBy: features/accounts, features/profile, features/content, features/solutions | @Task: TASK-134, TASK-135, TASK-137
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +16,10 @@ export const kluczeZapytan = {
   profilUproszczony: ["profil-uproszczony"] as const,
   zadania: (dzialId?: number) => ["zadania", dzialId ?? null] as const,
   zadanie: (zadanieId: string) => ["zadanie", zadanieId] as const,
+  rozwiazania: ["rozwiazania"] as const,
+  rozwiazanie: (rozwiazanieId: string) => ["rozwiazanie", rozwiazanieId] as const,
+  adresZdjecia: (rozwiazanieId: string, zdjecieId: string) =>
+    ["adres-zdjecia", rozwiazanieId, zdjecieId] as const,
 };
 
 export function useUczen() {
