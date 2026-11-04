@@ -153,5 +153,24 @@
     "szczegolyNaglowek": "Zadanie",
     "trudnoscPunkty": "Poziom trudności: {poziom} z 5 · Punkty do zdobycia: {punkty}",
     "dzialTrudnoscPunkty": "Dział: {dzial} · Poziom trudności: {poziom} z 5 · Punkty do zdobycia: {punkty}"
+  },
+  "Przeslanie": {
+    "naglowek": "Zdjęcia kartki",
+    "podpowiedz": "Zrób zdjęcie kartki aparatem albo wybierz pliki z galerii (od 1 do {maks} zdjęć).",
+    "dodaj": "Dodaj zdjęcia kartki",
+    "licznik": "Dodane zdjęcia: {liczba} z {maks}",
+    "przetwarzanie": "Przetwarzanie zdjęć…",
+    "limitZdjec": "Można dodać najwyżej {maks} zdjęć kartki. Nadmiarowe pliki pominęliśmy.",
+    "nieczytelne": "Nie udało się odczytać pliku „{nazwa}”. Zrób zdjęcie ponownie albo użyj formatu JPEG lub PNG.",
+    "zaDuze": "Zdjęcie „{nazwa}” jest zbyt duże nawet po kompresji (maksymalnie 10 MB).",
+    "miniatura": "Zdjęcie kartki {nr}",
+    "usun": "Usuń zdjęcie {nr}",
+    "usunKrotko": "Usuń",
+    "wyslij": "Wyślij do oceny",
+    "wTrakcie": "Wysyłanie…",
+    "bladZdjecia": "Nie udało się przyjąć zdjęcia. Usuń je i zrób nowe zdjęcie kartki.",
+    "istniejace": "Masz już rozwiązanie tego zadania w trakcie przetwarzania.",
+    "przejdzDoRozwiazania": "Przejdź do rozwiązania",
+    "wersjaNieaktualna": "Treść zadania się zmieniła. Odświeżyliśmy zadanie — wyślij zdjęcia ponownie."
   }
 }
