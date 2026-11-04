@@ -10,5 +10,35 @@
   "Ui": {
     "zamknij": "Zamknij",
     "pustaLista": "Brak elementów do wyświetlenia."
+  },
+  "bledy": {
+    "ZAPYTANIE_NIEPRAWIDLOWE": "Nie udało się odczytać wysłanych danych. Spróbuj ponownie.",
+    "KURSOR_NIEPRAWIDLOWY": "Nie udało się wczytać kolejnej strony listy. Odśwież listę.",
+    "NAGLOWEK_NIEPRAWIDLOWY": "Wystąpił błąd aplikacji (niepoprawny nagłówek). Odśwież stronę i spróbuj ponownie.",
+    "NIEUWIERZYTELNIONY": "Nieprawidłowy e-mail lub hasło albo sesja wygasła. Zaloguj się ponownie.",
+    "SESJA_UNIEWAZNIONA": "Twoja sesja wygasła. Zaloguj się ponownie.",
+    "BRAK_UPRAWNIEN": "Nie masz uprawnień do tej czynności.",
+    "KONTO_NIEAKTYWNE": "To konto jest nieaktywne.",
+    "NIE_ZNALEZIONO": "Nie znaleziono wskazanego zasobu.",
+    "METODA_NIEDOZWOLONA": "Ta operacja nie jest dostępna.",
+    "EMAIL_ZAJETY": "Nie udało się założyć konta na ten adres — zaloguj się albo zresetuj hasło.",
+    "ROZWIAZANIE_NIEPRAWIDLOWY_STAN": "Dla tego zadania masz już rozwiązanie w trakcie oceny albo ta operacja nie jest teraz możliwa.",
+    "TRANSKRYPCJA_NIEAKTUALNA": "Transkrypcja jest nieaktualna. Odśwież stronę i sprawdź ją ponownie.",
+    "WERSJA_ZADANIA_NIEAKTUALNA": "Treść zadania się zmieniła. Odśwież stronę i spróbuj ponownie.",
+    "KONFLIKT_WERSJI": "Dane zmieniły się w międzyczasie. Sprawdź aktualne wartości i spróbuj ponownie.",
+    "ZAPYTANIE_ZA_DUZE": "Wysyłane dane są zbyt duże.",
+    "ZDJECIE_ZA_DUZE": "Zdjęcie jest zbyt duże (maksymalnie 10 MB).",
+    "NIEOBSLUGIWANY_FORMAT": "Ten format pliku nie jest obsługiwany. Użyj zdjęcia JPEG.",
+    "WALIDACJA": "Popraw zaznaczone pola.",
+    "ZA_DUZO_ZDJEC": "Dodaj od 1 do 5 zdjęć kartki.",
+    "ZDJECIE_NIEPRAWIDLOWE": "Nie można odczytać zdjęcia. Zrób zdjęcie jeszcze raz.",
+    "WYMAGANY_IF_MATCH": "Wystąpił błąd aplikacji (brak wersji danych). Odśwież stronę i spróbuj ponownie.",
+    "BLAD_WEWNETRZNY": "Wystąpił błąd wewnętrzny. Spróbuj ponownie za chwilę.",
+    "BAZA_NIEDOSTEPNA": "Usługa jest chwilowo niedostępna. Spróbuj ponownie za chwilę.",
+    "BLAD_SIECI": "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.",
+    "PRZERWANO": "Operacja została przerwana.",
+    "BLAD_BRAMY": "Serwer jest chwilowo nieosiągalny. Spróbuj ponownie za chwilę.",
+    "SESJA_TYMCZASOWO_NIEDOSTEPNA": "Nie udało się teraz odświeżyć sesji. Spróbuj ponownie za chwilę.",
+    "NIEZNANY": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
   }
 }

@@ -459,10 +459,10 @@ rozbieżności rozstrzygaj zmianą kontraktu (procedura w POC_CONTRACT.md 10) i 
 
 | Pole | Wartość |
 |---|---|
-| Stan | TASK-131 … 139: 0 / 9 ukończonych |
+| Stan | TASK-131 … 139: 1 / 9 ukończonych (TASK-131 gotowe: `frontend/src/lib/api/{types,errors,client}.ts` — typy kontraktu POC 3–7 jako unie literałów, `BladApi` + `kluczKomunikatuBledu(kod)` → `bledy.<KOD>`, klient z `skonfigurujKlienta({pobierzToken, odswiezSesje, fetchImpl?, bazowyAdres?})`, 16 funkcji endpointów; jedno odświeżenie i jedno ponowienie po 401; `check:headers` zielone; Vitest 60 testów) |
 | Jak uruchomić | (po TASK-138) `npm --prefix frontend install`; `npm --prefix frontend run dev:mock` (MSW, bez backendu) lub `dev:real` (proxy `/api` → `LEMAT_API_URL`, domyślnie `http://localhost:5080`); `npm --prefix frontend run e2e` |
-| Zmienne środowiskowe / konfiguracja | (uzupełnia ścieżka B: `NEXT_PUBLIC_LEMAT_API=mock\|real`, `LEMAT_API_URL`, `NEXT_PUBLIC_LEMAT_MOCK_SCENARIUSZ`, `LEMAT_E2E_REAL`) |
-| Decyzje, odstępstwa, propozycje U-xx/OQ | (brak) |
+| Zmienne środowiskowe / konfiguracja | TASK-131: brak nowych zmiennych (nowe zależności npm: zod, react-hook-form, @hookform/resolvers). (uzupełnia ścieżka B: `NEXT_PUBLIC_LEMAT_API=mock\|real`, `LEMAT_API_URL`, `NEXT_PUBLIC_LEMAT_MOCK_SCENARIUSZ`, `LEMAT_E2E_REAL`) |
+| Decyzje, odstępstwa, propozycje U-xx/OQ | TASK-131: [B] konfiguracja klienta globalna w module (`skonfigurujKlienta`); token i `odswiezSesje` wstrzykuje TASK-133, single-flight odświeżania po stronie wstrzykiwanej funkcji; gdy `odswiezSesje` rzuci `BladApi` (np. `SESJA_UNIEWAZNIONA`) — propagacja, przy `null`/innym błędzie oryginalny 401. [B] Zdjęcia jako `kartka-N.jpg` w polu `zdjecia`; `If-Match: "<version>"`; PATCH `application/merge-patch+json`. [B] Brak `frontend/.env.example` (TASK-132/138). Wskazówki dla TASK-132+: MSW przechwytuje `/api/v1/...`; w testach jsdom ustaw `bazowyAdres` na pełny URL (np. `http://localhost/api/v1`); komunikaty przez `kluczKomunikatuBledu` z fallbackiem `bledy.NIEZNANY`/`problem.detail`; WALIDACJA → `bledyPol[].komunikat` przy polach; `version` z ostatnio odczytanego zasobu, po 412 z `blad.aktualny`. |
 
 ### 12.5 Definicja „POC gotowe” i scenariusz demo
 
@@ -490,6 +490,10 @@ rozbieżności rozstrzygaj zmianą kontraktu (procedura w POC_CONTRACT.md 10) i 
 | ID | Kto zgłasza | Pytanie / rozbieżność | Status / rozstrzygnięcie |
 |---|---|---|---|
 | K-A-01 | [A] (TASK-127) | Kontrakt 7.4: „plik inny niż JPEG → 415”. Zaimplementowano: 415 tylko dla rozpoznanych innych formatów obrazów (PNG/GIF/BMP/TIFF/WEBP/HEIC); plik bez sygnatury JPEG i bez rozpoznanego innego formatu → 422 `ZDJECIE_NIEPRAWIDLOWE`. Prośba o doprecyzowanie zapisu w kontrakcie (sekcja 10 kontraktu). | otwarte |
+| K-B-01 | [B] (TASK-131) | Kontrakt nie wylicza wartości `widocznosc_dla_ucznia` (tylko `PELNA`) — typ ma jedną wartość. | otwarte |
+| K-B-02 | [B] (TASK-131) | Kontrakt nie opisuje `NiepewnyFragment` ani `ZastapienieDanychOsobowych` (w POC zawsze puste) — typy przyjęte z `docs/spec/api.md`. | otwarte |
+| K-B-03 | [B] (TASK-131) | Kontrakt nie rozstrzyga, czy 412 dla `POST …/zatwierdzenie` zwraca `szczegoly.aktualny` jako `RozwiazanieWyjscie`; założono tak, `BladApi.aktualny` typowany `unknown`. | otwarte |
+| K-B-04 | [B] (TASK-131) | `kod_reguly` to zamknięta lista (U-31) — nieznane wartości UI pokazuje komunikatem z serwera. | otwarte |
 
 Zgłoszenia mają prefiks `[A]` lub `[B]` i numer (np. `K-A-01`); rozstrzygnięcie zapisuje się jako zmiana `docs/POC_CONTRACT.md` (wersja `POC-1.x`) albo odpowiedź „bez zmian — kontrakt jest jednoznaczny”.
 
