@@ -89,5 +89,47 @@
       "ustawienia": "Ustawienia",
       "wyloguj": "Wyloguj"
     }
+  },
+  "Ustawienia": {
+    "naglowek": "Ustawienia",
+    "ladowanie": "Wczytywanie danych…",
+    "ponow": "Spróbuj ponownie",
+    "poziomMatury": "Poziom matury",
+    "poziomNieWybrano": "Nie wybrano",
+    "poziom": {
+      "PODSTAWOWY": "Podstawowy",
+      "ROZSZERZONY": "Rozszerzony"
+    },
+    "terminEgzaminu": "Termin egzaminu",
+    "dzial": "Dział do nauki",
+    "wszystkieDzialy": "Wszystkie Działy",
+    "wyslij": "Zapisz zmiany",
+    "wTrakcie": "Zapisywanie…",
+    "zapisano": "Zapisano zmiany.",
+    "konflikt": "Dane zmieniły się w międzyczasie (np. w innej karcie). Wczytaliśmy aktualne wartości — sprawdź je i zapisz ponownie.",
+    "walidacja": {
+      "terminFormat": "Podaj poprawną datę."
+    },
+    "dzialOpcja": "{kod}. {nazwa}"
+  },
+  "Profil": {
+    "naglowek": "Profil ucznia",
+    "ladowanie": "Wczytywanie profilu…",
+    "ponow": "Spróbuj ponownie",
+    "pustyTytul": "Nie masz jeszcze rozwiązań",
+    "pustyOpis": "Rozwiąż pierwsze zadanie, a tutaj pojawią się Twoje wyniki.",
+    "pustyLink": "Przejdź do zadań",
+    "liczbaRozwiazan": "Liczba rozwiązań",
+    "liczbaOcenionych": "Ocenione rozwiązania",
+    "sredniWynik": "Średni wynik",
+    "brakWyniku": "—",
+    "punkty": "{punkty} z {punktyMax} pkt",
+    "dzialyNaglowek": "Wyniki według Działów",
+    "dzialyBrak": "Brak ocenionych rozwiązań w Działach.",
+    "ostatnieNaglowek": "Ostatnie oceny",
+    "ostatnieOtworz": "Zobacz rozwiązanie",
+    "ostatnieBrak": "Brak ocenionych rozwiązań.",
+    "dzialyWiersz": "{procent} · Ocenione: {liczba}",
+    "ostatniaOcena": "{dzial} · {punkty} z {punktyMax} pkt"
   }
 }
