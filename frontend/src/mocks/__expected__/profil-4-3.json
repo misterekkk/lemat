@@ -1,0 +1,18 @@
+{
+  "uczen_id": "c1000000-0000-4000-8000-000000000001",
+  "liczba_rozwiazan": 4,
+  "liczba_ocenionych": 3,
+  "suma_punktow": 3,
+  "suma_punktow_max": 6,
+  "sredni_procent_punktow": 50.0,
+  "dzialy": [
+    { "dzial": { "id": 3, "nazwa": "Równania i nierówności" }, "liczba_ocenionych": 1, "sredni_procent_punktow": 50.0 },
+    { "dzial": { "id": 5, "nazwa": "Funkcje" }, "liczba_ocenionych": 1, "sredni_procent_punktow": 100.0 },
+    { "dzial": { "id": 8, "nazwa": "Planimetria" }, "liczba_ocenionych": 1, "sredni_procent_punktow": 0.0 }
+  ],
+  "ostatnie_oceny": [
+    { "rozwiazanie_id": "d1000000-0000-4000-8000-000000000012", "zadanie_id": "a1000000-0000-4000-8000-000000000005", "dzial": { "id": 8, "nazwa": "Planimetria" }, "punkty": 0, "punkty_max": 2, "oceniono_at": "2026-11-02T10:12:00Z" },
+    { "rozwiazanie_id": "d1000000-0000-4000-8000-000000000011", "zadanie_id": "a1000000-0000-4000-8000-000000000002", "dzial": { "id": 3, "nazwa": "Równania i nierówności" }, "punkty": 1, "punkty_max": 2, "oceniono_at": "2026-11-02T10:08:00Z" },
+    { "rozwiazanie_id": "d1000000-0000-4000-8000-000000000010", "zadanie_id": "a1000000-0000-4000-8000-000000000001", "dzial": { "id": 5, "nazwa": "Funkcje" }, "punkty": 2, "punkty_max": 2, "oceniono_at": "2026-11-02T10:03:00Z" }
+  ]
+}

@@ -2,3 +2,5 @@ node_modules
 .next
 coverage
 package-lock.json
+public/mockServiceWorker.js
+src/mocks/__expected__

@@ -1,0 +1,83 @@
+// @Role: Dane mocka: 13 Działów (POC_CONTRACT 4.2) | @DependsOn: lib/api/types | @UsedBy: mocks/handlers | @Task: TASK-132
+import type { DzialWyjscie } from "@/lib/api/types";
+
+export const DZIALY: DzialWyjscie[] = [
+  {
+    id: 1,
+    kod: "I",
+    nazwa: "Liczby rzeczywiste",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 2,
+    kod: "II",
+    nazwa: "Wyrażenia algebraiczne",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 3,
+    kod: "III",
+    nazwa: "Równania i nierówności",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 4,
+    kod: "IV",
+    nazwa: "Układy równań",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 5,
+    kod: "V",
+    nazwa: "Funkcje",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 6,
+    kod: "VI",
+    nazwa: "Ciągi",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 7,
+    kod: "VII",
+    nazwa: "Trygonometria",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 8,
+    kod: "VIII",
+    nazwa: "Planimetria",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 9,
+    kod: "IX",
+    nazwa: "Geometria analityczna na płaszczyźnie kartezjańskiej",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 10,
+    kod: "X",
+    nazwa: "Stereometria",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 11,
+    kod: "XI",
+    nazwa: "Kombinatoryka",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 12,
+    kod: "XII",
+    nazwa: "Rachunek prawdopodobieństwa i statystyka",
+    poziom_matury: "PODSTAWOWY",
+  },
+  {
+    id: 13,
+    kod: "XIII",
+    nazwa: "Optymalizacja i rachunek różniczkowy",
+    poziom_matury: "ROZSZERZONY",
+  },
+];

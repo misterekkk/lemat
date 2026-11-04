@@ -5,7 +5,7 @@
 | Dokument | `docs/CODEBASE_MAP.md` — **jedyny plik w `docs/` utrzymywany w trakcie implementacji** |
 | Utrzymuje | `handoff-guardian` po każdym `TASK-XXX` (reguły: `CLAUDE.md` 5.2) |
 | Stan kodu | `Lemat.Domain.Profile`/`Recommendations` + `Lemat.Application.Profile`/`Recommendations` + trwałość w `Persistence/{Configurations,Repositories}/{Profile,Recommendations}` (TASK-019: `ProfilUcznia`, `OpanowanieUmiejetnosci`, `WynikZadania`, `TestDiagnostyczny`, `ModelElo`, `SciezkaNauki`, `ElementSciezki`, `Rekomendacja`, `IProfilFasada`, `IRekomendacjeFasada`; hosty jeszcze nie wołają `DodajModulProfil`/`DodajModulRekomendacje`; bez powiązań stron/endpointów); szkielet solucji `backend/` (TASK-001: 9 projektów `src`, puste biblioteki + 4 minimalne `Program.cs`) + 7 projektów testowych `backend/tests` (TASK-002: testy architektury, słownika, nagłówków, ASCII); hosty `api`/`worker`/`scheduler` z `/zdrowie`, dispatcher `Lemat.Tools`, OpenAPI `backend/openapi/lemat-v1.json` (TASK-003); `LematOpcje` (TASK-004); środowisko bazy: `docker-compose.yml` + `scripts/db-*.sh` (TASK-005); szkielet `frontend/` (TASK-006: Next.js App Router, next-intl pl-PL, KaTeX `Wzor`/`TrescMarkdown`, `src/ui`, QueryProvider, `check-headers.mjs`; bez stron biznesowych i bez wywołań API); skrypty weryfikacji `scripts/verify-*.sh` + `.github/workflows/ci.yml` + sekcja „Szybki start” w `README.md` (TASK-007; bez powiązań stron/endpointów); schemat bazy: `Persistence/` w `Lemat.Infrastructure` (`LematDbContext`, migracja SQL `SchematPoczatkowy`, `MigratorBazy`), polecenie `Lemat.Tools migrate`, `backend/tools/extract-ddl.sh`, `PostgresFixture` (TASK-013; bez encji EF); `Lemat.Domain.Accounts` + `Lemat.Application.Accounts` + trwałość Kont w `Persistence/{Configurations,Repositories}/Accounts` (TASK-016: `Uzytkownik`, `Uczen`, `Nauczyciel`, `TokenOdswiezania`, `ProbaLogowania`, `IKontaFasada`, 5 repozytoriów; hosty jeszcze nie wołają `DodajModulKonta`; bez powiązań stron/endpointów); `Lemat.Domain.Common` (TASK-014: `Agregat<TId>`, `IZdarzenieDomenowe`, `IIdentyfikator<T>`, `WyjatekDomenowy`/`NiezmiennikNaruszonyException`, `PoziomMatury`, `RodzajZadania`, `PoziomTrudnosci`, `GeneratorUuid`, `KonwencjaNazw`; bez pakietów, bez powiązań stron/endpointów); `Lemat.Domain.Classes`/`Models`/`Calibration` + `Lemat.Application.Classes`/`Models`/`Calibration` + trwałość w `Persistence/{Configurations,Repositories}/{Classes,Models,Calibration}` (TASK-018: `Klasa`, `CzlonkostwoKlasy`, `KonfiguracjaModelu`, `DecyzjaModelu`, `PlanPytan`, `KalibratorPewnosci`, `ProgPewnosci`, `IKlasyFasada`, `IModeleFasada`, `IKalibracjaFasada`, 5 repozytoriów; hosty jeszcze nie wołają `DodajModulKlasy/Modele/Kalibracji`; bez powiązań stron/endpointów); pozostałe wiersze `planowane` |
-| Ostatnia aktualizacja | 2026-11-04 (TASK-131 [POC-B]) |
+| Ostatnia aktualizacja | 2026-11-04 (TASK-132 [POC-B]) |
 | Źródła planu | `docs/ARCHITECTURE_DETAILED.md` v3.5: 6.2 (moduły), 6.4 (projekty), 6.6 (agenci), 6.7/6.8 (drzewa), 12.3 (endpointy), 13.3 (prace w tle), 18 (RTM); `docs/spec/api.md` 7 (strony ↔ endpointy) |
 
 **Jak czytać.** Kolumna *Status*: `planowane` → `w toku` (TASK `IN_PROGRESS`, rzadko używane) →
@@ -277,10 +277,13 @@ flowchart LR
     CLS["features/classes"]
     VER["features/verifications"]
     LIB["lib: api, auth, sse, katex, i18n, query"]
+    MCK["mocks (MSW, tylko tryb mock)"]
     UI["ui"]
     APP["app (układy grup tras)"]
     APP --> LIB
     APP --> UI
+    APP --> MCK
+    MCK --> LIB
     LRN --> SOL
     CLS --> PRF
     VER --> SOL
@@ -423,7 +426,7 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `backend/tests/Lemat.Domain.Tests/Common/Fnv1aTests.cs` | Testy Fnv1a: wektory referencyjne FNV-1a 32-bit i skrót UUID w kolejności sieciowej | Lemat.Domain.Common.Fnv1a | dotnet test | TASK-016 |
 | `backend/tests/Lemat.Infrastructure.Tests/Persistence/AccountsPersistenceTests.cs` | Testy bazy modułu Konta (PostgreSQL): zapis uzytkownik+uczen w jednej transakcji (FK odroczony), EMAIL_ZAJETY, CHECK weryfikator_globalny, karencja, wersjonowanie/If-Match, tokeny, próby logowania, DI | BazaTestowa, KontaFasada, repozytoria EF Kont, JednostkaPracyEf | dotnet test | TASK-016 |
 
-| `frontend/src/app/layout.tsx` | Główny układ: `<html lang="pl">`, NextIntlClientProvider, QueryClientProvider, style KaTeX | next-intl, lib/query/QueryProvider, globals.css | Next.js App Router (wszystkie trasy) | TASK-006 |
+| `frontend/src/app/layout.tsx` | Główny układ: `<html lang="pl">`, NextIntlClientProvider, QueryClientProvider, MockProvider (MSW), style KaTeX | next-intl, lib/query/QueryProvider, mocks/MockProvider, globals.css | Next.js App Router (wszystkie trasy) | TASK-006, TASK-132 |
 | `frontend/src/app/(public)/layout.tsx` | Układ stref publicznych (bez logowania) | react | Next.js App Router | TASK-006 |
 | `frontend/src/app/(public)/page.tsx` | Strona główna `/` z tekstami z komunikatów | next-intl/server, messages/pl-PL.json | Next.js App Router (trasa `/`) | TASK-006 |
 | `frontend/src/app/(student)/layout.tsx` | Układ strefy Ucznia (strażnik roli UCZEN w kolejnych zadaniach) | react | Next.js App Router | TASK-006 |
@@ -448,9 +451,26 @@ kopiowane z nagłówków plików; rejestr nie zastępuje nagłówków.
 | `frontend/src/lib/api/errors.test.ts` | Testy `BladApi` i kompletności komunikatów `bledy.*` | errors.ts, pl-PL.json | vitest | TASK-131 |
 | `frontend/src/lib/api/contract-examples.test.ts` | Przykłady JSON z kontraktu sprawdzane przez `satisfies` na typach | types.ts | vitest | TASK-131 |
 | `frontend/src/lib/api/fetch-guard.test.ts` | Strażnik: `fetch('/api` tylko w `client.ts` (ESLint + test) | eslint.config.mjs | vitest | TASK-131 |
+| `frontend/src/mocks/db.ts` | Stan mocka w pamięci (konta, sesje, Rozwiązania), przejścia stanów na timerach 0/3000/2000 ms (`version`+1, `nastepne_odpytanie_ms`), profil uproszczony liczony ze stanu, `resetujStan` | mocks/fixtures/*, lib/api/types | mocks/handlers, testy | TASK-132 |
+| `frontend/src/mocks/http.ts` | Pomocniki odpowiedzi mocka: ProblemDetails 1.1, nagłówki, kursor/paginacja | lib/api/types | mocks/handlers | TASK-132 |
+| `frontend/src/mocks/handlers.ts` | Handlery MSW dla endpointów 1–18 kontraktu POC (stanowe; 405/404 dla reszty `/api/v1/*`) ↔ backend `Lemat.Api` (te same ścieżki) | msw, mocks/db, mocks/http, mocks/fixtures/* | mocks/browser, mocks/server | TASK-132 |
+| `frontend/src/mocks/browser.ts` | Worker MSW dla przeglądarki (`NEXT_PUBLIC_LEMAT_API=mock`) | msw/browser, mocks/handlers | mocks/MockProvider | TASK-132 |
+| `frontend/src/mocks/server.ts` | Serwer MSW dla Node (Vitest, Playwright) | msw/node, mocks/handlers | testy komponentów (TASK-133+), e2e | TASK-132 |
+| `frontend/src/mocks/MockProvider.tsx` | Uruchamia Service Worker tylko przy trybie mock (import dynamiczny; kod MSW poza buildem `real`) | mocks/browser (dynamicznie) | app/layout.tsx | TASK-132 |
+| `frontend/src/mocks/fixtures/dzialy.ts` | Dane mocka: 13 Działów (POC_CONTRACT 4.2) | lib/api/types | mocks/db, handlers | TASK-132 |
+| `frontend/src/mocks/fixtures/zadania.ts` | Dane mocka: 5 Zadań w kolejności `GET /zadania` (6.3) | lib/api/types | mocks/db, handlers | TASK-132 |
+| `frontend/src/mocks/fixtures/transkrypcje.ts` | Dane mocka: kroki Transkrypcji per Zadanie (7.2) | lib/api/types | mocks/db | TASK-132 |
+| `frontend/src/mocks/fixtures/oceny.ts` | Dane mocka: Kryteria (6.3) i wyniki Oceny per Zadanie (7.3) | lib/api/types | mocks/db | TASK-132 |
+| `frontend/src/mocks/fixtures/konta.ts` | Dane mocka: konta demo (6.1) i miniatura | lib/api/types | mocks/db | TASK-132 |
+| `frontend/src/mocks/handlers.test.ts` | Testy mocków na `setupServer` (środowisko node): pełny przepływ z fałszywymi timerami, 5 Zadań vs 7.2/7.3, scenariusz `rozpoznanie-nieczytelne`, błędy 1.1 (28 testów) | mocks/server, mocks/__expected__/*.json | vitest | TASK-132 |
+| `frontend/src/mocks/MockProvider.test.tsx` | Testy warunkowego uruchomienia MSW wg zmiennej środowiskowej | mocks/MockProvider | vitest | TASK-132 |
+| `frontend/src/mocks/__expected__/*.json` | Wzorce testów: 5 wycinków JSON z kontraktu (nie `.ts`) | docs/POC_CONTRACT.md | handlers.test.ts | TASK-132 |
+| `frontend/public/mockServiceWorker.js` | Generowany (`msw init`, msw 2.15.0) — bez nagłówka, nie edytować | msw | przeglądarka (tryb mock) | TASK-132 |
+| `frontend/public/mock/kartka-przyklad.jpg` | Mała kartka JPEG do demonstracji mocka | — | mocks/handlers (adres zdjęcia) | TASK-132 |
+| `frontend/.env.example` | `NEXT_PUBLIC_LEMAT_API=mock`, `LEMAT_API_URL` | — | next.config.ts, MockProvider | TASK-132 |
 | `frontend/next.config.ts` | Konfiguracja Next.js: plugin next-intl, `rewrites` `/api/:path*` -> `LEMAT_API_URL` (dev), `output: standalone` | next-intl/plugin, LEMAT_API_URL | next dev/build | TASK-006 |
 | `frontend/vitest.config.ts` | Konfiguracja Vitest (jsdom, alias `@/`) | vitest | npm run test | TASK-006 |
-| `frontend/vitest.setup.ts` | Setup testów: matchery jest-dom, sprzątanie DOM | @testing-library/jest-dom | vitest.config.ts | TASK-006 |
+| `frontend/vitest.setup.ts` | Setup testów: matchery jest-dom, sprzątanie DOM, zapasowy Web Storage dla Node ≥ 25 | @testing-library/jest-dom | vitest.config.ts | TASK-006, TASK-132 |
 | `frontend/scripts/check-headers.mjs` | Sprawdza nagłówki Living Documentation w `.ts/.tsx` frontendu | node:fs, node:path | `npm run check:headers`, `scripts/verify-frontend.sh` (TASK-007) | TASK-006 |
 | `backend/src/Lemat.Application/Content/ContentFacade.cs` | Implementacja ITresciFasada nad repozytoriami Treści (tylko odczyt; mapowanie agregatów na migawki) | IZadanieRepozytorium, IWkladkaTeoretycznaRepozytorium, IDzialRepozytorium, IUmiejetnoscRepozytorium | DI (ContentRegistration), moduły przez ITresciFasada | TASK-017 |
 | `backend/src/Lemat.Application/Content/ContentRegistration.cs` | Rejestracja w DI usług aplikacyjnych modułu Treści (fasada); repozytoria rejestruje warstwa trwałości | Microsoft.Extensions.DependencyInjection.Abstractions, TresciFasada | Lemat.Api/Worker/Scheduler/Tools (Program.cs), testy | TASK-017 |
