@@ -1,0 +1,5 @@
+P:System.DateTime.Now;Użyj TimeProvider (6.5) albo parametru DateTimeOffset teraz
+P:System.DateTime.UtcNow;Użyj TimeProvider (6.5) albo parametru DateTimeOffset teraz
+P:System.DateTime.Today;Użyj TimeProvider (6.5) albo parametru DateTimeOffset teraz
+P:System.DateTimeOffset.Now;Użyj TimeProvider (6.5) albo parametru DateTimeOffset teraz
+P:System.DateTimeOffset.UtcNow;Użyj TimeProvider (6.5) albo parametru DateTimeOffset teraz

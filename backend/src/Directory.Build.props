@@ -1,0 +1,12 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <!-- Reguły 6.5: BannedApiAnalyzers tylko dla projektów produkcyjnych (backend/src). -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../BannedSymbols.txt" Link="BannedSymbols.txt" />
+  </ItemGroup>
+  <!-- SDK dostawców modeli wolno referencjonować wyłącznie w Lemat.Models (NFR-06). -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'Lemat.Models'">
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)../BannedSymbols.Sdk.txt" Link="BannedSymbols.Sdk.txt" />
+  </ItemGroup>
+</Project>

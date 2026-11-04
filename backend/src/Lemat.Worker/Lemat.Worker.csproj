@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <ItemGroup>
+    <ProjectReference Include="..\Lemat.Application\Lemat.Application.csproj" />
+    <ProjectReference Include="..\Lemat.Infrastructure\Lemat.Infrastructure.csproj" />
+    <ProjectReference Include="..\Lemat.Agents\Lemat.Agents.csproj" />
+    <ProjectReference Include="..\Lemat.Models\Lemat.Models.csproj" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

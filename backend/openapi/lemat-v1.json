@@ -1,0 +1,1695 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Lemat.Api | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/zdrowie": {
+      "get": {
+        "tags": [
+          "Lemat.Api"
+        ],
+        "operationId": "PobierzZdrowie",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZdrowieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dzialy": {
+      "get": {
+        "tags": [
+          "EndpointyTresci"
+        ],
+        "operationId": "ListaDzialow",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DzialWyjscie"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zadania": {
+      "get": {
+        "tags": [
+          "EndpointyTresci"
+        ],
+        "operationId": "ListaZadan",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StronaOfZadanieUczniaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/zadania/{id}": {
+      "get": {
+        "tags": [
+          "EndpointyTresci"
+        ],
+        "operationId": "PobierzZadanie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZadanieUczniaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rozwiazania": {
+      "post": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "PrzeslijRozwiazanie",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "zadanie_wersja_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "element_sciezki_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "przypisanie_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "Pliki": {
+                        "$ref": "#/components/schemas/IFormFileCollection"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RozwiazanieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "ListaRozwiazan",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StronaOfRozwiazanieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rozwiazania/{id}": {
+      "get": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "PobierzRozwiazanie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RozwiazanieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rozwiazania/{id}/zatwierdzenie": {
+      "post": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "ZatwierdzRozwiazanie",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZatwierdzenieRozwiazaniaWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RozwiazanieWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rozwiazania/{id}/ocena": {
+      "get": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "PobierzOceneRozwiazania",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OcenaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rozwiazania/{id}/zdjecia/{zdjecieRozwiazaniaId}/adres": {
+      "get": {
+        "tags": [
+          "EndpointyRozwiazan"
+        ],
+        "operationId": "AdresZdjeciaRozwiazania",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "zdjecieRozwiazaniaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdresZdjeciaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/uczniowie/ja/profil-uproszczony": {
+      "get": {
+        "tags": [
+          "EndpointyProfilu"
+        ],
+        "operationId": "PobierzProfilUproszczony",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfilUproszczonyWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/rejestracja": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "ZarejestrujUzytkownika",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejestracjaWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RejestracjaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logowanie": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "Zaloguj",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogowanieWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesjaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/odswiezenie": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "OdswiezSesje",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesjaWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/wylogowanie": {
+      "post": {
+        "tags": [
+          "EndpointyKont"
+        ],
+        "operationId": "Wyloguj",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/uczniowie/ja": {
+      "get": {
+        "tags": [
+          "EndpointyUcznia"
+        ],
+        "operationId": "PobierzUcznia",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UczenWyjscie"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "EndpointyUcznia"
+        ],
+        "operationId": "ZmienUcznia",
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZmianaUczniaWejscie"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZmianaUczniaWejscie"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UczenWyjscie"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdresZdjeciaWyjscie": {
+        "required": [
+          "url",
+          "wygasa_at"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "wygasa_at": {
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DzialProfiluWyjscie": {
+        "required": [
+          "id",
+          "nazwa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nazwa": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DzialUproszczony": {
+        "required": [
+          "dzial",
+          "liczba_ocenionych",
+          "sredni_procent_punktow"
+        ],
+        "type": "object",
+        "properties": {
+          "dzial": {
+            "$ref": "#/components/schemas/DzialProfiluWyjscie"
+          },
+          "liczba_ocenionych": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sredni_procent_punktow": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DzialWyjscie": {
+        "required": [
+          "id",
+          "kod",
+          "nazwa",
+          "poziom_matury"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kod": {
+            "type": "string"
+          },
+          "nazwa": {
+            "type": "string"
+          },
+          "poziom_matury": {
+            "$ref": "#/components/schemas/PoziomMatury"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DzialZadaniaWyjscie": {
+        "required": [
+          "id",
+          "nazwa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nazwa": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FlagiUzytkownika": {
+        "required": [
+          "weryfikator_globalny",
+          "recenzent_tresci"
+        ],
+        "type": "object",
+        "properties": {
+          "weryfikator_globalny": {
+            "type": "boolean"
+          },
+          "recenzent_tresci": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormaZamknieta": {
+        "enum": [
+          "WYBOR_JEDNOKROTNY",
+          "PRAWDA_FALSZ",
+          null
+        ]
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "IFormFileCollection": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/IFormFile"
+        }
+      },
+      "KlasaUcznia": {
+        "required": [
+          "id",
+          "nazwa",
+          "nauczyciel"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nazwa": {
+            "type": "string"
+          },
+          "nauczyciel": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KodBleduRozpoznawania": {
+        "enum": [
+          "NIECZYTELNE",
+          "PRZEKROCZONY_CZAS",
+          "BLAD_DOSTAWCY",
+          "ZBYT_WIELE_KROKOW",
+          null
+        ]
+      },
+      "KrokTranskrypcjiWyjscie": {
+        "required": [
+          "nr",
+          "tekst",
+          "latex",
+          "pewnosc_odczytu",
+          "niepewne_fragmenty",
+          "zmieniony_przez_ucznia",
+          "nr_kroku_agenta",
+          "wymaga_sprawdzenia",
+          "podejrzenie_danych_osobowych",
+          "tylko_dane_osobowe",
+          "zastapienia_danych_osobowych"
+        ],
+        "type": "object",
+        "properties": {
+          "nr": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "tekst": {
+            "type": "string"
+          },
+          "latex": {
+            "type": "string"
+          },
+          "pewnosc_odczytu": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "niepewne_fragmenty": {
+            "type": "array"
+          },
+          "zmieniony_przez_ucznia": {
+            "type": "boolean"
+          },
+          "nr_kroku_agenta": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int16"
+          },
+          "wymaga_sprawdzenia": {
+            "type": "boolean"
+          },
+          "podejrzenie_danych_osobowych": {
+            "type": "boolean"
+          },
+          "tylko_dane_osobowe": {
+            "type": "boolean"
+          },
+          "zastapienia_danych_osobowych": {
+            "type": "array"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KryteriumOcenyWyjscie": {
+        "required": [
+          "nr_kryterium",
+          "opis",
+          "punkty",
+          "punkty_max",
+          "prawdopodobienstwo"
+        ],
+        "type": "object",
+        "properties": {
+          "nr_kryterium": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "opis": {
+            "type": "string"
+          },
+          "punkty": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "punkty_max": {
+            "type": "number",
+            "format": "double"
+          },
+          "prawdopodobienstwo": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LogowanieWejscie": {
+        "required": [
+          "email",
+          "haslo"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "haslo": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OcenaWyjscie": {
+        "required": [
+          "id",
+          "wersja",
+          "status",
+          "zrodlo",
+          "widocznosc_dla_ucznia",
+          "punkty",
+          "punkty_max",
+          "wariant",
+          "kryteria",
+          "pierwszy_bledny_krok",
+          "brakujacy_krok",
+          "typ_bledu",
+          "krok_podejrzany_odczyt",
+          "mozliwy_blad_odczytu",
+          "wskazowka",
+          "wskazowka_w_przygotowaniu",
+          "uzasadnienie",
+          "pewnosc_oceny",
+          "komunikat",
+          "mozliwe_zgloszenie_do",
+          "created_at"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "wersja": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusOceny"
+          },
+          "zrodlo": {
+            "$ref": "#/components/schemas/ZrodloOceny"
+          },
+          "widocznosc_dla_ucznia": {
+            "$ref": "#/components/schemas/WidocznoscOcenyDlaUcznia"
+          },
+          "punkty": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "punkty_max": {
+            "type": "number",
+            "format": "double"
+          },
+          "wariant": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "kryteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KryteriumOcenyWyjscie"
+            }
+          },
+          "pierwszy_bledny_krok": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int16"
+          },
+          "brakujacy_krok": {
+            "type": "boolean"
+          },
+          "typ_bledu": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TypBledu"
+              }
+            ]
+          },
+          "krok_podejrzany_odczyt": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int16"
+          },
+          "mozliwy_blad_odczytu": {
+            "type": "boolean"
+          },
+          "wskazowka": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wskazowka_w_przygotowaniu": {
+            "type": "boolean"
+          },
+          "uzasadnienie": {
+            "type": "string"
+          },
+          "pewnosc_oceny": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "komunikat": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mozliwe_zgloszenie_do": {
+            "format": "date-time"
+          },
+          "created_at": {
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OpcjonalneOfboolean": {
+        "type": [
+          "null",
+          "boolean"
+        ]
+      },
+      "OpcjonalneOfDateOnly": {
+        "type": [
+          "null",
+          "string"
+        ],
+        "format": "date"
+      },
+      "OpcjonalneOfint": {
+        "type": [
+          "null",
+          "integer"
+        ],
+        "format": "int32"
+      },
+      "OpcjonalneOfPoziomMatury": {
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/components/schemas/PoziomMatury"
+          }
+        ]
+      },
+      "OstatniaOcenaSkrot": {
+        "required": [
+          "rozwiazanie_id",
+          "zadanie_id",
+          "dzial",
+          "punkty",
+          "punkty_max",
+          "oceniono_at"
+        ],
+        "type": "object",
+        "properties": {
+          "rozwiazanie_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "zadanie_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dzial": {
+            "$ref": "#/components/schemas/DzialProfiluWyjscie"
+          },
+          "punkty": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "punkty_max": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "oceniono_at": {
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PoziomMatury": {
+        "enum": [
+          "PODSTAWOWY",
+          "ROZSZERZONY"
+        ]
+      },
+      "ProfilUproszczonyWyjscie": {
+        "required": [
+          "uczen_id",
+          "liczba_rozwiazan",
+          "liczba_ocenionych",
+          "suma_punktow",
+          "suma_punktow_max",
+          "sredni_procent_punktow",
+          "dzialy",
+          "ostatnie_oceny"
+        ],
+        "type": "object",
+        "properties": {
+          "uczen_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "liczba_rozwiazan": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "liczba_ocenionych": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "suma_punktow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "suma_punktow_max": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sredni_procent_punktow": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "dzialy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DzialUproszczony"
+            }
+          },
+          "ostatnie_oceny": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OstatniaOcenaSkrot"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "RejestracjaWejscie": {
+        "required": [
+          "email",
+          "haslo",
+          "imie",
+          "nazwisko",
+          "rola",
+          "oswiadczenie_wieku_16",
+          "zgoda_regulamin"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "haslo": {
+            "type": "string"
+          },
+          "imie": {
+            "type": "string"
+          },
+          "nazwisko": {
+            "type": "string"
+          },
+          "rola": {
+            "$ref": "#/components/schemas/RolaRejestracji"
+          },
+          "oswiadczenie_wieku_16": {
+            "type": "boolean"
+          },
+          "zgoda_regulamin": {
+            "type": "boolean"
+          },
+          "kod_zaproszenia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RejestracjaWyjscie": {
+        "required": [
+          "status_konta",
+          "sesja"
+        ],
+        "type": "object",
+        "properties": {
+          "status_konta": {
+            "$ref": "#/components/schemas/StatusKonta"
+          },
+          "sesja": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SesjaWyjscie"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RodzajZadania": {
+        "enum": [
+          "ZAMKNIETE",
+          "OTWARTE_OBLICZENIOWE",
+          "OTWARTE_Z_DOWODEM"
+        ]
+      },
+      "RolaRejestracji": {
+        "enum": [
+          "UCZEN",
+          "NAUCZYCIEL"
+        ]
+      },
+      "RolaUzytkownika": {
+        "enum": [
+          "UCZEN",
+          "NAUCZYCIEL",
+          "ADMINISTRATOR"
+        ]
+      },
+      "RozwiazanieWyjscie": {
+        "required": [
+          "id",
+          "zadanie_id",
+          "zadanie_wersja_id",
+          "status",
+          "element_sciezki_id",
+          "przypisanie_id",
+          "zdjecia",
+          "liczba_przeslan",
+          "liczba_ponowien_rozpoznania",
+          "kod_bledu_rozpoznawania",
+          "transkrypcja",
+          "ocena",
+          "weryfikacja",
+          "version",
+          "created_at",
+          "updated_at",
+          "nastepne_odpytanie_ms",
+          "szkic_transkrypcji"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "zadanie_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "zadanie_wersja_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusRozwiazania"
+          },
+          "element_sciezki_id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "przypisanie_id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "zdjecia": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZdjecieRozwiazaniaWyjscie"
+            }
+          },
+          "liczba_przeslan": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "liczba_ponowien_rozpoznania": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "kod_bledu_rozpoznawania": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/KodBleduRozpoznawania"
+              }
+            ]
+          },
+          "transkrypcja": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TranskrypcjaWyjscie"
+              }
+            ]
+          },
+          "ocena": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OcenaWyjscie"
+              }
+            ]
+          },
+          "weryfikacja": { },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "created_at": {
+            "format": "date-time"
+          },
+          "updated_at": {
+            "format": "date-time"
+          },
+          "nastepne_odpytanie_ms": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "szkic_transkrypcji": { }
+        },
+        "additionalProperties": false
+      },
+      "SesjaWyjscie": {
+        "required": [
+          "access_token",
+          "wygasa_at",
+          "uzytkownik"
+        ],
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "wygasa_at": {
+            "format": "date-time"
+          },
+          "uzytkownik": {
+            "$ref": "#/components/schemas/UzytkownikSesji"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StanTestuDiagnostycznego": {
+        "enum": [
+          "BRAK",
+          "W_TOKU",
+          "ZAKONCZONY",
+          "POMINIETY",
+          "NIEDOSTEPNY"
+        ]
+      },
+      "StatusKonta": {
+        "enum": [
+          "AKTYWNE",
+          "OCZEKUJE_NA_ZATWIERDZENIE",
+          "ZABLOKOWANE",
+          "USUWANE"
+        ]
+      },
+      "StatusOceny": {
+        "enum": [
+          "WSTEPNA",
+          "OSTATECZNA",
+          "ZASTAPIONA"
+        ]
+      },
+      "StatusRozwiazania": {
+        "enum": [
+          "PRZESLANE",
+          "ROZPOZNAWANIE",
+          "BLAD_ROZPOZNAWANIA",
+          "TRANSKRYPCJA_GOTOWA",
+          "ZATWIERDZONE",
+          "OCENIANIE",
+          "OCZEKUJE_NA_WERYFIKACJE",
+          "OCENIONE",
+          "PORZUCONE",
+          "ANULOWANE"
+        ]
+      },
+      "StronaOfRozwiazanieWyjscie": {
+        "required": [
+          "elementy",
+          "nastepny_kursor"
+        ],
+        "type": "object",
+        "properties": {
+          "elementy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RozwiazanieWyjscie"
+            }
+          },
+          "nastepny_kursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "StronaOfZadanieUczniaWyjscie": {
+        "required": [
+          "elementy",
+          "nastepny_kursor"
+        ],
+        "type": "object",
+        "properties": {
+          "elementy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ZadanieUczniaWyjscie"
+            }
+          },
+          "nastepny_kursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "TranskrypcjaWyjscie": {
+        "required": [
+          "id",
+          "wersja",
+          "zrodlo",
+          "przeslanie_nr",
+          "zgodnosc_z_zadaniem",
+          "kroki",
+          "created_at",
+          "zakres_poprawek",
+          "konflikt_filtra",
+          "zgodnosc_poprawek"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "wersja": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "zrodlo": {
+            "$ref": "#/components/schemas/ZrodloTranskrypcji"
+          },
+          "przeslanie_nr": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "zgodnosc_z_zadaniem": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "kroki": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KrokTranskrypcjiWyjscie"
+            }
+          },
+          "created_at": {
+            "format": "date-time"
+          },
+          "zakres_poprawek": { },
+          "konflikt_filtra": {
+            "type": "boolean"
+          },
+          "zgodnosc_poprawek": { }
+        },
+        "additionalProperties": false
+      },
+      "TypBledu": {
+        "enum": [
+          "RACHUNKOWY",
+          "MERYTORYCZNY",
+          "NIEPELNE_ROZWIAZANIE",
+          null
+        ]
+      },
+      "UczenWyjscie": {
+        "required": [
+          "id",
+          "email",
+          "imie",
+          "nazwisko",
+          "poziom_matury",
+          "termin_egzaminu",
+          "wybrany_dzial_id",
+          "zgoda_na_trening",
+          "test_diagnostyczny",
+          "klasy",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "imie": {
+            "type": "string"
+          },
+          "nazwisko": {
+            "type": "string"
+          },
+          "poziom_matury": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PoziomMatury"
+              }
+            ]
+          },
+          "termin_egzaminu": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "wybrany_dzial_id": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "zgoda_na_trening": {
+            "type": "boolean"
+          },
+          "test_diagnostyczny": {
+            "$ref": "#/components/schemas/StanTestuDiagnostycznego"
+          },
+          "klasy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KlasaUcznia"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UmiejetnoscZadaniaWyjscie": {
+        "required": [
+          "id",
+          "nazwa",
+          "glowna"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nazwa": {
+            "type": "string"
+          },
+          "glowna": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UzytkownikSesji": {
+        "required": [
+          "id",
+          "rola",
+          "imie",
+          "flagi"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rola": {
+            "$ref": "#/components/schemas/RolaUzytkownika"
+          },
+          "imie": {
+            "type": "string"
+          },
+          "flagi": {
+            "$ref": "#/components/schemas/FlagiUzytkownika"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WidocznoscOcenyDlaUcznia": {
+        "enum": [
+          "PELNA",
+          "WSTRZYMANA_BLAD_ODCZYTU"
+        ]
+      },
+      "ZadanieUczniaWyjscie": {
+        "required": [
+          "id",
+          "zadanie_wersja_id",
+          "rodzaj",
+          "forma_zamknieta",
+          "tresc_md",
+          "zalaczniki",
+          "opcje",
+          "stwierdzenia",
+          "punkty_max",
+          "poziom_trudnosci",
+          "dzial",
+          "umiejetnosci"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "zadanie_wersja_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rodzaj": {
+            "$ref": "#/components/schemas/RodzajZadania"
+          },
+          "forma_zamknieta": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FormaZamknieta"
+              }
+            ]
+          },
+          "tresc_md": {
+            "type": "string"
+          },
+          "zalaczniki": {
+            "type": "array"
+          },
+          "opcje": { },
+          "stwierdzenia": { },
+          "punkty_max": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "poziom_trudnosci": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dzial": {
+            "$ref": "#/components/schemas/DzialZadaniaWyjscie"
+          },
+          "umiejetnosci": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UmiejetnoscZadaniaWyjscie"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZatwierdzenieRozwiazaniaWejscie": {
+        "required": [
+          "transkrypcja_id",
+          "wersja"
+        ],
+        "type": "object",
+        "properties": {
+          "transkrypcja_id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "wersja": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZdjecieRozwiazaniaWyjscie": {
+        "required": [
+          "id",
+          "przeslanie_nr",
+          "kolejnosc",
+          "dostepne"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "przeslanie_nr": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "kolejnosc": {
+            "type": "integer",
+            "format": "int16"
+          },
+          "dostepne": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZdrowieWyjscie": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZmianaUczniaWejscie": {
+        "type": "object",
+        "properties": {
+          "poziom_matury": {
+            "$ref": "#/components/schemas/OpcjonalneOfPoziomMatury"
+          },
+          "termin_egzaminu": {
+            "$ref": "#/components/schemas/OpcjonalneOfDateOnly"
+          },
+          "wybrany_dzial_id": {
+            "$ref": "#/components/schemas/OpcjonalneOfint"
+          },
+          "zgoda_na_trening": {
+            "$ref": "#/components/schemas/OpcjonalneOfboolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ZrodloOceny": {
+        "enum": [
+          "AUTOMATYCZNA",
+          "NAUCZYCIEL"
+        ]
+      },
+      "ZrodloTranskrypcji": {
+        "enum": [
+          "AGENT_ROZPOZNAJACY",
+          "POPRAWKA_UCZNIA"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Lemat.Api"
+    },
+    {
+      "name": "EndpointyTresci"
+    },
+    {
+      "name": "EndpointyRozwiazan"
+    },
+    {
+      "name": "EndpointyProfilu"
+    },
+    {
+      "name": "EndpointyKont"
+    },
+    {
+      "name": "EndpointyUcznia"
+    }
+  ]
+}

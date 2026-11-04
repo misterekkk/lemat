@@ -1196,7 +1196,7 @@ Poprawki C6-01 … C6-04 są lokalne (kontrakt `IZlecaniePrac`/`IJednostkaPracy`
 
 ## Iteracja 7 (v3.1 — agenci AI i dane)
 
-Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10 + Next.js”). Zakres: 3.6, 7, 10, 13, `docs/spec/ddl.md`, `docs/spec/ef-core.md`, `docs/spec/prompty.md`, ADR-056 … ADR-059, uzupełnienia 3.1 ADR-020/023/049/051/052/053/054/055 i mapowanie C6 w `ARCHITECTURE_CHANGELOG.md`. Sekcje 12, 14 i 15 mają notkę „do przepisania w iteracji 3”, więc ich kod pythonowy nie jest w tej rundzie oceniany.
+Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10 + Next.js”). Zakres: 3.6, 7, 10, 13, `docs/spec/ddl.md`, `docs/spec/ef-core.md`, `docs/spec/prompts.md`, ADR-056 … ADR-059, uzupełnienia 3.1 ADR-020/023/049/051/052/053/054/055 i mapowanie C6 w `ARCHITECTURE_CHANGELOG.md`. Sekcje 12, 14 i 15 mają notkę „do przepisania w iteracji 3”, więc ich kod pythonowy nie jest w tej rundzie oceniany.
 
 **Weryfikacja uwag iteracji 6.** Wszystkie 15 uwag (C6-01 … C6-15) są ZAMKNIĘTE. Statusy z uzasadnieniem są wpisane przy uwagach. C6-10 jest zamknięta w p. 1, 3 i 4, a niedziałający mechanizm limitu wywołań z p. 2 przechodzi do C7-01.
 
@@ -1231,7 +1231,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 | `KernelFunction.WithKernel(Kernel)` | istnieje (kompiluje się); `KernelFunction : FullyQualifiedAIFunction : AIFunction` | nazwa narzędzia widziana przez model = `sympy_sprawdz_rownowaznosc` (C7-01) |
 | `DelegatingAIFunction` (`InvokeCoreAsync`) | istnieje (`Microsoft.Extensions.AI.Abstractions` 10.11) | — |
 | `FunctionInvokingChatClient.MaximumIterationsPerRequest`, `AllowConcurrentInvocation`, `MaximumConsecutiveErrorsPerRequest` | istnieją | semantyka inna niż w ADR-058 (C7-01) |
-| `ChatOptions.AllowMultipleToolCalls`, `ChatResponseFormat.ForJsonSchema`, `ChatToolMode.Auto`, `DataContent`, `AIJsonUtilities.CreateJsonSchema` | istnieją | schemat generowany różni się od schematów `prompty.md` (C7-09) |
+| `ChatOptions.AllowMultipleToolCalls`, `ChatResponseFormat.ForJsonSchema`, `ChatToolMode.Auto`, `DataContent`, `AIJsonUtilities.CreateJsonSchema` | istnieją | schemat generowany różni się od schematów `prompts.md` (C7-09) |
 | `ChatClientBuilder.UseOpenTelemetry(sourceName:, configure: c => c.EnableSensitiveData = false)`, `UseFunctionInvocation(configure:)` | istnieją | kolejność potoku gubi spany `execute_tool` (C7-02) |
 | `ChatClientBuilder.Use(new LimitCzasuChatClient(…))` (ADR-058 p. 3) | **nie kompiluje się** (CS1503) | `Use` przyjmuje fabrykę `Func<IChatClient, IChatClient>`; poprawnie `.Use(wewn => new LimitCzasuChatClient(wewn, …))` (C7-02) |
 | `KernelPluginFactory.CreateFromObject`, `KernelFunctionYaml.ToPromptTemplateConfig`, `KernelPromptTemplateFactory.Create(…).RenderAsync` | istnieją | renderowanie koduje wartości zmiennych HTML-em (C7-14) |
@@ -1245,11 +1245,11 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-01: Limit wywołań funkcji Agenta generującego nie działa tak, jak opisano, a nazwy narzędzi w prompcie, danych Mock i teście są błędne
 - **Waga:** WYSOKA
-- **Lokalizacja:** ADR-058 p. 3 (`MaximumIterationsPerRequest = parametry.MaksIteracjiFunkcji ?? 1`, `MaximumConsecutiveErrorsPerRequest = 1`), p. 4 (`FunkcjaZLimitem`, „wywołanie nr `limit + 1` rzuca `BladModeluTrwalyException`”, `MaximumIterationsPerRequest = 8` jako „druga linia obrony”), p. 7 (`LimitWywolanFunkcjiTests`); 10.2.4 (`KernelPluginFactory.CreateFromObject(…, "sympy")`); 10.2.5 (test „9 żądań wywołań → zlecenie z przyczyną `LIMIT_WYWOLAN_FUNKCJI`”); `prompty.md` 4.3 i 6 (`"nazwa": "sprawdz_rownowaznosc"`); 10.0.4 (termin 60 s)
+- **Lokalizacja:** ADR-058 p. 3 (`MaximumIterationsPerRequest = parametry.MaksIteracjiFunkcji ?? 1`, `MaximumConsecutiveErrorsPerRequest = 1`), p. 4 (`FunkcjaZLimitem`, „wywołanie nr `limit + 1` rzuca `BladModeluTrwalyException`”, `MaximumIterationsPerRequest = 8` jako „druga linia obrony”), p. 7 (`LimitWywolanFunkcjiTests`); 10.2.4 (`KernelPluginFactory.CreateFromObject(…, "sympy")`); 10.2.5 (test „9 żądań wywołań → zlecenie z przyczyną `LIMIT_WYWOLAN_FUNKCJI`”); `prompts.md` 4.3 i 6 (`"nazwa": "sprawdz_rownowaznosc"`); 10.0.4 (termin 60 s)
 - **Problem (sprawdzone uruchomieniem z fałszywym `IChatClient`, który zawsze żąda wywołania funkcji):**
   1. Przy `MaximumIterationsPerRequest = 8` wykonuje się dokładnie 8 wywołań funkcji. Potem `FunctionInvokingChatClient` wysyła **9. żądanie bez narzędzi** (`Tools = 0`, `ToolMode = null`) i zwraca jego odpowiedź jako zwykły wynik, bez wyjątku. `FunkcjaZLimitem` nigdy nie dostaje 9. wywołania. Opisany test (`BladModeluTrwalyException("LIMIT_WYWOLAN_FUNKCJI")`, przyczyna w zleceniu) więc nie przejdzie, a „pierwsza linia obrony” jest martwym kodem.
   2. Przy `MaximumConsecutiveErrorsPerRequest = 1` (wartość z ADR-058) wyjątek pierwszego nadmiarowego wywołania jest połykany i wysyłany do modelu jako rezultat funkcji. Na zewnątrz wychodzi dopiero przy kolejnym błędzie, czyli przy **10.** wywołaniu (zmierzono: licznik 10, wykonane 8). Natychmiastowe przerwanie wymaga wartości `0`.
-  3. `KernelFunction` z pluginu `"sympy"` jest widoczna jako `AIFunction` o nazwie **`sympy_sprawdz_rownowaznosc`** (`FullyQualifiedAIFunction`). Prompt `zadanie-v1` każe wołać `sprawdz_rownowaznosc` / `postac_liniowa`, dane Mock (`prompty.md` 6) zawierają `"nazwa": "sprawdz_rownowaznosc"`, a test ADR-058 p. 7 żąda `sprawdz_rownowaznosc`. Takie wywołanie trafia w gałąź „nieznana funkcja”: model dostaje komunikat o braku narzędzia, licznik się nie zmienia i nic się nie wykonuje (zmierzono: 0 wykonań przy 8 żądaniach). Scenariusze Mock „3 Zadania wygenerowane z wywołaniami narzędzi” nie wywołają więc żadnego narzędzia, a `WywolanieNarzedzia.Funkcja` w śladzie NFR-05 będzie miało inną nazwę niż w prompcie.
+  3. `KernelFunction` z pluginu `"sympy"` jest widoczna jako `AIFunction` o nazwie **`sympy_sprawdz_rownowaznosc`** (`FullyQualifiedAIFunction`). Prompt `zadanie-v1` każe wołać `sprawdz_rownowaznosc` / `postac_liniowa`, dane Mock (`prompts.md` 6) zawierają `"nazwa": "sprawdz_rownowaznosc"`, a test ADR-058 p. 7 żąda `sprawdz_rownowaznosc`. Takie wywołanie trafia w gałąź „nieznana funkcja”: model dostaje komunikat o braku narzędzia, licznik się nie zmienia i nic się nie wykonuje (zmierzono: 0 wykonań przy 8 żądaniach). Scenariusze Mock „3 Zadania wygenerowane z wywołaniami narzędzi” nie wywołają więc żadnego narzędzia, a `WywolanieNarzedzia.Funkcja` w śladzie NFR-05 będzie miało inną nazwę niż w prompcie.
   4. Termin 60 s obejmuje cały potok, czyli do 9 kolejnych żądań do modelu. Każde z nich ponownie wysyła rosnący kontekst, a ostatnie generuje odpowiedź do `max_tokens` 6 000. Dokument nie uzasadnia, że 60 s wystarcza. Przekroczenie terminu po 3 próbach daje zlecenie `NIEUDANE`.
 - **Oczekiwana poprawka:**
   - Wybrać jedną semantykę limitu:
@@ -1366,13 +1366,13 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-07: Implementacje Mock nie są wystarczające do deterministycznych testów E2E, a domyślny przepływ offline nie dochodzi do Oceny automatycznej
 - **Waga:** WYSOKA
-- **Lokalizacja:** 10.0.6; `prompty.md` 4.1 (wiadomość `user` rozpoznania), 6 (klucz pliku = 16 znaków SHA-256 tekstu wiadomości `user`, fallback `domyslna.json`, potem generator ze schematu); 10.1.8 (Q-RE-01), `prompty.md` 3.3; 11.2 (Pewność = minimum prawdopodobieństw), próg migracji danych 0,95
+- **Lokalizacja:** 10.0.6; `prompts.md` 4.1 (wiadomość `user` rozpoznania), 6 (klucz pliku = 16 znaków SHA-256 tekstu wiadomości `user`, fallback `domyslna.json`, potem generator ze schematu); 10.1.8 (Q-RE-01), `prompts.md` 3.3; 11.2 (Pewność = minimum prawdopodobieństw), próg migracji danych 0,95
 - **Problem:**
   1. **Dobór scenariusza.**
      - Wiadomość `user` rozpoznania zawiera wyłącznie `tresc_zadania_md`, `tekst_alternatywny_rysunkow` i `liczba_zdjec`. Skrót nie zależy od zdjęć, więc każda para (Zadanie, liczba zdjęć) ma w Mock **jedną** Transkrypcję. Testy E2E różnych Rozwiązań tego samego Zadania (poprawne / z błędem / z podejrzeniem błędu odczytu / `NIECZYTELNE`) są niemożliwe bez osobnych Zadań, a ograniczenie nie jest zapisane.
      - Każda zmiana serializacji, promptu, normalizacji SymPy albo formatu stanu zmienia skrót. Brak pliku przechodzi **po cichu** w `domyslna.json` albo w generator, więc test może przejść na innych danych niż zamierzone.
   2. **Generator ze schematu jest nieokreślony i niebezpieczny dla przepływu.**
-     - Reguła „`boolean` = `true`” ustawia `przekroczono_limit_krokow = true`, co według `prompty.md` 4.1 daje `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`). Domyślne rozpoznanie offline kończy się więc błędem, wbrew 10.0.6 („cały przepływ … działa offline”).
+     - Reguła „`boolean` = `true`” ustawia `przekroczono_limit_krokow = true`, co według `prompts.md` 4.1 daje `BLAD_ROZPOZNAWANIA` (`ZBYT_WIELE_KROKOW`). Domyślne rozpoznanie offline kończy się więc błędem, wbrew 10.0.6 („cały przepływ … działa offline”).
      - „Środek przedziału zaokrąglony w dół” jest nieokreślony dla pól bez `maximum` (`Ramka`: tylko `minimum: 0`), dla map `additionalProperties` (`rozklad`, `stwierdzenia`), typów unii `["object","null"]` i `pattern` (`umiejetnosci_dodatkowe`, `kod`).
      - Dla `zgodnosc_z_zadaniem` w [0, 1] daje 0 albo 0,5, czyli baner E-07 przy każdym przesłaniu.
   3. **`MockModelDecyzyjny`** daje masę 0,90 na losowej opcji. Przy kalibratorze tożsamościowym i progu 0,95 z migracji danych Pewność oceny = 0,90 < 0,95, więc **każda** Ocena offline idzie do Weryfikacji, z losowymi punktami i losowym `Q-OC-06`. Trasy automatycznej (FR-23), Kontroli losowej i Wskazówki po Ocenie ostatecznej nie da się przetestować bez plików rozkładów kluczowanych skrótem stanu, który zmienia się przy każdej zmianie formatu `stan-oceny-v1`.
@@ -1388,7 +1388,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-08: Model zapasowy dla Walidacji Zadania (Q-WA) nie ma promptu ani stanu, a `ZapasowyLlmAdapter` nie zna kontekstu decyzji
 - **Waga:** ŚREDNIA
-- **Lokalizacja:** 10.0.4 (Walidacja: „Q-WA przez ten sam circuit breaker”); 10.2.5; 13.2 `ZapasowyLlmAdapter.WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, CancellationToken ct)` (bez `KontekstDecyzji`); `prompty.md` 2 (jedna wersja `plan-pytan-v1`), 4.8 („Jesteś modelem decyzyjnym systemu oceniania”, wymagane pole `Q-OC-04`, wiadomość `"[STAN]\n" + stan-oceny-v1`), 3.2 (`stan-walidacji-v1`); 6.4 (pakiety `Lemat.Modele` bez `JsonSchema.Net`)
+- **Lokalizacja:** 10.0.4 (Walidacja: „Q-WA przez ten sam circuit breaker”); 10.2.5; 13.2 `ZapasowyLlmAdapter.WykonajPlanAsync(string stan, PlanPytan plan, TerminPlanu termin, CancellationToken ct)` (bez `KontekstDecyzji`); `prompts.md` 2 (jedna wersja `plan-pytan-v1`), 4.8 („Jesteś modelem decyzyjnym systemu oceniania”, wymagane pole `Q-OC-04`, wiadomość `"[STAN]\n" + stan-oceny-v1`), 3.2 (`stan-walidacji-v1`); 6.4 (pakiety `Lemat.Modele` bez `JsonSchema.Net`)
 - **Problem:**
   - `IModelDecyzyjny.WykonajPlanAsync` przyjmuje `KontekstDecyzji`, ale `CircuitBreakerModeluDecyzyjnego` przekazuje do `ZapasowyLlmAdapter` wywołanie bez niego.
   - Jedyny prompt zapasowy opisuje Ocenę Rozwiązania (stan oceny, Q-OC-04, zasady CKE punktowania ucznia). Dla planu Q-WA-01…05 ze stanem `stan-walidacji-v1` model dostaje sprzeczne instrukcje, a wymagane pole `Q-OC-04` nie ma sensu.
@@ -1403,16 +1403,16 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-09: Schematy odpowiedzi — dwa źródła prawdy, test zgodności niewykonalny literalnie, a mapy rozkładów są sprzeczne z „trybem ścisłym”
 - **Waga:** ŚREDNIA
-- **Lokalizacja:** `prompty.md` 1 p. 3 („wszystkie właściwości wymagane, `additionalProperties: false` … zgodność z trybem ścisłym dostawców”), 4.4 (`stwierdzenia`: `additionalProperties: {boolean}`), 4.8 (`rozklad`: `additionalProperties: {number}`); 6.6 („test porównuje zapisane pliki z wygenerowanymi i ze schematami w `docs/spec/prompty.md`”); 10.0.3 (`AIJsonUtilities.CreateJsonSchema(typeof(T))`)
+- **Lokalizacja:** `prompts.md` 1 p. 3 („wszystkie właściwości wymagane, `additionalProperties: false` … zgodność z trybem ścisłym dostawców”), 4.4 (`stwierdzenia`: `additionalProperties: {boolean}`), 4.8 (`rozklad`: `additionalProperties: {number}`); 6.6 („test porównuje zapisane pliki z wygenerowanymi i ze schematami w `docs/spec/prompts.md`”); 10.0.3 (`AIJsonUtilities.CreateJsonSchema(typeof(T))`)
 - **Problem:**
   1. Wygenerowano schemat `AIJsonUtilities.CreateJsonSchema` dla rekordu z `[StringLength]`, `[Range]`, `[MaxLength]`, `[RegularExpression]`, nullowalnym enumem i słownikiem. Wynik:
      - zawiera `minLength`/`maxLength`/`minimum`/`maximum`/`maxItems`/`pattern` i komplet `required`;
      - **nie zawiera** `additionalProperties: false`, `$schema`, `title` ani `$defs`/`$ref` (typy powtarzalne są rozwijane inline).
 
-     Schematy z `prompty.md` (`$defs.Ramka`, `$defs.ObszarNaZdjeciu`, `title`) nie będą więc równe wygenerowanym, a test „dryfu” musi porównywać semantycznie i użyć `AIJsonSchemaCreateOptions.TransformOptions { DisallowAdditionalProperties = true, RequireAllProperties = true }` — dokument tego nie określa. Rekordy C# z atrybutami ograniczeń nie są nigdzie pokazane.
-  2. `rozklad` i `stwierdzenia` jako mapy dynamiczne (`additionalProperties: {…}`) są niezgodne z trybem ścisłym (strict), który wymaga `additionalProperties: false` na każdym obiekcie. Albo `prompty.md` 1 p. 3 jest nieprawdziwe dla modelu zapasowego i W-3, albo dostawca odrzuci schemat (`400` → `BladModeluTrwalyException` → przy otwartym obwodzie każda Ocena kończy się T-6). Nie wiadomo też, czy `ForJsonSchema` w adapterze OpenAI jest wysyłane jako `strict: true`.
+     Schematy z `prompts.md` (`$defs.Ramka`, `$defs.ObszarNaZdjeciu`, `title`) nie będą więc równe wygenerowanym, a test „dryfu” musi porównywać semantycznie i użyć `AIJsonSchemaCreateOptions.TransformOptions { DisallowAdditionalProperties = true, RequireAllProperties = true }` — dokument tego nie określa. Rekordy C# z atrybutami ograniczeń nie są nigdzie pokazane.
+  2. `rozklad` i `stwierdzenia` jako mapy dynamiczne (`additionalProperties: {…}`) są niezgodne z trybem ścisłym (strict), który wymaga `additionalProperties: false` na każdym obiekcie. Albo `prompts.md` 1 p. 3 jest nieprawdziwe dla modelu zapasowego i W-3, albo dostawca odrzuci schemat (`400` → `BladModeluTrwalyException` → przy otwartym obwodzie każda Ocena kończy się T-6). Nie wiadomo też, czy `ForJsonSchema` w adapterze OpenAI jest wysyłane jako `strict: true`.
 - **Oczekiwana poprawka:**
-  - Jedno źródło: schematy wyłącznie generowane z rekordów (z `TransformOptions`), a `prompty.md` jako wygenerowany artefakt; albo schematy ręczne jako zasoby i rekordy bez generacji.
+  - Jedno źródło: schematy wyłącznie generowane z rekordów (z `TransformOptions`), a `prompts.md` jako wygenerowany artefakt; albo schematy ręczne jako zasoby i rekordy bez generacji.
   - Mapy zastąpić tablicami `[{opcja, p}]` (zgodne z trybem ścisłym), z walidacją kompletu opcji w kodzie.
   - Jawne ustawienie trybu ścisłego per dostawca i test kontraktu na schemacie każdej roli.
 - **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 6: schematy generowane z `TransformOptions` i zapisane jako migawki, mapy zamienione na tablice par, `strict = true`, test kontraktu WireMock.
@@ -1470,7 +1470,7 @@ Data przeglądu: 2026-11-01. Wersja dokumentu: 3.1 (iteracja 2 pętli „.NET 10
 
 ### C7-14: Szablony SK kodują wartości zmiennych HTML-em — założenie ADR-058 p. 4 nie jest sprawdzane dla nazw z bazy referencyjnej
 - **Waga:** NISKA
-- **Lokalizacja:** ADR-058 p. 4 (zmienne: `int`, `decimal`, enumy, „nazwy Umiejętności i Działów z bazy referencyjnej”); `prompty.md` 4.3, 4.5, 4.6 (`{{$umiejetnosc}}`, `{{$dzial}}`); test `SzablonBezZmiennychTresci` (sprawdza tylko typy)
+- **Lokalizacja:** ADR-058 p. 4 (zmienne: `int`, `decimal`, enumy, „nazwy Umiejętności i Działów z bazy referencyjnej”); `prompts.md` 4.3, 4.5, 4.6 (`{{$umiejetnosc}}`, `{{$dzial}}`); test `SzablonBezZmiennychTresci` (sprawdza tylko typy)
 - **Problem:** `KernelPromptTemplateFactory` 1.81 renderuje `x<2 & y>3 "q"` jako `x&lt;2 &amp; y&gt;3 &quot;q&quot;` (sprawdzone). Nazwa Umiejętności albo Działu z cudzysłowem, `<`, `>` lub `&` (np. „Nierówności typu „f(x) < g(x)”” albo nazwy z LaTeX) trafi do promptu systemowego w postaci zakodowanej, a test tego nie wykryje.
 - **Oczekiwana poprawka:** `AllowDangerouslySetContent = true` w `PromptTemplateConfig` (bezpieczne, bo zmienne są wyłącznie systemowe), albo CHECK/test w danych referencyjnych zabraniający tych znaków w nazwach; test renderowania każdego szablonu dla wszystkich nazw z `umiejetnosci.yaml`.
 - **Status:** ZAMKNIĘTA (iteracja 8). ADR-058 uzup. 3.2 p. 8: `new KernelPromptTemplateFactory { AllowDangerouslySetContent = true }` (pomiar architekta: flaga w `PromptTemplateConfig` nie działa) i test `RenderowanieNazwUmiejetnosci`.
@@ -1542,7 +1542,7 @@ Iteracja 3 (sekcje 12, 14, 15) powinna je uwzględnić razem z mapowaniem macier
 
 Data przeglądu: 2026-11-01. Wersja dokumentu: 3.2 (iteracja 3 pętli „.NET 10 + Next.js”). Zakres przeglądu:
 - sekcje 12, 14 i 15 (przepisane);
-- `docs/spec/api.md` (nowy), `ddl.md`, `ef-core.md`, `prompty.md`;
+- `docs/spec/api.md` (nowy), `ddl.md`, `ef-core.md`, `prompts.md`;
 - ADR-060 … ADR-066 i mapowanie C7 w `ARCHITECTURE_CHANGELOG.md`.
 
 **Weryfikacja uwag iteracji 7.** Wszystkie 15 uwag (C7-01 … C7-15) są ZAMKNIĘTE. Uzasadnienia są wpisane przy uwagach. Dwie pozostałości redakcyjne, czyli szkielet `ProfilUcznia` w 3.6 i sekwencja `<` w `api.md` 1, przechodzą do C8-12.
@@ -1828,5 +1828,263 @@ Werdykt:
   - rozdzielenie `ETag` reprezentacji i wersji;
   - klucze limitów;
   - uzupełnienie macierzy 12.8 i endpointów `admin/*`.
+
+---
+
+## Iteracja 9 (v3.4 — audyt końcowy i RTM)
+
+Data przeglądu: 2026-11-01. Wersja dokumentu: 3.4 (iteracja 4 pętli „.NET 10 + Next.js”, audyt końcowy). Zakres:
+- zamknięcie uwag C8-01 … C8-12 (wersja 3.3) i ADR-067 … ADR-075;
+- sekcja 18 (RTM) — audyt niezależny od `check_rtm.py`;
+- ADR-075 (angielskie nazwy plików i katalogów), 3.5 (kolumna EN), 6.4, 6.7, 6.8, 6.11;
+- `docs/spec/api.md`, `ddl.md`, `ef-core.md`, `prompts.md` w wersji 3.4.
+
+**Metoda (artefakty krytyka w scratchpadzie, katalog `c9/`, niezależne od projektów architekta).**
+1. Oba bloki SQL `ddl.md` załadowane na czystej bazie PostgreSQL 16: 0 błędów, 61 tabel + 4 partycje, 43 enumy, 15 triggerów. Funkcję `zarezerwuj_klucz_idempotencji` sprawdzono 9 scenariuszami (pierwsze wykonanie, `W_TOKU`, `KONFLIKT_CIALA`, przejęcie po 60 s, spóźnione zatwierdzenie starego wykonania → `UPDATE 0`, `POWTORKA`, wiersz po `wygasa_at`, rola `lemat_api`).
+2. Własna aplikacja ASP.NET Core 10.0.14 z rekordami i politykami z `api.md` 1 i 3:
+   - wiązanie `[AsParameters] RozwiazanieWejscie` przez `curl -F`: pola `snake_case`, `GetFiles("zdjecia")` przy dodatkowym pliku `inne`, brak pola, zły GUID, nazwy PascalCase;
+   - `NazwyLemat` dla właściwości i enumów z cyframi;
+   - `Opcjonalne<T>` (`{}` vs `null`, `application/merge-patch+json`);
+   - dyskryminator poza kolejnością.
+3. `backend/.editorconfig` z 6.11.3 w projekcie klasy z `EnforceCodeStyleInBuild`: IDE0130 i IDE1006 zgłaszane jako błędy `dotnet build` (.NET SDK 10.0.114).
+4. Moduły `errors.ts`, `refresh.ts`, `stream.ts`, `save-queue.ts` wyodrębnione z `api.md` 6 i skompilowane `tsc --strict` 5.9.3: 0 błędów. Serializacja `FormData` sprawdzona w Node 22 (undici).
+5. RTM — własny skrypt `c9/rtm9.py`. Poza testami `check_rtm.py` sprawdza:
+   - istnienie projektów i przestrzeni nazw w specyfikacji;
+   - interfejsy Agentów i pluginy w 6.6/10;
+   - typy prac w tle w 13.3 i identyfikatory promptów w `prompts.md`;
+   - rozwiązanie każdej strony do drzewa 6.8 (`page.tsx`);
+   - wpis każdego `*.spec.ts` w 6.11.4 i wystąpienie każdego testu C# poza RTM;
+   - zgodność dwukierunkową z kolumną „Wymagania” katalogu 12.3;
+   - użycie endpointu przez stronę z wiersza (mapowanie `api.md` 7).
+6. Reguły `TestNazwPlikow` (6.11.2 p. 4 c, e) zasymulowane skryptami `c9/t611b.py`, `c9/t_e.py` na nazwach plików z drzew 6.7, 6.8 i 6.11.
+
+### Weryfikacja uwag iteracji 8
+
+| Uwaga | Status | Uzasadnienie |
+|---|---|---|
+| C8-01 | ZAMKNIĘTA | `[AsParameters]` z `[FromForm(Name = "…")]`, `IFormFileCollection Pliki` i `GetFiles("zdjecia")` wiąże się poprawnie (sprawdzone: element → wartości, `zdjecia: 2` przy 3 plikach). Brak `zadanie_wersja_id`, zły GUID i nazwy PascalCase → `BadHttpRequestException` → `422` przez `ObslugaBledowWiazania`. Domyślny schemat OpenAPI ma `Pliki` i `allOf`, więc `TransformatorFormularzy` (ADR-067 p. 2) jest konieczny, a dokument go przewiduje. Nowy problem idempotencji multipart opisuje C9-01. |
+| C8-02 | ZAMKNIĘTA | `stream.ts` (`tsc --strict` bez błędów) czeka na pierwsze zdarzenie z każdego połączenia (serwer zawsze wysyła `stan`). `null` kończy odpytywanie z odstępem ≥ 1 000 ms albo spoczynkiem 30 s. Ponowienie po `401` jest jedno (`ponowienia401`). `terazSerwer()` uwzględnia `roznicaZegara`. Pozostałość ADR-075 (`/logowanie`) — C9-05. |
+| C8-03 | ZAMKNIĘTA | Sprawdzone na PostgreSQL 16: rezerwacja 60 s, przejęcie po wygaśnięciu, spóźnione zatwierdzenie starego wykonania (`UPDATE 0` → `ROLLBACK`), `POWTORKA`, CHECK `2xx`. Odpowiedź jest zatwierdzana w transakcji skutku (ADR-068 p. 2). Drobne odstępstwa — C9-07 p. 1. |
+| C8-04 | ZAMKNIĘTA | Brak `If-None-Match`/`304`/`ETag` w odczytach (grep: 0 wystąpień poza Object Lock S3), `Cache-Control: no-store`, `version` w ciele, pola `rozwiazanie_version` i `zadanie_version`. |
+| C8-05 | ZAMKNIĘTA | ADR-070: limity kluczowane kontem, (IP, e-mail) i rodziną tokenu, Caddy 12 000/min z modelem A-03. W `refresh.ts` `WYLOGOWANIE` następuje wyłącznie po `401`, a `429`/`5xx`/sieć dają ponowienia i `SESJA_TYMCZASOWO_NIEDOSTEPNA`. |
+| C8-06 | ZAMKNIĘTA | Macierz 12.8 ma wiersz dla każdej ścieżki z `{id}` i regułę identyfikatorów zagnieżdżonych. Widoczność `ZadanieUczniaWyjscie` zależy od kontekstu. `RolaRejestracji { Uczen, Nauczyciel }`. Polityka jest na każdym endpoincie. |
+| C8-07 | ZAMKNIĘTA | `GET /admin/klasy`, `GET /admin/klasy/{id}` (`KlasaAdministratora.version`), pole i filtr `diagnostyczne`, `PUT /admin/zadania/{id}/otagowanie`; mapowanie stron `admin/*` poprawione. |
+| C8-08 | ZAMKNIĘTA | Sprawdzone: `oswiadczenie_wieku_16`, `liczba_wynikow_7d`, `n_eff`. Dyskryminator poza kolejnością działa, a błędy wiązania dają `422`. Separacja cyfr wprowadziła jednak niezgodność z DDL dla terminów technicznych i wartości enumów — nowa uwaga C9-03. |
+| C8-09 | ZAMKNIĘTA | Sprawdzone: `{"wybrany_dzial_id": null}` → `Obecne = true, Wartosc = null`, `{}` → `Obecne = false`; `application/merge-patch+json` przyjmowany. `RejestracjaWyjscie { status_konta, sesja }`. |
+| C8-10 | ZAMKNIĘTA (projekt) | Szkic roboczy, wersja domenowa po 10 s stabilnej edycji, limit 20, `KolejkaZapisowRozwiazania` i reguła edytora wobec `stan` usuwają wszystkie cztery problemy C8-10. Wybrany sposób numerowania zapisów jest jednak niewykonalny — nowa uwaga C9-02. |
+| C8-11 | ZAMKNIĘTA | Strona `teacher/solutions/[solutionId]` z korektą, `rozwiazanie_version`, `zadanie_version`, ADR-074 (`PATCH`/`wycofanie` Przypisania, ponowna odpowiedź nadpisuje). |
+| C8-12 | ZAMKNIĘTA | Sprawdzone wyrywkowo: p. 1 (`List<OpanowanieUmiejetnosci>`), p. 2 (`<`), p. 5 (`prog_pewnosci*`), p. 8 (`/uczniowie/ja/profil`), p. 9 (stronicowanie), p. 10 (`nastepny_kursor`). |
+
+**Audyt RTM — wynik.**
+- `check_rtm.py`: 0 błędów (46/46 wymagań, 140 odwołań do endpointów, 114 do tabel, 80 do stron, 96 do ADR).
+- Własny skrypt potwierdza:
+  - 46 kompletnych wierszy (żadna kolumna pusta poza świadomym „—” dla Agenta i dla tabel/endpointów NFR-10);
+  - wszystkie projekty .NET, interfejsy Agentów, pluginy, typy prac w tle, identyfikatory promptów i testy C# istnieją poza RTM;
+  - każda strona rozwiązuje się jednoznacznie do pliku `page.tsx` drzewa 6.8 (59 stron);
+  - każdy `*.spec.ts` ma wpis w 6.11.4.
+- Słabości macierzy (zgodność dwukierunkowa z 12.3, notacja stron) — C9-06.
+
+**Analiza end-to-end (14 wymagań: strona → endpoint → przypadek użycia → Agent → tabela).** Bez luk blokujących:
+- FR-03, FR-09, FR-11/FR-13, FR-15, FR-24, FR-28, FR-31, FR-32, FR-34;
+- NFR-07 (circuit breaker → `ZapasowyLlmAdapter` → `decyzja_modelu`);
+- NFR-09 (`DELETE /uczniowie/ja` → Zdarzenie RODO przed transakcją → `USUN_KONTO`; `szkic_transkrypcji` z `ON DELETE CASCADE`).
+
+Defekty znaleziono w trzech wymaganiach:
+- FR-16 i NFR-08 — idempotencja multipart (C9-01);
+- FR-18 — autozapis szkicu (C9-02);
+- FR-06 — źródło `element_sciezki_id` na stronie Wkładki (C9-06 p. 4).
+
+### C9-01: Skrót ciała dla idempotencji obejmuje losową granicę `multipart`, więc każde ponowienie przesłania zdjęć dostaje `422 KLUCZ_IDEMPOTENCJI_KONFLIKT` (sprawdzone uruchomieniem)
+- **Waga:** WYSOKA
+- **Lokalizacja:** `ddl.md` `klucz_idempotencji.skrot_zapytania` („SHA-256(metoda + ścieżka + ciało)”), `0007_api.sql` (`IF r.skrot_zapytania <> p_skrot THEN 'KONFLIKT_CIALA'`, sprawdzane przed `W_TOKU`); ADR-062 p. 3; ADR-068 p. 1 i p. 5; 12.1; 12.3 `POST /rozwiazania`, `POST /rozwiazania/{id}/zdjecia`, `POST /admin/arkusze-cke/importy`; E-02, E-41, E-47; testy `double-click.spec.ts`, `cellular-network.spec.ts`; FR-16, NFR-08
+- **Problem:**
+  1. Przeglądarka (i undici w Node) generuje nową granicę (`boundary`) przy każdej serializacji tego samego `FormData`. Sprawdzone w Node 22: dwa `Request` z tym samym obiektem `FormData` mają różne nagłówki `Content-Type` i różne ciała. „Ten sam klucz, to samo żądanie” daje więc zawsze inny `skrot_zapytania`.
+  2. Funkcja `zarezerwuj_klucz_idempotencji` porównuje skrót przed sprawdzeniem stanu. Sprawdzone: przy zapisanym `2xx` i przy rezerwacji w toku inny skrót daje `KONFLIKT_CIALA`.
+  3. W efekcie dla `POST /rozwiazania` (główny przepływ FR-16, sieć komórkowa NFR-08):
+     - ponowienie po utraconej odpowiedzi (E-02, „klient ponawia z tym samym `Idempotency-Key`”) dostaje `422` zamiast `202` z `Idempotent-Replayed`;
+     - podwójne kliknięcie (E-41) dostaje `422` zamiast `409 IDEMPOTENCJA_W_TOKU`.
+  4. Według ADR-068 p. 5 klient traktuje `422` jako „inne `4xx`” i przy następnym kliknięciu tworzy nowy klucz. Nowe żądanie trafia w `ux_rozwiazanie_element`/`ux_rozwiazanie_przypisanie` i dostaje `409 ROZWIAZANIE_NIEPRAWIDLOWY_STAN`, choć zdjęcia zostały przyjęte. Uczeń widzi błąd po udanym przesłaniu.
+  5. To samo dotyczy `POST /rozwiazania/{id}/zdjecia` i importu ZIP (≤ 50 MB). Przy imporcie skrót całego ciała oznacza dodatkowo buforowanie 50 MB w filtrze, a dokument nie opisuje, jak filtr czyta strumień po wiązaniu formularza.
+- **Oczekiwana poprawka:**
+  - Kanoniczny skrót żądania: metoda, ścieżka, dla JSON — ciało, dla `multipart/form-data` — posortowane pary (nazwa pola, wartość) pól tekstowych oraz (nazwa pola, kolejność, długość, SHA-256 zawartości) każdego pliku, bez nagłówka `Content-Type` i granicy.
+  - Opis w ADR-068 p. 1 i 12.1.
+  - Test `PonowienieMultipartTymSamymKluczemDajePowtorke`: dwa formularze o tej samej treści i różnych granicach → `POWTORKA`; inny plik → `KONFLIKT_CIALA`.
+
+### C9-02: `numer_zapisu` szkicu startuje od `Date.now()`, które przekracza `int` w C# i `integer` w DDL — każdy autozapis kończy się `422`
+- **Waga:** WYSOKA
+- **Lokalizacja:** ADR-073 p. 1 („`numer_zapisu` jest licznikiem karty (`sessionStorage`, start od `Date.now()` przy otwarciu edytora)”); `api.md` 3 (`SzkicTranskrypcjiWejscie(…, [property: Range(1, int.MaxValue)] int NumerZapisu, …)`, `SzkicTranskrypcjiWyjscie(…, int NumerZapisu, …)`); `ddl.md` `szkic_transkrypcji.numer_zapisu integer`; 12.3 `PUT /rozwiazania/{id}/transkrypcja/szkic`; C-56; `autosave-slow-network.spec.ts`; FR-18
+- **Problem:**
+  1. `Date.now()` w dniu przeglądu = 1 793 527 047 367, a `int.MaxValue` = 2 147 483 647. System.Text.Json z `NumberHandling.Strict` odrzuca wartość dla `int`. `ObslugaBledowWiazania` zamienia to na `422 WALIDACJA` (`TYP_NIEPRAWIDLOWY`). Nawet po zmianie typu w C# kolumna `integer` w PostgreSQL odrzuci wartość (`integer out of range`).
+  2. Każdy `PUT …/szkic` (co 1,5 s) kończy się więc błędem i toastem (`onBlad` w `KolejkaZapisowRozwiazania`). Szkic nigdy nie powstaje, a odtworzenie edytora po przeładowaniu, czyli cel ADR-073 p. 1, nie działa. Wersje domenowe po 10 s nadal się zapisują, więc FR-18 działa w trybie zdegradowanym.
+  3. Przy poprawionym typie zostaje błąd semantyczny. Karta otwarta wcześniej ma zawsze niższe numery niż karta otwarta później, więc jej szkice są **po cichu** pomijane (`204` w obu przypadkach). Uczeń w starszej karcie uważa tekst za zapisany, a po przeładowaniu odtwarza się szkic z drugiej karty. C-56 opisuje jedną kartę, a reguła „nowa karta ma wyższe numery” nie rozstrzyga edycji przeplatanej.
+- **Oczekiwana poprawka:**
+  - `numer_zapisu` jako `long`/`bigint` albo licznik nadawany przez serwer (np. `numer_zapisu` z odpowiedzi poprzedniego `PUT`).
+  - Pominięty zapis zgłaszany jawnie (`409 SZKIC_NIEAKTUALNY` z aktualnym szkicem albo pole `zapisano: false` w odpowiedzi), żeby edytor w starszej karcie mógł pokazać konflikt.
+  - Test `SzkicZNumeremZDateNowJestPrzyjety` i scenariusz C-56 dla dwóch kart.
+
+### C9-03: `NazwyLemat` rozdziela cyfry także w terminach technicznych i wartościach enumów — API zwraca `EWALUACJA_ZT_1`, a DDL i EF Core mają `EWALUACJA_ZT1` (sprawdzone uruchomieniem)
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** `api.md` 1 (`NazwyEnum = new NazwyLemat(JsonNamingPolicy.SnakeCaseUpper)`, wyrażenie `(?<=[A-Za-z])(?=\d)`); ADR-067 p. 3 („Reguła jest tą samą regułą, którą ADR-049 p. 14 stosuje do kolumn”); `ef-core.md` 4 (`EwaluacjaZt1` → `EWALUACJA_ZT1`); `ddl.md` `zrodlo_progu`, `zrodlo_kalibratora`, CHECK `metoda IN ('TOZSAMOSCIOWY','IZOTONICZNY_CV5')`, kolumna `sha256`; 3.1 p. 6 (terminy `cv5`, `sha256`, `fnv1a`); `ProgPewnosciWyjscie.Zrodlo`
+- **Problem:** wynik uruchomienia na ASP.NET Core 10.0.14 z opcjami `JsonApi.Konfiguruj`:
+
+  | Członek / właściwość C# | Wynik w API | Wartość w DDL / EF Core / słowniku |
+  |---|---|---|
+  | `ZrodloProgu.EwaluacjaZt1` | `EWALUACJA_ZT_1` | `EWALUACJA_ZT1` |
+  | `MetodaKalibratora.IzotonicznyCv5` | `IZOTONICZNY_CV_5` | `IZOTONICZNY_CV5` |
+  | `PowodPorzucenia.BrakPostepu7Dni` | `BRAK_POSTEPU_7_DNI` | — |
+  | właściwość `Sha256` | `sha_256` | `sha256` |
+  | właściwość `Cv5` | `cv_5` | `cv5` |
+  | właściwość `Fnv1a` | `fnv_1a` | `fnv1a` |
+
+  Skutki:
+  - `GET /admin/progi-pewnosci` zwraca `zrodlo: "EWALUACJA_ZT_1"`, czyli wartość spoza `pg_enum`, a typ TS z OpenAPI ma literał niezgodny z 3.5;
+  - test słownika (3.4 p. 2) dostaje tokeny `zt`, `cv`, `sha` spoza słownika tokenów;
+  - deklaracja ADR-067 p. 3 o „tej samej regule” jest fałszywa: EFCore.NamingConventions i `TlumaczNazwUpperSnake` nie rozdzielają cyfr.
+
+  Test `NazwyJsonZgodneZKolumnamiDdl` obejmuje tylko rekordy mapowane 1:1 na tabele i wartości enumów nie sprawdza.
+- **Oczekiwana poprawka:**
+  - Wyjątki `NazwyLemat` dla terminów technicznych 3.1 p. 6 i oznaczeń (`zt1`, `cv5`, `sha256`, `fnv1a`) albo reguła „separator tylko przed liczbą z jednostką (`7d`, `30d`, `16`)” z jawną listą.
+  - Test `WartosciEnumowApiRowneDdl`: każdy enum z OpenAPI porównany z `pg_enum` albo CHECK.
+
+### C9-04: Reguły `TestNazwPlikow` (6.11.2 p. 1, p. 4c, p. 4e) nie przechodzą na drzewach z 6.7/6.8, a kolumna EN 3.5 nie jest „jedyną nazwą” pojęcia
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** 3.5 (akapit „Kolumna Nazwa pliku/folderu (EN)” — „jedyną angielską nazwę pojęcia”), 6.7, 6.8, 6.11.1, 6.11.2 p. 1–4, 6.11.4; ADR-075 p. 3, p. 5, p. 9
+- **Problem (symulacja reguł skryptami na nazwach z dokumentu):**
+  1. **Reguła 4c** („plik typu z 3.5 = nazwa EN pojęcia + przyrostek z listy”). Drzewo 6.7 ma pliki typów z kolumny C# tabeli 3.5, które jej nie spełniają:
+     - `JobType.cs` (`TypPracy`), `JobHandler.cs` (`IHandlerPracy`), `JobPool.cs` (`PulaPracy`), `JobEnqueuing.cs` (`IZlecaniePrac`) — pojęcie „Praca w tle” ma nazwę `BackgroundJob`;
+     - `ChatClientFactory.cs` (`FabrykaKlientowCzatu`, wiersz „Model generatywny” → `GenerativeModel`);
+     - `S3GdprEventRegistry.cs` (przedrostek `S3`).
+
+     Przykład z samej reguły, `SafeguardState.cs` (`StanBezpiecznika`), używa przyrostka `State`, którego nie ma na liście. `ISolutionsFacade.cs` i `SolutionsEndpoints.cs` mają liczbę mnogą i przedrostek `I`, których reguła nie przewiduje.
+  2. **Reguła 1** („jeden plik — jeden typ najwyższego poziomu”) wobec 6.7:
+     - `Common/Identifiers.cs` (wszystkie typy `*Id`) przeczy przykładowi `RozwiazanieId` → `SolutionId.cs` z 6.11.2;
+     - `JobHandler.cs (IHandlerPracy, RezultatPracy)`, `JobEnqueuing.cs (IZlecaniePrac, ZleceniePracy)` i `GenerativeModel.cs (IModelGeneratywny, KlientCzatuRoli)` deklarują po dwa typy.
+  3. **Reguła 4e** (brak polskich tokenów: rdzenie ≥ 4 znaków z kolumny PostgreSQL 3.5 minus `wspolne_tokeny`). Kolumna daje 222 tokeny, w tym angielskie słowa `status`, `limit`, `element`, `administrator`, `version`, `total`, `date`, `numeric`. Zgodnie z regułą odrzucone zostałyby:
+     - przy dopasowaniu całych tokenów — `SolutionStatus.cs`, `(administrator)`;
+     - przy dopasowaniu rdzenia jako prefiksu — także `Profile/` (`profil`), `Program.cs` (`prog`), `RateLimiter.cs` (`limit`).
+
+     Lista `wspolne_tokeny` (6 słów) nie wystarcza, a sposób dopasowania (cały token czy prefiks) nie jest określony.
+  4. **Jednoznaczność kolumny EN.** Akapit 3.5 mówi o jedynej nazwie pojęcia w nazwach plików i katalogów. Drzewa używają jednak innych nazw:
+
+     | Pojęcie | Kolumna EN (3.5) | Użycie w drzewach |
+     |---|---|---|
+     | Klasa | `SchoolClass` | katalog `Classes/`, `features/classes`, trasy `classes`, `ClassTransfer` (Przekazanie Klasy) |
+     | Arkusz CKE | `CkeExamSheet` | `cke-sheets` |
+     | Profil ucznia | `StudentProfile` | `Profile/`, `profile` |
+     | Dział | `CurriculumSection` | `fr09-section-choice` |
+
+     Deweloper zakładający szkielet musi zgadywać, która nazwa jest wiążąca. Test `NazwyPlikowPojecUnikalne` sprawdza unikalność kolumny, nie zgodność drzew z kolumną.
+- **Oczekiwana poprawka:**
+  - Zakres reguły 4c: wyłącznie główny typ pojęcia albo lista typów pojęcia w manifeście; dopuszczalne `I`-przedrostek, liczba mnoga dla `Facade`/`Endpoints`, przyrostek `State`.
+  - Drzewo 6.7 zgodne z regułą (`BackgroundJobType.cs` … albo przeniesienie typów do manifestu jako technicznych; `Identifiers.cs` rozbity albo wyjątek).
+  - Dopasowanie w regule 4e jako całych tokenów i lista `wspolne_tokeny` uzupełniona o słowa angielskie z kolumny PostgreSQL.
+  - Jedna nazwa EN dla Klasy (`Class` / `classes`) i Arkusza CKE (`CkeSheet`) albo dopuszczenie formy skróconej w 6.11.
+  - Test „drzewa dokumentu przechodzą `TestNazwPlikow`” na manifeście z 6.7.
+
+### C9-05: Pozostałość polskiego adresu strony po ADR-075 — wylogowanie w innych kartach przechodzi na nieistniejące `/logowanie`
+- **Waga:** ŚREDNIA
+- **Lokalizacja:** `api.md` 6.2 (`if (m.data?.typ === "WYLOGOWANIE") { token = null; window.location.assign("/logowanie"); }`); ADR-057 p. 1 („każda karta czyści pamięć i przechodzi do `/logowanie`”); 6.8 (`/login`), 6.11.4; `check_rtm.py` (10)
+- **Problem:**
+  - Po ADR-075 strona logowania ma adres `/login`, a przekierowania ze starych adresów świadomie nie powstają (6.11.4).
+  - Wylogowanie w jednej karcie i `401` z `/auth/odswiezenie` rozgłaszają `WYLOGOWANIE`, więc pozostałe karty przechodzą na `/logowanie`, czyli stronę 404 Next.js.
+  - Sprawdzenie (9)–(10) w `check_rtm.py` obejmuje tylko RTM i odnośniki Markdown, a nie adresy stron w kodzie listingów.
+  - Przykład ADR-049 p. 3 (`app/(uczen)/sciezka-nauki`) jest nadpisany przez p. 16, więc można go pozostawić.
+- **Oczekiwana poprawka:**
+  - `/login` w `api.md` 6.2 i ADR-057.
+  - Rozszerzenie skryptu o literały adresów stron (`"/…"` w blokach `ts`/`tsx`) porównywane z tabelą 6.11.4.
+  - Test Playwright `session-two-tabs.spec.ts` z asercją adresu po wylogowaniu.
+
+### C9-06: RTM — niezgodność dwukierunkowa z katalogiem 12.3, niejednolita notacja stron i drobne luki śladu
+- **Waga:** NISKA
+- **Lokalizacja:** 18.1, 18.2; 12.3 (kolumna „Wymagania”); `api.md` 7; `docs/spec/tools/check_rtm.py`
+- **Problem:**
+  1. **Zgodność z 12.3.** Około 25 par (wymaganie, endpoint) z RTM nie ma tego wymagania w kolumnie „Wymagania” 12.3, na przykład:
+     - `GET /rozwiazania/{id}/ocena` w wierszach FR-19 … FR-22 i NFR-05 (12.3: FR-24, FR-27);
+     - `GET /weryfikacje` w FR-25 i FR-26 (12.3: FR-33);
+     - `POST /weryfikacje/{id}/rozstrzygniecie` w FR-28;
+     - `GET /admin/kalibracja` w FR-22, NFR-03 i NFR-07;
+     - `POST /rozwiazania` w NFR-08.
+
+     Śledzenie wymaganie → endpoint i endpoint → wymaganie daje więc różne odpowiedzi.
+  2. **Notacja stron.** RTM łączy pełne ścieżki (`(public)/login`, `(administrator)/admin/users`) ze skrótami (`register/teacher`, `teacher/...`, `admin/...`). `check_rtm.py` akceptuje skróty `admin/…` specjalną regułą. Własny skrypt rozwiązał wszystkie strony jednoznacznie do 6.8, ale konwencja nie jest zapisana.
+  3. **Endpointy katalogu bez wiersza RTM:** `GET /przypisania/{id}`, `GET /zestawy-zadan/{id}` (FR-32), `POST /admin/uzytkownicy`, `GET /powiadomienia/strumien`, `POST /powiadomienia/{id}/przeczytanie`, `GET /admin/praca-w-tle`, `GET /admin/harmonogram`, `POST /admin/praca-w-tle/{id}/ponowienie`.
+  4. **FR-06:** strona `(student)/theory-inserts/[theoryInsertId]` wywołuje `POST /elementy-sciezki/{id}/przeczytanie`, ale mapowanie nie mówi, skąd strona zna `element_sciezki_id`. Dla Zadań jest `?element=`, dla Wkładki brak parametru.
+  5. Wiersz `(student)/settings` w `api.md` 7 wymienia `GET /uczniowie/ja/eksport-danych` w kolumnie „Mutacje”.
+  6. `check_rtm.py` nie sprawdza kolumn „Moduł”, „Agent” i „Weryfikacja”. Własny skrypt potwierdził je w całości, ale CI tego nie zrobi.
+- **Oczekiwana poprawka:**
+  - Uzgodnić kolumnę „Wymagania” 12.3 z RTM (albo regułę „12.3 wymienia wymaganie główne”) i dopisać sprawdzenie dwukierunkowe do skryptu.
+  - Zapisać notację stron (zawsze pełna ścieżka z grupą).
+  - Uzupełnić p. 3–5.
+  - Dodać do `check_rtm.py` sprawdzenia z metody p. 5.
+
+### C9-07: Drobne niespójności wersji 3.4
+- **Waga:** NISKA
+- **Lokalizacja:** `ddl.md` `0007_api.sql`; 6.11.3; `ef-core.md` 2; 13.2, 7.1 (3.6); `api.md` 6.4; 18.5
+- **Problem:**
+  1. `zarezerwuj_klucz_idempotencji` (sprawdzone na PostgreSQL 16):
+     - przejęcie wygasłej rezerwacji nadpisuje `skrot_zapytania` bez porównania — inne ciało z tym samym kluczem dostaje `WYKONAJ`, a pierwotne ciało potem `KONFLIKT_CIALA`;
+     - funkcja pomija `wygasa_at` — wiersz po 24 h, jeszcze nieusunięty przez sprzątanie, daje `POWTORKA`.
+  2. Reguła `pola_prywatne` (`_camelCase`, IDE1006 `error`) obejmuje też `private const` i `private static readonly`. Sprawdzone `dotnet build`: `private const int MaksPunktow` daje błąd IDE1006. `ef-core.md` ma `private static readonly INpgsqlNameTranslator T` — szkielet się nie zbuduje. Potrzebna osobna reguła dla stałych albo poprawione listingi.
+  3. Odwołania do testów w postaci `Projekt/Katalog/KlasaTestowa` z polską nazwą klasy (13.2: `Lemat.Infrastructure.Tests/Models/OgranicznikSzybkosciTests`, `Lemat.Simulations/OgranicznikSymulacja`; 3.6: `Lemat.Domain.Tests/Solutions/PrzejsciaRozwiazaniaTests`; ADR-057, ADR-070, ADR-073) obok plików `RateLimiterTests.cs` i `RateLimiterSimulation.cs` w 6.7. Należy zapisać, że taka notacja wskazuje klasę, a plik wynika z manifestu.
+  4. `KolejkaZapisowRozwiazania.dodaj` przy scalaniu szkiców usuwa starszy `SZKIC` sprzed oczekującej `WERSJA`, więc nowszy szkic trafia za `WERSJA`. Jeśli ładunek szkicu (z `transkrypcja_id`) powstaje w chwili `dodaj`, a nie w `wykonaj`, dostaje `409 TRANSKRYPCJA_NIEAKTUALNA` i toast. Należy zapisać, że `wykonaj` buduje ładunek z bieżącego stanu edytora.
+  5. Warunek startu implementacji: `CLAUDE.md`, `TASKS.md` i `HANDOFF.md` nadal opisują stos 2.4 (Python/FastAPI, `src/lemat/`). 18.5 wymaga ich regeneracji przed pierwszym zadaniem implementacyjnym. Nie jest to wada architektury, ale deweloper czytający `CLAUDE.md` zbudowałby niewłaściwy szkielet.
+- **Oczekiwana poprawka:** poprawki w podanych miejscach; dla p. 5 — regeneracja dokumentów planu przez planistę przed startem implementacji.
+
+### Podsumowanie iteracji 9
+
+Weryfikacja uwag otwartych po iteracji 8:
+
+| Stan | Liczba | Identyfikatory |
+|---|---|---|
+| ZAMKNIĘTA | 12 | C8-01 … C8-12 (skutki uboczne poprawek C8-08 i C8-10 zapisane jako C9-03 i C9-02) |
+| OTWARTA | 0 | — |
+
+Nowe uwagi iteracji 9:
+
+| Waga | Liczba uwag | Identyfikatory |
+|---|---|---|
+| KRYTYCZNA | 0 | — |
+| WYSOKA | 2 | C9-01, C9-02 |
+| ŚREDNIA | 3 | C9-03, C9-04, C9-05 |
+| NISKA | 2 | C9-06, C9-07 |
+| **Razem** | **7** | |
+
+**ADR-075 — ocena:**
+- Zasada (pliki i katalogi angielskie, identyfikatory według słownika) jest spójna z Z-6.
+- Przestrzenie nazw = katalog: IDE0130 i IDE1006 działają w `dotnet build` (sprawdzone).
+- W drzewach planowanych nie ma polskich nazw plików ani katalogów: skan 6.7, 6.8, 6.11, `prompts.md` i ADR-040 … 075 nie znalazł żadnej poza historycznymi z dopiskiem.
+- Słabości:
+  - reguły testu nazw nie przechodzą na samych drzewach dokumentu, a kolumna EN nie jest stosowana konsekwentnie (C9-04);
+  - jeden polski adres strony w kodzie (C9-05).
+
+**Gotowość do implementacji.**
+- Szkielet solucji .NET jest wykonalny bez rozstrzygania otwartych kwestii architektury:
+  - projekty, referencje i pakiety z 6.4;
+  - `.editorconfig`, DDL ładowane bez błędów, EF Core;
+  - kontrakty multipart, JSON Merge Patch i ProblemDetails sprawdzone uruchomieniem.
+- Szkielet Next.js też jest wykonalny: drzewo 6.8, granice 6.9, moduły `lib` kompilują się `tsc --strict`.
+- Przed rozpoczęciem:
+  - poprawić C9-01 i C9-02 (kontrakty głównego przepływu FR-16/FR-18);
+  - ujednolicić reguły nazw plików (C9-04), bo inaczej `TestNazwPlikow` zablokuje CI od pierwszego commita;
+  - zregenerować `CLAUDE.md`/`TASKS.md`/`HANDOFF.md` (C9-07 p. 5).
+- Decyzje G-0 (D-1 … D-17) mają opcje domyślne i nie blokują szkieletu.
+
+### Podsumowanie pętli „.NET 10 + Next.js” (iteracje 6–9)
+
+| Iteracja | Wersja | Temat | Uwagi nowe (K/W/Ś/N) | Zamknięte w następnej wersji |
+|---|---|---|---|---|
+| 6 | 3.0 | stos, moduły, słownik → model domenowy | 15 (0/4/8/3) | 15/15 w 3.1 |
+| 7 | 3.1 | agenci AI (SK/MEAI), EF Core, porty, prace w tle | 15 (0/6/7/2) | 15/15 w 3.2 |
+| 8 | 3.2 | kontrakty REST/SSE, błędy, współbieżność | 12 (0/7/4/1) | 12/12 w 3.3–3.4 |
+| 9 | 3.4 | audyt końcowy, RTM, ADR-075 | 7 (0/2/3/2) | — |
+
+Trend:
+- liczba uwag WYSOKA: 4 → 6 → 7 → 2;
+- obszary ryzyka przesunęły się z wykonalności stosu (iteracje 6–7) przez kontrakty HTTP (8) do pojedynczych defektów kontraktowych na styku przeglądarka ↔ API (9);
+- warstwa danych, prace w tle, potok agentów, autoryzacja obiektowa i RTM są na poziomie produkcyjnym.
+
+Werdykt:
+- obie uwagi WYSOKA są lokalne (kanoniczny skrót żądania, typ i semantyka `numer_zapisu`), ale dotyczą głównego przepływu FR-16/FR-18 i obie potwierdzono uruchomieniem;
+- zatwierdzenie wymaga ich zamknięcia — po poprawce C9-01 i C9-02 dokument spełnia kryterium APPROVED, a uwagi ŚREDNIA i NISKA mogą zostać zamknięte w tej samej wersji albo przeniesione do planu jako zadania z DoD.
 
 STATUS: NEEDS_REVISION

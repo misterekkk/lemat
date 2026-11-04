@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}

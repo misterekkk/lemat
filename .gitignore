@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+# Next.js / Node
+.next/
+node_modules/
+out/
+coverage/
+*.tsbuildinfo
+# Środowisko i sekrety
+.env
+.env.*
+!.env.example
+# Lokalny magazyn obiektów (U-03)
+storage/
+# Różne
+.DS_Store
+*.log
+
+# Logi i PID-y procesow uruchamianych przez scripts/dev-up.sh (TASK-130)
+.logs/

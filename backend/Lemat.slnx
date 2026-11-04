@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Lemat.Domain/Lemat.Domain.csproj" />
+    <Project Path="src/Lemat.Application/Lemat.Application.csproj" />
+    <Project Path="src/Lemat.Agents/Lemat.Agents.csproj" />
+    <Project Path="src/Lemat.Models/Lemat.Models.csproj" />
+    <Project Path="src/Lemat.Infrastructure/Lemat.Infrastructure.csproj" />
+    <Project Path="src/Lemat.Api/Lemat.Api.csproj" />
+    <Project Path="src/Lemat.Worker/Lemat.Worker.csproj" />
+    <Project Path="src/Lemat.Scheduler/Lemat.Scheduler.csproj" />
+    <Project Path="src/Lemat.Tools/Lemat.Tools.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Lemat.Domain.Tests/Lemat.Domain.Tests.csproj" />
+    <Project Path="tests/Lemat.Application.Tests/Lemat.Application.Tests.csproj" />
+    <Project Path="tests/Lemat.Agents.Tests/Lemat.Agents.Tests.csproj" />
+    <Project Path="tests/Lemat.Models.Tests/Lemat.Models.Tests.csproj" />
+    <Project Path="tests/Lemat.Infrastructure.Tests/Lemat.Infrastructure.Tests.csproj" />
+    <Project Path="tests/Lemat.Api.Tests/Lemat.Api.Tests.csproj" />
+    <Project Path="tests/Lemat.Architecture.Tests/Lemat.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>

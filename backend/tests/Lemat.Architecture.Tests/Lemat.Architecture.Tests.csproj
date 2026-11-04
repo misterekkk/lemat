@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Domain\Lemat.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Application\Lemat.Application.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Agents\Lemat.Agents.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Models\Lemat.Models.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Infrastructure\Lemat.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Api\Lemat.Api.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Worker\Lemat.Worker.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Scheduler\Lemat.Scheduler.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Tools\Lemat.Tools.csproj" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+</Project>

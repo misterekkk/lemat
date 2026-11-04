@@ -1,0 +1,27 @@
+# Srodowisko lokalne (TASK-005): PostgreSQL 16 dla Lemat.
+# Port hosta: ${LEMAT_PG_PORT:-5433} (lokalny PostgreSQL zwykle zajmuje 5432).
+# Uzycie: cp .env.example .env && docker compose up -d postgres
+services:
+  postgres:
+    image: postgres:16
+    container_name: lemat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LEMAT_PG_UZYTKOWNIK:-lemat}
+      POSTGRES_PASSWORD: ${LEMAT_PG_HASLO:-lemat_dev}
+      POSTGRES_DB: lemat_dev
+      LEMAT_PG_HASLO: ${LEMAT_PG_HASLO:-lemat_dev}
+    ports:
+      - "${LEMAT_PG_PORT:-5433}:5432"
+    volumes:
+      - lemat-pg-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    command: ["postgres", "-c", "max_connections=200"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LEMAT_PG_UZYTKOWNIK:-lemat} -d lemat_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  lemat-pg-data:

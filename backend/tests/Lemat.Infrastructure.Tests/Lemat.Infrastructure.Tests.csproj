@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Infrastructure\Lemat.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Tools\Lemat.Tools.csproj" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+</Project>

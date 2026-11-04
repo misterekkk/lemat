@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lemat.Api\Lemat.Api.csproj" />
+    <ProjectReference Include="..\..\src\Lemat.Worker\Lemat.Worker.csproj" Aliases="WorkerAsm" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <None Include="Content\zadania-poc.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

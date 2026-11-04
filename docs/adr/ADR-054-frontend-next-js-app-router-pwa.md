@@ -31,8 +31,8 @@ TypeScript), a role wymagają osobnych układów i strażników.
    origin przez Caddy, bez CORS); access token JWT jest w pamięci
    (`DostawcaSesji`), odświeżany przez `POST /api/v1/auth/odswiezenie` z
    cookie `lemat_rt` (`Path=/api/v1/auth`). ADR-020 obowiązuje bez zmian.
-3. **Grupy tras:** `(publiczne)`, `(uczen)` (bez prefiksu URL),
-   `(nauczyciel)/nauczyciel/*`, `(administrator)/admin/*` (6.8); każda
+3. **Grupy tras:** `(public)`, `(student)` (bez prefiksu URL),
+   `(teacher)/teacher/*`, `(administrator)/admin/*` (6.8); każda
    grupa ma `layout.tsx` z nawigacją i strażnikiem roli. `src/proxy.ts`
    (Next.js 16; dawniej `middleware.ts`) przekierowuje na podstawie cookie
    `lemat_rola` (`HttpOnly; Secure; SameSite=Strict; Path=/`, wartość roli,
@@ -45,10 +45,10 @@ TypeScript), a role wymagają osobnych układów i strażników.
    brak buforowania odpowiedzi API przez Next.js.
 5. **Kontrakt typów:** `openapi-typescript` 7 generuje
    `src/lib/api/schema.d.ts` z `backend/openapi/lemat-v1.json`;
-   `openapi-fetch` jest jedynym klientem HTTP (`src/lib/api/klient.ts`,
+   `openapi-fetch` jest jedynym klientem HTTP (`src/lib/api/client.ts`,
    dodaje `Authorization`, `Idempotency-Key`, `If-Match`, mapuje
    ProblemDetails na błędy z polem `kod`); aliasy typów (3.5) w
-   `src/lib/api/typy.ts`; formularze: react-hook-form 7 + zod 4 (reguły
+   `src/lib/api/types.ts`; formularze: react-hook-form 7 + zod 4 (reguły
    12.5 odwzorowane ręcznie; serwer pozostaje źródłem prawdy).
 6. **PWA:** Serwist 9 (`@serwist/next`), `app/manifest.ts`,
    `app/sw.ts`: precache zasobów statycznych i fontów KaTeX,
@@ -65,14 +65,14 @@ TypeScript), a role wymagają osobnych układów i strażników.
    (`skipHtml`); podgląd kroku Transkrypcji renderowany przy edycji
    (debounce 300 ms).
 9. **Zdjęcia:** `<input type="file" accept="image/*" capture="environment"
-   multiple>`; kompresja w Web Workerze (`src/lib/zdjecia/kompresja.worker.ts`:
+   multiple>`; kompresja w Web Workerze (`src/lib/photos/compression.worker.ts`:
    `createImageBitmap` z `imageOrientation: "from-image"` +
    `OffscreenCanvas.convertToBlob({ type: "image/jpeg", quality: 0.85 })`,
    dłuższy bok ≤ 2560 px); przeglądarka bez `OffscreenCanvas` — `<canvas>`
    w wątku głównym; plik, którego przeglądarka nie dekoduje (HEIC poza
    Safari), jest wysyłany bez kompresji (≤ 10 MB) i normalizowany na
    serwerze (ADR-052).
-10. **SSE:** `src/lib/sse/strumien.ts` (`fetch` + `eventsource-parser` 3,
+10. **SSE:** `src/lib/sse/stream.ts` (`fetch` + `eventsource-parser` 3,
     `Last-Event-ID`, przejście na odpytywanie) — ADR-051.
 11. **Jakość:** ESLint 9 + `eslint-config-next`, dependency-cruiser 16
     (granice 6.9), Prettier 3, Vitest 3 + Testing Library, Playwright
@@ -117,7 +117,7 @@ deweloperskim wyłączony (`disable: process.env.NODE_ENV ===
 "development"`). (4) **Zdjęcia bez BFF:** zdjęcia kartek są wyświetlane
 przez `<img src>` z podpisanym URL magazynu (CSP `img-src` zawiera
 magazyn) pobranym z `GET /rozwiazania/{id}/zdjecia/{zdjecie_rozwiazania_id}/adres`
-(JSON `AdresZdjeciaWyjscie { url, wygasa_at }`) przez `klient.ts`; brak
+(JSON `AdresZdjeciaWyjscie { url, wygasa_at }`) przez `client.ts`; brak
 `blob:` URL, brak CORS na buckecie. (5) Trasy dla Administratora (Zadania,
 Zgłoszenia błędu w Zadaniu, zlecenia generowania), recenzenta treści
-(Wkładki do przeglądu) i Ucznia (Klasy) oraz przepływ `dolacz/[kod]` — 6.8.
+(Wkładki do przeglądu) i Ucznia (Klasy) oraz przepływ `join/[code]` — 6.8.

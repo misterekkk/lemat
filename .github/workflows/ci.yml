@@ -1,0 +1,63 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # PostgreSQL 16 dla testow korzystajacych z LEMAT_TEST_BAZA;
+    # testy integracyjne uzywaja takze Testcontainers (Docker jest na runnerze).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lemat
+          POSTGRES_PASSWORD: lemat
+          POSTGRES_DB: lemat_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U lemat"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DOTNET_NOLOGO: "1"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: backend/global.json
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('backend/**/*.csproj', 'backend/Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Weryfikacja backendu
+        run: scripts/verify-backend.sh
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Weryfikacja frontendu
+        run: scripts/verify-frontend.sh

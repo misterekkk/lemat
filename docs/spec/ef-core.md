@@ -3,7 +3,7 @@
 | Pole | Wartość |
 |---|---|
 | Dokument | `docs/spec/ef-core.md` |
-| Wersja | 3.2 (pętla 3.x, iteracja 3) |
+| Wersja | 3.5 (C9-02: `szkic_transkrypcji.numer_zapisu` jako `long`/`bigint` z licznikiem serwera; C9-03: `KonwencjaNazw` z wyjątkami dla oznaczeń z cyframi; C9-07 p. 2: `.editorconfig` ze stałymi `PascalCase`; wcześniej 3.4 — ADR-075) |
 | Dotyczy | [`docs/ARCHITECTURE_DETAILED.md`](../ARCHITECTURE_DETAILED.md) — 3.6 (agregaty), 7 (model danych), 13.4 (prace w tle); schemat: [`docs/spec/ddl.md`](ddl.md) |
 | Projekt | `backend/src/Lemat.Infrastructure/Persistence/` |
 
@@ -33,7 +33,7 @@ fragmenty kodu z sekcji 6 sprawdzono budową modelu i zapisem na PostgreSQL
 | `Microsoft.EntityFrameworkCore.Design` 10 | `Lemat.Infrastructure` (`PrivateAssets=all`) | wyłącznie `efbundle` (migracje SQL, ADR-063); `dotnet ef migrations add` nie jest używane |
 
 ```csharp
-// Lemat.Infrastructure/Persistence/RejestracjaPersistence.cs
+// Lemat.Infrastructure/Persistence/PersistenceRegistration.cs
 public static IServiceCollection DodajPersistence(this IServiceCollection uslugi, LematOpcje opcje, RodzajProcesu proces)
 {
     var zrodlo = new NpgsqlDataSourceBuilder(opcje.Baza.CiagPolaczenia(proces))      // pule wg ADR-059
@@ -133,7 +133,12 @@ public sealed class TlumaczNazwUpperSnake : INpgsqlNameTranslator
     public string TranslateTypeName(string nazwa) => KonwencjaNazw.NaSnakeCase(nazwa);        // StatusRozwiazania → status_rozwiazania
     public string TranslateMemberName(string nazwa) => KonwencjaNazw.NaSnakeCase(nazwa).ToUpperInvariant();
                                                                                          // OtwarteZDowodem → OTWARTE_Z_DOWODEM
-}
+}                                                                                        // EwaluacjaZt1 → EWALUACJA_ZT1, IzotonicznyCv5 → IZOTONICZNY_CV5
+// KonwencjaNazw (Lemat.Domain/Common/NamingConvention.cs, listing w api.md 1) jest tą samą regułą, którą stosuje NazwyLemat
+// w JSON API (3.5, C9-03): separator `_` przed liczbą (OswiadczenieWieku16 → oswiadczenie_wieku_16) poza tokenami
+// KonwencjaNazw.TokenyZCyframi (zt1, cv5, sha256, fnv1a, argon2id, uuid5, uuid7, es256, s3). Kolumny: UseSnakeCaseNamingConvention
+// daje oswiadczenie_wieku16, więc właściwość, dla której KonwencjaNazw.NaSnakeCase ≠ wynik konwencji EF, ma HasColumnName
+// (test KolumnyZCyframiMajaHasColumnName porównuje obie funkcje dla każdej właściwości modelu; argumenty_sha256 — bez HasColumnName).
 
 public static class MapowanieTypowWyliczeniowych
 {
@@ -179,7 +184,7 @@ pobrane z katalogu po załadowaniu DDL (`enum_range`); pozostałe 31 enumów
 są w 3.6, 10 i 13 dokumentu głównego.
 
 ```csharp
-namespace Lemat.Domain.Wspolne;   // przestrzenie według modułu właściciela (3.5); tu zebrane dla czytelności
+namespace Lemat.Domain.Common;   // przestrzenie według modułu właściciela (3.5); tu zebrane dla czytelności
 public enum StatusWkladki { Szkic, DoPrzegladu, Opublikowana, Wycofana }
 public enum RolaModelu { DecyzyjnyGlowny, DecyzyjnyZapasowy, RozpoznawaniePisma, GeneratywnyZadania,
                          GeneratywnyRozwiazujacyNiezaleznie, GeneratywnyWskazowki, GeneratywnyWkladki, GeneratywnyOpiniaPomocnicza }
@@ -236,16 +241,17 @@ wymagana (ADR-058 p. 4, test `ZgodnoscBajtowaLatexTests`).
 
 | Rodzaj | Tabele | Konfiguracja | Zmiana wartości |
 |---|---|---|---|
-| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; agregat nowy ma `Version = 1` z fabryki | `WersjaAgregatuInterceptor` (`SavingChangesAsync`, 3.2 — C7-06 p. 8): dla każdego wpisu `Added`/`Modified`/`Deleted` wyszukuje korzeń agregatu (po kluczu własności `IsOwnership` albo FK encji `IEncjaWewnetrzna`, rekurencyjnie, dla `Deleted` po wartościach oryginalnych) i zwiększa `Version` korzenia `Unchanged`/`Modified` o 1, o ile zmiana nie dotyczy wyłącznie właściwości `[BezZmianyWersji]` (ADR-029); sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` daje `UPDATE profil_ucznia SET version = … WHERE version = @oryginalna` |
+| `version` zmieniane przez aplikację | `uzytkownik`, `uczen`, `nauczyciel`, `wkladka_teoretyczna`, `zadanie`, `klasa`, `zestaw_zadan`, `przypisanie` (3.3, ADR-074), `profil_ucznia`, `sciezka_nauki`, `rozwiazanie`, `stan_bezpiecznika` | `Property(x => x.Version).IsConcurrencyToken()`; agregat nowy ma `Version = 1` z fabryki | `WersjaAgregatuInterceptor` (`SavingChangesAsync`, 3.2 — C7-06 p. 8): dla każdego wpisu `Added`/`Modified`/`Deleted` wyszukuje korzeń agregatu (po kluczu własności `IsOwnership` albo FK encji `IEncjaWewnetrzna`, rekurencyjnie, dla `Deleted` po wartościach oryginalnych) i zwiększa `Version` korzenia `Unchanged`/`Modified` o 1, o ile zmiana nie dotyczy wyłącznie właściwości `[BezZmianyWersji]` (ADR-029); sprawdzone: zmiana wyłącznie `opanowanie_umiejetnosci.theta` daje `UPDATE profil_ucznia SET version = … WHERE version = @oryginalna` |
 | `version` zmieniane przez trigger | `weryfikacja` (`trg_weryfikacja_wersja`, ADR-037) | `Property(w => w.Version).IsConcurrencyToken().ValueGeneratedOnAddOrUpdate()` | EF Core nie wysyła `version` w `SET`, warunek `WHERE version = @oryginalna` i odczyt `RETURNING version`; interceptor pomija `Weryfikacja` |
 | `xmin` (systemowy licznik wiersza PostgreSQL) | `transkrypcja`, `wynik_zadania`, `zlecenie_generowania`, `import_arkusza`, `konfiguracja_modelu`, `ocena` | `Property<uint>("xmin").HasColumnName("xmin").HasColumnType("xid").ValueGeneratedOnAddOrUpdate().IsConcurrencyToken()` | PostgreSQL przy każdej zmianie wiersza; kolumny nie ma w DDL (kolumna systemowa) |
-| brak (zapis wyłącznie SQL) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` | encja tylko do odczytu albo brak encji | warunki `UPDATE … WHERE` (13.2, 13.4, 10.1.3, C-36) |
+| brak (zapis wyłącznie SQL) | `praca_w_tle`, `kalibracja_trudnosci`, `limit_szybkosci_modelu`, `wstrzymanie_w_doborze`, `klucz_idempotencji` (funkcja `zarezerwuj_klucz_idempotencji` i `UPDATE … WHERE rezerwacja = @moja`, ADR-068), `szkic_transkrypcji` (`INSERT … ON CONFLICT … DO UPDATE SET numer_zapisu = numer_zapisu + 1 … WHERE numer_zapisu = @poprzedni_numer_zapisu`, ADR-073 uzup. 3.5) | encja tylko do odczytu albo brak encji | warunki `UPDATE … WHERE` (13.2, 13.4, 10.1.3, C-36) |
 
 `DbUpdateConcurrencyException` jest tłumaczony przez `Lemat.Api` na `412
 KONFLIKT_WERSJI` (żądanie z `If-Match`), `409 KONFLIKT_WSPOLBIEZNOSCI` (bez
 `If-Match`) albo przez handler pracy w tle na `rezultat_przestarzaly`
-(15.2 dokumentu głównego). ETag jest **silny**: `"<version>"` (wersja 3.2,
-ADR-062 p. 4; słaby ETag z wersji 3.1 nie nadaje się do `If-Match`);
+(15.2 dokumentu głównego). Wartość `If-Match` to `"<version>"` z pola
+`version` ciała odpowiedzi (od 3.3 API nie wysyła nagłówka `ETag` w
+odczytach, ADR-069);
 `If-Match` ustawia wartość oryginalną: `entry.Property(x => x.Version).OriginalValue
 = wersjaZNaglowka` w repozytorium przed modyfikacją.
 
@@ -259,8 +265,8 @@ ADR-062 p. 4; słaby ETag z wersji 3.1 nie nadaje się do `If-Match`);
 
 ## 6. Konfiguracje agregatów (kluczowe fragmenty)
 
-Wszystkie klasy są w `Lemat.Infrastructure/Persistence/Konfiguracje/<Modul>/`
-i nazywają się `<Encja>EntityTypeConfiguration` (3.1 p. 7). Wspólne:
+Wszystkie klasy są w `Lemat.Infrastructure/Persistence/Configurations/<Module>/`
+i nazywają się `<Entity>EntityTypeConfiguration` (3.1 p. 7). Wspólne:
 `builder.Ignore(a => a.Zdarzenia)`; kolekcje encji wewnętrznych przez pola
 prywatne (`UsePropertyAccessMode(PropertyAccessMode.Field)`).
 
@@ -573,7 +579,7 @@ public sealed class DecyzjaModeluEntityTypeConfiguration : IEntityTypeConfigurat
 {
     public void Configure(EntityTypeBuilder<DecyzjaModelu> b)
     {
-        b.ToTable("decyzja_modelu");                                                 // tabela partycjonowana (ddl.md, 0004_partycje.sql)
+        b.ToTable("decyzja_modelu");                                                 // tabela partycjonowana (ddl.md, 0004_partitions.sql)
         b.HasKey(d => new { d.Id, d.CreatedAt });
         b.Property(d => d.SkrotStanu).HasColumnType("bytea");
         b.Property(d => d.Opcje).HasConversion<JsonbConverter<OpcjePytania?>>().HasColumnType("jsonb");
@@ -584,7 +590,7 @@ public sealed class DecyzjaModeluEntityTypeConfiguration : IEntityTypeConfigurat
 
 Wiersze `decyzja_modelu` są wstawiane wsadowo (`AddRange` + `SaveChanges`
 w jednostce pracy zapisu Oceny, ≤ 29 wierszy); EF Core 10 wysyła je jednym
-poleceniem wielowierszowym. Tabela nadrzędna i partycje są tworzone w `0004_partycje.sql` (migracje są
+poleceniem wielowierszowym. Tabela nadrzędna i partycje są tworzone w `0004_partitions.sql` (migracje są
 wyłącznie SQL, ADR-063).
 
 ## 7. Pokrycie tabel
@@ -598,7 +604,7 @@ wyłącznie SQL, ADR-063).
 | `proba_logowania` | `ProbaLogowania` | EN (techniczna) | tylko `INSERT` i zapytanie liczące | Konta |
 | `zdarzenie_rodo` | `ZdarzenieRodo` | AG (niezmienny) | `ZdarzenieRodoEntityTypeConfiguration` (PK bez wartości domyślnej, `dane` jako `JsonDocument`) | Konta |
 | `dzien_wolny` | `DzienWolny` | EN | dane referencyjne, tylko odczyt | Wspolne |
-| `dzial`, `umiejetnosc`, `umiejetnosc_wymagana` | `Dzial`, `Umiejetnosc` (kolekcja `WymaganeUmiejetnosci`) | AG (referencyjne) | tylko odczyt, `HasData` z 7.4 i `umiejetnosci.yaml` | Tresci |
+| `dzial`, `umiejetnosc`, `umiejetnosc_wymagana` | `Dzial`, `Umiejetnosc` (kolekcja `WymaganeUmiejetnosci`) | AG (referencyjne) | tylko odczyt, `HasData` z 7.4 i `skills.yaml` | Tresci |
 | `wkladka_teoretyczna` | `WkladkaTeoretyczna` | AG | `version`, indeks `ux_wkladka_opublikowana` | Tresci |
 | `arkusz_cke` | `ArkuszCke` | AG | CHECK `sesja` (konwerter `SesjaArkusza`) | Tresci |
 | `import_arkusza` | `ImportArkusza` | AG | `xmin`, `raport` jako `JsonbConverter<RaportImportu>` | Tresci |
@@ -612,7 +618,8 @@ wyłącznie SQL, ADR-063).
 | `wstrzymanie_w_doborze` | `WstrzymanieWDoborze` | AG | SQL C-36 (`INSERT … ON CONFLICT DO NOTHING`) | Tresci |
 | `klasa`, `czlonkostwo_klasy` | `Klasa`, `CzlonkostwoKlasy` | AG + EN | `OwnsMany` członkostwa; `KodZaproszenia` → `kod_zaproszenia`, `kod_wazny_do` | Klasy |
 | `zestaw_zadan`, `pozycja_zestawu` | `ZestawZadan`, `PozycjaZestawu` | AG + EN | `version`; `OwnsMany` pozycji | Klasy |
-| `przypisanie`, `przypisanie_uczen` | `Przypisanie`, `PrzypisanieUczen` | AG + EN | `OwnsMany` adresatów | Klasy |
+| `przypisanie`, `przypisanie_uczen` | `Przypisanie`, `PrzypisanieUczen` | AG + EN | `OwnsMany` adresatów; `version` (3.3), `wycofano_at`/`powod_wycofania` (ADR-074) | Klasy |
+| `szkic_transkrypcji` | `SzkicTranskrypcji` | EN (techniczna, 3.3) | `kroki` jako `JsonbConverter<IReadOnlyList<KrokSzkicu>>`; zapis SQL, odczyt w `IOdczytRozwiazan` (ADR-073) | Rozwiazania |
 | `profil_ucznia`, `opanowanie_umiejetnosci` | `ProfilUcznia`, `OpanowanieUmiejetnosci` | AG + EN | 6.5 | Profil |
 | `test_diagnostyczny`, `pozycja_testu_diagnostycznego` | `TestDiagnostyczny`, `PozycjaTestuDiagnostycznego` | AG + EN | `pominiete_dzialy` jako `List<DzialId>` (`integer[]`) | Profil |
 | `wynik_zadania` | `WynikZadania` | AG | `xmin`; indeksy częściowe z ddl.md | Profil |
@@ -632,8 +639,8 @@ wyłącznie SQL, ADR-063).
 | `prog_pewnosci` | `ProgPewnosci` | AG (niezmienny poza `aktywny`) | `ux_prog_aktywny`; zmiana `aktywny` przez `ExecuteUpdate` w transakcji KALIBRUJ | Kalibracja |
 | `stan_bezpiecznika` | `StanBezpiecznika` | AG | 6.5 | Kalibracja |
 | `probka_kalibracyjna` | `ProbkaKalibracyjna` | AG (niezmienny) | kolumny `zgodna`, `uwzgledniana_w_progu` jako `HasComputedColumnSql(…, stored: true)` | Kalibracja |
-| `praca_w_tle` | `PracaWTle` | EN (techniczna) | tylko odczyt (`AsNoTracking`, rekord 13.4.1 z kompletem kolumn, `MaksProb` → `maks_prob`); zapis `SklepPracWTle` (`ponow_prace`, `odzyskaj_dzierzawy`), `ZlecaniePracSql` | Orkiestracja / Wspolne.PraceWTle |
-| `przebieg_harmonogramu` | `PrzebiegHarmonogramu` | EN (techniczna) | SQL `INSERT … ON CONFLICT DO UPDATE` w `HarmonogramHostedService`; odczyt do panelu (3.2, ADR-066 p. 5) | Wspolne.PraceWTle |
+| `praca_w_tle` | `PracaWTle` | EN (techniczna) | tylko odczyt (`AsNoTracking`, rekord 13.4.1 z kompletem kolumn, `MaksProb` → `maks_prob`); zapis `SklepPracWTle` (`ponow_prace`, `odzyskaj_dzierzawy`), `ZlecaniePracSql` | Orkiestracja / Common.BackgroundJobs |
+| `przebieg_harmonogramu` | `PrzebiegHarmonogramu` | EN (techniczna) | SQL `INSERT … ON CONFLICT DO UPDATE` w `HarmonogramHostedService`; odczyt do panelu (3.2, ADR-066 p. 5) | Common.BackgroundJobs |
 | `klucz_idempotencji` | `KluczIdempotencji` | EN (techniczna) | SQL w filtrze idempotencji `Lemat.Api` | — |
 | `powiadomienie` | `Powiadomienie` | AG | `Id` = `Guid.CreateVersion7()` w fabryce; `TypPowiadomienia` konwerter | Powiadomienia |
 | `dziennik_audytu` | `WpisAudytu` | AG (niezmienny) | tylko `INSERT` | Audyt |
@@ -645,9 +652,9 @@ tabeli; od 3.2 doszła `przebieg_harmonogramu`). Test
 
 ## 8. Strategia migracji i test zgodności (wersja 3.2, ADR-063)
 
-1. **Źródło:** `docs/spec/ddl.md` (bloki A i B) → `wyodrebnij-ddl.sh` →
-   `Persistence/Migrations/Sql/0000_schemat.sql`, `0001_funkcje.sql` …
-   `0006_prace_w_tle.sql` (zasoby osadzone).
+1. **Źródło:** `docs/spec/ddl.md` (bloki A i B) → `extract-ddl.sh` →
+   `Persistence/Migrations/Sql/0000_schema.sql`, `0001_functions.sql` …
+   `0006_background_jobs.sql` (zasoby osadzone).
 2. **Migracje:** klasy `Migration` wyłącznie z
    `migrationBuilder.Sql(ZasobSql.Wczytaj("…"))`; `0001_SchematPoczatkowy`
    wykonuje pliki `0000` … `0006`. Brak `ModelSnapshot`; model EF Core nie
@@ -689,7 +696,7 @@ tabeli; od 3.2 doszła `przebieg_harmonogramu`). Test
    `zlecenie_generowania.trg_zlecenie_generowania_powiadom` (C7-15 p. 3:
    `trg_suma_kryteriow` jest na `kryterium_oceniania`, nie na
    `zadanie_wersja`).
-6. **`OgraniczeniaZgodneZMigawka`** — `Persistence/Schemat/ograniczenia.txt`
+6. **`OgraniczeniaZgodneZMigawka`** — `Persistence/Schema/constraints.txt`
    (posortowane `tabela | nazwa | pg_get_constraintdef`) = katalog; zmiana
    DDL wymaga regeneracji pliku w tym samym PR.
 7. **Wykonanie i role:** `efbundle` w kontenerze `migracje`; `0005`
