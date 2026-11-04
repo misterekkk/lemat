@@ -40,5 +40,54 @@
     "BLAD_BRAMY": "Serwer jest chwilowo nieosiągalny. Spróbuj ponownie za chwilę.",
     "SESJA_TYMCZASOWO_NIEDOSTEPNA": "Nie udało się teraz odświeżyć sesji. Spróbuj ponownie za chwilę.",
     "NIEZNANY": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie."
+  },
+  "Konto": {
+    "sesjaLadowanie": "Wczytywanie sesji…",
+    "logowanie": {
+      "naglowek": "Zaloguj się",
+      "email": "Adres e-mail",
+      "haslo": "Hasło",
+      "wyslij": "Zaloguj się",
+      "wTrakcie": "Logowanie…",
+      "bladDanych": "Nieprawidłowy e-mail lub hasło.",
+      "brakKonta": "Nie masz jeszcze konta?",
+      "linkRejestracja": "Załóż konto"
+    },
+    "rejestracja": {
+      "naglowek": "Załóż konto ucznia",
+      "email": "Adres e-mail",
+      "haslo": "Hasło (10–128 znaków)",
+      "imie": "Imię",
+      "nazwisko": "Nazwisko",
+      "oswiadczenieWieku": "Oświadczam, że ukończyłem(-am) 16 lat.",
+      "zgodaRegulamin": "Akceptuję regulamin serwisu.",
+      "wyslij": "Załóż konto",
+      "wTrakcie": "Zakładanie konta…",
+      "bezSesji": "Konto zostało założone, ale nie udało się rozpocząć sesji. Zaloguj się.",
+      "maszKonto": "Masz już konto?",
+      "linkLogowanie": "Zaloguj się"
+    },
+    "walidacja": {
+      "emailWymagany": "Podaj adres e-mail.",
+      "emailZaDlugi": "Adres e-mail może mieć najwyżej 254 znaki.",
+      "emailFormat": "Podaj poprawny adres e-mail.",
+      "hasloWymagane": "Podaj hasło.",
+      "hasloZaKrotkie": "Hasło musi mieć co najmniej 10 znaków.",
+      "hasloZaDlugie": "Hasło może mieć najwyżej 128 znaków.",
+      "imieWymagane": "Podaj imię.",
+      "imieZaDlugie": "Imię może mieć najwyżej 60 znaków.",
+      "nazwiskoWymagane": "Podaj nazwisko.",
+      "nazwiskoZaDlugie": "Nazwisko może mieć najwyżej 80 znaków.",
+      "oswiadczenieWymagane": "Wymagane oświadczenie o ukończeniu 16 lat.",
+      "regulaminWymagany": "Wymagana akceptacja regulaminu."
+    },
+    "nawigacja": {
+      "etykieta": "Menu ucznia",
+      "zadania": "Zadania",
+      "rozwiazania": "Rozwiązania",
+      "profil": "Profil",
+      "ustawienia": "Ustawienia",
+      "wyloguj": "Wyloguj"
+    }
   }
 }
