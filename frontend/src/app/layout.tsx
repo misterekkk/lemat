@@ -1,9 +1,11 @@
-// @Role: Główny układ: <html lang="pl">, NextIntlClientProvider, QueryClientProvider, style KaTeX | @DependsOn: next-intl, lib/query/QueryProvider, globals.css | @UsedBy: Next.js App Router (wszystkie trasy) | @Task: TASK-006
+// @Role: Główny układ: <html lang="pl">, NextIntlClientProvider, QueryClientProvider, MockProvider (MSW), SessionProvider, style KaTeX | @DependsOn: next-intl, lib/query/QueryProvider, lib/auth/SessionProvider, mocks/MockProvider, globals.css | @UsedBy: Next.js App Router (wszystkie trasy) | @Task: TASK-006, TASK-132, TASK-133
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { SessionProvider } from "@/lib/auth/SessionProvider";
 import { QueryProvider } from "@/lib/query/QueryProvider";
+import { MockProvider } from "@/mocks/MockProvider";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,7 +19,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="pl">
       <body className="min-h-screen bg-white text-slate-900">
         <NextIntlClientProvider locale="pl-PL" messages={komunikaty}>
-          <QueryProvider>{children}</QueryProvider>
+          <MockProvider>
+            <QueryProvider>
+              <SessionProvider>{children}</SessionProvider>
+            </QueryProvider>
+          </MockProvider>
         </NextIntlClientProvider>
       </body>
     </html>

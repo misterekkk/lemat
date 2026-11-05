@@ -1,0 +1,26 @@
+{
+    "id": "f2000000-0000-4000-8000-000000000011",
+    "wersja": 1,
+    "status": "OSTATECZNA",
+    "zrodlo": "AUTOMATYCZNA",
+    "widocznosc_dla_ucznia": "PELNA",
+    "punkty": 1,
+    "punkty_max": 2,
+    "wariant": 1,
+    "kryteria": [
+      { "nr_kryterium": 1, "opis": "Obliczenie wyróżnika trójmianu: $\\Delta = 1$.", "punkty": 1, "punkty_max": 1, "prawdopodobienstwo": 0.995 },
+      { "nr_kryterium": 2, "opis": "Obliczenie pierwiastków równania: $x_1 = 2$, $x_2 = 3$.", "punkty": 0, "punkty_max": 1, "prawdopodobienstwo": 0.995 }
+    ],
+    "pierwszy_bledny_krok": 2,
+    "brakujacy_krok": false,
+    "typ_bledu": "RACHUNKOWY",
+    "krok_podejrzany_odczyt": null,
+    "mozliwy_blad_odczytu": false,
+    "wskazowka": "Sprawdź jeszcze raz krok 2 — policz ponownie drugi pierwiastek.",
+    "wskazowka_w_przygotowaniu": false,
+    "uzasadnienie": "Kryteria: K1 „Obliczenie wyróżnika trójmianu: $\\Delta = 1$.” — 1/1 pkt; K2 „Obliczenie pierwiastków równania: $x_1 = 2$, $x_2 = 3$.” — 0/1 pkt. Pierwszy błędny krok: 2 (błąd rachunkowy). Razem 1/2 pkt.",
+    "pewnosc_oceny": 0.995,
+    "komunikat": null,
+    "mozliwe_zgloszenie_do": null,
+    "created_at": "2026-11-02T10:08:00Z"
+  }
